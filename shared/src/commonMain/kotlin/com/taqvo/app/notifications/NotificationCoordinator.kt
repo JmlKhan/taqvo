@@ -1,0 +1,110 @@
+package com.taqvo.app.notifications
+
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import com.taqvo.app.domain.GeoLocation
+import com.taqvo.app.i18n.PlatformFormat
+import com.taqvo.app.i18n.createPlatformFormat
+import com.taqvo.app.prayer.PrayerTimesEngine
+import com.taqvo.app.settings.SettingsRepository
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
+
+/**
+ * Ties settings, the prayer engine, the pure planner and a platform [NotificationScheduler]
+ * together. Every platform entry point — app foreground, a boot receiver, a background task —
+ * calls [reschedule] and never touches [NotificationPlanner] or the scheduler directly.
+ *
+ * One reschedule runs at a time: two quick stepper taps, or a settings write racing the foreground
+ * reschedule, each read the settings and hand the scheduler a whole plan, and the one that planned
+ * first could otherwise arm last and leave a stale plan behind. Each waits for the one before it,
+ * so the last to start reads the latest settings and is the last to arm. The plan itself is built
+ * on [planning] (the default dispatcher), not on the caller's, which is Main for a Settings write.
+ */
+class NotificationCoordinator(
+    private val engine: PrayerTimesEngine,
+    private val settingsRepository: SettingsRepository,
+    private val locationOf: suspend () -> GeoLocation?,
+    private val scheduler: NotificationScheduler,
+    private val now: () -> Instant,
+    private val capacity: Int = NotificationPlanner.IOS_PENDING_LIMIT,
+    /**
+     * Given the chance to re-acquire the device's position before the plan is built. Returns the
+     * location that should be planned against, so a foreground reschedule after a flight plans
+     * the destination's times rather than the origin's. Defaults to [locationOf] for callers
+     * that have no location stack to hand.
+     */
+    private val locationFor: suspend (RescheduleTrigger) -> GeoLocation? = { locationOf() },
+    private val planning: CoroutineDispatcher = Dispatchers.Default,
+    /**
+     * The adhkar reminders whose set has already been said ([adhkarNotificationId]s, from the
+     * sets' done markers), read on every reschedule so that none of them is armed again (adhkar
+     * spec §5). None for callers with no adhkar store to hand.
+     */
+    private val doneAdhkar: suspend () -> Set<String> = { emptySet() },
+) {
+    private val rescheduling = Mutex()
+
+    companion object {
+        /** Below this much runway left in the window, a background task is worth requesting. */
+        val TOP_UP_HORIZON = 3.days
+    }
+
+    suspend fun reschedule(trigger: RescheduleTrigger): List<ScheduledNotification> = rescheduling.withLock {
+        val location = locationFor(trigger)
+        if (location == null) {
+            // Nothing to schedule against, and nothing stale should be left behind either —
+            // this is what happens when a user revokes location after granting it once.
+            scheduler.cancelAll()
+            return@withLock emptyList()
+        }
+        val plan = withContext(planning) { plan(location) }
+        // trigger is not branched on: every reason for waking up resolves to the same correct
+        // plan for right now. It exists so callers and logs can say why a reschedule happened.
+        scheduler.scheduleAll(plan)
+        plan
+    }
+
+    private suspend fun plan(location: GeoLocation): List<ScheduledNotification> {
+        val prayerSettings = settingsRepository.prayerSettings.first()
+        val notificationSettings = settingsRepository.notificationSettings.first()
+        val windowDays = NotificationPlanner.windowDaysFor(capacity, notificationSettings)
+        // Resolved here, at schedule time, rather than injected: a reschedule can be triggered
+        // from a boot receiver or a background task, where there is no composition to read a
+        // locale from and the device's own default is the only truth available. The clock format
+        // is read from the repository for the same reason: the times baked into the notification
+        // text are written now, days before they fire, in the format the reader has chosen.
+        val format = createPlatformFormat(settingsRepository.clockFormat.first())
+        val done = if (notificationSettings.adhkar) doneAdhkar() else emptySet()
+        return NotificationPlanner.plan(
+            location = location,
+            settings = prayerSettings,
+            notifications = notificationSettings,
+            engine = engine,
+            from = now(),
+            windowDays = windowDays,
+            capacity = capacity,
+            copy = LocalizedNotificationCopy(format),
+            formatClockTime = { instant, tz -> localizedClockTime(instant, tz, format) },
+            doneAdhkar = done,
+        )
+    }
+
+    fun needsTopUp(plan: List<ScheduledNotification>): Boolean =
+        RescheduleDecider.needsTopUp(plan, now(), TOP_UP_HORIZON)
+
+    /** As above, for a caller holding only how far the armed plan reaches. */
+    fun needsTopUp(furthest: Instant?): Boolean =
+        RescheduleDecider.needsTopUp(furthest, now(), TOP_UP_HORIZON)
+
+    private fun localizedClockTime(instant: Instant, timeZoneId: String, format: PlatformFormat): String {
+        val t = instant.toLocalDateTime(TimeZone.of(timeZoneId))
+        return format.clockTime(t.hour, t.minute)
+    }
+}

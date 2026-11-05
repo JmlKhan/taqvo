@@ -1,0 +1,69 @@
+[versions]
+kotlin = "2.4.10"
+compose-multiplatform = "1.12.1"
+agp = "9.4.0"
+android-minSdk = "26"
+android-compileSdk = "37"
+android-targetSdk = "36"
+adhan = "0.0.7"
+kotlinx-datetime = "0.8.0"
+kotlinx-coroutines = "1.10.2"
+datastore = "1.1.7"
+androidx-activity = "1.9.3"
+androidx-core = "1.15.0"
+androidx-glance = "1.1.1"
+# Slice 3a: surah downloads survive the app being backgrounded, which on Android means
+# WorkManager. 2.11.2 is the latest stable; 2.12.0 is still RC.
+androidx-work = "2.11.2"
+# The version Compose Multiplatform 1.12.1 already resolves transitively (via material3's
+# lifecycle-viewmodel-compose), confirmed with
+# `./gradlew :shared:dependencies --configuration metadataCommonMainCompileClasspath | grep lifecycle`.
+# Pinning it here rather than leaving it implicit avoids a second, unpinned resolution picking a
+# different patch release later.
+jetbrains-lifecycle = "2.9.6"
+sqldelight = "2.2.1"
+# Slice 3a: the recitation manifest and the `.taqa` container index are JSON, and the container
+# is read by byte range off disk on both platforms. okio is already on the classpath transitively
+# (DataStore reads its file through it); pinning it makes that dependency ours rather than
+# DataStore's to change.
+kotlinx-serialization = "1.11.0"
+okio = "3.18.2"
+# Slice 3a task 3: the Android player. Media3 is Android-only and sits behind the expect/actual,
+# so ExoPlayer cannot leak into common code (spec §10). 1.11.1 is the latest stable; 1.12.0 is
+# still alpha.
+media3 = "1.11.1"
+
+[libraries]
+sqldelight-android = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
+sqldelight-native = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" }
+sqldelight-sqlite = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
+sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
+jetbrains-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "jetbrains-lifecycle" }
+# The @Preview annotation in common code, for the Prayer screen's states.
+compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-multiplatform" }
+# Compose UI tests on the iOS simulator target (shared/src/iosTest): semantics assertions on the
+# shared controls. Through the catalog rather than `compose.uiTest`, which the plugin deprecates.
+compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "compose-multiplatform" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "okio" }
+media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
+media3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
+adhan2 = { module = "com.batoulapps.adhan:adhan2", version.ref = "adhan" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+datastore-preferences = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
+androidx-core = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
+androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "androidx-glance" }
+androidx-work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
+
+[plugins]
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidKotlinMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

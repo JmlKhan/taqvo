@@ -1,0 +1,182 @@
+package com.taqvo.app.widget
+
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
+import com.taqvo.app.domain.DayPrayerTimes
+import com.taqvo.app.domain.ObligatoryPrayers
+import com.taqvo.app.domain.Prayer
+import com.taqvo.app.domain.PrayerStatus
+import com.taqvo.app.domain.TodayState
+import com.taqvo.app.domain.WidgetBackground
+import com.taqvo.app.i18n.PlatformFormat
+import com.taqvo.app.i18n.PrayerNaming
+import com.taqvo.app.prayer.TimelineBuilder
+import kotlin.math.round
+import kotlin.time.Instant
+
+/** Stays in `shared`: producing a snapshot needs `TodayState` from the prayer engine. The read
+ * side is `WidgetInputsMirror.read`, in `:widgetcore`, which is all the iOS widget extension
+ * links. */
+object WidgetMirrorWriter {
+
+    /** Same key `TaqvoGlanceWidget.kt` (Android) and `TaqvoMirror.background()` (iOS) read
+     * literally — the widget processes never see `SettingsRepository`/DataStore, only this
+     * mirror, so the choice made in Settings › Widgets has to be written here too. */
+    private const val BACKGROUND_KEY = "widget_background"
+
+    fun writeBackground(store: KeyValueStore, background: WidgetBackground) {
+        store.putString(BACKGROUND_KEY, background.name)
+    }
+
+    /**
+     * Mirrors the exact copy `Res.string.prayer_next_in` renders for the Prayer screen's ring
+     * ("%1$s in" / "متبقٍّ على %1$s") as plain Kotlin instead of a resource lookup — for the same
+     * reason [com.taqvo.app.notifications.LocalizedNotificationCopy] is: this runs from a plain,
+     * non-composable writer, which is what makes it testable without a resource loader. That
+     * matters concretely here, not just stylistically — Compose Multiplatform's non-composable
+     * `getString` calls `Resources.getSystem()` unconditionally on Android, which the local JVM
+     * unit tests covering this file have no way to satisfy (there is no device, no Robolectric),
+     * so it throws on every call. Two supported languages, so a plain `when` costs nothing extra
+     * to keep in sync with the resource by hand.
+     */
+    internal fun countdownLabel(prayer: Prayer, languageTag: String): String =
+        PrayerNaming.countdownLabel(prayer, languageTag)
+
+    /**
+     * How many discrete steps the ring is rounded to before it reaches the mirror.
+     *
+     * Every other field in a [WidgetSnapshot] is minute-granular — `countdownMinutes` is
+     * `inWholeMinutes`, the clock strings are `HH:mm` — but `TodayState.ringProgress` is
+     * elapsed/total in *seconds*, so it takes a different value on every one of
+     * `PrayerViewModel`'s 1 Hz ticks. That single field is what made the serialised snapshot
+     * differ every second, which defeated iOS's `lastSnapshot` dedupe and burned WidgetKit's
+     * ~40-70 reloads/day budget in under a minute, after which the widget froze for the day.
+     *
+     * 120 steps is finer than a pixel on the lock-screen circular complication (a ~40 pt ring has
+     * roughly 120 pixels of circumference at 1x), so nothing visible is lost; what is gained is
+     * that the value only moves once per `total / 120` seconds — for a typical two-to-five-hour
+     * gap between prayers, once every one to two and a half minutes, i.e. no more often than
+     * `countdownMinutes` already moves.
+     */
+    private const val RING_STEPS = 120
+
+    /** [ScheduledPrayer.dayIndex] of a start of yesterday's: the last before midnight, and any
+     * carried past it. */
+    private const val YESTERDAY = -1
+
+    private fun quantisedRing(progress: Float): Float =
+        round(progress.coerceIn(0f, 1f) * RING_STEPS) / RING_STEPS
+
+    /**
+     * Builds the snapshot [write] would store, without storing it. [days] is the day of writing
+     * followed by the day after; their obligatory prayers become [WidgetSnapshot.schedule], the
+     * two-day horizon a widget can count across on its own. [yesterday], the day before the day of
+     * writing, adds the starts of its that fall after the day of writing's midnight and before its
+     * Fajr, at [ScheduledPrayer.dayIndex] −1 (spec §3.3: a high-latitude Isha after midnight), so
+     * every start of yesterday's still ahead is in the schedule and the widget's next prayer and
+     * countdown look across it.
+     *
+     * Yesterday's last start before midnight is carried too, also at −1: it is where the interval
+     * a widget is inside from midnight to Fajr began (its Isha, or its Maghrib while a carried
+     * Isha is still ahead), the same start `TimelineBuilder.buildForWidgets` fills the app's ring
+     * from. Without it a mirror written after midnight had nothing behind its own moment, and the
+     * lock-screen ring sat empty until Fajr (B35) — every night of Ramadan, when the app is opened
+     * for suhoor. The snapshot's own [WidgetSnapshot.ringProgress] is no substitute: it is frozen
+     * at the moment of writing.
+     */
+    fun snapshotOf(
+        today: TodayState,
+        timeZoneId: String,
+        format: PlatformFormat,
+        days: List<DayPrayerTimes> = emptyList(),
+        yesterday: DayPrayerTimes? = null,
+    ): WidgetSnapshot {
+        val zone = TimeZone.of(timeZoneId)
+        fun clock(instant: Instant): String {
+            val t = instant.toLocalDateTime(zone)
+            return format.clockTime(t.hour, t.minute)
+        }
+        val first = days.firstOrNull()
+        val carried = if (yesterday != null && first != null) {
+            val midnight = first.date.atStartOfDayIn(zone)
+            val starts = TimelineBuilder.yesterdaysStarts(yesterday, first)
+            val lastBeforeMidnight = starts.filter { it.instant < midnight }.maxByOrNull { it.instant }
+            (listOfNotNull(lastBeforeMidnight) + starts.filter { it.instant >= midnight })
+                .map { ScheduledPrayer(it.prayer, it.instant.epochSeconds, clock(it.instant), YESTERDAY) }
+        } else {
+            emptyList()
+        }
+        val schedule = carried + days.flatMapIndexed { dayIndex, day ->
+            ObligatoryPrayers.map { prayer ->
+                val instant = day.time(prayer)
+                ScheduledPrayer(prayer, instant.epochSeconds, clock(instant), dayIndex)
+            }
+        }
+        return WidgetSnapshot(
+            nextPrayer = today.next.prayer,
+            countdownMinutes = today.countdown.inWholeMinutes,
+            nextClockTime = clock(today.next.instant),
+            allClockTimes = today.rows.associate { it.prayer to clock(it.instant) },
+            currentPrayer = today.rows.firstOrNull { it.status == PrayerStatus.CURRENT }?.prayer,
+            languageTag = format.languageTag(),
+            ringProgress = quantisedRing(today.ringProgress),
+            countdownLabel = countdownLabel(today.next.prayer, format.languageTag()),
+            // Absolute instants, not elapsed durations. The mirror is only written while the Prayer
+            // screen is open, so anything relative in it is a lie the moment the screen closes; a
+            // widget holding the instant can recompute against its own clock whenever it happens to
+            // draw.
+            nextPrayerEpochSeconds = today.next.instant.epochSeconds,
+            previousPrayerEpochSeconds = previousObligatoryInstant(today),
+            schedule = schedule,
+            // The app's own digit set, asked of the platform rather than derived from the tag
+            // beside it: the widget's countdown is the one number it composes itself, and it has
+            // to match the clock times in the same card, which this same format produced (D2).
+            arabicIndicDigits = format.usesNativeDigits(),
+        )
+    }
+
+    /**
+     * The other end of the interval the ring fills: the most recent obligatory prayer that has
+     * already arrived. Read off the timeline's own statuses rather than recomputed, so it cannot
+     * drift from what the screen is showing.
+     *
+     * Returns `0` — the "not recorded" sentinel — before the day's Fajr, when no obligatory prayer
+     * has passed. Deliberately not synthesised: a widget reading `0` knows it has no start point,
+     * which is the truth, and the interval a fabricated one would produce is precisely the flat
+     * overnight ring finding I1 is about.
+     */
+    private fun previousObligatoryInstant(today: TodayState): Long =
+        today.rows
+            .filter { it.prayer in ObligatoryPrayers && it.status != PrayerStatus.UPCOMING }
+            .maxByOrNull { it.instant }
+            ?.instant
+            ?.epochSeconds
+            ?: 0L
+
+    /**
+     * The exact string [write] would store. Exposed so a caller that recomputes once a second can
+     * compare it against what it last wrote and skip both the store write and `refreshWidgets()`
+     * when nothing a widget could show has actually changed (see `PrayerViewModel.refresh`).
+     */
+    fun serializedSnapshot(
+        today: TodayState,
+        timeZoneId: String,
+        format: PlatformFormat,
+        days: List<DayPrayerTimes> = emptyList(),
+        yesterday: DayPrayerTimes? = null,
+    ): String = WidgetInputsMirror.serialize(snapshotOf(today, timeZoneId, format, days, yesterday))
+
+    fun write(
+        store: KeyValueStore,
+        today: TodayState,
+        timeZoneId: String,
+        format: PlatformFormat,
+        days: List<DayPrayerTimes> = emptyList(),
+        yesterday: DayPrayerTimes? = null,
+    ) {
+        store.putString(WidgetInputsMirror.KEY, serializedSnapshot(today, timeZoneId, format, days, yesterday))
+    }
+
+    fun read(store: KeyValueStore): WidgetSnapshot? = WidgetInputsMirror.read(store)
+}

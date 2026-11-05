@@ -1,0 +1,947 @@
+package com.taqvo.app.feature.tasbeeh
+
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
+import com.taqvo.app.design.KeepScreenOn
+import com.taqvo.app.design.LocalTaqvoColors
+import com.taqvo.app.design.TaqvoText
+import com.taqvo.app.design.components.CountdownRingSize
+import com.taqvo.app.design.components.RingArc
+import com.taqvo.app.design.components.TaqvoBottomSheet
+import com.taqvo.app.design.components.TaqvoCard
+import com.taqvo.app.design.components.TaqvoPrimaryButton
+import com.taqvo.app.design.components.TaqvoRow
+import com.taqvo.app.design.components.TaqvoTextLink
+import com.taqvo.app.design.components.drawPlus
+import com.taqvo.app.design.contentWidth
+import com.taqvo.app.feature.settings.BackChevron
+import com.taqvo.app.i18n.LocalPlatformFormat
+import com.taqvo.app.i18n.isLatinScriptUi
+import com.taqvo.app.i18n.uiLanguage
+import com.taqvo.app.i18n.uppercaseIn
+import com.taqvo.app.resources.Res
+import com.taqvo.app.resources.dhikr_meaning_alhamdulillah
+import com.taqvo.app.resources.dhikr_meaning_allahu_akbar
+import com.taqvo.app.resources.dhikr_meaning_astaghfirullah
+import com.taqvo.app.resources.dhikr_meaning_la_ilaha_illallah
+import com.taqvo.app.resources.dhikr_meaning_subhanallah
+import com.taqvo.app.resources.dhikr_meaning_subhanallahi_wa_bihamdihi
+import com.taqvo.app.resources.tasbeeh_add_custom
+import com.taqvo.app.resources.tasbeeh_custom_add
+import com.taqvo.app.resources.tasbeeh_custom_delete
+import com.taqvo.app.resources.tasbeeh_custom_edit_title
+import com.taqvo.app.resources.tasbeeh_custom_phrase
+import com.taqvo.app.resources.tasbeeh_custom_save
+import com.taqvo.app.resources.tasbeeh_custom_target
+import com.taqvo.app.resources.tasbeeh_custom_title
+import com.taqvo.app.resources.tasbeeh_hint
+import com.taqvo.app.resources.tasbeeh_of
+import com.taqvo.app.resources.tasbeeh_preset_after_prayer
+import com.taqvo.app.resources.tasbeeh_preset_alhamdulillah
+import com.taqvo.app.resources.tasbeeh_preset_allahu_akbar
+import com.taqvo.app.resources.tasbeeh_preset_astaghfirullah
+import com.taqvo.app.resources.tasbeeh_preset_la_ilaha_illallah
+import com.taqvo.app.resources.tasbeeh_preset_subhanallah
+import com.taqvo.app.resources.tasbeeh_preset_subhanallahi_wa_bihamdihi
+import com.taqvo.app.resources.tasbeeh_reset
+import com.taqvo.app.resources.tasbeeh_reset_confirm
+import com.taqvo.app.resources.tasbeeh_round
+import com.taqvo.app.resources.tasbeeh_title
+import com.taqvo.app.settings.takeCodePoints
+import com.taqvo.app.tasbeeh.Dhikr
+import com.taqvo.app.tasbeeh.TasbeehPreset
+
+/** The counter's ring is the Prayer screen's ring, at the same 196 dp it draws itself at. */
+private val RingSize = CountdownRingSize
+
+/** The count's own size inside it — the countdown style at the mockup's 56 sp. */
+private val CountSize = 56.sp
+
+/** The target under it: the caption, one step down from its own 14 sp. */
+private val CaptionSize = 13.sp
+
+/** 28 sp of the count's 56: how far the ring's three lines may shrink on a short screen. */
+private const val MinCountScale = 28f / 56f
+
+/**
+ * How much of a sideways screen the chips take, and therefore how much of it does not count.
+ *
+ * Measured against the longest label there is — "SubhanAllahi wa bihamdihi" — at the chip's own
+ * 13 sp: on the 1344x2992 emulator it draws 170 dp of text, which with the pill's own 14 dp a
+ * side is 198 dp of chip. 200 dp cut it to "SubhanAllahi wa biha…"; 220 dp with a narrow gutter
+ * holds it whole. Everything left over is tap surface.
+ */
+private val ChipColumnWidth = 220.dp
+
+/** The column's gutter, narrow because every dp of it is a dp the longest chip cannot have. */
+private val ChipColumnGutter = 8.dp
+
+/**
+ * The top row's height: [BackChevron]'s own 8 dp of padding above its 44 dp target, which is what
+ * both buttons and the name between them are laid out inside. Sideways this is height the counting
+ * surface does not get, so the ring is sized against what is left rather than against the screen.
+ */
+private val HeaderRowHeight = 52.dp
+
+/**
+ * What the counter stack needs besides its ring: the dhikr block, the reminder row, the hint and
+ * the three spacers between them. Sideways the ring is given whatever is left of the pane after
+ * this, so a short screen shrinks the ring rather than pushing the hint off the bottom of it.
+ *
+ * Measured on the 1344x2992 emulator turned sideways, on the tallest stack there is — the
+ * post-prayer set at 0, which is the only one showing both the reminder row and the hint: 80 dp of
+ * dhikr, 28 + 20 + 12 dp of spacers, 12 dp of reminder and a 28 dp hint come to 180 dp, and the
+ * 10 dp on top of that is what keeps a face with taller metrics than this one from cropping. The
+ * old 150 dp was measured before the header row took its 52 dp, and left the hint drawn past the
+ * bottom edge.
+ */
+private val StackReserve = 190.dp
+
+/** One tap's bump: 1 → 1.06 → 1, 120 ms end to end (spec §4). */
+private const val BumpScale = 1.06f
+private const val BumpHalfMillis = 60
+
+/** Which sheet, if any, is up. */
+private sealed interface TasbeehSheet {
+    /** The plus in the top corner: a new phrase of the reader's own. */
+    data object NewCustom : TasbeehSheet
+
+    /** A long-press on a custom chip: the same fields, prefilled, with Save and a Delete row. */
+    data class EditCustom(val preset: TasbeehPreset) : TasbeehSheet
+
+    /** Reset, which is the one thing here that ninety more taps cannot undo. */
+    data object ResetConfirm : TasbeehSheet
+}
+
+/**
+ * The tasbeeh (spec Tasbeeh §4): the dhikr, the count inside the app's own ring, the round, a row
+ * of presets and a way back to zero.
+ *
+ * The whole middle of the page counts — dhikr, ring, reminder and hint are one `clickable` with
+ * no ripple, so a tap lands wherever the thumb happens to be and the eyes can stay shut. Only the
+ * chips, Reset and the two top buttons are outside it.
+ *
+ * [onLeave] is the view model's flush: the debounced write is 300 ms behind the last tap, and
+ * leaving the screen must not lose it.
+ */
+@Composable
+fun TasbeehScreen(
+    state: TasbeehUiState,
+    onBack: () -> Unit,
+    onTap: () -> Unit,
+    onSelect: (String) -> Unit,
+    onReset: () -> Unit,
+    onAddCustom: (String, Int) -> Unit,
+    onUpdateCustom: (String, String, Int) -> Unit,
+    onRemoveCustom: (String) -> Unit,
+    onLeave: () -> Unit,
+) {
+    val colors = LocalTaqvoColors.current
+    val scope = rememberCoroutineScope()
+
+    // A set counted in the hand is minutes of no touch input at all; the display staying on is
+    // the difference between finishing a tasbeeh and unlocking the phone at 67.
+    KeepScreenOn()
+
+    // `rememberUpdatedState` so the effect below never captures the first lambda it was given and
+    // then flushes through a stale view model after a language change swaps it.
+    val leave by rememberUpdatedState(onLeave)
+    DisposableEffect(Unit) { onDispose { leave() } }
+
+    var sheet by remember { mutableStateOf<TasbeehSheet?>(null) }
+
+    // Kicked on every tap, including one that lands mid-animation: `snapTo` restarts it from 1
+    // rather than queueing, so a fast burst bumps once per tap and never falls behind.
+    val bump = remember { Animatable(1f) }
+    val animatedProgress by animateFloatAsState(
+        targetValue = state.progress,
+        animationSpec = tween(durationMillis = 250),
+        label = "tasbeehProgress",
+    )
+
+    fun count() {
+        onTap()
+        scope.launch {
+            bump.snapTo(1f)
+            bump.animateTo(BumpScale, tween(BumpHalfMillis))
+            bump.animateTo(1f, tween(BumpHalfMillis))
+        }
+    }
+
+    Box(Modifier.fillMaxSize().background(colors.background)) {
+        // Sideways the upright column has nowhere to go: the dhikr, a 196 dp ring, the reminder
+        // and the chips want some 470 dp of height and a landscape phone has about 430 of it, so
+        // the column crushed everything it could and dropped what it could not. Two panes, as the
+        // Prayer screen already does sideways, give the ring its height back.
+        BoxWithConstraints(
+            Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
+        ) {
+            if (maxWidth > maxHeight) {
+                LandscapeBody(
+                    state = state,
+                    paneHeight = maxHeight,
+                    progress = animatedProgress,
+                    scale = bump.value,
+                    onBack = onBack,
+                    onCount = { count() },
+                    onSelect = onSelect,
+                    onLongPress = { sheet = TasbeehSheet.EditCustom(it) },
+                    onAddCustom = { sheet = TasbeehSheet.NewCustom },
+                    onReset = { sheet = TasbeehSheet.ResetConfirm },
+                )
+            } else {
+                PortraitBody(
+                    state = state,
+                    progress = animatedProgress,
+                    scale = bump.value,
+                    onBack = onBack,
+                    onCount = { count() },
+                    onSelect = onSelect,
+                    onLongPress = { sheet = TasbeehSheet.EditCustom(it) },
+                    onAddCustom = { sheet = TasbeehSheet.NewCustom },
+                    onReset = { sheet = TasbeehSheet.ResetConfirm },
+                )
+            }
+        }
+    }
+
+    when (val open = sheet) {
+        null -> Unit
+        TasbeehSheet.NewCustom -> CustomDhikrSheet(
+            existing = null,
+            onSubmit = { phrase, target -> onAddCustom(phrase, target); sheet = null },
+            onDelete = {},
+            onDismiss = { sheet = null },
+        )
+
+        is TasbeehSheet.EditCustom -> CustomDhikrSheet(
+            existing = open.preset,
+            onSubmit = { phrase, target -> onUpdateCustom(open.preset.id, phrase, target); sheet = null },
+            onDelete = { onRemoveCustom(open.preset.id); sheet = null },
+            onDismiss = { sheet = null },
+        )
+
+        TasbeehSheet.ResetConfirm -> ResetSheet(
+            onReset = { onReset(); sheet = null },
+            onDismiss = { sheet = null },
+        )
+    }
+}
+
+/**
+ * Upright: the screen as it has always been — a header of two buttons with the screen's own name
+ * between them, the whole middle of the page counting, the chips and Reset along the bottom.
+ */
+@Composable
+private fun PortraitBody(
+    state: TasbeehUiState,
+    progress: Float,
+    scale: Float,
+    onBack: () -> Unit,
+    onCount: () -> Unit,
+    onSelect: (String) -> Unit,
+    onLongPress: (TasbeehPreset) -> Unit,
+    onAddCustom: () -> Unit,
+    onReset: () -> Unit,
+) {
+    Column(Modifier.fillMaxSize().contentWidth()) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            BackChevron(onBack)
+            ScreenName(Modifier.weight(1f))
+            GlyphButton(
+                description = stringResource(Res.string.tasbeeh_add_custom),
+                onClick = onAddCustom,
+            )
+        }
+
+        Box(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onCount,
+                ),
+        ) {
+            CounterStack(state, progress, scale, RingSize, Modifier.fillMaxSize())
+        }
+
+        ChipRow(state, onSelect = onSelect, onLongPress = onLongPress)
+        TaqvoTextLink(
+            stringResource(Res.string.tasbeeh_reset),
+            onClick = onReset,
+            modifier = Modifier.padding(top = 6.dp, bottom = 8.dp),
+        )
+    }
+}
+
+/**
+ * Sideways: the thing being counted on the side the eye starts from, the things you choose with
+ * on the other — the same split the Prayer screen makes when it is turned.
+ *
+ * **Everything up to the chips counts.** The two panes were equal once, which meant half a
+ * landscape screen did nothing at all: someone counting while walking aims at the middle and
+ * lands on a chip, or on the dead air beside one. The tap surface now runs from the start edge to
+ * the chips column and from under the header row to the bottom of the screen — the stack is
+ * merely centred inside it, so the empty margins above, below and beside it count too. Only the
+ * chips column, which is the three things a tap must *not* do, and the header row are outside it.
+ *
+ * The header row is the one place this differs from the pane that came before it: the chevron used
+ * to float over the counting surface, which counted a tap that missed it. Now that the row names
+ * the screen as well, it is a row rather than a glyph — a name that counts when it is read is a
+ * name you stop reading — so the surface begins beneath it.
+ *
+ * The column is a fixed [ChipColumnWidth] rather than a share of the screen: it needs the width
+ * of its longest label and not one pixel more, and every pixel it does not take is counting
+ * surface. The chips run down rather than across because the column's shape is a column, and
+ * reading down a list is how a set is chosen from.
+ *
+ * [paneHeight] is the height the body gets. The ring takes what is left of it after the header
+ * row, the dhikr block and the stack's own spacers, and never grows past the 196 dp it draws
+ * upright.
+ */
+@Composable
+private fun LandscapeBody(
+    state: TasbeehUiState,
+    paneHeight: Dp,
+    progress: Float,
+    scale: Float,
+    onBack: () -> Unit,
+    onCount: () -> Unit,
+    onSelect: (String) -> Unit,
+    onLongPress: (TasbeehPreset) -> Unit,
+    onAddCustom: () -> Unit,
+    onReset: () -> Unit,
+) {
+    val diameter = minOf(RingSize, paneHeight - HeaderRowHeight - StackReserve).coerceAtLeast(96.dp)
+    Row(Modifier.fillMaxSize()) {
+        Column(Modifier.weight(1f).fillMaxHeight()) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                BackChevron(onBack)
+                ScreenName(Modifier.weight(1f))
+            }
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onCount,
+                    ),
+            ) {
+                // The cap is on the stack's own content, not on the surface under it: the reading
+                // stays the width it reads best at while the tap keeps the whole pane.
+                CounterStack(state, progress, scale, diameter, Modifier.fillMaxHeight().contentWidth())
+            }
+        }
+        Column(Modifier.width(ChipColumnWidth).fillMaxHeight()) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                GlyphButton(
+                    description = stringResource(Res.string.tasbeeh_add_custom),
+                    onClick = onAddCustom,
+                )
+            }
+            ChipColumn(state, onSelect, onLongPress, Modifier.weight(1f))
+            TaqvoTextLink(
+                stringResource(Res.string.tasbeeh_reset),
+                onClick = onReset,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(top = 6.dp, bottom = 8.dp),
+            )
+        }
+    }
+}
+
+/**
+ * The screen's own name beside the chevron, in the reader header's words and weight: the row used
+ * to be a chevron, a hole and a plus, which named nothing — arriving from the Prayer header's
+ * misbaha glyph, the only thing that said what had been opened was the dhikr itself.
+ *
+ * It is [TaqvoText.rowLabel] at extra-bold rather than the app's 24 sp [TaqvoText.screenTitle]:
+ * this screen's subject is the ring in the middle of it, and a title big enough to compete with
+ * the count would push the ring down the page. The reader makes the same trade for the same
+ * reason, and the two headers now read as one family.
+ */
+@Composable
+private fun ScreenName(modifier: Modifier = Modifier) {
+    val colors = LocalTaqvoColors.current
+    Text(
+        stringResource(Res.string.tasbeeh_title),
+        style = TaqvoText.rowLabel.copy(fontWeight = FontWeight.ExtraBold),
+        color = colors.textPrimary,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier.padding(horizontal = 4.dp),
+    )
+}
+
+/**
+ * The counted thing: the dhikr, the ring, the reminder and the hint, centred as a group rather
+ * than pinned at the top with the ring floating in what is left — a dhikr held far from the ring
+ * it belongs to read as two unrelated things with a hole between them.
+ *
+ * The gutter is on the blocks that need it, not on the column: the reminder row is the widest
+ * thing on the page — three transliterations in capitals — and on a 402 pt iPhone the last of
+ * them wrapped when it had to clear 24 dp a side too.
+ */
+@Composable
+private fun CounterStack(
+    state: TasbeehUiState,
+    progress: Float,
+    scale: Float,
+    diameter: Dp,
+    modifier: Modifier,
+) {
+    val colors = LocalTaqvoColors.current
+    Column(
+        modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        DhikrBlock(state.preset.parts[state.currentPart].dhikr, Modifier.padding(horizontal = 24.dp))
+        Spacer(Modifier.height(28.dp))
+        Counter(state, progress, scale, diameter)
+        Spacer(Modifier.height(20.dp))
+        // The row's height is held for a single-part preset too — drawn and then hidden rather
+        // than measured into a constant, so the reserved slot is the row's own height whatever
+        // the interface's face does to it. Without this the ring jumped by half the row every
+        // time a chip swapped a set for a phrase.
+        val multi = state.preset.parts.size > 1
+        Box(
+            if (multi) Modifier else Modifier.alpha(0f).clearAndSetSemantics {},
+            contentAlignment = Alignment.Center,
+        ) {
+            PartReminder(state)
+        }
+        Spacer(Modifier.height(12.dp))
+        // The same reservation for the hint, which leaves at the first tap: the ring must not
+        // slide up the screen when it does.
+        Box(Modifier.height(28.dp).padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
+            if (state.count == 0 && state.state.round == 1) {
+                Text(
+                    stringResource(Res.string.tasbeeh_hint),
+                    style = TaqvoText.caption.copy(fontSize = 12.sp),
+                    color = colors.textTertiary,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+/** The plus in the top corner, drawn and targeted exactly as [BackChevron] is at the other end. */
+@Composable
+private fun GlyphButton(description: String, onClick: () -> Unit) {
+    val colors = LocalTaqvoColors.current
+    Box(
+        Modifier
+            .padding(end = 8.dp, top = 8.dp)
+            .size(44.dp)
+            .clip(CircleShape)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.size(22.dp)) { drawPlus(colors.textPrimary) }
+    }
+}
+
+/**
+ * The phrase being said: the Arabic alone under an Arabic interface, with the transliteration and
+ * the meaning beneath it under a Latin one (spec §4). A custom phrase has neither in either
+ * interface — it is shown exactly as it was typed.
+ *
+ * The face is always the OS one. Manrope ships no Arabic glyphs, and a custom phrase can be in
+ * any script at all, so the one family that can draw both is the system's.
+ */
+@Composable
+private fun DhikrBlock(dhikr: Dhikr, modifier: Modifier = Modifier) {
+    val colors = LocalTaqvoColors.current
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            dhikr.arabic,
+            style = TextStyle(
+                fontFamily = FontFamily.Default,
+                fontSize = 30.sp,
+                lineHeight = 48.sp,
+                // Explicitly none, not merely unset: an unset tracking inherits material3's 0.5sp
+                // from `bodyLarge`, and tracking on a cursive script measures wide and wraps.
+                letterSpacing = 0.sp,
+            ),
+            color = colors.textPrimary,
+            textAlign = TextAlign.Center,
+        )
+        // Under a Latin-script interface the phrase gets its transliteration and its meaning in
+        // the interface's language; an Arabic-script or Bengali interface shows the phrase alone,
+        // and names it through the preset label instead (see dhikrLabel).
+        if (isLatinScriptUi()) {
+            dhikr.transliteration?.let {
+                Text(it, style = TaqvoText.caption.copy(fontSize = 13.sp), color = colors.textSecondary)
+            }
+            dhikrMeaning(dhikr)?.let {
+                Text(it, style = TaqvoText.caption.copy(fontSize = 12.sp), color = colors.textTertiary)
+            }
+        }
+    }
+}
+
+/**
+ * The ring and what it holds: the round above the count, the target below it.
+ *
+ * [diameter] is only ever smaller than [RingSize], when a sideways screen has less height to give
+ * it; the three lines inside scale by the same factor, so a shrunken ring is the same ring seen
+ * from further away rather than a small ring with upright-sized type spilling over its stroke.
+ */
+@Composable
+private fun Counter(state: TasbeehUiState, progress: Float, scale: Float, diameter: Dp = RingSize) {
+    val colors = LocalTaqvoColors.current
+    val format = LocalPlatformFormat.current
+    // The floor is the count's: 28 sp is the smallest a number read at arm's length may be, and
+    // the label and the caption stop shrinking with it rather than going on down to nothing.
+    val k = (diameter / RingSize).coerceAtLeast(MinCountScale)
+    val label = TaqvoText.sectionLabel
+    Box(Modifier.size(diameter), contentAlignment = Alignment.Center) {
+        RingArc(progress = progress, diameter = diameter, ticks = state.partEnds)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                stringResource(Res.string.tasbeeh_round, format.localizedDigits(state.state.round)),
+                style = label.copy(fontSize = label.fontSize * k),
+                color = colors.accent,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                format.localizedDigits(state.count),
+                // The countdown's own style, so the two rings show their number in one voice;
+                // tabular figures come with it, which is what stops a count from 99 to 100
+                // shuffling sideways.
+                style = TaqvoText.countdown.copy(fontSize = CountSize * k),
+                color = colors.textPrimary,
+                modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale },
+            )
+            Text(
+                stringResource(Res.string.tasbeeh_of, format.localizedDigits(state.preset.total)),
+                style = TaqvoText.caption.copy(fontSize = CaptionSize * k),
+                color = colors.textSecondary,
+            )
+        }
+    }
+}
+
+/**
+ * The three parts of a multi-part set under the ring: a filled dot for what is done and for where
+ * you are, a hollow one for what is still to come, the current part in the accent.
+ */
+@Composable
+private fun PartReminder(state: TasbeehUiState) {
+    val colors = LocalTaqvoColors.current
+    // The section label's 0.14 em is display tracking for a lone word; three of them in a row need
+    // the mockup's tighter 0.08 em to fit a narrow phone. Arabic keeps none at all, as everywhere.
+    val style = TaqvoText.sectionLabel.copy(fontSize = 10.sp).let {
+        if (isLatinScriptUi()) it.copy(letterSpacing = 0.08.em) else it
+    }
+    Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        state.preset.parts.forEachIndexed { index, part ->
+            if (index > 0) {
+                Text(" · ", style = style, color = colors.textTertiary)
+            }
+            val current = index == state.currentPart
+            val done = index < state.currentPart
+            val tint = if (current) colors.accent else colors.textTertiary
+            Canvas(Modifier.size(6.dp)) {
+                val radius = size.width / 2f
+                if (current || done) {
+                    drawCircle(tint, radius = radius)
+                } else {
+                    drawCircle(tint, radius = radius - size.width * 0.1f, style = Stroke(width = size.width * 0.2f))
+                }
+            }
+            Spacer(Modifier.width(4.dp))
+            Text(dhikrLabel(part.dhikr), style = style, color = tint, maxLines = 1)
+        }
+    }
+}
+
+/**
+ * Every preset in spec §2's order, the selected one filled. A long press on one of the reader's
+ * own opens its sheet — there is nowhere else to delete it from, and a chip has no room for a
+ * second control.
+ */
+@Composable
+private fun ChipRow(
+    state: TasbeehUiState,
+    onSelect: (String) -> Unit,
+    onLongPress: (TasbeehPreset) -> Unit,
+) {
+    val listState = rememberLazyListState()
+    // A phrase just added sits past the end of the row, and a selection you cannot see is worse
+    // than no selection at all — so the row walks to whichever chip is selected. Keyed on the id,
+    // not the index, so it moves when the selection changes and not when the list merely does.
+    LaunchedEffect(state.preset.id) {
+        val index = state.presets.indexOfFirst { it.id == state.preset.id }
+        if (index >= 0) listState.animateScrollToItem(index)
+    }
+    LazyRow(
+        Modifier.fillMaxWidth(),
+        state = listState,
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(state.presets, key = { it.id }) { preset ->
+            PresetChip(
+                preset = preset,
+                selected = preset.id == state.preset.id,
+                onSelect = onSelect,
+                onLongPress = onLongPress,
+            )
+        }
+    }
+}
+
+/**
+ * The same presets down the end column when the phone is turned: one chip a row, each keeping its
+ * own width, the column scrolling if a reader has added enough of their own to fill it.
+ *
+ * The gutter is the narrow [ChipColumnGutter] rather than the usual 16 dp: the column is only as
+ * wide as its longest label needs, and a wide gutter would spend that width on air and ellipsise
+ * the label instead.
+ */
+@Composable
+private fun ChipColumn(
+    state: TasbeehUiState,
+    onSelect: (String) -> Unit,
+    onLongPress: (TasbeehPreset) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val listState = rememberLazyListState()
+    LaunchedEffect(state.preset.id) {
+        val index = state.presets.indexOfFirst { it.id == state.preset.id }
+        if (index >= 0) listState.animateScrollToItem(index)
+    }
+    LazyColumn(
+        modifier.fillMaxWidth(),
+        state = listState,
+        contentPadding = PaddingValues(horizontal = ChipColumnGutter, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        // Start, not centre: a column of pills of seven different widths centred on one axis
+        // reads as a heap. Against the pane's start edge they read as a list — and Start is the
+        // right edge under an Arabic interface without a word of arrangement here.
+        horizontalAlignment = Alignment.Start,
+    ) {
+        items(state.presets, key = { it.id }) { preset ->
+            PresetChip(
+                preset = preset,
+                selected = preset.id == state.preset.id,
+                onSelect = onSelect,
+                onLongPress = onLongPress,
+            )
+        }
+    }
+}
+
+/** One preset's pill: the same 44 dp target and the same two faces in either orientation. */
+@Composable
+private fun PresetChip(
+    preset: TasbeehPreset,
+    selected: Boolean,
+    onSelect: (String) -> Unit,
+    onLongPress: (TasbeehPreset) -> Unit,
+) {
+    val colors = LocalTaqvoColors.current
+    val shape = RoundedCornerShape(percent = 50)
+    Box(
+        Modifier
+            .height(44.dp)
+            .clip(shape)
+            .background(if (selected) colors.accent else colors.surface)
+            .border(1.dp, if (selected) colors.accent else colors.hairline, shape)
+            .combinedClickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = { onSelect(preset.id) },
+                onLongClick = if (preset.custom) ({ onLongPress(preset) }) else null,
+            )
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            presetLabel(preset),
+            // The page's own ground on the amber fill — off-white in light, which is the
+            // mockup's white, and near-black in dark, where the accent is bright enough
+            // that white on it is barely legible. The same pairing the primary button
+            // uses for its label.
+            color = if (selected) colors.background else colors.textPrimary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = FontFamily.Default,
+            maxLines = 1,
+            // A last resort, not a layout: the sideways column is sized so the longest built-in
+            // label fits whole, and upright the row is unbounded. Only a phrase of the reader's
+            // own, long enough to outrun the column, is ever cut — and being cut is better than
+            // the pill running off the edge of the screen.
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/**
+ * Phrase and target for a dhikr of the reader's own — the same two fields whether the phrase is
+ * being written or rewritten, prefilled and headed "Edit dhikr" in the second case, with Delete
+ * beneath the button.
+ *
+ * It used to show an existing phrase as a heading and nothing but Delete, which made the sheet a
+ * confirmation rather than a way in: a target typed as 33 out of habit and meant as 100 could only
+ * be fixed by deleting the phrase and typing it again, count and all. The phrase is in the field
+ * now, where it can be corrected, and the heading is the screen's own title.
+ *
+ * [onSubmit] is Add or Save by the same rule either way, since the store accepts the same two
+ * things from both: something left once the phrase is trimmed, and a target inside 1..1000.
+ */
+@Composable
+private fun CustomDhikrSheet(
+    existing: TasbeehPreset?,
+    onSubmit: (String, Int) -> Unit,
+    onDelete: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val colors = LocalTaqvoColors.current
+    // Keyed on nothing: the sheet is composed afresh for each opening, so an edit begins at what
+    // is stored and an add at the blank phrase and the 100 every built-in now counts to. A
+    // prefilled target is a target that need not be thought about: the field is already right for
+    // a phrase said a hundred times, and typing over it is one gesture for anyone who means 33.
+    var phrase by remember { mutableStateOf(existing?.parts?.first()?.dhikr?.arabic.orEmpty()) }
+    var target by remember { mutableStateOf(existing?.total?.toString() ?: DEFAULT_TARGET.toString()) }
+    val bounded = target.toIntOrNull()?.takeIf { it in 1..MAX_TARGET }
+    // Exactly the store's own two conditions, so the button is live only where the store would
+    // accept: a phrase with something in it once trimmed, and a target inside 1..1000.
+    val trimmed = phrase.trim()
+    val valid = trimmed.isNotEmpty() && bounded != null
+
+    TaqvoBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+                .windowInsetsPadding(WindowInsets.navigationBars),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                stringResource(
+                    if (existing == null) Res.string.tasbeeh_custom_title else Res.string.tasbeeh_custom_edit_title,
+                ),
+                style = TaqvoText.screenTitle.copy(fontSize = 20.sp),
+                color = colors.textPrimary,
+            )
+            SheetField(
+                label = stringResource(Res.string.tasbeeh_custom_phrase),
+                value = phrase,
+                onValueChange = { phrase = it.takeCodePoints(MAX_PHRASE) },
+                numeric = false,
+            )
+            SheetField(
+                label = stringResource(Res.string.tasbeeh_custom_target),
+                value = target,
+                // Four digits is 1000, the largest target the store keeps; anything longer
+                // could only be typed to be clamped away on the way in.
+                onValueChange = { typed -> target = typed.filter { it.isDigit() }.take(4) },
+                numeric = true,
+            )
+            TaqvoPrimaryButton(
+                stringResource(
+                    if (existing == null) Res.string.tasbeeh_custom_add else Res.string.tasbeeh_custom_save,
+                ),
+                onClick = { onSubmit(trimmed, bounded ?: 1) },
+                enabled = valid,
+            )
+            if (existing != null) {
+                TaqvoCard {
+                    TaqvoRow(
+                        label = stringResource(Res.string.tasbeeh_custom_delete),
+                        onClick = onDelete,
+                        ripple = false,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** The sheets' one text field: the city search's box, with its label above it. */
+@Composable
+private fun SheetField(label: String, value: String, onValueChange: (String) -> Unit, numeric: Boolean) {
+    val colors = LocalTaqvoColors.current
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(label, style = TaqvoText.sectionLabel, color = colors.accent)
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .background(colors.surface)
+                .border(1.dp, colors.hairline, RoundedCornerShape(18.dp))
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+        ) {
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                // The system face: a phrase can be in any script, and the target is digits.
+                textStyle = TextStyle(fontSize = 17.sp, color = colors.textPrimary, fontFamily = FontFamily.Default),
+                cursorBrush = SolidColor(colors.accent),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = if (numeric) KeyboardType.Number else KeyboardType.Text,
+                    imeAction = ImeAction.Done,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+/** One line and one row: the only undoable-by-counting action on the screen asks first. */
+@Composable
+private fun ResetSheet(onReset: () -> Unit, onDismiss: () -> Unit) {
+    val colors = LocalTaqvoColors.current
+    TaqvoBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+                .windowInsetsPadding(WindowInsets.navigationBars),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(
+                stringResource(Res.string.tasbeeh_reset_confirm),
+                style = TaqvoText.rowLabel,
+                color = colors.textPrimary,
+            )
+            TaqvoCard {
+                TaqvoRow(label = stringResource(Res.string.tasbeeh_reset), onClick = onReset, ripple = false)
+            }
+        }
+    }
+}
+
+/** The store's own ceiling, restated here only to grey the Add button out before it is hit. */
+private const val MAX_TARGET = 1000
+private const val MAX_PHRASE = 60
+
+/** What a new phrase is counted to until someone says otherwise — every built-in's target. */
+private const val DEFAULT_TARGET = 100
+
+/** A chip's words: the built-in's resource, or the reader's own phrase exactly as typed. */
+@Composable
+private fun presetLabel(preset: TasbeehPreset): String =
+    presetLabelRes(preset.id)?.let { stringResource(it) } ?: preset.parts.first().dhikr.arabic
+
+/**
+ * The reminder row's words: the transliteration in capitals under a Latin interface, and the
+ * chip's own Arabic under an Arabic one — the same words the chips use, so the row reads as the
+ * set the chip names rather than as three new phrases. Dhikr ids and the built-in preset ids for
+ * the single-dhikr presets are the same strings, which is what makes one lookup serve both.
+ */
+@Composable
+private fun dhikrLabel(dhikr: Dhikr): String = if (isLatinScriptUi()) {
+    dhikr.transliteration?.uppercaseIn(uiLanguage()) ?: dhikr.arabic
+} else {
+    presetLabelRes(dhikr.id)?.let { stringResource(it) } ?: dhikr.arabic
+}
+
+/** A built-in phrase's meaning in the interface language; a phrase of the reader's own has none. */
+@Composable
+private fun dhikrMeaning(dhikr: Dhikr): String? = when (dhikr.id) {
+    "subhanallah" -> stringResource(Res.string.dhikr_meaning_subhanallah)
+    "alhamdulillah" -> stringResource(Res.string.dhikr_meaning_alhamdulillah)
+    "allahu_akbar" -> stringResource(Res.string.dhikr_meaning_allahu_akbar)
+    "astaghfirullah" -> stringResource(Res.string.dhikr_meaning_astaghfirullah)
+    "la_ilaha_illallah" -> stringResource(Res.string.dhikr_meaning_la_ilaha_illallah)
+    "subhanallahi_wa_bihamdihi" -> stringResource(Res.string.dhikr_meaning_subhanallahi_wa_bihamdihi)
+    else -> dhikr.meaning
+}
+
+private fun presetLabelRes(id: String): StringResource? = when (id) {
+    "after_prayer" -> Res.string.tasbeeh_preset_after_prayer
+    "subhanallah" -> Res.string.tasbeeh_preset_subhanallah
+    "alhamdulillah" -> Res.string.tasbeeh_preset_alhamdulillah
+    "allahu_akbar" -> Res.string.tasbeeh_preset_allahu_akbar
+    "astaghfirullah" -> Res.string.tasbeeh_preset_astaghfirullah
+    "la_ilaha_illallah" -> Res.string.tasbeeh_preset_la_ilaha_illallah
+    "subhanallahi_wa_bihamdihi" -> Res.string.tasbeeh_preset_subhanallahi_wa_bihamdihi
+    else -> null
+}

@@ -1,0 +1,789 @@
+# The weekly monitor in the cloud (docs/MONITOR.md, ruling R94). This file belongs in the PRIVATE
+# archive repository (MohamedAbulgasem/Taqwa-official) as .github/workflows/monitor-weekly.yml; the
+# public Taqvo repository only keeps this template, and a run says when the two differ. That
+# repository holds the restricted archive (archive/) and the monitor's state (monitor/) at its root,
+# the layout TAQVO_OFFICIAL names.
+#
+# It runs on Mondays and on the 1st of each month, after midnight in Cape Town: the MJC's page shows
+# the current month alone and drops it when the next begins (a month-start source in sources.tsv).
+# The run on the 1st is a normal full run: whatever is due is fetched, and the issue follows the same
+# rules; when the 1st is a Monday the second run waits for the first and finds nothing new due.
+# Every day at 01:23 UTC the job "due" asks the monitor's state alone (fetch.py --month-turn) whether a
+# source's new Hijri month is due today: habous.gov.ma publishes one Hijri month at a time, on the day
+# it begins, which the moon's sighting decides (a hijri-month source in sources.tsv, due from the last
+# day its tables hold until three days after). Only then does the full run follow, a normal one like
+# the 1st's; on every other day nothing runs past that check and nothing is touched.
+#
+# Four jobs, so the token that pushes to Taqvo never sits on a runner that ran a fetcher, pip or Gradle
+# (security review D1, 27 Oct 2026; docs/MONITOR.md, "Publishing"):
+# - "due" (read-only) asks the monitor's state whether the daily check's new month is due (below).
+# - "monitor" (read-only, no push token) checks out the archive repository at its branch's head and the public
+#   Taqvo repository at main into taqvo/ (neither checkout keeps a token), runs scripts/monitor.sh and, after a
+#   full run that is green or needs attention (never a partial run, never when the monitor itself failed),
+#   scripts/prove.sh, which turns the new captures into proof (docs/MONITOR.md, "Prove"): pinned copies, the
+#   recipes' rows, the whole gate green, the stamps, ProofStamps.kt, the golden vector byte-identical and every
+#   check, the app's own tests last (on the Android SDK platform tests.yml installs, installed just before prove
+#   the same way). It commits nothing: tools/timetables/monitor/ci/handoff.py packs what the run changed under
+#   archive/ and monitor/, and the gate files, stamps and ProofStamps.kt prove changed, each with its sha256, into
+#   the artifact monitor-handoff-<run id> (kept 90 days, so a run whose push fails loses nothing).
+# - "publish" (contents: write here; the secret TAQVO_PUSH_TOKEN) runs on a clean runner and runs nothing but
+#   git and handoff.py from its own checkout of Taqvo main (the Python standard library alone: no pip, no Gradle,
+#   no fetcher). It checks the handoff (only plain paths under archive/ and monitor/ here, only the paths of
+#   tools/timetables/monitor/ci/bot-paths.txt there, every hash, no clock time's shape, ruling R69) and writes
+#   ProofStamps.kt itself from the stamps (proof_stamps.py: the proving job's copy must equal it), then commits as
+#   taqvo-monitor with hooks off: the archive's changes to this branch (rebased onto what arrived meanwhile, retried
+#   once) and, when prove changed the public checkout with every check green and that commit landed, the proof to
+#   MohamedAbulgasem/Taqwa main, fast-forward only (a token GitHub refuses is not retried; skipped with a notice
+#   while the secret is not set). Each token reaches git as a masked header on the commands that push alone.
+# - "report" (issues: write) keeps one issue "Taqvo monitor" (label monitor-attention) open while something needs
+#   attention: created or updated only when the attention set changed (always when the monitor itself failed), its
+#   body rewritten from the report with a "Recovered" comment on the first sound full run after a failure, closed
+#   with a one-line comment when a full run is green and prove found nothing for the owner (a green run opens one
+#   only for prove's findings). A partial run (--only) adds a comment at most, whether it succeeded or failed; the
+#   issue gains a "Proof" section. Refused dispatch options stop the run before anything runs, and nothing else is
+#   touched. The run fails when the monitor itself failed (an exit other than 0 or 1, a result record missing or
+#   older than the run's start), a push could not land, the handoff was refused, or prove failed.
+#
+# A run by hand may be a rehearsal (rehearsal: true, never on main): no fetch and no prove, a comment line added to
+# one gate file in prove's place, the archive's changes committed to the branch the run was started on, and the
+# proof pushed to a new Taqvo branch monitor-rehearsal-<run id> instead of main; the issue is not touched. Delete
+# both branches afterwards.
+#
+# No secret is ever echoed: LPT_API_KEY (London Prayer Times, optional) reaches the fetcher through the
+# environment alone, and every URL and message the monitor writes is masked. The push retries once, rebased,
+# only when main's new commits touch nothing the proof depends on; the issue raises prove's findings (rows left
+# out, cities newly held, a push that did not land) even on a green week, once each time they change.
+# Every action is pinned by commit (its version beside it, as the public workflows do); no step's script reads
+# an expression directly: what a job hands on reaches the next one's scripts through the environment alone.
+name: Taqvo monitor
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # Mondays 03:00 UTC
+    - cron: "17 3 1 * *" # the 1st of each month, 03:17 UTC (two hours later in Cape Town): the MJC's new month
+    - cron: "23 1 * * *" # every day, 01:23 UTC: the daily check, a full run only when a new Hijri month is due (job "due")
+  workflow_dispatch:
+    inputs:
+      options:
+        description: "Options for scripts/monitor.sh: --no-fetch, --check-all, --verbose, --only <a source id of sources.tsv> (a partial run)"
+        required: false
+        default: ""
+      rehearsal:
+        description: "true: a rehearsal of the publish path (no fetch, no prove; the proof goes to a new Taqvo branch monitor-rehearsal-<run id>, never main; refused on main)"
+        required: false
+        default: "false"
+      taqvo_ref:
+        description: "A rehearsal only: the Taqvo branch whose monitor code it runs (else always main)"
+        required: false
+        default: "main"
+
+# Nothing by default; each job names what it needs.
+permissions: {}
+
+concurrency:
+  group: taqvo-monitor
+  cancel-in-progress: false
+
+jobs:
+  due:
+    # The daily check (the cron "23 1 * * *" alone): the monitor's state and code, no archive, and
+    # fetch.py --month-turn, which prints each hijri-month source whose new month is due today. The full
+    # run follows only when it prints one. Mondays, the 1st and a run by hand go ahead without asking.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - name: Check out the monitor's state
+        if: github.event_name == 'schedule' && github.event.schedule == '23 1 * * *'
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: ${{ github.ref_name }}
+          persist-credentials: false
+          sparse-checkout: monitor
+
+      - name: Check out Taqvo's monitor code
+        if: github.event_name == 'schedule' && github.event.schedule == '23 1 * * *'
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          repository: MohamedAbulgasem/Taqwa
+          ref: main
+          path: taqvo
+          persist-credentials: false
+          sparse-checkout: |
+            tools/timetables/monitor
+            tools/timetables/official/monitor
+
+      - name: Is a new month due today?
+        id: decide
+        env:
+          DAILY: ${{ github.event_name == 'schedule' && github.event.schedule == '23 1 * * *' }}
+        run: |
+          set -euo pipefail
+          if [ "$DAILY" != true ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "Not the daily check: the run goes ahead"
+            exit 0
+          fi
+          turning="$(python3 taqvo/tools/timetables/monitor/fetch.py --official "$GITHUB_WORKSPACE" --month-turn | tr '\n' ' ' | sed 's/ *$//')"
+          if [ -n "$turning" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "A new month is due today ($turning): the full run goes ahead"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "No source's new month is due today: nothing runs"
+          fi
+
+  monitor:
+    needs: due
+    # Every event but the daily check runs whatever "due" did (unless the run was cancelled); the daily
+    # check runs only on its yes.
+    if: ${{ !cancelled() && (needs.due.outputs.run == 'true' || github.event_name != 'schedule' || github.event.schedule != '23 1 * * *') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    # Read-only: this job runs third-party fetchers, pip and Gradle, so it holds no token that can write anywhere.
+    permissions:
+      contents: read
+    outputs:
+      options: ${{ steps.options.outcome }}
+      partial: ${{ steps.options.outputs.partial }}
+      code: ${{ steps.run.outputs.code }}
+      valid: ${{ steps.result.outputs.valid }}
+      changed: ${{ steps.result.outputs.changed }}
+      date: ${{ steps.result.outputs.date }}
+      summary: ${{ steps.result.outputs.summary }}
+      prove_code: ${{ steps.prove.outputs.code }}
+      prove_changed: ${{ steps.prove.outputs.changed }}
+      packed: ${{ steps.pack.outputs.packed }}
+      archive_sha: ${{ steps.pack.outputs.archive_sha }}
+      taqvo_sha: ${{ steps.pack.outputs.taqvo_sha }}
+    env:
+      TAQVO_OFFICIAL: ${{ github.workspace }}
+      BRANCH: ${{ github.ref_name }}
+      REHEARSAL: ${{ github.event.inputs.rehearsal == 'true' }}
+    steps:
+      - name: Check out the archive at the branch's head
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: ${{ github.ref_name }}
+          persist-credentials: false
+
+      - name: Check out Taqvo at main
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          repository: MohamedAbulgasem/Taqwa
+          ref: ${{ github.event.inputs.rehearsal == 'true' && github.event.inputs.taqvo_ref || 'main' }}
+          path: taqvo
+          persist-credentials: false
+
+      - name: Java 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+          # The app's build scripts too, for prove's last check: a cache saved under the tools' alone is not saved
+          # again until one of those files changes, so it does not hold the app's dependencies.
+          cache-dependency-path: |
+            taqvo/gradle/libs.versions.toml
+            taqvo/gradle/wrapper/gradle-wrapper.properties
+            taqvo/tools/timetables/*.gradle.kts
+            taqvo/*.gradle.kts
+            taqvo/shared/build.gradle.kts
+            taqvo/widgetcore/build.gradle.kts
+
+      - name: Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Check the options
+        id: options
+        env:
+          OPTIONS: ${{ github.event.inputs.options }}
+          TAQVO_REF: ${{ github.event.inputs.taqvo_ref }}
+        run: |
+          # Only --no-fetch, --check-all, --verbose and --only <a source id listed in sources.tsv> pass;
+          # anything else stops the job before the monitor runs. The words are split with globbing off
+          # and never reach a shell unquoted; the catalogue's comment and header lines are no source.
+          set -euo pipefail
+          set -f
+          # Last run's proof report (committed with that run) is never read as this run's: a week where prove does
+          # not run says so.
+          rm -rf monitor/proof
+          args=()
+          partial=false
+          expect_source=false
+          ids="$(awk -F'\t' '/^#/ {next} !seen {seen=1; next} {print $1}' taqvo/tools/timetables/official/monitor/sources.tsv)"
+          for word in $OPTIONS; do
+            if [ "$expect_source" = true ]; then
+              if [[ "$word" =~ ^[a-z0-9-]+$ ]] && printf '%s\n' "$ids" | grep -qx -- "$word"; then
+                args+=(--only "$word")
+                partial=true
+                expect_source=false
+                continue
+              fi
+              echo "::error::'$word' is not a source id of sources.tsv"
+              exit 1
+            fi
+            case "$word" in
+              --no-fetch|--check-all|--verbose) args+=("$word") ;;
+              --only) expect_source=true ;;
+              *) echo "::error::option '$word' is not allowed here"; exit 1 ;;
+            esac
+          done
+          if [ "$expect_source" = true ]; then echo "::error::--only needs a source id"; exit 1; fi
+          if [ "$REHEARSAL" = true ]; then
+            # A rehearsal of the publish path: never on main, never a partial run, and nothing fetched.
+            if [ "$BRANCH" = main ]; then echo "::error::a rehearsal never runs on main: start it on another branch"; exit 1; fi
+            if [[ ! "$TAQVO_REF" =~ ^[A-Za-z0-9._/-]+$ ]]; then echo "::error::taqvo_ref is not a branch name"; exit 1; fi
+            if [ "$partial" = true ]; then echo "::error::a rehearsal is never a partial run"; exit 1; fi
+            args+=(--no-fetch)
+          fi
+          : > .monitor-args
+          for a in ${args[@]+"${args[@]}"}; do printf '%s\n' "$a" >> .monitor-args; done
+          echo "partial=$partial" >> "$GITHUB_OUTPUT"
+          echo "Options: ${args[*]:-none}"
+
+      - name: Run the monitor
+        id: run
+        env:
+          LPT_API_KEY: ${{ secrets.LPT_API_KEY }}
+        run: |
+          set +e
+          rm -f monitor/last-run.json
+          start=$(date +%s)
+          echo "start=$start" >> "$GITHUB_OUTPUT"
+          args=()
+          while IFS= read -r line; do [ -n "$line" ] && args+=("$line"); done < .monitor-args
+          rm -f .monitor-args
+          taqvo/scripts/monitor.sh --verbose ${args[@]+"${args[@]}"}
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "The monitor exited $code"
+
+      - name: Read the result
+        id: result
+        if: always() && steps.options.outcome == 'success'
+        env:
+          CODE: ${{ steps.run.outputs.code }}
+          START: ${{ steps.run.outputs.start }}
+          PARTIAL: ${{ steps.options.outputs.partial }}
+        run: |
+          # The record counts only when it is this run's: present, written after the run started, and
+          # its code 0 or 1. Anything else is "the monitor itself failed". Writes issue-body.md (at most
+          # 60,000 characters, ending with a pointer to the run's files) and the step summary. Whether
+          # the run was partial comes from the checked options, never from a record.
+          python3 - <<'PY'
+          import json, os, time
+          code = os.environ.get("CODE") or ""
+          start_text = os.environ.get("START") or ""
+          partial = os.environ.get("PARTIAL") == "true"
+          path = "monitor/last-run.json"
+          record, fresh, stale = {}, False, False
+          if start_text and os.path.isfile(path):
+              if int(os.stat(path).st_mtime) >= int(start_text) - 1:
+                  try:
+                      record = json.load(open(path, encoding="utf-8"))
+                      fresh = True
+                  except ValueError:
+                      record = {}
+              else:
+                  stale = True
+          date = record.get("date") or time.strftime("%Y-%m-%d", time.gmtime())
+          valid = fresh and code in ("0", "1") and str(record.get("exit")) == code
+          marker = "<!-- monitor-failed -->"
+          if valid:
+              body = record.get("issue") or ""
+              summary = record.get("summary") or ""
+          else:
+              if not start_text:
+                  reason = "the run step did not run"
+              elif fresh and str(record.get("exit")) == "2":
+                  reason = record.get("summary") or "no reason recorded"
+              elif fresh:
+                  reason = "the run exited %s but its record says %s" % (code or "?", record.get("exit"))
+              elif stale:
+                  reason = "the run exited %s and left a result record older than this run" % (code or "?")
+              else:
+                  reason = "the run exited %s and wrote no result record (see the workflow log)" % (code or "?")
+              summary = reason if reason.startswith("The monitor itself failed") else "The monitor itself failed: " + reason
+              # A failure record that still carries the check's own list (the fetch driver broke, the check ran) keeps it.
+              kept = (record.get("issue") or "") if fresh and str(record.get("exit")) == "2" else ""
+              body = marker + "\n" + (kept if kept.startswith("**Taqvo monitor") else "**Taqvo monitor, %s.** %s\n" % (date, summary))
+              body = body.rstrip("\n") + ("\n\nThe run's log is `monitor/fetch/run-%s.log` in the archive repository, its report (when the check ran) "
+                                          "`monitor/reports/%s.md`, and the last full report `monitor/latest.md`.\n") % (date, date)
+          pointer = "\nThe full report is `monitor/latest.md` in the archive repository (restricted: it quotes dates, counts and minutes).\n"
+          limit = 60000
+          if len(body) + len(pointer) > limit:
+              body = body[: limit - len(pointer) - 40].rsplit("\n", 1)[0] + "\n… (cut: the rest is in the report)\n"
+          if valid and not body.rstrip().endswith("minutes)."):
+              body = body.rstrip("\n") + "\n" + pointer
+          with open("issue-body.md", "w", encoding="utf-8") as f:
+              f.write(body)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write(("Partial run.\n\n" if partial else "") + body[:limit])
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write("valid=%s\n" % str(valid).lower())
+              f.write("changed=%s\n" % str(bool(record.get("attentionChanged"))).lower())
+              f.write("date=%s\n" % date)
+              f.write("summary=%s\n" % summary.replace("\n", " ")[:900])
+          print("valid" if valid else "not valid", "-", summary[:300])
+          PY
+
+      - name: Android SDK platform 37
+        # prove's last check is the app's own tests on the new ProofStamps.kt (the shared module's Android host
+        # tests), and compileSdk 37 is newer than the runner's image may carry: the platform tests.yml installs, by
+        # the same name (android-37.0, not android-37; docs/BUILD-LOG.md). Only when prove runs, and never failing
+        # the job: without the platform prove's last check fails and puts back, and the issue says Gradle stopped
+        # outside the tests (the log says why). Five minutes at most, so a stalled download cannot eat prove's time.
+        if: always() && steps.options.outcome == 'success' && steps.options.outputs.partial != 'true' && steps.result.outputs.valid == 'true' && (steps.run.outputs.code == '0' || steps.run.outputs.code == '1')
+        continue-on-error: true
+        timeout-minutes: 5
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" > /dev/null
+
+      - name: Prove the new captures
+        id: prove
+        # Only after a FULL run whose record is sound and green or attention (never a partial run, never when the
+        # monitor itself failed). scripts/prove.sh pins each new capture under archive/ (committed by the next step),
+        # appends its recipe's rows, runs the whole gate (a failing new row is removed and reported, never loosened),
+        # and runs every check (ProofStamps.kt, the golden vector byte-identical, checkStamps, the tools' tests, the
+        # generator, the site's checks, the app's tests); on any failure it puts everything back. No token reaches
+        # this step.
+        if: always() && steps.options.outcome == 'success' && steps.options.outputs.partial != 'true' && steps.result.outputs.valid == 'true' && (steps.run.outputs.code == '0' || steps.run.outputs.code == '1')
+        env:
+          RUN_DATE: ${{ steps.result.outputs.date }}
+          PROVE_OUT: ${{ github.workspace }}/monitor/proof
+        run: |
+          set +e
+          rm -rf monitor/proof
+          if [ "$REHEARSAL" = true ]; then
+            # The rehearsal's stand-in for prove: one comment line in one gate file, nothing else.
+            mkdir -p monitor/proof
+            gate="$(ls taqvo/tools/timetables/official/gate/*.tsv | head -1)"
+            printf '# Rehearsal of the monitor'"'"'s publish job (run %s): this branch is deleted afterwards.\n' "$GITHUB_RUN_ID" >> "$gate"
+            echo true > monitor/proof/changed
+            echo "code=0" >> "$GITHUB_OUTPUT"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Rehearsal: $(basename "$gate") gained a comment line"
+            exit 0
+          fi
+          # The site's checks need what the public Pages workflow installs, pinned with their hashes here (tzdata: the
+          # newest zones when this was written; raise it with the Pages workflow's).
+          printf '%s\n' \
+            'markdown==3.10.3 --hash=sha256:fa6c92a00a4a3c98b22728c64a935ae1928250ae65058a6ded814d2cc29a4cea --hash=sha256:3589362618f743188b4d955b874402bc814f4f83f544dc207719f4baa7d9c45f' \
+            'tzdata==2026.5 --hash=sha256:b683bd1b6659ddcd810ff02ad09ba821d4bf1065072805063eb35c49617905ac --hash=sha256:8cc73c0a0bfca7dbfa59235d60b2eff82231dee33f53d206db1acd9173cfc0a7' \
+            > "$RUNNER_TEMP/site-requirements.txt"
+          python3 -m pip install --quiet --require-hashes --no-deps -r "$RUNNER_TEMP/site-requirements.txt"
+          taqvo/scripts/prove.sh --date "$RUN_DATE"
+          code=$?
+          changed="$(cat monitor/proof/changed 2>/dev/null || echo false)"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "Prove exited $code (public change: $changed)"
+          exit 0
+
+      - name: Pack what the run changed for the publish job
+        id: pack
+        # Whatever happened after the options passed: the archive's changes always (a failed monitor's log and
+        # record too), the public files only when prove changed them with every check green. Nothing is committed
+        # here; the publish job checks every path and hash before it commits anything.
+        if: always() && steps.options.outcome == 'success'
+        env:
+          PROVE_CODE: ${{ steps.prove.outputs.code }}
+          PROVE_CHANGED: ${{ steps.prove.outputs.changed }}
+        run: |
+          set -euo pipefail
+          rm -rf monitor/lock
+          out="$RUNNER_TEMP/handoff"
+          rm -rf "$out"
+          mkdir -p "$out"
+          echo "archive_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "taqvo_sha=$(git -C taqvo rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          # The archive's side first and always: what the run captured is never lost to a failure on the public side.
+          python3 taqvo/tools/timetables/monitor/ci/handoff.py pack --archive . --out "$out" | tee "$RUNNER_TEMP/pack.log"
+          grep -q '^packed=true$' "$RUNNER_TEMP/pack.log"
+          if [ "${PROVE_CODE:-}" = 0 ] && [ "${PROVE_CHANGED:-}" = true ]; then
+            # The public side when prove changed it with every check green. A failure here leaves the public half out:
+            # the publish job then refuses the push with the reason (no public.manifest) and the run fails.
+            if [ "$REHEARSAL" = true ]; then
+              printf 'Rehearsal of the monitor'"'"'s publish job (run %s), never on main\n' "$GITHUB_RUN_ID" > "$out/proof-message.txt"
+            else
+              python3 taqvo/tools/timetables/monitor/proof.py message monitor/proof > "$out/proof-message.txt" || rm -f "$out/proof-message.txt"
+            fi
+            if ! python3 taqvo/tools/timetables/monitor/ci/handoff.py pack --taqvo taqvo --out "$out"; then
+              rm -rf "$out/public" "$out/public.manifest"
+              echo "::warning::the public side could not be packed; the proof is not pushed this run"
+            fi
+          fi
+          # What the report job reads: the issue's body and prove's own report (also committed under monitor/).
+          if [ -f issue-body.md ]; then cp issue-body.md "$out/issue-body.md"; fi
+          if [ -d monitor/proof ]; then cp -R monitor/proof "$out/proof"; fi
+          echo "packed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Keep the handoff
+        if: always() && steps.pack.outputs.packed == 'true'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: monitor-handoff-${{ github.run_id }}
+          path: ${{ runner.temp }}/handoff
+          retention-days: 90
+          if-no-files-found: error
+
+  publish:
+    needs: monitor
+    # A clean runner that runs nothing but git and handoff.py (the Python standard library alone) from its own
+    # checkout of Taqvo: no pip, no Gradle, no fetcher, nothing from the monitor job but the handoff's data.
+    if: ${{ !cancelled() && needs.monitor.outputs.packed == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    outputs:
+      archive: ${{ steps.archive.outputs.state }}
+      archivefailed: ${{ steps.archive.outputs.pushfailed }}
+      state: ${{ steps.publish.outputs.state }}
+      pushfailed: ${{ steps.publish.outputs.pushfailed }}
+    env:
+      BRANCH: ${{ github.ref_name }}
+      REHEARSAL: ${{ github.event.inputs.rehearsal == 'true' }}
+    steps:
+      - name: Check out the archive where the run checked it out
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: ${{ needs.monitor.outputs.archive_sha }}
+          persist-credentials: false
+
+      - name: Check out Taqvo at main
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          repository: MohamedAbulgasem/Taqwa
+          ref: ${{ github.event.inputs.rehearsal == 'true' && github.event.inputs.taqvo_ref || 'main' }}
+          path: taqvo
+          persist-credentials: false
+
+      - name: Fetch the handoff
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: monitor-handoff-${{ github.run_id }}
+          path: ${{ runner.temp }}/handoff
+
+      - name: Check the archive's changes and apply them
+        id: apply
+        # Only plain paths under archive/ and monitor/, each file the manifest's hash, nothing it does not list.
+        run: |
+          set -uo pipefail
+          if [ "$REHEARSAL" = true ] && [ "$BRANCH" = main ]; then echo "::error::a rehearsal never commits to main"; exit 1; fi
+          code=0
+          python3 taqvo/tools/timetables/monitor/ci/handoff.py check --kind private --from "$RUNNER_TEMP/handoff" --into . > "$RUNNER_TEMP/check.log" || code=$?
+          cat "$RUNNER_TEMP/check.log"
+          if [ "$code" != 0 ]; then echo "::error::the archive's changes were refused: $(tail -1 "$RUNNER_TEMP/check.log")"; exit 1; fi
+
+      - name: Commit what the run added or changed
+        id: archive
+        # As taqvo-monitor, hooks off, rebased onto whatever arrived meanwhile (a run by hand, a queued run), one
+        # retry; when the push still fails the job says so (the handoff artifact keeps the changes 90 days). The
+        # token is turned into a masked header at once, and reaches git on the pull and push commands alone. When the
+        # rebase brought in changes under archive/tables/ (tables the proof may read, changed after the run checked
+        # them out), archivemoved=true keeps the proof from the public repository: the next run proves again.
+        if: steps.apply.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          basic="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 | tr -d '\n')"
+          unset GITHUB_TOKEN
+          echo "::add-mask::$basic"
+          G() { git -c core.hooksPath=/dev/null "$@"; }
+          authed() {
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="http.https://github.com/.extraheader" GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $basic" G "$@"
+          }
+          G config user.name "taqvo-monitor"
+          G config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          checked_out="$(G rev-parse HEAD)"
+          G add -A archive monitor
+          if G diff --cached --quiet; then
+            echo "Nothing to commit"
+            echo "state=nothing to commit" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          G commit -q -m "Monitor: run of $(date -u +%Y-%m-%d)"
+          remote="https://github.com/${GITHUB_REPOSITORY}.git"
+          for attempt in 1 2; do
+            if authed pull -q --rebase "$remote" "$BRANCH" && authed push -q "$remote" "HEAD:$BRANCH"; then
+              echo "Pushed"
+              echo "state=pushed" >> "$GITHUB_OUTPUT"
+              # HEAD~1 is the branch's head this run's commit now sits on; what it changed under archive/tables/
+              # since the checkout is what another run or a hand commit brought in meanwhile.
+              if [ -n "$(G diff --name-only "$checked_out" HEAD~1 -- archive/tables | head -1)" ]; then
+                echo "The rebase brought in changes under archive/tables/; the proof is not published this run"
+                echo "archivemoved=true" >> "$GITHUB_OUTPUT"
+              fi
+              exit 0
+            fi
+            G rebase --abort 2>/dev/null || true
+            echo "The push did not land (attempt $attempt)"
+            sleep 20
+          done
+          echo "::error::the push was rejected twice; this run's changes are kept as the artifact monitor-handoff-$GITHUB_RUN_ID"
+          echo "pushfailed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Push the proof to Taqvo's main
+        id: publish
+        # Only when prove changed the public checkout with every check green AND this run's archive commit (the
+        # pinned copies the new rows read) landed without bringing in other changes under archive/tables/. On Taqvo
+        # as it is now: when main's commits since the run's own checkout touch what the proof depends on (the engine,
+        # the gate, the generator, the site, the scripts, the build), nothing is pushed and the next run proves again.
+        # handoff.py (from this job's own checkout) refuses any path outside bot-paths.txt, a deletion, a hash that
+        # differs, a clock time's shape (ruling R69), and a ProofStamps.kt that is not what proof_stamps.py writes from
+        # the stamps. The token (TAQVO_PUSH_TOKEN, a fine-grained token with Contents: write on MohamedAbulgasem/Taqwa
+        # alone) is turned into a masked header at once and reaches git on the push commands alone; the push is
+        # fast-forward only (main's ruleset refuses anything else), retried once on a main that moved elsewhere. A
+        # token GitHub refuses is not retried. Without the secret the step skips with a notice.
+        if: ${{ !cancelled() && needs.monitor.outputs.prove_code == '0' && needs.monitor.outputs.prove_changed == 'true' && steps.archive.outcome == 'success' && steps.archive.outputs.pushfailed != 'true' }}
+        env:
+          TAQVO_PUSH_TOKEN: ${{ secrets.TAQVO_PUSH_TOKEN }}
+          ARCHIVE_MOVED: ${{ steps.archive.outputs.archivemoved }}
+          PROVEN_ON: ${{ needs.monitor.outputs.taqvo_sha }}
+        run: |
+          set -uo pipefail
+          if [ -z "${TAQVO_PUSH_TOKEN:-}" ]; then
+            unset TAQVO_PUSH_TOKEN
+            echo "::notice::TAQVO_PUSH_TOKEN is not set: the proof was checked but not pushed to Taqvo (add the secret, docs/MONITOR.md)"
+            echo "state=not pushed: the secret TAQVO_PUSH_TOKEN is not set" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          basic="$(printf 'x-access-token:%s' "$TAQVO_PUSH_TOKEN" | base64 | tr -d '\n')"
+          unset TAQVO_PUSH_TOKEN
+          echo "::add-mask::$basic"
+          G() { git -c core.hooksPath=/dev/null "$@"; }
+          authed() {
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="http.https://github.com/.extraheader" GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $basic" G "$@"
+          }
+          refused() {
+            echo "state=not pushed: $1" >> "$GITHUB_OUTPUT"
+            echo "pushfailed=true" >> "$GITHUB_OUTPUT"
+            echo "::error::the proof was not pushed to Taqvo main: $1"
+            exit 0
+          }
+          if [ "${ARCHIVE_MOVED:-}" = true ]; then
+            echo "::warning::the archive's tables changed upstream while this run proved: not pushed; the next run proves again"
+            echo "state=not pushed: the archive's tables changed upstream while this run proved (another run or a hand commit); the next run proves again" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          [[ "$PROVEN_ON" =~ ^[0-9a-f]{40}$ ]] || refused "the monitor job named no Taqvo commit"
+          target=main
+          if [ "$REHEARSAL" = true ]; then target="monitor-rehearsal-$GITHUB_RUN_ID"; fi
+          remote="https://github.com/MohamedAbulgasem/Taqwa.git"
+          # handoff.py check reads the message before anything is committed: short plain text, no time's shape, no trailer.
+          message="$RUNNER_TEMP/handoff/proof-message.txt"
+          cd taqvo
+          G config user.name "taqvo-monitor"
+          G config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # On the current HEAD: main's commits since the run's checkout must leave the proof's ground alone, then the
+          # handoff is checked, applied and committed. Prints nothing secret; "moved" when main moved under the proof.
+          commit_proof() {
+            G fetch -q --depth=1 "$remote" "$PROVEN_ON" || refused "the run's Taqvo commit could not be fetched"
+            moved="$(G diff --name-only "$PROVEN_ON" HEAD | grep -E '^(tools/|shared/|widgetcore/|scripts/|site/|gradle/|buildSrc/|[^/]+\.gradle\.kts$|gradle\.properties$)' || true)"
+            if [ -n "$moved" ]; then
+              printf '%s\n' "$moved" | head -20
+              return 1
+            fi
+            local code=0
+            python3 tools/timetables/monitor/ci/handoff.py check --kind public --from "$RUNNER_TEMP/handoff" --into . > "$RUNNER_TEMP/check.log" || code=$?
+            cat "$RUNNER_TEMP/check.log"
+            [ "$code" = 0 ] || refused "the handoff was refused: $(tail -1 "$RUNNER_TEMP/check.log")"
+            G add -A tools/timetables/official/gate tools/timetables/official/stamps shared/src/commonMain/kotlin/com/taqvo/app/prayer/engine/registry/data/ProofStamps.kt
+            if G diff --cached --quiet; then
+              echo "state=nothing to push" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            G commit -q -F "$message" || refused "git commit failed"
+          }
+          not_moved_or_stop() {
+            echo "::warning::main changed what the proof depends on while this run proved; not pushed, the next run proves again on the new main"
+            echo "state=not pushed: main changed the engine, the gate, the generator, the site or the build while this run proved; the next run proves again on the new main" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+          commit_proof || not_moved_or_stop
+          if authed push -q "$remote" "HEAD:refs/heads/$target" 2> "$RUNNER_TEMP/push.err"; then
+            echo "state=pushed to $target ($(G rev-parse --short HEAD))" >> "$GITHUB_OUTPUT"
+            echo "Pushed $(G rev-parse --short HEAD) to Taqvo $target"
+            exit 0
+          fi
+          cat "$RUNNER_TEMP/push.err" >&2
+          if grep -q -i -E 'error: 40[13]|returned error: 40[13]|authentication failed|invalid username or (password|token)|permission to .* denied|write access to repository not granted' "$RUNNER_TEMP/push.err"; then
+            refused "GitHub refused the token (revoked, expired, or without Contents: write on Taqvo): replace the secret TAQVO_PUSH_TOKEN (docs/MONITOR.md)"
+          fi
+          [ "$target" = main ] || refused "the push to $target was rejected"
+          echo "The push was rejected; trying once more on main as it is now"
+          G fetch -q --depth=1 "$remote" main || refused "the push was rejected and main could not be fetched"
+          G reset -q --hard FETCH_HEAD
+          commit_proof || not_moved_or_stop
+          if authed push -q "$remote" "HEAD:refs/heads/$target"; then
+            echo "state=pushed to main after a retry ($(G rev-parse --short HEAD))" >> "$GITHUB_OUTPUT"
+            echo "Pushed $(G rev-parse --short HEAD) to Taqvo main (main had moved, touching nothing the proof depends on)"
+            exit 0
+          fi
+          refused "the push to Taqvo main was rejected twice; the pinned copies are committed and the next run proves again"
+
+  report:
+    needs: [monitor, publish]
+    # The issue and the run's verdict. Runs whenever the options passed, whatever the publish job did.
+    if: ${{ !cancelled() && needs.monitor.outputs.options == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+    env:
+      # gh acts on this (the private) repository: the job's only checkout is Taqvo's monitor code under taqvo/,
+      # so there is no git repository at the root for gh to infer one from.
+      GH_REPO: ${{ github.repository }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      REHEARSAL: ${{ github.event.inputs.rehearsal == 'true' }}
+    steps:
+      - name: Check out Taqvo's monitor code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          repository: MohamedAbulgasem/Taqwa
+          ref: ${{ github.event.inputs.rehearsal == 'true' && github.event.inputs.taqvo_ref || 'main' }}
+          path: taqvo
+          persist-credentials: false
+          sparse-checkout: tools/timetables/monitor
+
+      - name: Fetch the handoff
+        if: needs.monitor.outputs.packed == 'true'
+        continue-on-error: true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: monitor-handoff-${{ github.run_id }}
+          path: ${{ runner.temp }}/handoff
+
+      - name: Write the proof section
+        id: proofsection
+        if: needs.monitor.outputs.partial != 'true'
+        env:
+          PUSHED: ${{ needs.publish.outputs.state }}
+          ARCHIVE_FAILED: ${{ needs.publish.outputs.archivefailed }}
+          PROVE_CODE: ${{ needs.monitor.outputs.prove_code }}
+          PROVE_CHANGED: ${{ needs.monitor.outputs.prove_changed }}
+        run: |
+          # The issue body (restricted repository) gains "## Proof": rows added, rows left out with the reason, cities
+          # newly proven (the generator's notices before and after), and whether the public push landed. A week where
+          # prove did not run says so (never last week's report). The attention lines (fingerprint, tier1, summary) let
+          # the issue step raise what prove found even on a green week.
+          state="$PUSHED"
+          dir="$RUNNER_TEMP/handoff/proof"
+          cp "$RUNNER_TEMP/handoff/issue-body.md" issue-body.md 2>/dev/null || printf '<!-- monitor-failed -->\n**Taqvo monitor.** The monitor job left no handoff (see the run).\n' > issue-body.md
+          if [ "$ARCHIVE_FAILED" = true ]; then state="not pushed: this run's archive commit did not land (its changes are kept as the artifact monitor-handoff-$GITHUB_RUN_ID)"; fi
+          if [ -z "$PROVE_CODE" ]; then dir="$RUNNER_TEMP/prove-did-not-run"; state="not run"; fi
+          if [ -z "$state" ] && [ "$PROVE_CODE" = 1 ]; then state="not pushed: a check failed after rows were added, everything was put back (see the log)"; fi
+          if [ -z "$state" ] && [ "$PROVE_CODE" = 0 ] && [ "$PROVE_CHANGED" = true ]; then state="not pushed: this run's archive commit did not land, so the rows' pinned copies are not in the archive repository"; fi
+          if [ -z "$state" ] && [ "$PROVE_CODE" = 0 ]; then state="nothing to push"; fi
+          python3 taqvo/tools/timetables/monitor/proof.py section "$dir" --pushed "${state:-not run}" > proof-section.md || echo "## Proof" > proof-section.md
+          python3 taqvo/tools/timetables/monitor/proof.py attention "$dir" --pushed "${state:-not run}" --code "${PROVE_CODE:-}" > proof-attention.txt || echo "fingerprint=" > proof-attention.txt
+          cat proof-attention.txt
+          cat proof-attention.txt >> "$GITHUB_OUTPUT"
+          if [ -f issue-body.md ]; then printf '\n' >> issue-body.md && cat proof-section.md >> issue-body.md; fi
+          cat proof-section.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CODE: ${{ needs.monitor.outputs.code }}
+          VALID: ${{ needs.monitor.outputs.valid }}
+          PARTIAL: ${{ needs.monitor.outputs.partial }}
+          CHANGED: ${{ needs.monitor.outputs.changed }}
+          RUN_DATE: ${{ needs.monitor.outputs.date }}
+          SUMMARY: ${{ needs.monitor.outputs.summary }}
+          PROOF_FP: ${{ steps.proofsection.outputs.fingerprint }}
+          PROOF_TIER1: ${{ steps.proofsection.outputs.tier1 }}
+          PROOF_SUMMARY: ${{ steps.proofsection.outputs.summary }}
+        run: |
+          # What prove found counts as attention too (a row left out, above all an early start or a late end; prove
+          # stopped or put back; a city newly held; a public push that did not land), even on a green week: the body
+          # carries its fingerprint, and the issue is opened or updated when the fingerprint changes.
+          set -euo pipefail
+          if [ "$REHEARSAL" = true ]; then
+            echo "Rehearsal: the issue is not touched"
+            exit 0
+          fi
+          if [ ! -f issue-body.md ]; then
+            cp "$RUNNER_TEMP/handoff/issue-body.md" issue-body.md 2>/dev/null || printf '<!-- monitor-failed -->\n**Taqvo monitor.** The monitor job left no handoff (see the run).\n' > issue-body.md
+          fi
+          number="$(gh issue list --state open --label monitor-attention --limit 20 --json number,title --jq '[.[] | select(.title == "Taqvo monitor")][0].number // empty')"
+          body=""
+          if [ -n "$number" ]; then body="$(gh issue view "$number" --json body --jq .body || true)"; fi
+          failed=true
+          if [ "$VALID" = true ] && { [ "$CODE" = 0 ] || [ "$CODE" = 1 ]; }; then failed=false; fi
+          if [ "$PARTIAL" = true ]; then
+            # A partial run, sound or failed, never closes, opens or rewrites the issue (ruling N1): a comment at most.
+            if [ -n "$number" ]; then gh issue comment "$number" --body "Partial run on $RUN_DATE ($RUN_URL): $SUMMARY"; fi
+            echo "Partial run: the issue stands as it is"
+            exit 0
+          fi
+          proof=false
+          if [ -n "${PROOF_FP:-}" ]; then proof=true; fi
+          notified=""
+          re='<!-- proof: ([0-9a-f]+) -->'
+          if [[ $body =~ $re ]]; then notified="${BASH_REMATCH[1]}"; fi
+          proof_changed=false
+          if [ "$proof" = true ] && [ "$PROOF_FP" != "$notified" ]; then proof_changed=true; fi
+          if [ "$failed" = false ] && [ "$CODE" = 0 ] && [ "$proof" = false ]; then
+            # A green week with nothing from prove closes an open issue and never opens one.
+            if [ -n "$number" ]; then gh issue close "$number" --comment "All green on $RUN_DATE; closed ($RUN_URL)."; fi
+            echo "All green"
+            exit 0
+          fi
+          recovered=false
+          if [ "$failed" = false ] && [ -n "$number" ] && [[ $body == *'<!-- monitor-failed -->'* ]]; then
+            # The first sound full run after a failure: the body is rewritten from the report whatever the set did.
+            recovered=true
+          fi
+          if [ "$failed" = false ] && [ "$recovered" = false ] && [ "$CHANGED" != true ] && [ "$proof_changed" = false ] && [ -n "$number" ]; then
+            echo "The attention set and prove's findings are as last notified; the issue stands as it is"
+            exit 0
+          fi
+          if [ "$proof" = true ]; then
+            printf '\n<!-- proof: %s -->\n' "$PROOF_FP" >> issue-body.md
+            if [ "$PROOF_TIER1" = true ]; then SUMMARY="${SUMMARY} PROVE LEFT OUT AN EARLY START OR A LATE END."; fi
+            SUMMARY="${SUMMARY} ${PROOF_SUMMARY}"
+          fi
+          printf '\n\nRun: %s\n' "$RUN_URL" >> issue-body.md
+          gh label create monitor-attention --color B60205 --description "The weekly timetable monitor needs attention" --force >/dev/null 2>&1 || true
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --body-file issue-body.md >/dev/null
+            if [ "$recovered" = true ]; then
+              gh issue comment "$number" --body "Recovered on $RUN_DATE ($RUN_URL): $SUMMARY"
+              echo "Recovered: issue #$number rewritten from the report"
+            else
+              gh issue comment "$number" --body "Updated on $RUN_DATE ($RUN_URL): $SUMMARY"
+              echo "Updated issue #$number"
+            fi
+          else
+            gh issue create --title "Taqvo monitor" --label monitor-attention --body-file issue-body.md
+            echo "Opened the issue"
+          fi
+
+      - name: Fail the run when the monitor itself failed, a push did not land, the handoff was refused, or prove failed
+        if: ${{ !cancelled() && (needs.monitor.outputs.valid != 'true' || needs.monitor.outputs.packed != 'true' || needs.publish.result == 'failure' || needs.publish.outputs.archivefailed == 'true' || (needs.monitor.outputs.prove_code != '' && needs.monitor.outputs.prove_code != '0') || needs.publish.outputs.pushfailed == 'true') }}
+        env:
+          CODE: ${{ needs.monitor.outputs.code }}
+          VALID: ${{ needs.monitor.outputs.valid }}
+          PACKED: ${{ needs.monitor.outputs.packed }}
+          PUBLISH: ${{ needs.publish.result }}
+          ARCHIVE_FAILED: ${{ needs.publish.outputs.archivefailed }}
+          PROVE_CODE: ${{ needs.monitor.outputs.prove_code }}
+          PUSH_FAILED: ${{ needs.publish.outputs.pushfailed }}
+        run: |
+          if [ "$VALID" != true ]; then
+            echo "::error::the monitor itself failed (exit $CODE, result valid: $VALID)"
+          elif [ "$PACKED" != true ] || [ "$PUBLISH" = failure ] || [ "$ARCHIVE_FAILED" = true ]; then
+            echo "::error::the run's changes did not land (packed: $PACKED, publish job: $PUBLISH, archive push failed: $ARCHIVE_FAILED); see the publish job"
+          else
+            echo "::error::prove did not publish (prove exit $PROVE_CODE, Taqvo push failed: $PUSH_FAILED); the issue's Proof section says why"
+          fi
+          exit 1

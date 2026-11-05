@@ -1,0 +1,265 @@
+{
+  "entry": "nl.cautious",
+  "class": "C",
+  "engineHash": "b6aa5289f1b9a296",
+  "broken": 0,
+  "places": 1,
+  "first": "2026-09-25",
+  "last": "2026-10-25",
+  "checked": ["2026-09-25..2026-10-25"],
+  "placeDays": 31,
+  "heldOutDays": 31,
+  "ramadanDays": 0,
+  "outOfOrderDays": 0,
+  "unreadableLines": 0,
+  "repeatedLines": 0,
+  "events": {
+    "fajr": {
+      "checked": 31,
+      "early": 0,
+      "late": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3+": 31
+      },
+      "exactShare": 0,
+      "worstLate": 16,
+      "lateLimit": 16,
+      "lateLimitFrom": "entry nl.cautious",
+      "overLimit": 0
+    },
+    "sunrise": {
+      "checked": 31,
+      "lateEnd": 0,
+      "late": {
+        "0": 22,
+        "1": 9,
+        "2": 0,
+        "3+": 0
+      },
+      "exactShare": 0.7097,
+      "worstLate": 1,
+      "lateLimit": 1,
+      "lateLimitFrom": "class C",
+      "overLimit": 0
+    },
+    "dhuhr": {
+      "checked": 31,
+      "early": 0,
+      "late": {
+        "0": 23,
+        "1": 8,
+        "2": 0,
+        "3+": 0
+      },
+      "exactShare": 0.7419,
+      "worstLate": 1,
+      "lateLimit": 1,
+      "lateLimitFrom": "class C",
+      "overLimit": 0
+    },
+    "asrStandard": {
+      "checked": 31,
+      "early": 0,
+      "late": {
+        "0": 23,
+        "1": 8,
+        "2": 0,
+        "3+": 0
+      },
+      "exactShare": 0.7419,
+      "worstLate": 1,
+      "lateLimit": 1,
+      "lateLimitFrom": "class C",
+      "overLimit": 0
+    },
+    "maghrib": {
+      "checked": 31,
+      "early": 0,
+      "late": {
+        "0": 24,
+        "1": 7,
+        "2": 0,
+        "3+": 0
+      },
+      "exactShare": 0.7742,
+      "worstLate": 1,
+      "lateLimit": 1,
+      "lateLimitFrom": "class C",
+      "overLimit": 0
+    },
+    "isha": {
+      "checked": 31,
+      "early": 0,
+      "late": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3+": 31
+      },
+      "exactShare": 0,
+      "worstLate": 6,
+      "lateLimit": 6,
+      "lateLimitFrom": "entry nl.cautious",
+      "overLimit": 0
+    },
+    "endOfEating": {
+      "checked": 31,
+      "lateEnd": 0,
+      "late": {
+        "0": 8,
+        "1": 23,
+        "2": 0,
+        "3+": 0
+      },
+      "exactShare": 0.2581,
+      "worstLate": 1,
+      "lateLimit": 2,
+      "lateLimitFrom": "entry nl.cautious",
+      "overLimit": 0
+    }
+  },
+  "heldOut": {
+    "placeDays": 31,
+    "ramadanDays": 0,
+    "events": {
+      "fajr": {
+        "checked": 31,
+        "early": 0,
+        "late": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3+": 31
+        },
+        "exactShare": 0,
+        "worstLate": 16,
+        "lateLimit": 16,
+        "lateLimitFrom": "entry nl.cautious",
+        "overLimit": 0
+      },
+      "sunrise": {
+        "checked": 31,
+        "lateEnd": 0,
+        "late": {
+          "0": 22,
+          "1": 9,
+          "2": 0,
+          "3+": 0
+        },
+        "exactShare": 0.7097,
+        "worstLate": 1,
+        "lateLimit": 1,
+        "lateLimitFrom": "class C",
+        "overLimit": 0
+      },
+      "dhuhr": {
+        "checked": 31,
+        "early": 0,
+        "late": {
+          "0": 23,
+          "1": 8,
+          "2": 0,
+          "3+": 0
+        },
+        "exactShare": 0.7419,
+        "worstLate": 1,
+        "lateLimit": 1,
+        "lateLimitFrom": "class C",
+        "overLimit": 0
+      },
+      "asrStandard": {
+        "checked": 31,
+        "early": 0,
+        "late": {
+          "0": 23,
+          "1": 8,
+          "2": 0,
+          "3+": 0
+        },
+        "exactShare": 0.7419,
+        "worstLate": 1,
+        "lateLimit": 1,
+        "lateLimitFrom": "class C",
+        "overLimit": 0
+      },
+      "maghrib": {
+        "checked": 31,
+        "early": 0,
+        "late": {
+          "0": 24,
+          "1": 7,
+          "2": 0,
+          "3+": 0
+        },
+        "exactShare": 0.7742,
+        "worstLate": 1,
+        "lateLimit": 1,
+        "lateLimitFrom": "class C",
+        "overLimit": 0
+      },
+      "isha": {
+        "checked": 31,
+        "early": 0,
+        "late": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3+": 31
+        },
+        "exactShare": 0,
+        "worstLate": 6,
+        "lateLimit": 6,
+        "lateLimitFrom": "entry nl.cautious",
+        "overLimit": 0
+      },
+      "endOfEating": {
+        "checked": 31,
+        "lateEnd": 0,
+        "late": {
+          "0": 8,
+          "1": 23,
+          "2": 0,
+          "3+": 0
+        },
+        "exactShare": 0.2581,
+        "worstLate": 1,
+        "lateLimit": 2,
+        "lateLimitFrom": "entry nl.cautious",
+        "overLimit": 0
+      }
+    }
+  },
+  "members": {
+    "nl.moroccan": {
+      "checked": ["2026-09-25..2026-10-25"],
+      "points": {
+        "52.37403,4.88969": ["2026-09-25..2026-10-25"]
+      }
+    },
+    "tr.diyanet.europe": {
+      "checked": ["2026-09-25..2026-10-25"],
+      "points": {
+        "52.37403,4.88969": ["2026-09-25..2026-10-25"]
+      }
+    }
+  },
+  "lateLimits": {
+    "class C: 1 min": {
+      "events": ["sunrise", "dhuhr", "asrStandard", "maghrib"]
+    },
+    "entry nl.cautious: 2 min": {
+      "reason": "The members' own margins: the end of eating (Diyanet's earliest dawns) up to 2 min before the tables held.",
+      "events": ["endOfEating"]
+    },
+    "entry nl.cautious: 6 min": {
+      "reason": "Isha is the latest member's, MWL's 17°, whose own table is not held here: up to 6 min after the Moroccan calendar's and Diyanet's.",
+      "events": ["isha"]
+    },
+    "entry nl.cautious: 16 min": {
+      "reason": "The Moroccan calendar's Fajr moves from about 16° in winter to 14° in May and August; its member takes 14°, the calendar's latest, never before it, and so runs up to 16 min after it in autumn (Task 7g checked it at Amsterdam from 25 September to 25 October).",
+      "events": ["fajr"]
+    }
+  }
+}

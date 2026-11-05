@@ -1,0 +1,328 @@
+package com.taqvo.app.recitation
+
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import okio.FileSystem
+import okio.HashingSource
+import okio.Path
+import okio.blackholeSink
+import okio.buffer
+import okio.use
+
+/**
+ * One surah of one reciter, as one file (spec 3a §4). The ayahs inside are the corpus's own MP3s
+ * byte for byte — the licence permits redistribution at the published bitrate and forbids
+ * re-encoding, so nothing here touches the audio; the container only records where each ayah
+ * starts.
+ *
+ * ```
+ * 0..3    magic "TAQA"
+ * 4       version, 1
+ * 5..7    reserved, zero
+ * 8..11   index length, u32 big-endian
+ * 12..    index JSON, UTF-8
+ * then    the ayah MP3s back to back, in ayah order
+ * ```
+ *
+ * Not a zip: iOS has no zip reader in Foundation and Kotlin/Native would need a cinterop for one.
+ * The shape earns two things beyond simplicity — a surah is one HTTP request, resumable with
+ * `Range`, and the first few kilobytes alone say where every ayah begins, so ayah 1 can play while
+ * the rest of the file is still arriving.
+ */
+@Serializable
+data class TaqaAyah(
+    val n: Int,
+    /** Offset from `dataStart`, not from the start of the file. See [TaqaIndex.dataStart]. */
+    val off: Long,
+    val len: Long,
+    /**
+     * The ayah's length in milliseconds, **measured** by the pipeline from a full decode of the
+     * file (spec §14.1). Containers packed before 13 September carry none, and the length is
+     * then estimated from [len] and [TaqaIndex.kbps]; where it is present it is exact, which
+     * is what makes the clock right for an edition that is not constant-bit-rate and for a
+     * file whose own header lies about its length (both true of Al-Ajmi's).
+     */
+    val ms: Long? = null,
+)
+
+/**
+ * The parsed header of a `.taqa`. [dataStart] is the absolute offset the audio begins at, which is
+ * what turns an ayah's relative [TaqaAyah.off] into a file offset; every reader of the container —
+ * the players, the downloader's verifier — goes through here rather than doing that sum itself.
+ */
+data class TaqaIndex(
+    val reciter: String,
+    val surah: Int,
+    val kbps: Int,
+    val ayahs: List<TaqaAyah>,
+    val dataStart: Long,
+) {
+    fun ayah(n: Int): TaqaAyah? = ayahs.firstOrNull { it.n == n }
+
+    /** What a whole, undamaged file of this index measures: the header plus every ayah. */
+    val expectedFileBytes: Long get() = dataStart + (ayahs.maxOfOrNull { it.off + it.len } ?: 0L)
+
+    /** Absolute file offsets of ayah [n], both ends inclusive — the shape an HTTP `Range` wants. */
+    fun rangeOf(n: Int): LongRange {
+        val ayah = ayah(n) ?: throw MalformedTaqa("Surah $surah has no ayah $n")
+        val first = dataStart + ayah.off
+        return first until (first + ayah.len)
+    }
+
+    companion object {
+        const val MAGIC = "TAQA"
+        const val VERSION = 1
+
+        /** Magic, version, reserved, index length: what must be read before anything else can be. */
+        const val FIXED_HEADER = 12
+
+        private val json = Json { ignoreUnknownKeys = true }
+
+        /**
+         * How many bytes of index follow the fixed header — so a reader that has only the first
+         * twelve bytes knows exactly how much more to fetch before calling [parse].
+         *
+         * @throws MalformedTaqa if [header] is short, or is not a version-1 `.taqa` at all.
+         */
+        fun indexLength(header: ByteArray): Int {
+            if (header.size < FIXED_HEADER) {
+                throw MalformedTaqa("A .taqa header is $FIXED_HEADER bytes; got ${header.size}")
+            }
+            val magic = header.copyOfRange(0, 4).decodeToString()
+            if (magic != MAGIC) throw MalformedTaqa("Not a .taqa: magic was \"$magic\"")
+            val version = header[4].toInt() and 0xFF
+            if (version != VERSION) throw MalformedTaqa("Unsupported .taqa version $version")
+            val length = ((header[8].toInt() and 0xFF) shl 24) or
+                ((header[9].toInt() and 0xFF) shl 16) or
+                ((header[10].toInt() and 0xFF) shl 8) or
+                (header[11].toInt() and 0xFF)
+            if (length <= 0) throw MalformedTaqa("A .taqa index cannot be $length bytes")
+            return length
+        }
+
+        /**
+         * Parses the header of a container. [header] needs to hold at least the first
+         * `12 + indexLength` bytes and may hold the whole file; everything past the index is
+         * ignored, which is what lets a partly downloaded file be read.
+         *
+         * Pure — no file system, no platform. The players and the downloader both need this and
+         * neither should have to open the file twice to get it.
+         *
+         * @throws MalformedTaqa on a bad magic, an unknown version, a truncated buffer or an index
+         * that is not the JSON this version writes.
+         */
+        fun parse(header: ByteArray): TaqaIndex {
+            val length = indexLength(header)
+            val end = FIXED_HEADER + length
+            if (header.size < end) {
+                throw MalformedTaqa("A .taqa index of $length bytes needs $end bytes; got ${header.size}")
+            }
+            val text = header.copyOfRange(FIXED_HEADER, end).decodeToString()
+            val wire = try {
+                json.decodeFromString(Wire.serializer(), text)
+            } catch (e: Exception) {
+                throw MalformedTaqa("A .taqa index that is not readable JSON: ${e.message}")
+            }
+            if (wire.ayahs.isEmpty()) throw MalformedTaqa("A .taqa with no ayahs in its index")
+            return TaqaIndex(
+                reciter = wire.reciter,
+                surah = wire.surah,
+                kbps = wire.kbps,
+                ayahs = wire.ayahs,
+                dataStart = end.toLong(),
+            )
+        }
+    }
+
+    /** The index exactly as it is written inside the file. */
+    @Serializable
+    internal data class Wire(
+        val reciter: String,
+        val surah: Int,
+        val kbps: Int,
+        val ayahs: List<TaqaAyah>,
+    )
+}
+
+/** A `.taqa` that is not one, or not this version of one. */
+class MalformedTaqa(message: String) : IllegalArgumentException(message)
+
+/**
+ * A `.taqa` on disk. Everything that reads recitation audio — both players, the downloader's
+ * verifier, the library's reconciliation — goes through this class, so the container's layout is
+ * known in exactly one place.
+ *
+ * The index is read once and kept; the audio never is. `readAyah` and `ayahRange` exist so a
+ * player can hand the platform a byte range rather than a temporary file per ayah.
+ */
+class TaqaFile(
+    val path: Path,
+    private val fs: FileSystem = FileSystem.SYSTEM,
+) {
+    private var cached: TaqaIndex? = null
+
+    /** @throws MalformedTaqa if the file is not a readable version-1 container. */
+    fun index(): TaqaIndex {
+        cached?.let { return it }
+        val parsed = fs.read(path) {
+            val fixed = ByteArray(TaqaIndex.FIXED_HEADER)
+            if (!request(TaqaIndex.FIXED_HEADER.toLong())) {
+                throw MalformedTaqa("A .taqa shorter than its own header: $path")
+            }
+            readFully(fixed)
+            val length = TaqaIndex.indexLength(fixed)
+            val rest = try {
+                readByteArray(length.toLong())
+            } catch (e: okio.EOFException) {
+                throw MalformedTaqa("A .taqa whose index of $length bytes is not all there: $path")
+            }
+            TaqaIndex.parse(fixed + rest)
+        }
+        cached = parsed
+        return parsed
+    }
+
+    /** Absolute file offsets of ayah [n], both ends inclusive. */
+    fun ayahRange(n: Int): LongRange = index().rangeOf(n)
+
+    /** The ayah's MP3, exactly the bytes the corpus published. */
+    fun readAyah(n: Int): ByteArray {
+        val range = ayahRange(n)
+        val length = (range.last - range.first + 1).toInt()
+        return fs.openReadOnly(path).use { handle ->
+            val bytes = ByteArray(length)
+            var read = 0
+            while (read < length) {
+                val got = handle.read(range.first + read, bytes, read, length - read)
+                if (got == -1) throw MalformedTaqa("Ayah $n runs past the end of $path")
+                read += got
+            }
+            bytes
+        }
+    }
+
+    /**
+     * The whole file's SHA-256 as lower-case hex — what the manifest publishes and what a download
+     * is checked against before it is allowed to become a surah the reader owns. Streamed through
+     * okio rather than read into memory: Al-Baqarah is 58 MB.
+     */
+    fun sha256(): String = fs.source(path).use { source ->
+        HashingSource.sha256(source).use { hashing ->
+            hashing.buffer().readAll(blackholeSink())
+            hashing.hash.hex()
+        }
+    }
+
+    /**
+     * Every ayah's length in milliseconds, keyed by ayah number (see [SurahTimeline]). The
+     * index's own measured [TaqaAyah.ms] where the pipeline wrote one; otherwise an estimate
+     * from the container alone: the ayah's bytes less the ID3 tag at its head and less the
+     * Xing/Info frame the CDN's files carry after it — metadata both, not sound — over the
+     * bit-rate the index records. Two small reads per estimated ayah through one open handle;
+     * for Al-Baqarah well under a frame. Kept, like the index, because the players ask once per
+     * load and the service asks again for the lock screen.
+     */
+    fun ayahDurationsMs(): Map<Int, Long> {
+        cachedDurations?.let { return it }
+        val parsed = index()
+        val head = ByteArray(ID3V2_HEADER)
+        val frame = ByteArray(XING_PROBE)
+        val computed = fs.openReadOnly(path).use { handle ->
+            parsed.ayahs.associate { ayah ->
+                ayah.ms?.let { return@associate ayah.n to it }
+                val first = parsed.dataStart + ayah.off
+                val want = minOf(ID3V2_HEADER.toLong(), ayah.len).toInt()
+                val read = if (want > 0) handle.read(first, head, 0, want) else 0
+                val tag = if (read == ID3V2_HEADER) id3v2TagBytes(head) else 0L
+                val probe = minOf(XING_PROBE.toLong(), ayah.len - tag).toInt()
+                val got = if (probe > 0) handle.read(first + tag, frame, 0, probe) else 0
+                val xing = if (got == XING_PROBE) xingFrameBytes(frame) else 0L
+                ayah.n to SurahTimeline.estimateMs((ayah.len - tag - xing).coerceAtLeast(0L), parsed.kbps)
+            }
+        }
+        cachedDurations = computed
+        return computed
+    }
+
+    private var cachedDurations: Map<Int, Long>? = null
+
+    /** The size on disk matches what the manifest says the finished asset measures. */
+    fun isComplete(expectedBytes: Long): Boolean =
+        fs.metadataOrNull(path)?.size == expectedBytes
+
+    /**
+     * The file accounts for itself without a manifest: the header parses and the file is at least
+     * as long as its own index says it must be. This is what `RecitationLibrary.reconcile` can ask
+     * of a file it finds on disk that the registry has never heard of — there is no manifest entry
+     * to compare it with at that point, and half a download must not be adopted as a surah.
+     */
+    fun isWhole(): Boolean = try {
+        (fs.metadataOrNull(path)?.size ?: return false) >= index().expectedFileBytes
+    } catch (e: MalformedTaqa) {
+        false
+    } catch (e: okio.IOException) {
+        false
+    }
+}
+
+/** The fixed part of an ID3v2 tag: "ID3", two version bytes, one of flags, four of syncsafe size. */
+internal const val ID3V2_HEADER = 10
+
+/**
+ * How many bytes an ID3v2 tag at the head of an MP3 occupies, or zero when [head] does not begin
+ * one. The corpus files each open with a small tag (title, reciter, a comment naming the CDN) —
+ * metadata, not sound — and a length estimate that counted it would run long by a frame or two
+ * an ayah. The size field is four syncsafe bytes (seven bits each), and a tag with the footer
+ * flag set carries ten more bytes after its frames.
+ */
+internal fun id3v2TagBytes(head: ByteArray): Long {
+    if (head.size < ID3V2_HEADER) return 0L
+    if (head[0] != 'I'.code.toByte() || head[1] != 'D'.code.toByte() || head[2] != '3'.code.toByte()) return 0L
+    val size = ((head[6].toInt() and 0x7F) shl 21) or
+        ((head[7].toInt() and 0x7F) shl 14) or
+        ((head[8].toInt() and 0x7F) shl 7) or
+        (head[9].toInt() and 0x7F)
+    val footer = (head[5].toInt() and 0x10) != 0
+    return ID3V2_HEADER + size.toLong() + (if (footer) ID3V2_HEADER.toLong() else 0L)
+}
+
+/** Enough of the first frame to see a Xing/Info tag: 4 of header, 32 of side information, 4 of tag. */
+internal const val XING_PROBE = 40
+
+private val MPEG1_LAYER3_KBPS = intArrayOf(0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0)
+private val MPEG2_LAYER3_KBPS = intArrayOf(0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0)
+
+/**
+ * The length in bytes of the Xing/Info frame [frame] begins with, or zero when it does not.
+ *
+ * A LAME-style encoder writes one whole MPEG frame of metadata before the first frame of audio
+ * — a frame count, a byte count, a seek table — and the CDN's re-tagged files carry one after
+ * the ID3 tag on five of the ten reciters. It decodes to silence and ffprobe leaves it out of
+ * the duration, so an estimate that counted it ran a flat 26 ms long on every ayah: 7.4 s over
+ * Al-Baqarah, and a line that never quite reached its end. Layer III only, which the corpus
+ * is; anything else answers zero and the estimate merely stays what it was.
+ */
+internal fun xingFrameBytes(frame: ByteArray): Long {
+    if (frame.size < XING_PROBE) return 0L
+    if (frame[0] != 0xFF.toByte() || (frame[1].toInt() and 0xE0) != 0xE0) return 0L
+    val version = (frame[1].toInt() shr 3) and 0x03      // 3 = MPEG-1, 2 = MPEG-2, 0 = MPEG-2.5
+    val layer = (frame[1].toInt() shr 1) and 0x03        // 1 = Layer III
+    val rateIndex = (frame[2].toInt() shr 4) and 0x0F
+    val sampleIndex = (frame[2].toInt() shr 2) and 0x03
+    val padding = (frame[2].toInt() shr 1) and 0x01
+    val mono = ((frame[3].toInt() shr 6) and 0x03) == 3
+    if (version == 1 || layer != 1 || rateIndex == 0 || rateIndex == 15 || sampleIndex == 3) return 0L
+    val mpeg1 = version == 3
+    val kbps = (if (mpeg1) MPEG1_LAYER3_KBPS else MPEG2_LAYER3_KBPS)[rateIndex]
+    val sampleRate = when (version) {
+        3 -> intArrayOf(44100, 48000, 32000)
+        2 -> intArrayOf(22050, 24000, 16000)
+        else -> intArrayOf(11025, 12000, 8000)
+    }[sampleIndex]
+    val sideInfo = if (mpeg1) (if (mono) 17 else 32) else (if (mono) 9 else 17)
+    val tagAt = 4 + sideInfo
+    val tag = frame.copyOfRange(tagAt, tagAt + 4).decodeToString()
+    if (tag != "Xing" && tag != "Info") return 0L
+    val samplesPerFrame = if (mpeg1) 1152 else 576
+    return (samplesPerFrame / 8 * kbps * 1000 / sampleRate + padding).toLong()
+}

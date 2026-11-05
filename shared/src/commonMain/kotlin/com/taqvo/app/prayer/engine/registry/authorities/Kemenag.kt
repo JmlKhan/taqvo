@@ -1,0 +1,177 @@
+package com.taqvo.app.prayer.engine.registry.authorities
+
+import com.taqvo.app.prayer.engine.method.AsrSchool
+import com.taqvo.app.prayer.engine.method.DayRule
+import com.taqvo.app.prayer.engine.method.EventOffsets
+import com.taqvo.app.prayer.engine.method.GeoPoint
+import com.taqvo.app.prayer.engine.method.IshaRule
+import com.taqvo.app.prayer.engine.method.TimetableMethod
+import com.taqvo.app.prayer.engine.registry.AuthorityUnit
+import com.taqvo.app.prayer.engine.registry.EntryClass
+import com.taqvo.app.prayer.engine.registry.RegistryEntry
+import com.taqvo.app.prayer.engine.registry.Scope
+import com.taqvo.app.prayer.engine.registry.UnitSet
+import com.taqvo.app.prayer.engine.registry.atEdge
+import com.taqvo.app.prayer.engine.registry.margins
+import com.taqvo.app.prayer.engine.registry.single
+import com.taqvo.app.prayer.engine.registry.widened
+
+/**
+ * Indonesia: Kemenag (Bimas Islam), as republished by the open myQuran API (profiles-tested.md,
+ * data-diyanet-kemenag; lowland HIGH, highland MEDIUM): Subuh 20°, Isya 18°, Shafi'i Asr, the
+ * "2 menit" ihtiyat on each start and −2 on syuruk (second-hand: tarjih.or.id; fitted), computed at
+ * the regency or city capital, sunrise and Maghrib at a horizon of −1° in lowland and −2° in
+ * highland kab/kota (fitted to 0.02°; the class cannot be told from elevation: Malang is 1°, Bogor
+ * 2°). Imsak = Subuh − 10 on every day checked (R14/R27: counted back from the authority's own dawn
+ * as an end, not our rounded start).
+ *
+ * Task 7c: each of the 13 fitted kab/kota carries its own margins (`Fitter.fit("id.kemenag/<id>")`,
+ * over the whole of 2026, then myQuran's only captured year, split Jan–Sep fit / Oct–Dec test,
+ * safety 5 s; since 11 Oct 2026 over 2026 and 2027, below), not one shared national value. A single shared margin (the 2025-era shipping figures, kept
+ * as [method]'s own for the unfitted "outside" edge) has 2 gaps over the 13 places' 4,745 days,
+ * both by a handful of seconds inside the 5 s safety pad (an early Fajr at Banda Aceh on 21 Mar
+ * 2026, the Ramadan-adjacent anomaly the old research notes; a late sunrise at Bukittinggi on
+ * 8 Feb 2026): fitting per kab/kota removes both, and removes the squeeze a shared value forces on
+ * every other place to cover the tightest one (Kota Jakarta's own sunrise had 0 s of slack left
+ * under the shared margin fitted to Bukittinggi's wider swing; each place now keeps its own).
+ *
+ * The March equinox (track T4, 11 Oct 2026). The weekly monitor first read Kemenag's 2027 tables on
+ * 5 Oct 2026, and against them the 2026-fitted margins were one minute early on 21 or 22 March 2027 at
+ * eight kab/kota (Dhuhr, Maghrib or Isha at Banda Aceh, Bukittinggi, Garut, Bogor, Wonosobo, Batu,
+ * Denpasar and Jayawijaya). Kemenag's own tables step there: on 21 and 22 March a printed time lags
+ * the smooth curve by about a day's change (some 17 s for Dhuhr, 30 s for Maghrib and Isha), which
+ * the rounding makes a whole minute on whichever day it crosses one; in 2026 the step had decided
+ * most places' Maghrib and Isha margins, and the Banda Aceh Fajr gap above is the same step. The
+ * method now says so ([DayRule.LAG_EQUINOX_KEMENAG]: on those two dates each start is the later of
+ * the day's and the day before's, each end the earlier), and every unit's margins are fitted over
+ * both published years with it (safety 5 s): never early on any of their 13,140 days, and the
+ * margins the step had held up fall back (Maghrib and Isha by up to 30 s at most places), so the
+ * shown minute is the printed one on more days than before; a few rise by up to 3 s, and
+ * Palembang's Asr by 8 s for its 2027 table's 30 September. [method]'s own margins, which the edge
+ * widens, are kept as they were, the largest of the 2026 fit. The step follows the calendar date, not
+ * the equinox (a leap year moves the equinox to 20 March): myQuran answers 2024 and 2028 too (read
+ * on 11 Oct 2026), and averaged over the eighteen places the step falls on 21 and 22 March in 2024 and
+ * on 21 March alone in 2028, never on 20 March. 2028, never fitted on, is the held-out year: 0 early
+ * and 0 late ends on its 6,588 place-days, worst a minute (the end of eating 2, as in the fitted years).
+ *
+ * Units are the 18 fitted kab/kota: the 13 of the research round and, since the monitor round of
+ * 29 Sep 2026, Kota Medan, Palembang, Semarang, Surabaya and Yogyakarta, whose tables the weekly
+ * monitor first met on 28 Sep 2026: at all five the printed sunrise and Maghrib sit where a −1°
+ * horizon puts them, to the rounding minute, and about 4 min from where −2° would. Their whole 2026
+ * was then fetched from the same source and fitted exactly as the 13 were (ruling R104).
+ *
+ * Rulings R103 and R113: Kemenag prints one table per kabupaten/kota and a user follows their own,
+ * so a unit's circle stays inside its own kab/kota. Each radius is the distance from the unit's
+ * point to the nearest boundary of a kabupaten/kota Kemenag prints separately, on OpenStreetMap's
+ * administrative boundaries (29 Sep 2026, in the engine's own distance), less a 0.5 km buffer for
+ * those boundaries' accuracy, rounded down to 0.1 km and never below 0.1 km, so that the unit's own
+ * point still resolves to it after the app's rounding of a location to three decimals (at most
+ * 0.08 km). A coastline bounds no table, so a circle may cross it (Makassar, Jayapura, Semarang,
+ * Surabaya). Kota Bukittinggi's point is 0.687 km from Kab. Agam: 0.1 km, the city entry and little
+ * else. Beyond a circle the edge applies as it did before the unit existed. Kota Jakarta's own core
+ * (DKI Jakarta, 7.8 km: Bekasi is 8.365 km away) keeps its checked −1° horizon. Ruling R106 closes
+ * ruling R46's reach unit (Jakarta's point riding as the fixed point out to 55 km with the deepest
+ * horizon but without the edge's allowance for an unknown capital: a start could fall seconds
+ * before a neighbouring kabupaten's own table where its seat lies further west): beyond the core the
+ * edge takes over, which is never early against Jakarta's table and every neighbour's for a seat up
+ * to half a degree away. It is at least as accurate as the ruling's other closure, the reach unit
+ * widened by the same allowance (whose fixed point only added lateness east of Jakarta); against the
+ * closed unit itself, each start is 2 min later and sunrise 2 min earlier there. Beyond every unit
+ * (class D, spec §6.3) the highland horizon −2° (the deepest plausible, brief) and 2 min
+ * more for a capital up to half a degree away. At a lowland kab/kota that edge puts sunrise 6–7 min
+ * before Kemenag's and Maghrib 6–7 min after (about 4 min the horizon, 2 the capital's unknown
+ * point, the rest the margins and the rounding), as the monitor measured at the five kota before
+ * they were fitted; it stays, since a kab/kota's horizon class cannot be told without its own table
+ * (Malang, 450 m up, is −1°; Bogor, 260 m, is −2°).
+ */
+object Kemenag {
+    private val ihtiyat = EventOffsets(fajr = 2, sunrise = -2, dhuhr = 2, asr = 2, maghrib = 2, isha = 2)
+
+    val method = TimetableMethod(
+        id = "id.kemenag",
+        fajrAngle = 20.0,
+        isha = IshaRule.Angle(18.0),
+        horizonDeg = -1.0,
+        authorityMinutes = ihtiyat,
+        margins = margins(start = 0, sunrise = -10, fajr = 35, dhuhr = 84, asr = 27, maghrib = 37, isha = 35),
+        imsakMinutesBeforeFajr = 10,
+        dayRule = DayRule.LAG_EQUINOX_KEMENAG,
+    )
+
+    val outside = method.atEdge("id.kemenag.edge", method.margins.widened(EDGE_SECONDS)).copy(horizonDeg = -2.0)
+
+    private class Kabkota(
+        val id: String,
+        val name: String,
+        val lat: Double,
+        val lon: Double,
+        val highland: Boolean,
+        val radiusKm: Double,
+        val margins: EventOffsets,
+    )
+
+    private fun m(fajr: Int, sunrise: Int, dhuhr: Int, asr: Int, maghrib: Int, isha: Int) =
+        EventOffsets(fajr = fajr, sunrise = sunrise, dhuhr = dhuhr, asr = asr, maghrib = maghrib, isha = isha)
+
+    private val fitted = listOf(
+        Kabkota("1301", "Kota Jakarta", -6.21462, 106.84513, highland = false, radiusKm = JAKARTA_CORE_KM, m(16, -9, 71, 25, 13, 14)),
+        Kabkota("0119", "Kota Banda Aceh", 5.54167, 95.33333, highland = false, radiusKm = 0.9, m(12, -5, 70, 27, 12, 12)),
+        Kabkota("2622", "Kota Makassar", -5.14861, 119.43194, highland = false, radiusKm = 4.0, m(13, -7, 72, 20, 10, 11)),
+        Kabkota("1709", "Kota Denpasar", -8.65, 115.21667, highland = false, radiusKm = 3.3, m(9, -9, 68, 20, 9, 10)),
+        Kabkota("3329", "Kota Jayapura", -2.53371, 140.71813, highland = false, radiusKm = 8.9, m(12, -4, 73, 21, 13, 14)),
+        Kabkota("1634", "Kota Malang", -7.9797, 112.6304, highland = false, radiusKm = 2.6, m(8, -8, 69, 19, 7, 9)),
+        Kabkota("1219", "Kota Bandung", -6.92222, 107.60694, highland = true, radiusKm = 3.8, m(8, -8, 67, 19, 9, 8)),
+        Kabkota("3308", "Kab. Jayawijaya", -4.09583, 138.94806, highland = true, radiusKm = 13.3, m(9, -8, 70, 16, 9, 10)),
+        Kabkota("1630", "Kota Batu", -7.87, 112.52833, highland = true, radiusKm = 3.4, m(8, -7, 69, 19, 9, 9)),
+        Kabkota("0313", "Kota Bukittinggi", -0.30907, 100.37055, highland = true, radiusKm = 0.1, m(8, -10, 67, 22, 8, 6)),
+        Kabkota("1222", "Kota Bogor", -6.59444, 106.78917, highland = true, radiusKm = 1.3, m(12, -5, 72, 28, 13, 14)),
+        Kabkota("1208", "Kab. Garut", -7.245, 107.921, highland = true, radiusKm = 3.8, m(14, -5, 74, 27, 13, 14)),
+        Kabkota("1429", "Kab. Wonosobo", -7.35889, 109.90306, highland = true, radiusKm = 9.9, m(8, -9, 69, 19, 8, 9)),
+        // Monitor round (29 Sep 2026, ruling R104): five more lowland kota, fitted over the whole of 2026 like the 13.
+        Kabkota("0228", "Kota Medan", 3.58333, 98.66667, highland = false, radiusKm = 3.3, m(2, -14, 63, 18, 4, 4)),
+        Kabkota("0816", "Kota Palembang", -2.91673, 104.7458, highland = false, radiusKm = 0.6, m(10, -18, 64, 24, 10, 11)),
+        Kabkota("1433", "Kota Semarang", -6.99306, 110.42083, highland = false, radiusKm = 7.3, m(3, -14, 63, 12, 2, 2)),
+        Kabkota("1638", "Kota Surabaya", -7.24917, 112.75083, highland = false, radiusKm = 8.0, m(23, -8, 77, 36, 22, 24)),
+        Kabkota("1505", "Kota Yogyakarta", -7.80139, 110.36472, highland = false, radiusKm = 1.3, m(9, -10, 67, 19, 7, 6)),
+    )
+
+    private fun unitsFor(base: TimetableMethod, idPrefix: String) = fitted.map { k ->
+        AuthorityUnit(
+            id = k.id, name = k.name, point = GeoPoint(k.lat, k.lon), radiusKm = k.radiusKm,
+            method = base.copy(id = "$idPrefix.${k.id}", horizonDeg = if (k.highland) -2.0 else -1.0, margins = k.margins),
+        )
+    }
+
+    val units = UnitSet("id.kemenag", unitsFor(method, "id.kemenag")) { outside }
+
+    val entry: RegistryEntry = single(
+        id = "id.kemenag", nameKey = "authority_kemenag", entryClass = EntryClass.B, method = method,
+        school = AsrSchool.STANDARD, countries = setOf("ID"), nearby = listOf("id.muhammadiyah"),
+    )
+
+    /**
+     * Muhammadiyah's Subuh at 18° (Munas Tarjih XXXI, adopted 24 Mar 2021; it changes Subuh only), with
+     * Kemenag's other parameters and units: a named timetable, a large organised minority (spec §9).
+     */
+    val muhammadiyahMethod = method.copy(id = "id.muhammadiyah", fajrAngle = 18.0)
+
+    val muhammadiyahUnits = UnitSet("id.muhammadiyah", unitsFor(muhammadiyahMethod, "id.muhammadiyah")) {
+        outside.copy(id = "id.muhammadiyah.edge", fajrAngle = 18.0)
+    }
+
+    val muhammadiyah: RegistryEntry = single(
+        id = "id.muhammadiyah", nameKey = "authority_muhammadiyah", entryClass = EntryClass.D_AUTHORITY,
+        method = muhammadiyahMethod, school = AsrSchool.STANDARD, scope = Scope.GLOBAL,
+    )
+
+    val entries = listOf(entry, muhammadiyah)
+
+    private const val EDGE_SECONDS = 120
+
+    /**
+     * Kota Jakarta's own core (rulings R103, R113): DKI Jakarta within its point's distance to the
+     * nearest neighbouring kota, Bekasi (8.365 km on OpenStreetMap's boundaries), less the buffer,
+     * rounded down to 0.1 km.
+     */
+    private const val JAKARTA_CORE_KM = 7.8
+}

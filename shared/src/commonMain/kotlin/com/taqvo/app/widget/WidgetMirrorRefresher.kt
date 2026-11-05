@@ -1,0 +1,62 @@
+package com.taqvo.app.widget
+
+import kotlinx.coroutines.flow.first
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+import com.taqvo.app.i18n.PlatformFormat
+import com.taqvo.app.i18n.createPlatformFormat
+import com.taqvo.app.prayer.PrayerTimesEngine
+import com.taqvo.app.prayer.TimelineBuilder
+import com.taqvo.app.settings.SettingsRepository
+import kotlin.time.Clock
+import kotlin.time.Instant
+
+/**
+ * Rewrites the widget mirror from the stored location and settings, with no screen involved.
+ *
+ * `PrayerViewModel` writes the mirror while the Prayer screen is open, and the mirror's two-day
+ * schedule lets a widget count across prayers on its own after that. This is what pushes the
+ * horizon forward when the app has not been opened, called from:
+ *  - Android's `PrayerAlarmReceiver`, as each prayer arrives;
+ *  - Android's `SystemEventReceiver`, on boot and the other system events it listens for;
+ *  - Android's `NotificationTopUpWorker`, twice a day: the one left when notifications are off;
+ *  - iOS's `BackgroundRefreshBridge`, from its daily background refresh;
+ *  - `refreshForNewTimes` (SettingsRoutes), after a settings change, a new location and, on iOS,
+ *    each time the app is in front (bug hunt B1).
+ *
+ * Cheap (three days of prayer times) and quiet: no location fix is requested, and a missing
+ * location simply writes nothing.
+ */
+object WidgetMirrorRefresher {
+
+    /**
+     * [format] is the app's own, when a caller already holds one in the language it wants written.
+     * Null builds one from the stored clock format, the device's default language and
+     * [settings] - what a caller with no screen of its own passes, and what a caller that has
+     * just changed the clock format passes so the mirror is not written with the format the
+     * composition has yet to rebuild.
+     */
+    suspend fun refresh(
+        settings: SettingsRepository,
+        engine: PrayerTimesEngine,
+        store: KeyValueStore = createWidgetKeyValueStore(),
+        format: PlatformFormat? = null,
+        now: Instant = Clock.System.now(),
+    ): Boolean {
+        val location = settings.location.first() ?: return false
+        val prefs = settings.prayerSettings.first()
+        val zone = TimeZone.of(location.timeZoneId)
+        val localDate = now.toLocalDateTime(zone).date
+        val yesterday = engine.timesFor(location, localDate.plus(-1, DateTimeUnit.DAY), prefs)
+        val today = engine.timesFor(location, localDate, prefs)
+        val tomorrow = engine.timesFor(location, localDate.plus(1, DateTimeUnit.DAY), prefs)
+        // Today's highlight rule: the widgets change in the Ramadan release (ruling R8); the next
+        // prayer looks across yesterday's, which the mirror carries past midnight (spec §3.3).
+        val timeline = TimelineBuilder.buildForWidgets(yesterday, today, tomorrow, now, prefs.showSunrise, zone)
+        val fmt = format ?: createPlatformFormat(settings.clockFormat.first())
+        WidgetMirrorWriter.write(store, timeline, location.timeZoneId, fmt, listOf(today, tomorrow), yesterday)
+        return true
+    }
+}

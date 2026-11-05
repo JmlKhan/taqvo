@@ -1,0 +1,293 @@
+package com.taqvo.app.debug
+
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
+import android.media.MediaPlayer
+import android.util.Log
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import com.taqvo.app.di.appContainer
+import com.taqvo.app.notifications.NotificationKind
+import com.taqvo.app.notifications.RescheduleTrigger
+import com.taqvo.app.notifications.createNotificationScheduler
+import com.taqvo.app.notifications.isDuha
+import com.taqvo.app.notifications.setTahajjud
+import com.taqvo.app.recitation.NowPlayingText
+import com.taqvo.app.recitation.Reciter
+import com.taqvo.app.recitation.Reciters
+import com.taqvo.app.recitation.VoiceStatus
+import com.taqvo.app.recitation.buildSpokenTranslation
+
+/**
+ * Debug-only remote control for the recitation player, so slice 3a task 3 can be verified on a
+ * device before task 4 gives it any UI. Never referenced from `androidMain`: it exists in the
+ * debug variant alone and is not in a release build at all.
+ *
+ * ```
+ * adb shell am broadcast -a com.taqvo.app.debug.RECITATION \
+ *   -n com.taqvo.app/com.taqvo.app.debug.RecitationHarnessReceiver \
+ *   --es cmd load --ei surah 36 --ei ayah 1 --es reciter ar.alafasy
+ * ```
+ *
+ * Commands: `load` (with `--es translation en.sahih` to read that translation aloud after each
+ * ayah), `play`, `pause`, `toggle`, `next`, `prev`, `seek --ei ayah n`, `stop`, `state`,
+ * `reconcile` (adopt the containers pushed onto the device), `focus` (take audio focus away with
+ * a second player, to see the recitation pause), `voices` (what the phone's speech engines answer
+ * for every bundled language, with each chosen voice's features and network flag), `speech --es
+ * translation <id>` (read-aloud changed while a surah plays; `none` turns it off).
+ *
+ * Everything it does is logged under the tag `TaqvoHarness`, including every state change with a
+ * millisecond timestamp — which is how the ayah boundary and the gap are actually measured.
+ */
+class RecitationHarnessReceiver : BroadcastReceiver() {
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val pending = goAsync()
+        val command = intent.getStringExtra("cmd").orEmpty()
+        val reciterId = intent.getStringExtra("reciter") ?: "ar.alafasy"
+        val surah = intent.getIntExtra("surah", 1)
+        val ayah = intent.getIntExtra("ayah", 1)
+        val gapMs = intent.getIntExtra("gap", -1)
+        Log.i(TAG, "cmd=$command reciter=$reciterId surah=$surah ayah=$ayah gap=$gapMs")
+        val player = appContainer.recitationPlayer
+        scope.launch {
+            try {
+                when (command) {
+                    "load" -> {
+                        watch()
+                        // Read-aloud (spec §5.5): the translation read after each ayah, if the
+                        // phone has a voice for its language.
+                        val translation = intent.getStringExtra("translation")
+                        val speech = translation?.let {
+                            buildSpokenTranslation(appContainer.quranRepository, appContainer.speechVoices, it, surah)
+                        }
+                        Log.i(TAG, "speech ${speech?.translationId} ${speech?.texts?.size}")
+                        player.load(
+                            reciter = reciter(reciterId, gapMs),
+                            surah = surah,
+                            startAyah = ayah,
+                            text = NowPlayingText(
+                                title = "Surah $surah",
+                                subtitle = "Mishary Rashid Alafasy",
+                            ),
+                            speech = speech,
+                        )
+                    }
+                    // Read-aloud live (spec §2): `--es translation fr.hamidullah`, or `none` for off.
+                    "speech" -> {
+                        val surahNow = player.state.value.surah ?: surah
+                        val id = intent.getStringExtra("translation")
+                        val speech = id?.takeIf { it != "none" }?.let {
+                            buildSpokenTranslation(appContainer.quranRepository, appContainer.speechVoices, it, surahNow)
+                        }
+                        Log.i(TAG, "setSpeech ${speech?.translationId}")
+                        player.setSpeech(speech)
+                    }
+                    "play" -> player.play()
+                    "pause" -> player.pause()
+                    "toggle" -> player.toggle()
+                    "next" -> player.next()
+                    "prev" -> player.previous()
+                    "seek" -> player.seekToAyah(ayah)
+                    "stop" -> player.stop()
+                    // The store-screenshot run (no finger on the glass): a screen by name, the
+                    // theme, the reading mode and the translation, same words as the iOS harness.
+                    "screen" -> com.taqvo.app.nav.LaunchRequests.openScreen(intent.getStringExtra("name") ?: "prayer")
+                    "search" -> com.taqvo.app.nav.LaunchRequests.search(intent.getStringExtra("q") ?: "")
+                    "theme" -> appContainer.settingsRepository.setThemeMode(
+                        when (intent.getStringExtra("name")) {
+                            "dark" -> com.taqvo.app.design.ThemeMode.DARK
+                            "light" -> com.taqvo.app.design.ThemeMode.LIGHT
+                            else -> com.taqvo.app.design.ThemeMode.SYSTEM
+                        },
+                    )
+                    "mode" -> appContainer.settingsRepository.setReadingMode(
+                        if (intent.getStringExtra("name") == "mushaf") com.taqvo.app.quran.ReadingMode.MUSHAF
+                        else com.taqvo.app.quran.ReadingMode.TRANSLATION,
+                    )
+                    "translation" -> appContainer.settingsRepository.setTranslation(intent.getStringExtra("id") ?: "en.sahih")
+                    // Read-aloud (spec §4): what the phone's engines answer for every bundled language,
+                    // and for each Ready one the chosen voice as its engine lists it — its features,
+                    // its network flag and the app's own offline verdict on the two.
+                    "voices" -> listOf("en", "ar", "fr", "tr", "id", "ur", "bn").forEach { language ->
+                        val status = appContainer.speechVoices.status(language)
+                        Log.i(TAG, "voice $language $status")
+                        if (status is VoiceStatus.Ready) {
+                            Log.i(TAG, "voice $language ${appContainer.speechVoices.describe(status.voice)}")
+                        }
+                    }
+                    "state" -> Log.i(TAG, "state ${player.state.value}")
+                    "reconcile" -> {
+                        val library = appContainer.recitationLibrary
+                        library.reconcile()
+                        // `.first()`, not the Flow itself: logging the Flow prints its identity
+                        // hash and says nothing about which surahs were adopted.
+                        Log.i(
+                            TAG,
+                            "reconciled $reciterId: " +
+                                library.downloaded(reciterId).first().sorted(),
+                        )
+                    }
+                    "focus" -> stealFocus(context)
+                    // The alarm receiver's question and answer (spec §16.5), from a process with
+                    // no Activity: has the phone moved, and where does a background refresh land?
+                    "location" -> {
+                        val refresher = appContainer.locationRefresher
+                        Log.i(TAG, "location lastKnown=${appContainer.locationRepository.lastKnownCoordinates()} hasMoved=${refresher.hasMoved()}")
+                        val landed = refresher.refreshFor(com.taqvo.app.notifications.RescheduleTrigger.ALARM_FIRED)
+                        Log.i(TAG, "location after ALARM_FIRED refresh: ${landed?.cityName} ${landed?.latitude},${landed?.longitude}")
+                    }
+                    // `--es name on|off` switches it; with no name, one fires in a few seconds.
+                    "tahajjud" -> when (intent.getStringExtra("name")) {
+                        "on" -> appContainer.setTahajjud(true)
+                        "off" -> appContainer.setTahajjud(false)
+                        else -> fireTahajjud()
+                    }
+                    // `--es name <VOICE>` (ORIGINAL, MAKKAH, MADINAH, AZEMI, AZEEZ, CUSTOM): that voice, all
+                    // five prayers on Adhan, and one prayer notification through the real scheduler in 8 s.
+                    "adhan" -> fireAdhan(intent.getStringExtra("name") ?: "ORIGINAL")
+                    // `--es name on|off` switches Duha or the iqama (Duha and Iqama spec §3), as
+                    // their Settings cards do, and logs what the new plan arms for it.
+                    "duha", "iqama" -> {
+                        val on = intent.getStringExtra("name") == "on"
+                        val repository = appContainer.settingsRepository
+                        val current = repository.notificationSettings.first()
+                        repository.setNotificationSettings(
+                            if (command == "duha") current.copy(duha = on) else current.copy(iqama = on),
+                        )
+                        val plan = appContainer.notificationCoordinator.reschedule(RescheduleTrigger.SETTINGS_CHANGED)
+                        plan.filter { if (command == "duha") it.kind.isDuha else it.kind == NotificationKind.IQAMA }
+                            .forEach { Log.i(TAG, "$command: ${it.id} at ${it.instant} until ${it.windowEnd} ${it.sound} | ${it.title} | ${it.body}") }
+                        Log.i(TAG, "$command ${if (on) "on" else "off"}: plan of ${plan.size}")
+                    }
+                    else -> Log.w(TAG, "unknown command \"$command\"")
+                }
+            } catch (e: Throwable) {
+                Log.e(TAG, "command $command failed", e)
+            } finally {
+                pending.finish()
+            }
+        }
+    }
+
+    /**
+     * Tahajjud a few seconds from now instead of at two in the morning, through the real
+     * scheduler, alarm and receiver: the entry is the plan's own first Tahajjud with its instant
+     * moved. The receiver reschedules the true plan once it has fired, so nothing of this
+     * outlives the test.
+     */
+    private suspend fun fireTahajjud() {
+        val plan = appContainer.notificationCoordinator.reschedule(RescheduleTrigger.SETTINGS_CHANGED)
+        val entry = plan.firstOrNull { it.kind == NotificationKind.TAHAJJUD }
+        if (entry == null) {
+            Log.w(TAG, "tahajjud: nothing planned — is it switched on, with a location set?")
+            return
+        }
+        val soon = entry.copy(id = "TAHAJJUD-debug", instant = Clock.System.now() + 8.seconds)
+        createNotificationScheduler().scheduleAll(plan + soon)
+        Log.i(TAG, "tahajjud: real one at ${entry.instant}, test one in 8 s: ${soon.title} | ${soon.body} | ${soon.sound}")
+    }
+
+    /** The adhan test: [voiceName], every prayer on Adhan, and the plan's next prayer moved to 8 s from now. */
+    private suspend fun fireAdhan(voiceName: String) {
+        val repository = appContainer.settingsRepository
+        val current = repository.notificationSettings.first()
+        val voice = com.taqvo.app.domain.AdhanVoice.valueOf(voiceName)
+        repository.setNotificationSettings(
+            current.copy(voice = voice, sounds = current.sounds.mapValues { com.taqvo.app.domain.PrayerSound.ADHAN }),
+        )
+        val plan = appContainer.notificationCoordinator.reschedule(RescheduleTrigger.SETTINGS_CHANGED)
+        val entry = plan.firstOrNull { it.kind == NotificationKind.PRAYER && it.sound == com.taqvo.app.domain.PrayerSound.ADHAN }
+        if (entry == null) {
+            Log.w(TAG, "adhan: nothing planned — are notifications on, with a location set?")
+            return
+        }
+        val soon = entry.copy(id = "PRAYER-debug", instant = Clock.System.now() + 8.seconds)
+        createNotificationScheduler().scheduleAll(plan + soon)
+        Log.i(TAG, "adhan: $voice, test one in 8 s: ${soon.title} | ${soon.sound} ${soon.voice}")
+    }
+
+    /** One collector for the life of the process, logging every state the player publishes. */
+    private fun watch() {
+        if (watching?.isActive == true) return
+        watching = scope.launch {
+            appContainer.recitationPlayer.state.collectLatest {
+                Log.i(
+                    TAG,
+                    "state ayah=${it.ayah}/${it.ayahCount} playing=${it.playing} speaking=${it.speaking} " +
+                        "buffering=${it.buffering} pos=${it.positionMs} dur=${it.durationMs} " +
+                        "clock=${it.surahPositionMs}/${it.surahDurationMs} surah=${it.surah}",
+                )
+            }
+        }
+    }
+
+    /**
+     * A second player that asks for the focus with `AUDIOFOCUS_GAIN`, which is what a call, an
+     * alarm or another music app does. The recitation should pause on its own.
+     */
+    private fun stealFocus(context: Context) {
+        val manager = context.getSystemService(AudioManager::class.java)
+        val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build(),
+            )
+            .build()
+        val granted = manager.requestAudioFocus(request)
+        Log.i(TAG, "focus request granted=$granted")
+        // Something has to actually make a noise, or the platform may hand the focus straight
+        // back. The notification sound is always present on an emulator image.
+        runCatching {
+            val uri = android.media.RingtoneManager
+                .getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION)
+            MediaPlayer.create(context, uri)?.apply {
+                setOnCompletionListener {
+                    it.release()
+                    manager.abandonAudioFocusRequest(request)
+                    Log.i(TAG, "focus abandoned")
+                }
+                start()
+            }
+        }.onFailure { Log.w(TAG, "could not sound the interruption", it) }
+    }
+
+    /**
+     * The launch table's gap and id are enough to drive the player; the rest of [Reciter] is
+     * manifest data no part of playback reads. `--ei gap` overrides it, to see the boundary with
+     * and without silence between ayahs.
+     */
+    private fun reciter(id: String, gapMs: Int): Reciter {
+        val launch = Reciters.LAUNCH.firstOrNull { it.id == id }
+        return Reciter(
+            id = id,
+            nameEn = id,
+            nameAr = id,
+            style = "murattal",
+            kbps = 64,
+            gapMs = if (gapMs >= 0) gapMs else (launch?.gapMs ?: 300),
+            hue = launch?.hue?.name ?: "AMBER",
+            release = "audio-$id-v1",
+            totalBytes = 0L,
+        )
+    }
+
+    private companion object {
+        const val TAG = "TaqvoHarness"
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+        var watching: Job? = null
+    }
+}

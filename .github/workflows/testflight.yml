@@ -1,0 +1,81 @@
+name: TestFlight
+
+# Archives the signed App Store build and uploads it to App Store Connect, where it appears under
+# TestFlight once Apple has processed it. Run by hand from the Actions tab.
+#
+# Signing uses an App Store Connect API key (Users and Access › Integrations › App Store Connect
+# API, Admin role so Xcode can create the cloud-managed distribution certificate and register
+# com.taqvo.app, com.taqvo.app.widget and group.taqvo.app under the team in Config.xcconfig).
+# Repository secrets:
+#   ASC_KEY_ID      the key's ID
+#   ASC_ISSUER_ID   the issuer ID shown above the keys list
+#   ASC_KEY_P8      the AuthKey_<id>.p8 file, base64-encoded (base64 -i AuthKey_XXXX.p8)
+on:
+  workflow_dispatch:
+    inputs:
+      build_number:
+        description: "CFBundleVersion for this upload (blank: the one in Info.plist). Must be higher than the last uploaded build."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - name: Xcode
+        run: |
+          echo "DEVELOPER_DIR=$(xcode-select -p)" >> "$GITHUB_ENV"
+          xcodebuild -version
+      - name: Kotlin/Native toolchain cache
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('gradle/libs.versions.toml') }}
+      - name: Build number
+        if: inputs.build_number != ''
+        env:
+          BUILD_NUMBER: ${{ inputs.build_number }}
+        run: |
+          [[ $BUILD_NUMBER =~ ^[0-9]+$ ]] || { echo "build_number must be a whole number" >&2; exit 1; }
+          for plist in iosApp/iosApp/Info.plist iosApp/TaqvoWidget/Info.plist; do
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$plist"
+          done
+      - name: App Store Connect API key
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_KEY_P8" ] || { echo "ASC_KEY_ID and ASC_KEY_P8 secrets are required" >&2; exit 1; }
+          key="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          echo "$ASC_KEY_P8" | base64 --decode > "$key"
+          echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
+      - name: Archive and upload
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: ./scripts/ios-release.sh
+      - name: Remove the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP"/AuthKey_*.p8
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        if: failure()
+        with:
+          name: testflight-logs
+          path: |
+            build/ios-archive/**/*.log
+            build/ios-archive/**/*.plist
+          if-no-files-found: ignore

@@ -1,0 +1,188 @@
+package com.taqvo.app.di
+
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
+import com.taqvo.app.adhkar.AdhkarSet
+import com.taqvo.app.audio.ClipPlayer
+import com.taqvo.app.feature.recitation.RecitationController
+import com.taqvo.app.feature.recitation.asPort
+import com.taqvo.app.feature.recitation.asRecitationPort
+import com.taqvo.app.feature.recitation.readAloudPort
+import com.taqvo.app.city.CityRepository
+import com.taqvo.app.location.LocationRefresher
+import com.taqvo.app.location.LocationRepository
+import com.taqvo.app.location.createLocationProvider
+import com.taqvo.app.notifications.NotificationCoordinator
+import com.taqvo.app.notifications.adhkarNotificationId
+import com.taqvo.app.notifications.createNotificationScheduler
+import com.taqvo.app.prayer.PrayerTimesEngine
+import com.taqvo.app.quran.QuranRepository
+import com.taqvo.app.recitation.ManifestRefresher
+import com.taqvo.app.recitation.RecitationEngagement
+import com.taqvo.app.recitation.RecitationPlayer
+import com.taqvo.app.recitation.SpeechVoices
+import com.taqvo.app.recitation.adhkarClipBytes
+import com.taqvo.app.recitation.createManifestProvider
+import com.taqvo.app.recitation.createSpeechVoices
+import com.taqvo.app.recitation.createSurahDownloader
+import com.taqvo.app.recitation.createRecitationLibrary
+import com.taqvo.app.recitation.createRecitationPaths
+import com.taqvo.app.recitation.recitationPreviewBytes
+import com.taqvo.app.resources.Res
+import com.taqvo.app.settings.AdhkarStore
+import com.taqvo.app.settings.BookmarkStore
+import com.taqvo.app.settings.DataStoreAdhkarStore
+import com.taqvo.app.settings.SettingsRepository
+import com.taqvo.app.settings.TasbeehStore
+import com.taqvo.app.settings.createDataStore
+import com.taqvo.app.widget.createWidgetPinRequester
+import com.taqvo.app.widget.createWidgetPlacementSource
+import com.taqvo.app.wallpaper.createWallpaperSetter
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Clock
+
+/** Manual construction. A DI framework earns its place when there is a graph worth managing. */
+class AppContainer {
+    private val dataStore = createDataStore()
+    val settingsRepository = SettingsRepository(dataStore)
+    val bookmarkStore = BookmarkStore(dataStore)
+    val tasbeehStore = TasbeehStore(dataStore)
+    val adhkarStore: AdhkarStore by lazy { DataStoreAdhkarStore(dataStore) }
+    val cityRepository = CityRepository(
+        loadCsv = { Res.readBytes("files/cities.csv").decodeToString() },
+        // `Res.readBytes` throws rather than returning null for a file that is not bundled, and
+        // the six name files cover only six of the languages the app can be read in.
+        loadNames = { language ->
+            try {
+                Res.readBytes("files/city-names-$language.csv").decodeToString()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (missing: Exception) {
+                null
+            }
+        },
+    )
+    val quranRepository by lazy { QuranRepository() }
+
+    /**
+     * Recitation (spec 3a). The paths are shared by both so the library and the manifest cache
+     * agree on where `<files>/quran` is; both are `by lazy` because touching them asks the
+     * platform for a directory (and, on iOS, creates it), which nothing that never opens the
+     * Quran should pay for.
+     */
+    val recitationPaths by lazy { createRecitationPaths() }
+    val recitationLibrary by lazy { createRecitationLibrary(dataStore, recitationPaths) }
+    val manifestProvider by lazy { createManifestProvider(recitationPaths) }
+
+    // ── Recitation downloads (spec 3a §7, slice 3a task 2). One block, kept together. ──
+    // Both are `by lazy` for the same reason as the three above: constructing the downloader
+    // reaches for WorkManager on Android and builds a background URL session on iOS, and an
+    // install that never opens the Quran should pay for neither.
+    val surahDownloader by lazy {
+        createSurahDownloader(recitationLibrary, manifestProvider, settingsRepository, quranRepository)
+    }
+    // Privacy spec §2: the daily catalogue fetch waits until the reader has used recitation, so
+    // an install that never opens it never opens a socket.
+    val recitationEngagement by lazy { RecitationEngagement(dataStore, recitationLibrary) }
+    val manifestRefresher by lazy {
+        ManifestRefresher(manifestProvider, dataStore, engaged = { recitationEngagement.isEngaged() })
+    }
+    // ── end recitation downloads ──────────────────────────────────────────────────────
+    // Slice 3a task 3: the player. Lazy for a stronger reason than the three above — building it
+    // is free, but its first `load` binds a MediaSessionService on Android and claims the audio
+    // session on iOS, and nothing that never plays a recitation should pay for either. One per
+    // process, because a media session is a process-wide thing and two would fight over the
+    // notification.
+    val recitationPlayer by lazy { RecitationPlayer(recitationLibrary) }
+
+    /** Read-aloud spec §4: the phone's own offline voices, queried lazily like the player above. */
+    val speechVoices: SpeechVoices by lazy { createSpeechVoices() }
+
+    /**
+     * Slice 3a task 4a: the one place the recitation surface's decisions live. Its own scope,
+     * because it outlives every composition — the bar goes on playing while the reader walks to
+     * Settings — and `Main.immediate`, because the player it drives is a `MediaController` on
+     * Android, which must be touched from the main thread.
+     *
+     * Not lazy in practice: `App` collects its state from the first frame, since the player bar
+     * is a scaffold overlay that has to be able to appear on any Quran screen. That does make
+     * every launch build the downloader, which on Android asks WorkManager for its instance —
+     * cheap, and WorkManager is already initialised by its own start-up provider by then.
+     */
+    val recitationController by lazy {
+        RecitationController(
+            manifests = manifestProvider::current,
+            library = recitationLibrary.asPort(),
+            downloader = surahDownloader.asPort(),
+            player = recitationPlayer.asPort(),
+            settings = settingsRepository.asRecitationPort(),
+            quran = quranRepository,
+            clips = ClipPlayer().asPort(),
+            previewBytes = ::recitationPreviewBytes,
+            adhkarClipBytes = ::adhkarClipBytes,
+            // The handler, not just the SupervisorJob: a supervisor stops a failed child taking
+            // its siblings, but an uncaught throw still reaches the default handler and the
+            // process with it.
+            scope = CoroutineScope(
+                SupervisorJob() + Dispatchers.Main.immediate + CoroutineExceptionHandler { _, _ -> },
+            ),
+            // Swallowed for the same reason the refresh is: a flag that failed to write is
+            // retried by the next tap, and a tap to play must never be the thing that takes the
+            // process down. Cancellation still propagates.
+            markEngaged = {
+                try {
+                    recitationEngagement.mark()
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (e: Exception) {
+                    // Next tap.
+                }
+            },
+            refreshCatalogue = {
+                withContext(Dispatchers.Default) { runCatching { manifestRefresher.refreshIfStale() } }
+            },
+            readAloud = readAloudPort(settingsRepository, speechVoices),
+        )
+    }
+
+    val locationRepository = LocationRepository(createLocationProvider())
+    val prayerTimesEngine = PrayerTimesEngine()
+    val widgetPinRequester = createWidgetPinRequester()
+    // Stateless — it asks the platform on every call and caches nothing, because widgets are
+    // added and removed outside the app.
+    val widgetPlacementSource = createWidgetPlacementSource()
+    val wallpaperSetter = createWallpaperSetter()
+    val locationRefresher = LocationRefresher(locationRepository, cityRepository, settingsRepository)
+
+    /** The one platform scheduler: the coordinator arms whole plans with it, and a finished set of
+     * adhkar withdraws its own reminder through it (adhkar spec §5) without a reschedule. */
+    val notificationScheduler = createNotificationScheduler()
+    val notificationCoordinator = NotificationCoordinator(
+        engine = prayerTimesEngine,
+        settingsRepository = settingsRepository,
+        locationOf = { settingsRepository.location.first() },
+        scheduler = notificationScheduler,
+        now = { Clock.System.now() },
+        locationFor = { locationRefresher.refreshFor(it) },
+        // A set said in full has no reminder armed for it again (adhkar spec §5): its id, from
+        // the date the set was last finished. An old date names a day the plan no longer reaches.
+        doneAdhkar = {
+            AdhkarSet.entries.mapNotNull { set -> adhkarStore.done(set).first()?.let { adhkarNotificationId(set, it) } }.toSet()
+        },
+    )
+}
+
+/**
+ * One graph per process. DataStore refuses two live instances over the same file; that risk is
+ * now closed in `createDataStore()` itself, which hands out one process-wide, lazily created
+ * instance to every caller (this container, `SystemEventReceiver`, `BackgroundRefreshBridge`).
+ * The container still should not be rebuilt when an Activity is recreated or a view controller
+ * re-created — there is no reason to pay for a second `AppContainer` graph — but doing so would
+ * no longer crash on the DataStore file itself. On Android this is first touched from
+ * `MainActivity.onCreate`, after `appContext` is assigned.
+ */
+val appContainer: AppContainer by lazy { AppContainer() }

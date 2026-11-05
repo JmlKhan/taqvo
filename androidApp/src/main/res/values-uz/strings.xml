@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Taqvo</string>
+    <string name="widget_small_label">Keyingi namoz</string>
+    <string name="widget_medium_label">Namoz vaqtlari</string>
+    <string name="widget_ayah_label">Kun oyati</string>
+    <string name="widget_small_description">Keyingi namoz va jonli teskari sanoq.</string>
+    <string name="widget_medium_description">Keyingi namoz, teskari sanoq va bugungi vaqtlar.</string>
+    <string name="widget_ayah_description">Bugungi oyat, tarjimasi bilan.</string>
+    <string name="widget_ayah_a11y_reference">%1$s, %2$s-oyat</string>
+    <string name="widget_dua_label">Kun duosi</string>
+    <string name="widget_dua_description">Bugungi duo, tarjimasi bilan.</string>
+    <string name="widget_dua_reference">Hisnul-muslim %1$s</string>
+</resources>

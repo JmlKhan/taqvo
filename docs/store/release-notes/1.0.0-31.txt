@@ -1,0 +1,28 @@
+<en-GB>
+• Fixes a stability issue when a recitation starts playing.
+• Recitation downloads update their notification far less often, which is lighter on the phone and the battery.
+</en-GB>
+<ar>
+• إصلاح مشكلة في الاستقرار عند بدء التلاوة.
+• تنزيلات التلاوة تحدّث إشعارها بوتيرة أقل بكثير، وهذا أخفّ على الهاتف والبطارية.
+</ar>
+<fr-FR>
+• Correction d’un problème de stabilité au lancement d’une récitation.
+• Les téléchargements de récitations mettent à jour leur notification bien moins souvent : c’est plus léger pour le téléphone et la batterie.
+</fr-FR>
+<tr-TR>
+• Tilavet başlatılırken görülen bir kararlılık sorunu giderildi.
+• Tilavet indirmeleri bildirimini artık çok daha seyrek güncelliyor; bu, telefonu ve pili daha az yorar.
+</tr-TR>
+<id>
+• Memperbaiki masalah kestabilan saat tilawah mulai diputar.
+• Unduhan tilawah kini jauh lebih jarang memperbarui notifikasinya, sehingga lebih ringan bagi ponsel dan baterai.
+</id>
+<ur>
+• تلاوت شروع ہوتے وقت استحکام کا ایک مسئلہ دور کیا گیا۔
+• تلاوت کے ڈاؤن لوڈ اب اپنی اطلاع بہت کم بار تازہ کرتے ہیں، جو فون اور بیٹری دونوں پر ہلکا ہے۔
+</ur>
+<bn-BD>
+• তিলাওয়াত শুরু হওয়ার সময়ের একটি স্থিতিশীলতার সমস্যা ঠিক করা হয়েছে।
+• তিলাওয়াত ডাউনলোড এখন অনেক কম ঘন ঘন তার নোটিফিকেশন হালনাগাদ করে, যা ফোন ও ব্যাটারির জন্য হালকা।
+</bn-BD>

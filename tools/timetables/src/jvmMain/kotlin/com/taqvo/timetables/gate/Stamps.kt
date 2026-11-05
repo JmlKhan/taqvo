@@ -1,0 +1,219 @@
+package com.taqvo.timetables.gate
+
+import com.taqvo.app.prayer.engine.method.TimetableMethod
+import com.taqvo.app.prayer.engine.registry.Resolution
+import com.taqvo.timetables.Json
+import java.io.File
+import java.security.MessageDigest
+
+/**
+ * The gate's stamps (spec §5): per entry, what was checked and how it came out, as statistics only.
+ * A stamp never holds an official time: places, first and last date, the checked dates as runs
+ * (for the entry, each unit and, for a cautious entry, each member at each point its rows were
+ * read at — ruling R115: a page shows only days some table was checked on — with the days the gate
+ * file excuses there and the kind of reason, never its words: ruling R117), place-days, Ramadan
+ * days, early and late-end counts per event, the late histogram, the exact share, the worst late
+ * minutes, the cells declared not followed and their dates (ruling R82), a cautious entry's
+ * Maghrib cells the far-north guard read otherwise than as printed (ruling R156) and its place-days
+ * that show no Maghrib end (ruling R158), and the engine
+ * hash they were measured on. Committed as `official/stamps/<entry>.json`; the same inputs always
+ * write the same bytes.
+ *
+ * The engine hash covers the engine's core (everything under `prayer/engine/` but the authority
+ * files and their data, plus the Umm al-Qura dates, the `Prayer` keys and the Hijri calendar every
+ * Ramadan falls back to) and the entry's own methods as resolved at each checked point, so one
+ * authority's change leaves every other entry's stamp as it was. The methods are hashed in [Canonical]
+ * words, so the Mac and the Linux runner write the same hash for the same engine.
+ */
+object Stamps {
+
+    /** Writes a stamp for each entry of [result] with checked days into [dir]; returns the files. */
+    fun write(result: GateResult, dir: File, repoRoot: File): List<File> {
+        dir.mkdirs()
+        val core = coreHash(repoRoot)
+        return result.entries.values.filter { it.placeDayCount > 0 }.map { s ->
+            val file = dir.resolve("${s.entry.id}.json")
+            file.writeText(Json.pretty(stamp(s, core)))
+            file
+        }
+    }
+
+    /** One entry's stamp, as JSON values. */
+    fun stamp(s: EntryStats, coreHash: String): Map<String, Any?> = linkedMapOf<String, Any?>(
+        "entry" to s.entry.id,
+        "class" to s.classes.joinToString("/") { it.label() },
+        "engineHash" to engineHash(coreHash, s.fingerprints),
+        // Early starts, late ends, cells over the late limit and days out of order: 0 when green.
+        "broken" to s.broken,
+        "places" to s.places.size,
+        "first" to s.first?.toString(),
+        "last" to s.last?.toString(),
+        // The days any row compared, as runs: the envelope first..last may have holes (ruling R115).
+        "checked" to dateRanges(s.dates),
+        "placeDays" to s.placeDayCount,
+        "heldOutDays" to s.testDays,
+        // Place-days in Ramadan by Umm al-Qura's own dates.
+        "ramadanDays" to s.ramadanDays,
+        "outOfOrderDays" to s.outOfOrder,
+        // Lines the reader could not take (skipped), and lines repeating a date (each checked).
+        "unreadableLines" to s.unreadable,
+        "repeatedLines" to s.duplicates,
+        "events" to events(s.events),
+        // The same over the held-out rows alone: the proof proper (spec §5).
+        "heldOut" to linkedMapOf(
+            "placeDays" to s.testDays,
+            "ramadanDays" to s.testRamadanDays,
+            "events" to events(s.heldOut),
+        ),
+        // Ruling R156, a cautious entry's far-north guard: each member whose printed Maghrib was not the bar on some
+        // days (its far-north or winter rule set it, or the real sun did not set there): those days, how many were
+        // checked against its Maghrib from the sun, and the shown Maghrib less its printed one, in minutes (below
+        // zero: before it); and the cells no member's time checked, with their dates. Written only where there are some.
+        "maghribGuard" to if (s.maghribGuards.isEmpty() && s.maghribGuardUnchecked == 0) null else linkedMapOf(
+            "uncheckedDays" to s.maghribGuardUnchecked.takeIf { it > 0 },
+            "uncheckedDates" to s.maghribGuardUncheckedDates.takeIf { it.isNotEmpty() }?.let(::dateRanges),
+            "members" to s.maghribGuards.entries.associate { (member, g) ->
+                member to linkedMapOf(
+                    "days" to g.days, "checkedAtSun" to g.atSun, "leastGap" to g.least, "mostGap" to g.most,
+                    "dates" to dateRanges(g.dates),
+                )
+            }.takeIf { it.isNotEmpty() },
+        ).filterValues { it != null },
+        // Ruling R158, a cautious entry's place-days that show no Maghrib end (no end in play after the Maghrib shown: a
+        // member's Isha has begun by then), and their dates. Written only where there are some; recorded, never broken.
+        "maghribNoEnd" to if (s.maghribNoEnd == 0) null else linkedMapOf("days" to s.maghribNoEnd, "dates" to dateRanges(s.maghribNoEndDates)),
+        // A cautious entry's members: each one's checked days, and by the point its rows were read at
+        // (ruling R115: a place is proven only where every member's table was checked near it).
+        // Ruling R117: and the days its rows there leave out for a reason the gate file records, by
+        // point and by why ("fault": printed wrongly; "unpublished": not printed) — dates only.
+        "members" to if (s.memberDays.isEmpty()) null else s.memberDays.entries.associate { (member, points) ->
+            member to linkedMapOf(
+                "checked" to dateRanges(points.values.flatten()),
+                "points" to points.entries.associate { (point, dates) -> point to dateRanges(dates) },
+                "excused" to s.memberExcused[member]?.takeIf { it.isNotEmpty() }?.entries?.associate { (point, kinds) ->
+                    point to kinds.entries.associate { (kind, dates) -> kind.key to dateRanges(dates) }
+                },
+            ).filterValues { it != null }
+        },
+        // The limits the events were held to (rulings R37, R41): each event's exception from its unit,
+        // else its entry, else its class's.
+        "lateLimits" to limits(s.events),
+        // Per authority unit: its own place-days, checked days, limits and tally.
+        "units" to if (s.units.isEmpty()) null else s.units.entries.associate { (id, u) ->
+            id to linkedMapOf<String, Any?>(
+                "name" to u.name,
+                "placeDays" to u.placeDays.size,
+                "checked" to dateRanges(u.placeDays),
+                "broken" to u.broken,
+                "lateLimits" to limits(u.events),
+                "events" to events(u.events),
+            )
+        },
+    ).filterValues { it != null }
+
+    // An event only promise-only rows read (GateRow.promiseOnly: a table the place may not follow, such as ISNA's West
+    // Island Hanafi Asr under Canada's cautious times) has no cell in the proof, so it is left out of the stamp.
+    private fun events(events: Map<Event, EventStats>): Map<String, Any?> = events.entries.filter { (_, e) -> e.checked > 0 || e.declared > 0 }.associate { (event, e) ->
+        event.key to linkedMapOf(
+            "checked" to e.checked,
+            if (event.isStart) ("early" to e.early) else ("lateEnd" to e.lateEnd),
+            // Minutes on the safe side: late for a start, early for an end.
+            "late" to linkedMapOf("0" to e.late[0], "1" to e.late[1], "2" to e.late[2], "3+" to e.late[3]),
+            "exactShare" to Math.round(e.exact * 10_000) / 10_000.0,
+            "worstLate" to e.worst,
+            "lateLimit" to e.limits.maxOrNull(),
+            "lateLimitFrom" to e.applied.values.joinToString(", ") { it.source },
+            "overLimit" to e.over,
+            // Cells the day declared not followed (ruling R82), written only where there are some.
+            "declared" to e.declared.takeIf { it > 0 },
+            "declaredDates" to e.declaredDates.takeIf { it.isNotEmpty() }?.let(::dateRanges),
+        ).filterValues { it != null }
+    }
+
+    /**
+     * Each limit applied, "<source>: <minutes> min", with its reason and the events it covered.
+     * Two limits merge into one entry — their events unioned — only when their source, minutes
+     * and reason are all equal, i.e. they are the same [Limit]. Two *different* limits (different
+     * reasons) can still share a source and minutes: DUM RF's Moscow Fajr and its end-of-eating
+     * limit are both 4 min from "unit moscow", but for different reasons. Each then keeps its own
+     * entry, disambiguated by its earliest event so the label stays readable and deterministic,
+     * e.g. "unit moscow: 4 min (fajr)" and "unit moscow: 4 min (endOfEating)".
+     */
+    private fun limits(events: Map<Event, EventStats>): Map<String, Any?> {
+        val found = LinkedHashMap<Limit, MutableList<String>>()
+        for ((event, e) in events) for (limit in e.applied.values) found.getOrPut(limit) { mutableListOf() } += event.key
+        val entries = found.entries.sortedWith(compareBy({ it.key.source }, { it.key.minutes }, { it.value.sorted().firstOrNull() ?: "" }))
+        fun label(limit: Limit) = "${limit.source}: ${limit.minutes} min"
+        val collisions = entries.groupingBy { label(it.key) }.eachCount()
+        return entries.associate { (limit, keys) ->
+            val base = label(limit)
+            val key = if (collisions.getValue(base) > 1) "$base (${keys.sorted().first()})" else base
+            key to linkedMapOf<String, Any?>("reason" to limit.reason, "events" to keys).filterValues { it != null }
+        }
+    }
+
+    /** The core's sources, hashed with their paths (see the class comment). */
+    fun coreHash(repoRoot: File): String = hashSources(repoRoot, wholeEngine = false)
+
+    /**
+     * The whole engine hashed the same way, the authority files and their data included: what the
+     * monitor remembers each table was checked with, so that any engine or registry change has every
+     * held table checked again (one authority's change re-checks every table; that costs seconds).
+     */
+    fun wholeEngineHash(repoRoot: File): String = hashSources(repoRoot, wholeEngine = true)
+
+    private fun hashSources(repoRoot: File, wholeEngine: Boolean): String {
+        val engine = repoRoot.resolve("shared/src/commonMain/kotlin/com/taqvo/app/prayer/engine")
+        val files = engine.walkTopDown().filter { it.isFile && it.extension == "kt" }.filter { file ->
+            val path = file.relativeTo(engine).invariantSeparatorsPath
+            wholeEngine || (!path.startsWith("registry/authorities/") && (!path.startsWith("registry/data/") || path == "registry/data/UmmAlQuraDates.kt"))
+        }.toList() + listOf(
+            repoRoot.resolve("widgetcore/src/commonMain/kotlin/com/taqvo/app/domain/Prayer.kt"),
+            repoRoot.resolve("shared/src/commonMain/kotlin/com/taqvo/app/hijri/TabularHijriCalendar.kt"),
+        )
+        val digest = MessageDigest.getInstance("SHA-256")
+        for (file in files.sortedBy { it.relativeTo(repoRoot).invariantSeparatorsPath }) {
+            require(file.isFile) { "engine source missing: $file" }
+            digest.update(file.relativeTo(repoRoot).invariantSeparatorsPath.toByteArray())
+            digest.update(0)
+            digest.update(file.readBytes())
+            digest.update(0)
+        }
+        return hex(digest.digest())
+    }
+
+    /** The stamp's hash: the core's and every method the entry was checked with. */
+    fun engineHash(coreHash: String, fingerprints: Collection<String>): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        digest.update(coreHash.toByteArray())
+        fingerprints.sorted().forEach {
+            digest.update(0)
+            digest.update(it.toByteArray())
+        }
+        return hex(digest.digest()).take(16)
+    }
+
+    /**
+     * What decided a row's days: the class, the points and each method, the same on every run and every
+     * machine ([Canonical]: no double printed, so neither `Double.toString` nor a maths routine's last bit
+     * can move it).
+     */
+    fun fingerprint(resolution: Resolution): String = buildString {
+        append(resolution.entry.id).append(' ').append(resolution.entryClass).append(' ').append(resolution.entry.school)
+        append(" at ").append(Canonical.of(resolution.point))
+        append(" unit ").append(Canonical.of(resolution.unitName)).append(' ').append(Canonical.of(resolution.unitPoint))
+        resolution.method?.let { append(' ').append(fingerprint(it)) }
+        resolution.members.forEach { append(" member ").append(it.id).append('#').append(it.shareRank).append(' ').append(fingerprint(it.method)) }
+        // Another entry's tables riding beside the place (Resolution.alongside, the owner's decision of 17 Oct 2026).
+        resolution.alongside.forEach { append(" alongside ").append(Canonical.of(it)) }
+    }
+
+    /**
+     * [method] in [Canonical] words: every field by name, its curves by content in whole millionths of a
+     * degree, its clock rule's constants likewise. It once printed through the data class's `toString`,
+     * whose doubles, with every digit, carried the last bits `sin` and `cos` give on each CPU.
+     */
+    fun fingerprint(method: TimetableMethod): String = Canonical.of(method)
+
+    private fun hex(bytes: ByteArray) = bytes.joinToString("") { "%02x".format(it) }
+}

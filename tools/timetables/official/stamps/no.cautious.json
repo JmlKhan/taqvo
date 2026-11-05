@@ -1,0 +1,324 @@
+{
+  "entry": "no.cautious",
+  "class": "C",
+  "engineHash": "fdfd5dd3312ed9b7",
+  "broken": 0,
+  "places": 5,
+  "first": "2026-01-01",
+  "last": "2027-12-31",
+  "checked": ["2026-01-01..2027-12-31"],
+  "placeDays": 2648,
+  "heldOutDays": 2648,
+  "ramadanDays": 205,
+  "outOfOrderDays": 0,
+  "unreadableLines": 0,
+  "repeatedLines": 0,
+  "events": {
+    "fajr": {
+      "checked": 2648,
+      "early": 0,
+      "late": {
+        "0": 0,
+        "1": 463,
+        "2": 90,
+        "3+": 2095
+      },
+      "exactShare": 0,
+      "worstLate": 101,
+      "lateLimit": 101,
+      "lateLimitFrom": "entry no.cautious",
+      "overLimit": 0
+    },
+    "sunrise": {
+      "checked": 2648,
+      "lateEnd": 0,
+      "late": {
+        "0": 1290,
+        "1": 604,
+        "2": 4,
+        "3+": 750
+      },
+      "exactShare": 0.4872,
+      "worstLate": 58,
+      "lateLimit": 58,
+      "lateLimitFrom": "entry no.cautious",
+      "overLimit": 0
+    },
+    "dhuhr": {
+      "checked": 2648,
+      "early": 0,
+      "late": {
+        "0": 896,
+        "1": 613,
+        "2": 3,
+        "3+": 1136
+      },
+      "exactShare": 0.3384,
+      "worstLate": 6,
+      "lateLimit": 6,
+      "lateLimitFrom": "entry no.cautious",
+      "overLimit": 0
+    },
+    "asrStandard": {
+      "checked": 2648,
+      "early": 0,
+      "late": {
+        "0": 1349,
+        "1": 667,
+        "2": 0,
+        "3+": 632
+      },
+      "exactShare": 0.5094,
+      "worstLate": 6,
+      "lateLimit": 8,
+      "lateLimitFrom": "entry no.cautious",
+      "overLimit": 0
+    },
+    "asrHanafi": {
+      "checked": 730,
+      "early": 0,
+      "late": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3+": 730
+      },
+      "exactShare": 0,
+      "worstLate": 7,
+      "lateLimit": 8,
+      "lateLimitFrom": "entry no.cautious",
+      "overLimit": 0
+    },
+    "maghrib": {
+      "checked": 2648,
+      "early": 0,
+      "late": {
+        "0": 1400,
+        "1": 660,
+        "2": 202,
+        "3+": 386
+      },
+      "exactShare": 0.5287,
+      "worstLate": 50,
+      "lateLimit": 50,
+      "lateLimitFrom": "entry no.cautious",
+      "overLimit": 0
+    },
+    "isha": {
+      "checked": 2648,
+      "early": 0,
+      "late": {
+        "0": 719,
+        "1": 527,
+        "2": 106,
+        "3+": 1296
+      },
+      "exactShare": 0.2715,
+      "worstLate": 135,
+      "lateLimit": 135,
+      "lateLimitFrom": "entry no.cautious",
+      "overLimit": 0
+    },
+    "endOfEating": {
+      "checked": 2648,
+      "lateEnd": 0,
+      "late": {
+        "0": 760,
+        "1": 502,
+        "2": 104,
+        "3+": 1282
+      },
+      "exactShare": 0.287,
+      "worstLate": 57,
+      "lateLimit": 57,
+      "lateLimitFrom": "entry no.cautious",
+      "overLimit": 0
+    }
+  },
+  "heldOut": {
+    "placeDays": 2648,
+    "ramadanDays": 205,
+    "events": {
+      "fajr": {
+        "checked": 2648,
+        "early": 0,
+        "late": {
+          "0": 0,
+          "1": 463,
+          "2": 90,
+          "3+": 2095
+        },
+        "exactShare": 0,
+        "worstLate": 101,
+        "lateLimit": 101,
+        "lateLimitFrom": "entry no.cautious",
+        "overLimit": 0
+      },
+      "sunrise": {
+        "checked": 2648,
+        "lateEnd": 0,
+        "late": {
+          "0": 1290,
+          "1": 604,
+          "2": 4,
+          "3+": 750
+        },
+        "exactShare": 0.4872,
+        "worstLate": 58,
+        "lateLimit": 58,
+        "lateLimitFrom": "entry no.cautious",
+        "overLimit": 0
+      },
+      "dhuhr": {
+        "checked": 2648,
+        "early": 0,
+        "late": {
+          "0": 896,
+          "1": 613,
+          "2": 3,
+          "3+": 1136
+        },
+        "exactShare": 0.3384,
+        "worstLate": 6,
+        "lateLimit": 6,
+        "lateLimitFrom": "entry no.cautious",
+        "overLimit": 0
+      },
+      "asrStandard": {
+        "checked": 2648,
+        "early": 0,
+        "late": {
+          "0": 1349,
+          "1": 667,
+          "2": 0,
+          "3+": 632
+        },
+        "exactShare": 0.5094,
+        "worstLate": 6,
+        "lateLimit": 8,
+        "lateLimitFrom": "entry no.cautious",
+        "overLimit": 0
+      },
+      "asrHanafi": {
+        "checked": 730,
+        "early": 0,
+        "late": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3+": 730
+        },
+        "exactShare": 0,
+        "worstLate": 7,
+        "lateLimit": 8,
+        "lateLimitFrom": "entry no.cautious",
+        "overLimit": 0
+      },
+      "maghrib": {
+        "checked": 2648,
+        "early": 0,
+        "late": {
+          "0": 1400,
+          "1": 660,
+          "2": 202,
+          "3+": 386
+        },
+        "exactShare": 0.5287,
+        "worstLate": 50,
+        "lateLimit": 50,
+        "lateLimitFrom": "entry no.cautious",
+        "overLimit": 0
+      },
+      "isha": {
+        "checked": 2648,
+        "early": 0,
+        "late": {
+          "0": 719,
+          "1": 527,
+          "2": 106,
+          "3+": 1296
+        },
+        "exactShare": 0.2715,
+        "worstLate": 135,
+        "lateLimit": 135,
+        "lateLimitFrom": "entry no.cautious",
+        "overLimit": 0
+      },
+      "endOfEating": {
+        "checked": 2648,
+        "lateEnd": 0,
+        "late": {
+          "0": 760,
+          "1": 502,
+          "2": 104,
+          "3+": 1282
+        },
+        "exactShare": 0.287,
+        "worstLate": 57,
+        "lateLimit": 57,
+        "lateLimitFrom": "entry no.cautious",
+        "overLimit": 0
+      }
+    }
+  },
+  "maghribGuard": {
+    "members": {
+      "tr.diyanet.europe": {
+        "days": 28,
+        "checkedAtSun": 28,
+        "leastGap": -13,
+        "mostGap": 0,
+        "dates": ["2027-01-01..2027-01-05", "2027-12-09..2027-12-31"]
+      }
+    }
+  },
+  "members": {
+    "no.irn": {
+      "checked": ["2026-01-01..2026-12-31"],
+      "points": {
+        "59.91273,10.74609": ["2026-01-01..2026-12-31"],
+        "63.43049,10.39506": ["2026-01-01..2026-12-31"]
+      }
+    },
+    "tr.diyanet.europe": {
+      "checked": ["2026-09-25..2026-11-30", "2027-01-01..2027-12-31"],
+      "points": {
+        "58.14671,7.9956": ["2026-09-29..2026-10-29", "2027-01-01..2027-12-31"],
+        "58.97005,5.73332": ["2026-09-29..2026-10-29", "2027-01-01..2027-12-31"],
+        "59.91273,10.74609": ["2026-09-25..2026-11-30", "2027-01-01..2027-12-31"],
+        "60.39299,5.32415": ["2026-09-29..2026-10-29", "2027-01-01..2027-12-31"],
+        "63.43049,10.39506": ["2026-09-29..2026-10-29", "2027-01-01..2027-12-31"]
+      }
+    }
+  },
+  "lateLimits": {
+    "entry no.cautious: 6 min": {
+      "reason": "Zuhr is the later member's (IRN's + 4 to + 9, Diyanet's + 5): up to 5 min after the tables', and beyond IRN's calendars, where its edge keeps + 10, up to 6 after Diyanet's Kristiansand table.",
+      "events": ["dhuhr"]
+    },
+    "entry no.cautious: 8 min": {
+      "reason": "Asr is the later member's, in the later school (the school is not known): up to 8 min after IRN's Trondheim Asr.",
+      "events": ["asrStandard", "asrHanafi"]
+    },
+    "entry no.cautious: 50 min": {
+      "reason": "Maghrib is the later member's from the sun like every start (ruling R155), most days Diyanet's sunset + 7: up to 5 min after IRN's Oslo calendar and 6 after its Trondheim calendar, and up to 4 after Diyanet's own Bergen table and 1 after its Oslo, Kristiansand and Stavanger tables. From late May to late July Diyanet's own Trondheim table holds the day to about nineteen hours around Dhuhr and prints its Maghrib before the sun sets; Maghrib never comes before the sun's, up to 50 min after that table (the safe side). On the winter days Diyanet's five-hour day holds its Trondheim Maghrib later than the sun, its Maghrib from the sun is the one checked (ruling R156).",
+      "events": ["maghrib"]
+    },
+    "entry no.cautious: 57 min": {
+      "reason": "The end of eating is the earlier member's: IRN's own earliest dawns (ruling R39) at Oslo, up to 55 min before Diyanet's imsak and 26 before IRN's Fajr; at Trondheim Diyanet's own table's dawn, up to 55 before IRN's printed Fajr in spring; at Bergen up to 57 before Diyanet's imsak in August.",
+      "events": ["endOfEating"]
+    },
+    "entry no.cautious: 58 min": {
+      "reason": "Sunrise is the earlier member's, the sun's own less Diyanet's 7 (IRN's is up to 2 min before the sun's): up to 10 min before IRN's Trondheim sunrise, and from late May to late July up to 58 min before Diyanet's own Trondheim table, which holds the day to about nineteen hours around Dhuhr and prints its sunrise up to 53 min after the sun's (the app keeps the sun's, the safe side).",
+      "events": ["sunrise"]
+    },
+    "entry no.cautious: 101 min": {
+      "reason": "Fajr is the later member's. At IRN's own calendars Diyanet's European takdir on its own city curves: up to 54 min after IRN's Trondheim calendar in June and 48 after its Oslo calendar. Beyond them, at Diyanet's Kristiansand, Stavanger and Bergen tables (their own units since the monitor round), IRN's edge (its hour before sunrise from April to September, else 16°) is the later: up to 101 min after Diyanet's 18° in spring and autumn.",
+      "events": ["fajr"]
+    },
+    "entry no.cautious: 135 min": {
+      "reason": "Isha is the later member's. At IRN's own calendars Diyanet's European takdir on its own city curves: up to 34 min after IRN's calendars (Trondheim's in spring, Oslo's 29). Beyond them, at Diyanet's Kristiansand, Stavanger and Bergen tables, IRN's edge (15°, else the proportion from 45°) is the later: up to 135 min after Diyanet's takdir Isha in spring and summer.",
+      "events": ["isha"]
+    }
+  }
+}

@@ -1,0 +1,72 @@
+# Sweden, Denmark, Finland and Iceland (se.cautious, ruling R64): no national authority. Members: Diyanet's European
+# method (subtask 7b's; the most followed) and Rabita Helsinki's family (se.rabita). Each member's tables where held,
+# at their own cities:
+# - Stockholm: Islamiska Förbundet's (IFIS, Diyanet Stockholm) December 2025-September 2026 pages and Diyanet's own
+#   Stockholm table (September 2026-December 2027), both the member tr.diyanet.europe; their Fajr is also their imsak.
+# - Copenhagen: Diyanet's Copenhagen table (tr.diyanet.europe).
+# - Helsinki: Rabita's 2026 calendar (se.rabita; 31 March left out, its Asr an hour off). Maghrib is checked like every
+#   start (ruling R155; until then the 26 Sep cap followed Diyanet's, the most followed, and left it unchecked here).
+# Every row is held out (a cautious entry has no margins of its own). Rabita's calendar does not hold its member out,
+#   though: se.rabita is fitted on it (its Fajr curve and Isha, Task 7g; the region's margins, the city-point round 2
+#   review; its Maghrib month by month, rulings R155 and R42), so its Helsinki rows are no held-out check of that member:
+#   its Maghrib there is fitted to be at or after the calendar's, as no.irn's curves are read from IRN's calendars in
+#   no-cautious.tsv.
+# - Helsinki and Copenhagen, Diyanet (the monitor round, brief D): Diyanet's own tables, the member tr.diyanet.europe
+#   at its new units there.
+# - The monitor round's fourteen Nordic tables (step c): Diyanet's own for Malmö, Aarhus, Aalborg, Göteborg, Uppsala, Turku,
+#   Tampere, Sundsvall, Umeå, Oulu and Luleå, the member tr.diyanet.europe at its units there.
+# - Stockholm, Diyanet (the monitor's capture of 28 Sep 2026, the member tr.diyanet.europe): 29 Sep – 29 Oct 2026
+#   and 2027; it adds 26–29 October to Diyanet's own Stockholm table above.
+# - The monitor's captures are read from copies pinned as they were (archive/tables/pinned/tr-diyanet-europe/<date>/):
+#   2026-09-28 for the rows above. The capture of 2 Oct 2026 (2026-10-02/) refreshed Stockholm, Helsinki and
+#   Copenhagen (29 Sep – 1 Nov 2026 and 2027, the same minutes on every day both hold): a row each, as above; it
+#   adds 30 October – 1 November. The other Nordic tables were not refetched.
+# Ruling R117: Rabita's fault day as the gate reads it (@excuse: entry, member, *, the date, fault, the reason).
+@excuse	se.cautious	se.rabita	*	2026-03-31	fault	Rabita's Asr on 31 March an hour before its neighbours'
+path	entry	lat	lon	zone	columns	format	school	split	note	member
+archive/tables/moral-auth-world/europe/nordic/off-ifis-stockholm-all.txt	se.cautious	59.32938	18.06871	Europe/Stockholm	F+E S D A M I	daily	standard	test	IFIS Stockholm	tr.diyanet.europe
+archive/tables/moral-auth-world/europe/verify/dy-stockholm.txt	se.cautious	59.32938	18.06871	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Stockholm	tr.diyanet.europe
+archive/tables/moral-auth-world/europe/verify/dy-cph.txt	se.cautious	55.6761	12.5683	Europe/Copenhagen	F+E S D A M I	daily	standard	test	Diyanet Copenhagen	tr.diyanet.europe
+archive/tables/moral-auth-world/europe/split-7g/rabita-2026.txt	se.cautious	60.1699	24.9384	Europe/Helsinki	F+E S D A M I	daily	standard	test	Rabita Helsinki	se.rabita
+archive/tables/moral-auth-world/europe/split-7g/rabita-2026.txt	se.cautious	60.15896	24.86797	Europe/Helsinki	F+E S D A M I	daily	standard	test	Rabita's Helsinki calendar at the app's Lauttasaari, 4.1 km, the region's margins (round 2 review)	se.rabita
+archive/tables/moral-auth-world/europe/split-7g/rabita-2026.txt	se.cautious	60.25174	24.88111	Europe/Helsinki	F+E S D A M I	daily	standard	test	Rabita's Helsinki calendar at the app's Kaarela, 9.6 km, the region's margins (round 2 review)	se.rabita
+archive/tables/moral-auth-world/europe/split-7g/rabita-2026.txt	se.cautious	60.17239	24.72713	Europe/Helsinki	F+E S D A M I	daily	standard	test	Rabita's Helsinki calendar at the app's Olari, 11.7 km, the region's margins (round 2 review)	se.rabita
+archive/tables/moral-auth-world/europe/split-7g/rabita-2026.txt	se.cautious	60.15885	24.74241	Europe/Helsinki	F+E S D A M I	daily	standard	test	Rabita's Helsinki calendar at the app's Matinkylä, 10.9 km, the region's margins (round 2 review)	se.rabita
+archive/tables/moral-auth-world/europe/split-7g/rabita-2026.txt	se.cautious	60.15054	24.65307	Europe/Helsinki	F+E S D A M I	daily	standard	test	Rabita's Helsinki calendar at the app's Espoonlahti, 15.9 km, the region's margins (round 2 review)	se.rabita
+archive/tables/moral-auth-world/europe/split-7g/rabita-2026.txt	se.cautious	60.37752	25.26906	Europe/Helsinki	F+E S D A M I	daily	standard	test	Rabita's Helsinki calendar at the app's Sibbo, 29.4 km, the region's margins (round 2 review)	se.rabita
+archive/tables/moral-auth-world/europe/split-7g/rabita-2026.txt	se.cautious	60.40338	25.10500	Europe/Helsinki	F+E S D A M I	daily	standard	test	Rabita's Helsinki calendar at the app's Kerava, 27.5 km, the region's margins (round 2 review)	se.rabita
+archive/tables/moral-auth-world/europe/split-7g/rabita-2026.txt	se.cautious	60.46407	24.80730	Europe/Helsinki	F+E S D A M I	daily	standard	test	Rabita's Helsinki calendar at the app's Nurmijärvi, 33.5 km, the region's margins (round 2 review)	se.rabita
+archive/tables/moral-auth-world/europe/split-7g/rabita-2026.txt	se.cautious	60.47369	25.08992	Europe/Helsinki	F+E S D A M I	daily	standard	test	Rabita's Helsinki calendar at the app's Järvenpää, 34.8 km, the region's margins (round 2 review)	se.rabita
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/helsinki.txt	se.cautious	60.1699	24.9384	Europe/Helsinki	F+E S D A M I	daily	standard	test	Diyanet Helsinki (the monitor capture of 28 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/copenhagen.txt	se.cautious	55.6761	12.5683	Europe/Copenhagen	F+E S D A M I	daily	standard	test	Diyanet Copenhagen (the monitor capture of 28 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/malmo.txt	se.cautious	55.60587	13.00073	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Malmö (the monitor round's capture of 29 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/aarhus.txt	se.cautious	56.15674	10.21076	Europe/Copenhagen	F+E S D A M I	daily	standard	test	Diyanet Aarhus (the monitor round's capture of 29 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/aalborg.txt	se.cautious	57.048	9.9187	Europe/Copenhagen	F+E S D A M I	daily	standard	test	Diyanet Aalborg (the monitor round's capture of 29 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/goteborg.txt	se.cautious	57.70716	11.96679	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Göteborg (the monitor round's capture of 29 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/uppsala.txt	se.cautious	59.85882	17.63889	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Uppsala (the monitor round's capture of 29 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/turku.txt	se.cautious	60.45148	22.26869	Europe/Helsinki	F+E S D A M I	daily	standard	test	Diyanet Turku (the monitor round's capture of 29 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/tampere.txt	se.cautious	61.49911	23.78712	Europe/Helsinki	F+E S D A M I	daily	standard	test	Diyanet Tampere (the monitor round's capture of 29 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/sundsvall.txt	se.cautious	62.39129	17.3063	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Sundsvall (the monitor round's capture of 29 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/umea.txt	se.cautious	63.82842	20.25972	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Umeå (the monitor round's capture of 29 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/oulu.txt	se.cautious	65.01236	25.46816	Europe/Helsinki	F+E S D A M I	daily	standard	test	Diyanet Oulu (the monitor round's capture of 29 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/lulea.txt	se.cautious	65.58415	22.15465	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Luleå (the monitor round's capture of 29 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-09-28/stockholm.txt	se.cautious	59.32938	18.06871	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Stockholm (the monitor capture of 28 Sep 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-10-02/helsinki.txt	se.cautious	60.1699	24.9384	Europe/Helsinki	F+E S D A M I	daily	standard	test	Diyanet Helsinki (the monitor capture of 2 Oct 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-10-02/copenhagen.txt	se.cautious	55.6761	12.5683	Europe/Copenhagen	F+E S D A M I	daily	standard	test	Diyanet Copenhagen (the monitor capture of 2 Oct 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-10-02/stockholm.txt	se.cautious	59.32938	18.06871	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Stockholm (the monitor capture of 2 Oct 2026)	tr.diyanet.europe
+# prove, 2026-10-12: the monitor's captures pinned as they were under archive/tables/pinned/{tr-diyanet-europe}/2026-10-12/, each row as its recipe (official/monitor/recipes.tsv) and family say, added with the whole gate green
+archive/tables/pinned/tr-diyanet-europe/2026-10-12/copenhagen.txt	se.cautious	55.6761	12.5683	Europe/Copenhagen	F+E S D A M I	daily	standard	test	Diyanet Copenhagen (the monitor capture of 12 Oct 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-10-12/helsinki.txt	se.cautious	60.1699	24.9384	Europe/Helsinki	F+E S D A M I	daily	standard	test	Diyanet Helsinki (the monitor capture of 12 Oct 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-10-12/stockholm.txt	se.cautious	59.32938	18.06871	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Stockholm (the monitor capture of 12 Oct 2026)	tr.diyanet.europe
+# prove, 2026-10-19: the monitor's captures pinned as they were under archive/tables/pinned/{tr-diyanet-europe}/2026-10-19/, each row as its recipe (official/monitor/recipes.tsv) and family say, added with the whole gate green
+archive/tables/pinned/tr-diyanet-europe/2026-10-19/copenhagen.txt	se.cautious	55.6761	12.5683	Europe/Copenhagen	F+E S D A M I	daily	standard	test	Diyanet Copenhagen (the monitor capture of 19 Oct 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-10-19/helsinki.txt	se.cautious	60.1699	24.9384	Europe/Helsinki	F+E S D A M I	daily	standard	test	Diyanet Helsinki (the monitor capture of 19 Oct 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-10-19/stockholm.txt	se.cautious	59.32938	18.06871	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Stockholm (the monitor capture of 19 Oct 2026)	tr.diyanet.europe
+# prove, 2026-10-26: the monitor's captures pinned as they were under archive/tables/pinned/{tr-diyanet-europe}/2026-10-26/, each row as its recipe (official/monitor/recipes.tsv) and family say, added with the whole gate green
+archive/tables/pinned/tr-diyanet-europe/2026-10-26/copenhagen.txt	se.cautious	55.6761	12.5683	Europe/Copenhagen	F+E S D A M I	daily	standard	test	Diyanet Copenhagen (the monitor capture of 26 Oct 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-10-26/helsinki.txt	se.cautious	60.1699	24.9384	Europe/Helsinki	F+E S D A M I	daily	standard	test	Diyanet Helsinki (the monitor capture of 26 Oct 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-10-26/stockholm.txt	se.cautious	59.32938	18.06871	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Stockholm (the monitor capture of 26 Oct 2026)	tr.diyanet.europe
+# prove, 2026-10-31: the monitor's captures pinned as they were under archive/tables/pinned/{tr-diyanet-europe}/2026-10-31/, each row as its recipe (official/monitor/recipes.tsv) and family say, added with the whole gate green
+archive/tables/pinned/tr-diyanet-europe/2026-10-31/copenhagen.txt	se.cautious	55.6761	12.5683	Europe/Copenhagen	F+E S D A M I	daily	standard	test	Diyanet Copenhagen (the monitor capture of 31 Oct 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-10-31/helsinki.txt	se.cautious	60.1699	24.9384	Europe/Helsinki	F+E S D A M I	daily	standard	test	Diyanet Helsinki (the monitor capture of 31 Oct 2026)	tr.diyanet.europe
+archive/tables/pinned/tr-diyanet-europe/2026-10-31/stockholm.txt	se.cautious	59.32938	18.06871	Europe/Stockholm	F+E S D A M I	daily	standard	test	Diyanet Stockholm (the monitor capture of 31 Oct 2026)	tr.diyanet.europe

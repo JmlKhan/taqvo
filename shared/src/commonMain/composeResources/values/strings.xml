@@ -1,0 +1,883 @@
+<resources>
+    <string name="app_name">Taqvo</string>
+    <!-- The language these strings are written in; the one fact every "is the UI Arabic?" decision reads. -->
+    <string name="ui_language">en</string>
+
+    <!-- The name of this file's own language, shown in Settings › Appearance › Language. -->
+    <string name="language_name">English</string>
+
+    <!-- Navigation: what a screen reader calls the drawn back chevron. -->
+    <string name="nav_a11y_back">Back</string>
+    <!-- The sound and adhan-voice sheets' preview buttons; %1$s is the option's own name. -->
+    <string name="sound_a11y_preview">Hear %1$s</string>
+    <!-- Spoken only. The grab handle at the top of every bottom sheet: material3's own words,
+         which its default handle says and the app's drawn one did not. -->
+    <string name="sheet_a11y_drag_handle">Drag handle</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Taqvo</string>
+    <string name="onboarding_welcome_body">Prayer times, qibla and the Quran. Free forever. No ads, no account, works offline.</string>
+    <string name="onboarding_welcome_cta">Get started</string>
+    <string name="onboarding_location_title">Where are you?</string>
+    <string name="onboarding_location_body">Prayer times depend on where you are. Everything is calculated on your device. Your location never leaves your phone.</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_notifications_title">Prayer notifications</string>
+    <string name="onboarding_notifications_body">A notification for each prayer. You pick the sound for every prayer separately, and can change it whenever you like.</string>
+    <string name="onboarding_notifications_secondary">Not now</string>
+    <string name="onboarding_exact_title">Alarms &amp; reminders</string>
+    <string name="onboarding_exact_body">Android can ring at the exact prayer time only if “Alarms &amp; reminders” is allowed for Taqvo. Without it, a notification can arrive up to an hour late.</string>
+    <string name="onboarding_widget_title">On your home screen</string>
+    <string name="onboarding_widget_body">The Taqvo widget shows the next prayer and a live countdown, without opening the app.</string>
+    <string name="onboarding_widget_body_ios">The Taqvo widget shows the next prayer and a live countdown, without opening the app. To add it, touch and hold the Taqvo icon on your home screen and choose a widget size.</string>
+    <string name="onboarding_widget_body_ios_legacy">The Taqvo widget shows the next prayer and a live countdown, without opening the app. To add it, touch and hold your home screen, tap the plus in the top corner, then search for Taqvo.</string>
+    <string name="onboarding_widget_cta_add">Add widget</string>
+    <string name="onboarding_widget_cta_done">Done</string>
+    <string name="onboarding_widget_secondary">Maybe later</string>
+    <string name="onboarding_widget_steps_android">Your home screen does not let apps add widgets, so add it yourself: touch and hold an empty spot on your home screen (or pinch it), tap Widgets, find Taqvo and drag the widget into place.</string>
+
+    <!-- Prayer names. The Arabic name that sits beside these is never a resource: it is the
+         same in every locale, so it lives in PrayerNaming. -->
+    <string name="prayer_fajr">Fajr</string>
+    <string name="prayer_sunrise">Sunrise</string>
+    <string name="prayer_dhuhr">Dhuhr</string>
+    <string name="prayer_asr">Asr</string>
+    <string name="prayer_maghrib">Maghrib</string>
+    <string name="prayer_isha">Isha</string>
+
+    <!-- Prayer screen -->
+    <string name="prayer_current_location">Current location</string>
+    <string name="prayer_next_in">%1$s in</string>
+    <!-- Spoken only. What a screen reader says after a prayer row's name and time. -->
+    <string name="prayer_a11y_prayer_next">Next prayer</string>
+    <string name="prayer_a11y_prayer_current">Current prayer</string>
+    <string name="prayer_a11y_prayer_passed">Passed</string>
+    <!-- Spoken only. The countdown ring as one sentence: %1$s the prayer, %2$s a duration built from
+         a11y_hours / a11y_minutes / duration_hours_minutes, %3$s the clock time. -->
+    <string name="prayer_a11y_countdown">%1$s in %2$s, at %3$s</string>
+    <string name="prayer_a11y_countdown_soon">%1$s in under a minute, at %2$s</string>
+    <!-- Joins the hours and the minutes of a spoken duration. -->
+    <string name="duration_hours_minutes">%1$s %2$s</string>
+    <plurals name="a11y_hours">
+        <item quantity="one">%1$s hour</item>
+        <item quantity="other">%1$s hours</item>
+    </plurals>
+    <plurals name="a11y_minutes">
+        <item quantity="one">%1$s minute</item>
+        <item quantity="other">%1$s minutes</item>
+    </plurals>
+    <string name="prayer_exact_alarms_label">EXACT ALARMS OFF</string>
+    <string name="prayer_exact_alarms_body">Android can ring up to an hour late until “Alarms &amp; reminders” is allowed for Taqvo.</string>
+    <string name="prayer_no_location_title">No location yet</string>
+    <string name="prayer_choose_city">Choose a city</string>
+    <string name="prayer_location_settings">Turn on location in Settings</string>
+    <!-- The pill beside Dhuhr on a Friday, the chosen city's own Friday. -->
+    <string name="prayer_jumuah">Jumuʿah</string>
+
+    <!-- Prayer engine: the Prayer screen (Task 10) -->
+    <!-- The card the ⓘ after the date opens (spec §2.1): whose times these are, by the entry's class. %1$s is the timetable's short name, %2$s the place. -->
+    <string name="prayer_whose_checked_title">%1$s timetable</string>
+    <string name="prayer_whose_checked_body">%1$s’s times for %2$s, reproduced by Taqvo and checked against its published timetable.</string>
+    <string name="prayer_whose_unchecked_title">%1$s method, not yet fully checked</string>
+    <string name="prayer_whose_unchecked_body">Taqvo calculates the times for %2$s by the %1$s method, with a safety margin.</string>
+    <string name="prayer_whose_cautious_body">Mosques here follow different timetables, so Taqvo shows each prayer once they have all begun it.</string>
+    <string name="prayer_whose_calculated_body">No local timetable is known here, so Taqvo calculates these times on the safe side.</string>
+    <!-- The link to About these times; the screen adds the chevron. -->
+    <string name="prayer_about_these_times">About these times</string>
+    <!-- Screen-reader labels (spec §2.4): %1$s names the times ("Times by Diyanet", "Cautious times"), %2$s the place. -->
+    <string name="prayer_times_by">Times by %1$s</string>
+    <string name="prayer_whose_a11y">%1$s, %2$s. Opens whose times these are</string>
+    <string name="prayer_about_a11y">%1$s, %2$s. Opens About these times</string>
+    <!-- The pill after a prayer's name when a high-latitude rule set its time (spec §2.1, the Jumuʿah pill's style); approved terms in §2.4. -->
+    <string name="prayer_set_by_rule">Set by rule</string>
+    <!-- The source label on the times card where an authority's published method is followed but not yet proven against its timetable (spec §2.1); approved by Mohamed 22 Oct 2026, beside "Cautious times" and "Calculated by Taqvo". -->
+    <string name="prayer_source_published_method">Published method</string>
+    <!-- On a polar day, one line under the prayer list instead of the pills; it opens About these times. Some times, not all, follow the nearby latitude. -->
+    <string name="prayer_polar_line">The sun does not rise or set here today, so some times follow the nearest latitude where it does.</string>
+    <!-- One-time cards below the prayer list (spec §2.1): the cautious-times card, then the Sunni card on a later launch. -->
+    <string name="prayer_card_cautious_title">Mosques here follow different timetables</string>
+    <string name="prayer_card_cautious_body">Taqvo shows each prayer once they have all begun it.</string>
+    <string name="prayer_card_sunni_title">These are Sunni prayer times</string>
+    <string name="prayer_card_sunni_body">In Shia (Ja’fari) practice, Maghrib and iftar are later.</string>
+    <string name="prayer_match_my_mosque">Match my mosque</string>
+    <string name="prayer_card_ok">OK</string>
+    <!-- The clock line above the ring (spec §3.9) and its sheet: %1$s the place whose clocks changed, %2$s the date of the change.
+         "changed": a place that moved its clocks once (Morocco, Kazakhstan); "kept": one that stopped turning them back, so from
+         that date it keeps one time all year (British Columbia, Syria, Paraguay...). -->
+    <string name="prayer_clock_line">Prayer times may be an hour off</string>
+    <string name="prayer_clock_stale_early">%1$s changed its clocks on %2$s and your phone hasn’t caught up, so prayer times may be an hour early. Install the latest system update, if there is one, and keep date and time on automatic: alerts are right only when the clock is automatic.</string>
+    <string name="prayer_clock_stale_late">%1$s changed its clocks on %2$s and your phone hasn’t caught up, so prayer times may be an hour late. Install the latest system update, if there is one, and keep date and time on automatic: alerts are right only when the clock is automatic.</string>
+    <string name="prayer_clock_manual_early">%1$s changed its clocks on %2$s. If you set the clock by hand, prayer times may be an hour early. Turn on automatic date and time: alerts are right only when the clock is automatic.</string>
+    <string name="prayer_clock_manual_late">%1$s changed its clocks on %2$s. If you set the clock by hand, prayer times may be an hour late. Turn on automatic date and time: alerts are right only when the clock is automatic.</string>
+    <string name="prayer_clock_kept_stale_early">%1$s has kept one time all year since %2$s and your phone hasn’t caught up, so prayer times may be an hour early. Install the latest system update, if there is one, and keep date and time on automatic: alerts are right only when the clock is automatic.</string>
+    <string name="prayer_clock_kept_stale_late">%1$s has kept one time all year since %2$s and your phone hasn’t caught up, so prayer times may be an hour late. Install the latest system update, if there is one, and keep date and time on automatic: alerts are right only when the clock is automatic.</string>
+    <string name="prayer_clock_kept_manual_early">%1$s has kept one time all year since %2$s. If you set the clock by hand, prayer times may be an hour early. Turn on automatic date and time: alerts are right only when the clock is automatic.</string>
+    <string name="prayer_clock_kept_manual_late">%1$s has kept one time all year since %2$s. If you set the clock by hand, prayer times may be an hour late. Turn on automatic date and time: alerts are right only when the clock is automatic.</string>
+    <string name="prayer_clock_region_morocco">Morocco</string>
+    <string name="prayer_clock_region_british_columbia">British Columbia</string>
+    <string name="prayer_clock_region_alberta">Alberta</string>
+    <string name="prayer_clock_region_manitoba">Manitoba</string>
+    <string name="prayer_clock_region_kazakhstan">Kazakhstan</string>
+    <string name="prayer_clock_region_yukon">Yukon</string>
+    <string name="prayer_clock_region_syria">Syria</string>
+    <string name="prayer_clock_region_jordan">Jordan</string>
+    <string name="prayer_clock_region_chihuahua">Chihuahua</string>
+    <string name="prayer_clock_region_paraguay">Paraguay</string>
+    <!-- "Show where timetables differ", under the current prayer (spec §2.1): %1$s a timetable's short name, %2$s the next prayer, %3$s a time. -->
+    <string name="prayer_differ_before">%1$s’s %2$s begins at %3$s</string>
+    <string name="prayer_differ_after">%1$s’s %2$s has begun · Taqvo shows it from %3$s</string>
+    <!-- "Show both Asr times": the other school’s Asr under Asr ("Standard 16:24"). %1$s is the school (madhab_standard or madhab_hanafi), %2$s its time; one string, so each language puts them in its own order. -->
+    <string name="prayer_other_asr">%1$s %2$s</string>
+
+    <!-- Settings root -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_group_prayer">PRAYER</string>
+    <string name="settings_group_app">APP</string>
+    <string name="settings_group_about">ABOUT</string>
+    <string name="settings_location">Location</string>
+    <string name="settings_prayer_times">Prayer times</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_appearance_value">%1$s · %2$s</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_about">About Taqvo</string>
+    <string name="settings_attribution">Attribution &amp; licences</string>
+    <string name="settings_rate">Rate Taqvo</string>
+    <string name="settings_share">Share Taqvo</string>
+    <string name="settings_share_message">Taqvo: prayer times, the Quran and the Qibla. Free, with no ads and no account.</string>
+    <string name="settings_not_set">Not set</string>
+    <string name="settings_notifications_off">Off</string>
+    <string name="settings_notifications_on_count">%1$s on</string>
+    <string name="settings_version_value">1.5.0</string>
+
+    <!-- About screen (privacy spec §6). "Taqvo" is the product name and stays in Latin script in
+         both locales, as on the icon. -->
+    <string name="about_tagline">Free, for everyone, for good.</string>
+    <string name="about_privacy_label">PRIVACY</string>
+    <string name="about_stays_title">Stays on your phone</string>
+    <string name="about_stays_body">Location, settings, bookmarks and counts never leave it.</string>
+    <string name="about_online_title">Online only when you ask</string>
+    <string name="about_online_body">The internet is used for one thing: recitations you choose to download, from Taqvo’s public repository on GitHub.</string>
+    <string name="about_nothing_title">No account, no ads, no analytics</string>
+    <string name="about_nothing_body">Nothing to sign into, nothing to sell.</string>
+    <string name="about_privacy_policy">Privacy policy</string>
+    <string name="about_source">Source code</string>
+    <string name="about_source_value">GitHub</string>
+    <string name="about_licence">Licence</string>
+    <string name="about_licence_value">GPL-3.0</string>
+    <string name="about_website">Website</string>
+    <string name="about_website_value">taqvo.app</string>
+    <string name="about_icon_open_website">Open taqvo.app</string>
+    <string name="about_report_problem">Report a problem</string>
+
+    <!-- Settings › Widgets and About Taqvo (settings redesign spec, approved 30 Oct 2026). The
+         Widgets row's value counts the widgets on a home screen: %1$s how many are, %2$s how many
+         there are. -->
+    <string name="settings_widgets">Widgets</string>
+    <string name="settings_widgets_all">All added</string>
+    <string name="settings_widgets_none">Not added</string>
+    <string name="settings_widgets_count">%1$s of %2$s added</string>
+    <!-- The Widgets screen. Android says "home screen" in lower case, as its own launchers do;
+         the _ios twins use Apple's names for the iPhone's UI, "Home Screen", "Lock Screen",
+         "Customize", "Edit" and "Add Widget", as iOS writes them in each language. In the steps,
+         %1$s is the widget's name as its card gives it (widgets_prayer_name, widgets_ayah_name), which is
+         also how the Android picker and the iPhone's gallery list it (home_widget_name and ayah_widget_name
+         in iosApp/TaqvoWidget). Words between ** and ** are the ones the reader will look for on the
+         phone, and show in bold without the stars; tools/i18n-check.py checks that the stars come in
+         pairs. The Home Screen's corner button,
+         which opens the menu with Add Widget, shows its title on iOS 18 and 26 (Edit; on iOS 26 "+"
+         in French and Turkish) and a brush from iOS 27 in every language, so widgets_ios_fallback
+         names both; the "+" of iOS 16 and 17 opens the gallery with no menu, so widgets_step_ios_plus_2
+         names only it (seen on the iOS 26.2, 27.0 and 27.1 simulators, 31 October 2026, and held by
+         tools/i18n-check.py). widgets_lock_then is the Lock Screen picture's second line, %1$s the prayer
+         after the next one, worded as the accessory's own lock_widget_then in iosApp/TaqvoWidget. -->
+    <string name="widgets_intro">The next prayer and today’s ayah on your home screen, without opening Taqvo.</string>
+    <string name="widgets_intro_ios">The next prayer and today’s ayah on your Home Screen and Lock Screen, without opening Taqvo.</string>
+    <string name="widgets_background_note">For every Taqvo widget. System follows your phone’s light and dark setting.</string>
+    <string name="widgets_prayer_label">PRAYER TIMES</string>
+    <string name="widgets_prayer_name">Prayer times</string>
+    <string name="widgets_prayer_body">The next prayer with a live countdown, and today’s times. Small or wide.</string>
+    <string name="widgets_prayer_body_ios">The next prayer with a live countdown, and today’s times. Small or medium.</string>
+    <string name="widgets_ayah_label">AYAH OF THE DAY</string>
+    <string name="widgets_ayah_name">Ayah of the day</string>
+    <string name="widgets_ayah_body">A new ayah each day, with its translation. Wide or large.</string>
+    <string name="widgets_ayah_body_ios">A new ayah each day, with its translation. Medium or large.</string>
+    <string name="widgets_dua_label">DUA OF THE DAY</string>
+    <string name="widgets_dua_name">Dua of the day</string>
+    <string name="widgets_dua_body">A new dua each day, said at any hour, with its translation. Wide or large.</string>
+    <string name="widgets_dua_body_ios">A new dua each day, said at any hour, with its translation. Medium or large.</string>
+    <string name="widgets_on_home">On your home screen</string>
+    <string name="widgets_on_home_ios">On your Home Screen</string>
+    <string name="widgets_on_lock_ios">On your Lock Screen</string>
+    <string name="widgets_refused_title">Your home screen doesn’t let apps add widgets.</string>
+    <string name="widgets_refused_body">It only takes a moment by hand:</string>
+    <string name="widgets_step_android_1">Touch and hold an empty spot on your home screen (or pinch it).</string>
+    <string name="widgets_step_android_2">Tap **Widgets**.</string>
+    <string name="widgets_step_android_3">Find **Taqvo**, then drag %1$s into place.</string>
+    <string name="widgets_how_label">HOW TO ADD IT</string>
+    <string name="widgets_step_ios_hold_1">Touch and hold the **Taqvo** icon on your Home Screen.</string>
+    <string name="widgets_step_ios_hold_2">Choose %1$s and a size.</string>
+    <string name="widgets_step_ios_hold_3">It lands on your Home Screen. Drag it wherever you like.</string>
+    <string name="widgets_ios_fallback">No widgets when you hold the icon? Touch and hold an empty part of the Home Screen, tap **Edit** at the top (on iOS 27 and later, a brush), then **Add Widget**, and search for Taqvo.</string>
+    <string name="widgets_step_ios_plus_1">Touch and hold an empty part of your Home Screen.</string>
+    <string name="widgets_step_ios_plus_2">Tap the **+** in the top corner.</string>
+    <string name="widgets_step_ios_plus_3">Search for Taqvo and choose %1$s.</string>
+    <string name="widgets_show_how">Show me how</string>
+    <string name="widgets_lock_label">LOCK SCREEN</string>
+    <string name="widgets_lock_name">Next prayer at a glance</string>
+    <string name="widgets_lock_body">Under the clock on your Lock Screen, round or wide.</string>
+    <string name="widgets_lock_then">then %1$s</string>
+    <string name="widgets_step_lock_1">Touch and hold your Lock Screen, then tap **Customize**.</string>
+    <string name="widgets_step_lock_2">Choose your Lock Screen, then tap the space under the clock.</string>
+    <string name="widgets_step_lock_3">Choose **Taqvo**, then the round or wide widget.</string>
+    <!-- About Taqvo as the app's profile page: the chip under the tagline (%1$s is the version,
+         settings_version_value) and the labels of its last two cards. Rate and Share there reuse
+         settings_rate, settings_share and settings_share_message. -->
+    <string name="about_version_chip">Version %1$s</string>
+    <string name="about_open_source_label">OPEN SOURCE</string>
+    <string name="about_help_label">HELP</string>
+
+    <!-- Crash report (crash spec §3): the sheet on the launch after a crash, and the email's
+         line when there is no report to send. -->
+    <string name="crash_sheet_title">Taqvo closed unexpectedly</string>
+    <string name="crash_sheet_body">A technical report was saved on your phone. Sending it to support@taqvo.world helps fix the problem. It contains the app version, your phone model and the error, nothing else.</string>
+    <string name="crash_send">Send report</string>
+    <string name="crash_not_now">Not now</string>
+    <string name="crash_mail_no_report">No crash report is saved on this phone.</string>
+
+    <!-- Appearance -->
+    <string name="appearance_theme_label">THEME</string>
+    <string name="appearance_language_label">LANGUAGE</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="appearance_note">System follows your device’s light and dark setting.</string>
+
+    <!-- Location settings -->
+    <string name="location_use_my_location">Use my location</string>
+    <string name="location_in_use">IN USE</string>
+    <string name="location_city">City</string>
+    <string name="location_country">Country</string>
+    <string name="location_timezone">Time zone</string>
+    <string name="location_choose_city_instead">Choose a city instead</string>
+    <string name="location_privacy_note">Coordinates are stored on your device and used only to calculate times. Nothing is sent anywhere.</string>
+    <string name="location_denied_note">Location access is currently denied. You can grant it in your device settings, or choose a city instead.</string>
+
+    <!-- City search -->
+    <string name="city_search_title">Choose a city</string>
+    <string name="city_search_placeholder">Search for a city</string>
+    <string name="city_search_hint">Start typing a city name. The database is bundled with the app, so search works offline.</string>
+    <string name="city_search_no_results">No city matches “%1$s”.</string>
+
+    <!-- Notification settings -->
+    <string name="notifications_master_toggle">Prayer notifications</string>
+    <string name="notifications_remind_before">Remind me before</string>
+    <string name="notifications_prayers_label">PRAYERS</string>
+    <string name="notifications_tahajjud">Tahajjud</string>
+    <string name="notifications_tahajjud_subtitle">When the last third of the night begins</string>
+    <string name="notifications_tahajjud_sound">Sound</string>
+    <string name="notifications_remind_never">Never</string>
+    <!--
+        A count of minutes. English has one plural break, Arabic six (CLDR): 3-10 take "دقائق"
+        and everything else "دقيقة", which is why this is a plural resource and not a string with
+        a placeholder. Every form keeps %1$s: the callers pass already-localized digits, and one
+        of them prefixes a sign that must stay attached to them.
+    -->
+    <plurals name="minutes_count">
+        <item quantity="one">%1$s min</item>
+        <item quantity="other">%1$s min</item>
+    </plurals>
+
+    <!-- Sound sheet -->
+    <string name="sound_sheet_title">Notification sound</string>
+    <string name="sound_silent">Silent</string>
+    <string name="sound_notification">Notification</string>
+    <string name="sound_takbir">Takbir</string>
+    <string name="sound_adhan">Adhan</string>
+    <string name="sound_silent_detail">Banner only, no sound</string>
+    <string name="sound_notification_detail">A clear announcement tone, %1$s seconds</string>
+    <string name="sound_takbir_detail">Allahu akbar, Allahu akbar, about %1$ss</string>
+    <string name="sound_adhan_detail">The adhan, first %1$s seconds</string>
+    <string name="sound_sheet_footnote">A prayer notification plays the first %1$s seconds of its sound. The complete adhan can be played inside the app.</string>
+    <string name="sound_adhan_detail_full">The complete adhan</string>
+    <string name="sound_sheet_muted_hint">Your phone is on silent or Do Not Disturb, so previews and prayer notifications make no sound.</string>
+
+    <!-- Adhan voice -->
+    <string name="adhan_voice_row">Adhan</string>
+    <string name="adhan_voice_sheet_title">Adhan</string>
+    <string name="adhan_voice_original">Original</string>
+    <string name="adhan_voice_azeez">Aaqib Azeez</string>
+    <string name="adhan_voice_azemi">Besim Azemi</string>
+    <string name="adhan_voice_original_detail">Melismatic, %1$s</string>
+    <string name="adhan_voice_azeez_detail">Plain and brisk, %1$s</string>
+    <string name="adhan_voice_azemi_detail">Live from Malmö Mosque, %1$s</string>
+    <string name="adhan_voice_makkah">Makkah</string>
+    <string name="adhan_voice_madinah">Madinah</string>
+    <string name="adhan_voice_makkah_detail">Masjid al-Haram, %1$s</string>
+    <string name="adhan_voice_madinah_detail">Masjid an-Nabawi, %1$s</string>
+    <string name="adhan_voice_taqvo_label">TAQVO’S ADHANS</string>
+    <string name="adhan_voice_phone_label">FROM YOUR PHONE</string>
+    <string name="adhan_voice_choose">Choose a recording</string>
+    <string name="adhan_voice_choose_detail">An adhan saved on this phone. It stays here.</string>
+    <string name="adhan_voice_custom">Your recording</string>
+    <string name="adhan_voice_choose_another">Choose another</string>
+    <string name="adhan_voice_remove">Remove</string>
+    <string name="adhan_voice_pick_failed">That file couldn’t be read as audio.</string>
+    <string name="adhan_voice_custom_detail">%1$s · %2$s</string>
+
+    <!-- Prayer time settings -->
+    <!-- Prayer engine: Settings (Task 12) -->
+    <string name="prayer_times_timetable">Timetable</string>
+    <string name="timetable_automatic">Automatic</string>
+    <string name="timetable_automatic_named">Automatic · %1$s</string>
+    <string name="prayer_times_paused_value">%1$s · paused</string>
+    <string name="timetable_out_of_scope">%1$s isn’t used here, so Automatic applies until you return.</string>
+    <string name="timetable_paused_note">%1$s is paused: no prayer is shown before Automatic’s time until you confirm it in Timetable.</string>
+    <string name="saudi_fajr_later">Pray Fajr 5 minutes later</string>
+    <string name="saudi_fajr_later_detail">Some scholars advise waiting a few minutes after Umm al-Qura’s Fajr. The Fajr shown and its alert move; stop eating at Umm al-Qura’s Fajr, 5 minutes before.</string>
+    <string name="prayer_times_asr_label">ASR</string>
+    <string name="asr_automatic">Automatic</string>
+    <string name="asr_shadow_standard">the shadow equal to its length</string>
+    <string name="asr_shadow_hanafi">twice the shadow</string>
+    <string name="asr_note_automatic_authority">Automatic: %1$s, as %2$s.</string>
+    <string name="asr_note_automatic_majority">Automatic: %1$s, as most mosques here.</string>
+    <string name="asr_note_automatic_unknown">Automatic: %1$s, the later time, because %2$s’s majority school isn’t known.</string>
+    <string name="asr_note_automatic_unknown_here">Automatic: %1$s, the later time, because the majority school here isn’t known.</string>
+    <string name="asr_note_standard">Standard: %1$s.</string>
+    <string name="asr_note_hanafi">Hanafi: %1$s.</string>
+    <string name="show_both_asr">Show both Asr times</string>
+    <string name="show_where_differ">Show where timetables differ</string>
+    <string name="show_where_differ_detail">When %1$s’s timetables begin a prayer at different times</string>
+    <string name="show_where_differ_detail_here">When the timetables here begin a prayer at different times</string>
+    <string name="prayer_times_about_row">About these times</string>
+    <string name="timetable_auto_authority">The timetable %1$s publishes for this place</string>
+    <!-- Under Automatic when it follows the timetable most local mosques follow, not an authority’s (London Unified, the ISNA and Karachi conventions): %1$s is its name. -->
+    <string name="timetable_auto_majority">%1$s, followed by most mosques here</string>
+    <string name="timetable_auto_cautious">Cautious times: each prayer once this place’s timetables have all begun it</string>
+    <string name="timetable_auto_calculated">Calculated by Taqvo: no timetable is known for this place</string>
+    <string name="timetable_times_today">Fajr %1$s, Maghrib %2$s, Isha %3$s today</string>
+    <string name="timetable_nearby_label">ALSO USED NEARBY</string>
+    <string name="timetable_other_methods">Other methods</string>
+    <string name="timetable_other_examples">%1$s, %2$s, %3$s…</string>
+    <string name="timetable_match_mosque">Match my mosque</string>
+    <string name="timetable_checking">Checking the next 12 months…</string>
+    <string name="timetable_paused_row">Paused: shown no earlier than Automatic until you confirm it</string>
+    <string name="timetable_earlier_start">Its %1$s begins %2$s before %3$s on some days. Follow it only if your mosque does.</string>
+    <!-- The same warning when the earlier time is the other school’s Asr, the one "Show both Asr times" adds: %1$s is that school (madhab_standard or madhab_hanafi), %2$s the minutes, %3$s whose time it runs ahead of. -->
+    <string name="timetable_earlier_asr_other">Its %1$s Asr begins %2$s before %3$s on some days. Follow it only if your mosque does.</string>
+    <string name="timetable_later_sunrise">Its sunrise is %1$s after %2$s on some days. Follow it only if your mosque does.</string>
+    <string name="timetable_later_fast">Its fast begins %1$s after %2$s on some days. Follow it only if your mosque does.</string>
+    <string name="timetable_of_authority">%1$s’s</string>
+    <string name="timetable_of_cautious">the cautious times</string>
+    <string name="timetable_of_taqvo">Taqvo’s</string>
+    <plurals name="timetable_minutes">
+        <item quantity="one">%1$s minute</item>
+        <item quantity="other">%1$s minutes</item>
+    </plurals>
+    <string name="timetable_keep_automatic">Keep Automatic</string>
+    <string name="timetable_keep_current">Keep %1$s</string>
+    <string name="timetable_follow_it">Follow it</string>
+    <string name="match_note">From your mosque’s board, for today, %1$s. Use when each prayer begins (the adhan time), not the jamāʿah.</string>
+    <string name="match_fajr_begins">Fajr begins</string>
+    <string name="match_isha_begins">Isha begins</string>
+    <string name="match_both">Both times match. Check its other times against the board: Dhuhr %1$s, Asr %2$s, Maghrib %3$s.</string>
+    <string name="match_hour_apart">Both times are exactly an hour off: your board may be on summer or winter time. Its Fajr begins at %1$s and its Isha at %2$s.</string>
+    <string name="match_one_fajr">Its Fajr matches, but its Isha begins at %1$s.</string>
+    <string name="match_one_isha">Its Isha matches, but its Fajr begins at %1$s.</string>
+    <string name="match_none">No timetable Taqvo knows matches both times.</string>
+    <string name="match_fajr_isha">Fajr %1$s, Isha %2$s</string>
+    <string name="match_use">Use this timetable</string>
+    <string name="match_in_use">Taqvo already follows this timetable.</string>
+    <string name="timetable_source_authority">%1$s’s time</string>
+    <string name="timetable_source_cautious">the cautious time</string>
+    <string name="timetable_source_taqvo">Taqvo’s time</string>
+    <string name="timetable_source_latest">the latest local timetable</string>
+    <string name="adjust_paused_for">%1$s · paused (set for %2$s)</string>
+    <string name="adjust_timetable_paused_note">Earlier adjustments wait until %1$s is confirmed in Timetable.</string>
+    <string name="adjust_confirm_title">Show %1$s before %2$s?</string>
+    <string name="adjust_confirm_body">A prayer prayed before its time must be repeated. Only do this if your mosque’s timetable is earlier.</string>
+    <string name="adjust_confirm_body_maghrib">A prayer prayed before its time must be repeated, and a fast broken before it must be made up. Only do this if your mosque’s timetable is earlier.</string>
+    <string name="adjust_strong_body">Taqvo’s %1$s is at most %2$s after %3$s, so %4$s moves it before that time. A prayer prayed before its time must be repeated. Only do this if your mosque’s timetable is this much earlier.</string>
+    <string name="adjust_strong_body_maghrib">Taqvo’s %1$s is at most %2$s after %3$s, so %4$s moves it before that time. A prayer prayed before its time must be repeated, and a fast broken before it must be made up. Only do this if your mosque’s timetable is this much earlier.</string>
+    <string name="adjust_keep">Keep %1$s</string>
+    <string name="adjust_use">Use %1$s</string>
+    <string name="adjust_note">Moves a time by up to an hour from the timetable’s. Use it only when your mosque’s board differs.</string>
+    <!-- /Prayer engine: Settings (Task 12) -->
+    <string name="prayer_times_high_latitude">High latitude rule</string>
+    <string name="prayer_times_manual">Manual adjustments</string>
+    <string name="madhab_standard">Standard</string>
+    <string name="madhab_hanafi">Hanafi</string>
+    <string name="prayer_times_hijri_label">HIJRI DATE</string>
+    <string name="hijri_day_before">A day earlier</string>
+    <string name="hijri_day_after">A day later</string>
+    <string name="hijri_method_note">An arithmetic calendar, not a sighting. It can differ by a day from Umm al-Qura and from your local moonsighting; use the adjustment to match your community.</string>
+    <string name="prayer_times_show_sunrise">Show sunrise</string>
+    <string name="adjustments_none">None</string>
+    <string name="adjustments_one">1 prayer</string>
+    <string name="adjustments_many">%1$s prayers</string>
+
+    <string name="method_muslim_world_league">Muslim World League</string>
+    <string name="method_isna">ISNA (North America)</string>
+    <string name="method_egyptian">Egyptian General Authority</string>
+    <string name="method_umm_al_qura">Umm al-Qura (Makkah)</string>
+    <string name="method_karachi">University of Islamic Sciences, Karachi</string>
+    <string name="method_dubai">Dubai</string>
+    <string name="method_kuwait">Kuwait</string>
+    <string name="method_qatar">Qatar</string>
+    <string name="method_singapore">Singapore</string>
+    <string name="method_turkey">Diyanet (Türkiye)</string>
+    <string name="method_moonsighting">Moonsighting Committee</string>
+    <string name="method_picker_note">Authorities differ on how far below the horizon the sun must be for Fajr and Isha. Pick the one your local mosque follows.</string>
+
+    <string name="high_lat_automatic">Automatic</string>
+    <string name="high_lat_middle">Middle of the night</string>
+    <string name="high_lat_seventh">One-seventh of the night</string>
+    <string name="high_lat_twilight">Twilight angle</string>
+    <string name="high_lat_picker_note">Above roughly %1$s degrees the sun stops dropping far enough below the horizon for a true Fajr and Isha, so a substitution rule takes over.</string>
+
+    <!-- Prayer engine: About these times (Task 11) -->
+    <string name="about_times_title">About these times</string>
+    <!-- The link on About these times to Settings › Prayer times; hidden when About was opened from there. -->
+    <string name="about_prayer_times_settings">Prayer times settings</string>
+    <string name="timetable_cautious">Cautious times</string>
+    <string name="timetable_calculated">Calculated by Taqvo</string>
+    <string name="about_who_publishes">Who publishes them</string>
+    <string name="about_who_publishes_body">%1$s publishes the prayer times used in %2$s.</string>
+    <string name="about_not_affiliated">Taqvo is not affiliated with %1$s.</string>
+    <string name="about_how_reproduces">How Taqvo reproduces them</string>
+    <string name="about_method_intro">The way %1$s calculates: %2$s.</string>
+    <string name="about_method_fajr_angle">dawn (Fajr) at %1$s° below the horizon</string>
+    <string name="about_method_isha_angle">nightfall (Isha) at %1$s° below the horizon</string>
+    <string name="about_method_fajr_curve">dawn (Fajr) at a twilight angle that changes through the year, between %1$s° and %2$s° below the horizon</string>
+    <string name="about_method_isha_curve">nightfall (Isha) at a twilight angle that changes through the year, between %1$s° and %2$s° below the horizon</string>
+    <string name="about_method_isha_after_maghrib">nightfall (Isha) %1$s minutes after Maghrib</string>
+    <string name="about_method_minutes_note">its own minutes (%1$s)</string>
+    <string name="about_method_rounding_note">and each start rounded up to the next minute (sunrise and the end of eating down)</string>
+    <string name="about_method_daily_sun">the sun’s position taken once a day</string>
+    <string name="about_method_horizon_dip">its own horizon, set lower for elevation and haze</string>
+    <string name="about_how_checked">How it was checked</string>
+    <string name="about_stat_days_at_places">days at %1$s places</string>
+    <string name="about_stat_never_before">starts before %1$s’s</string>
+    <string name="about_stat_minutes_value">%1$s min</string>
+    <string name="about_stat_at_most_after">at most after</string>
+    <string name="about_checked_through">Checked against %1$s’s published timetable through %2$s.</string>
+    <string name="about_not_measured_unit">Not measured for %1$s.</string>
+    <string name="about_checked_so_far_with_data">Checked on %1$s days so far: never before %2$s’s, up to %3$s minutes after.</string>
+    <string name="about_checked_so_far_without_data">Taqvo has not yet compared them with %1$s’s own timetable.</string>
+    <!-- About at Tromsø (ruling R82), after "Checked on … days so far": what of IRN's Makkah-time calendar Taqvo does not follow. %1$s is the authority's short name. -->
+    <string name="about_not_followed_irn_tromso">%1$s’s Makkah-time Fajr is not followed from late April to mid-May and from late July to mid-August, when it falls after sunrise, nor its sunrise under the midnight sun; Maghrib never comes before the real sunset.</string>
+    <string name="about_authority_method_title">%1$s method</string>
+    <string name="about_authority_unchecked_body">%1$s publishes the prayer times for %2$s. Taqvo calculates them the way %1$s does, with a safety margin.</string>
+    <!-- About, not yet fully checked, for a convention most mosques follow with no authority behind it (spec §6.2 b): %1$s its name, %2$s the place. -->
+    <string name="about_majority_unchecked_body">Most mosques in %2$s follow the %1$s method. Taqvo calculates the times by it, with a safety margin.</string>
+    <string name="about_nearby_heading">Timetables some local mosques follow instead</string>
+    <string name="about_cautious_body">Mosques in %1$s follow different timetables in good faith, and none is followed by most. Taqvo combines %2$s: each prayer once all have begun it.</string>
+    <!-- About, cautious times (ruling R155's far-north guard, spec §3.6): shown only on a day another timetable's Maghrib is later than the one shown because a high-latitude rule sets it rather than the sun (Diyanet's five-hour winter day in the far north, a time borrowed on a polar day). %1$s the timetable whose Maghrib from the sun (its sunset plus its own minutes) is shown, %2$s the timetable(s) whose Maghrib is later; at Trondheim in December both can be Diyanet. "Set by a high-latitude rule" echoes the "Set by rule" pill and the "High latitude rule" setting. -->
+    <string name="about_cautious_maghrib_guard">Maghrib is the exception today: it follows the sun, as %1$s calculates it, rather than the later Maghrib of %2$s, set by a high-latitude rule.</string>
+    <!-- The same, on a day the sun does not set at the place (a polar day or a polar night), when only the most-followed timetable's own Maghrib counts. %1$s the most-followed timetable's short name, %2$s the timetable(s) whose Maghrib is later. -->
+    <string name="about_cautious_maghrib_no_sunset">Maghrib is the exception today, as there is no sunset here: it follows %1$s, the most-followed timetable, rather than the later Maghrib of %2$s.</string>
+    <string name="about_which_decides">Which timetable decides each time today</string>
+    <!-- About, cautious times (rulings R100, R105, R111 and R112, site parity): the proof tiles and sentence a cautious place shows — "0" / "starts before the timetable that decides it" beside "days at N places" (about_stat_days_at_places), then the sentence. "The timetable that decides it" is the one the table above names for each time (the latest to begin it; on a far-north guard day, for Maghrib, the one whose time from the sun is shown, or the most-followed where the sun does not set), which is what the gate checks a start against — never "any of them": on such a day another timetable's Maghrib is later. No date: a cautious stamp's last date is one member's, not every member's. -->
+    <string name="about_stat_never_before_decider">starts before the timetable that decides it</string>
+    <string name="about_cautious_checked">Checked against the timetables followed here.</string>
+    <string name="about_calculated_body">Taqvo found no official Sunni timetable for %1$s, so it calculates one on the safe side: %2$s.</string>
+    <string name="about_asr_heading">Asr</string>
+    <string name="about_asr_known">%1$s: %3$s, because most mosques in %2$s follow it.</string>
+    <string name="about_asr_unknown">%1$s: %3$s, the later time, because %2$s’s majority school is not known. You can change it in Settings.</string>
+    <string name="about_sunni_heading">Sunni times</string>
+    <string name="about_sunni_body">These are Sunni prayer times. In Shia (Ja’fari) practice, Maghrib and iftar are later.</string>
+    <string name="about_check_mosque_heading">Check your mosque</string>
+    <string name="about_check_mosque_body">Calculated times can differ from a mosque’s by a few minutes. If yours differs, choose its timetable or adjust a prayer in Settings.</string>
+    <string name="about_if_fasting">If you are fasting</string>
+    <string name="about_stop_eating">Stop eating by %1$s today.</string>
+
+    <!-- Attribution -->
+    <string name="attribution_intro">Taqvo is built on work other people gave away. Their licences require credit, and it is owed regardless.</string>
+    <string name="credit_calculation">Prayer time calculation</string>
+    <string name="credit_calculation_detail">Taqvo’s own engine. The Qibla bearing uses Adhan by Batoul Apps, MIT licence.</string>
+    <string name="credit_cities">City database</string>
+    <string name="credit_cities_detail">GeoNames cities15000, CC BY 4.0.</string>
+    <string name="credit_typeface">Manrope typeface</string>
+    <string name="credit_typeface_detail">SIL Open Font Licence 1.1.</string>
+    <string name="credit_audio">Adhan and takbir audio</string>
+    <string name="credit_audio_detail">“Beautiful adhan” by Adam-synagda, CC0 1.0, via Wikimedia Commons. “The Adhan – Muslim Call to Prayer – Aaqib Azeez”, CC BY-SA 4.0, via Wikimedia Commons. “Eid al-Fitr Fajr azan at Malmö Mosque” by Islamic Center Malmö, CC BY 3.0, via Wikimedia Commons. “Adhan, Great Mosque of Mecca” by Seyfula Islam, CC BY 3.0, via Wikimedia Commons. “Call to prayer from the Prophet’s Mosque” by ejaz215, CC BY 3.0, via Wikimedia Commons.</string>
+    <string name="credit_chime">Notification tone</string>
+    <string name="credit_chime_detail">“Clear announce tones” from Mixkit, Mixkit Sound Effects Free Licence.</string>
+    <string name="credit_quran_text">Quran text</string>
+    <string name="credit_quran_text_detail">Tanzil Quran Text v1.1, Creative Commons Attribution 3.0. Reproduced verbatim.</string>
+    <string name="credit_quran_font">Quran typeface</string>
+    <string name="credit_quran_font_detail">KFGQPC Uthmanic Script Hafs by the King Fahd Glorious Quran Printing Complex. Free to use and distribute unmodified.</string>
+    <string name="credit_quran_layout">Page layout</string>
+    <string name="credit_quran_layout_detail">Madinah Mushaf page and line breaks from the Quranic Universal Library data.</string>
+    <string name="credit_translations">Translations</string>
+    <string name="credit_translations_detail">Bundled from the Tanzil Project for non-commercial use. Each translator is credited below.</string>
+
+    <!-- Prayer engine: authority names (Task 10) -->
+    <!-- The short name of every timetable the registry names (an entry's shortNameKey, a cautious
+         member's nameKey): read through feature/common/AuthorityNames.kt, never by key directly.
+         The Other methods reuse the method_* names above. -->
+    <string name="authority_awqaf_jordan">Jordan Awqaf</string>
+    <string name="authority_awqaf_kuwait">Kuwait Awqaf</string>
+    <string name="authority_awqaf_libya">Libyan Awqaf</string>
+    <string name="authority_awqaf_syria">Syrian Awqaf</string>
+    <string name="authority_awqaf_uae">UAE Awqaf</string>
+    <string name="authority_bahrain_council">Bahrain Supreme Council</string>
+    <string name="authority_bik">BIK Kosovo</string>
+    <string name="authority_cape_calendar">Cape community calendar</string>
+    <string name="authority_chicago">Chicago 18°/15°</string>
+    <string name="authority_dar_al_fatwa">Dar al-Fatwa</string>
+    <string name="authority_diyanet">Diyanet</string>
+    <string name="authority_diyanet_europe">Diyanet Europe</string>
+    <string name="authority_dum_rd">Dagestan Muftiate</string>
+    <string name="authority_dum_rf">DUM RF</string>
+    <string name="authority_dum_rt">Tatarstan Muftiate</string>
+    <string name="authority_emb">EMB Belgium</string>
+    <string name="authority_esa">Egyptian Survey Authority</string>
+    <string name="authority_fazilet">Fazilet</string>
+    <string name="authority_fianz">FIANZ</string>
+    <string name="authority_fids">FIDS</string>
+    <string name="authority_gaza_awqaf">Gaza Awqaf</string>
+    <string name="authority_grande_mosquee_paris">Paris Grand Mosque</string>
+    <string name="authority_habous">Habous</string>
+    <string name="authority_iacad">IACAD</string>
+    <string name="authority_icci">ICCI Dublin</string>
+    <string name="authority_ifb">Islamic Foundation Bangladesh</string>
+    <string name="authority_ifi">IFI Ireland</string>
+    <string name="authority_ift">Islamic Foundation Toronto</string>
+    <string name="authority_iggo">IGGÖ</string>
+    <string name="authority_iit">Islamic Institute</string>
+    <string name="authority_inm">INM Tunisia</string>
+    <string name="authority_irn">IRN Norway</string>
+    <string name="authority_isna">ISNA</string>
+    <string name="authority_iz_bih">IZ BiH</string>
+    <string name="authority_izcg">IZ Montenegro</string>
+    <string name="authority_jakim">JAKIM</string>
+    <string name="authority_jamiat">Jamiatul Ulama</string>
+    <string name="authority_karachi">Karachi</string>
+    <string name="authority_kemenag">Kemenag</string>
+    <string name="authority_kmsh">KMSH Albania</string>
+    <string name="authority_kyrgyz_muftiate">Kyrgyz Muftiate</string>
+    <string name="authority_lakemba">Lakemba Mosque</string>
+    <string name="authority_london_unified">London Unified</string>
+    <string name="authority_mac_toronto">MAC Masjid</string>
+    <string name="authority_marw">Ministry of Religious Affairs</string>
+    <string name="authority_mauritania">Ministry of Islamic Affairs</string>
+    <string name="authority_mjc">MJC</string>
+    <string name="authority_mora_brunei">MORA Brunei</string>
+    <string name="authority_muhammadiyah">Muhammadiyah</string>
+    <string name="authority_muis">MUIS</string>
+    <string name="authority_oman_awqaf">Oman Awqaf</string>
+    <string name="authority_pa_iftaa">Dar al-Iftaa</string>
+    <string name="authority_qatar_calendar">Qatar Calendar House</string>
+    <string name="authority_qmdb">Kazakh Muftiate</string>
+    <string name="authority_sudan_fiqh">Sudan Fiqh Academy</string>
+    <string name="authority_sunni_endowment">Sunni Endowment</string>
+    <string name="authority_umm_al_qura">Umm al-Qura</string>
+    <string name="authority_uzbek_board">Uzbek Muslim Board</string>
+    <string name="authority_wifaqul_ulama">Wifaqul Ulama</string>
+    <string name="timetable_twelve_degrees">12° timetable</string>
+    <string name="timetable_late_dawn">Late-dawn timetable</string>
+    <string name="timetable_moroccan_calendar">Moroccan calendar</string>
+    <string name="timetable_isha_ninety">90-minute Isha timetable</string>
+    <string name="timetable_fifteen_degrees">15° timetable</string>
+    <string name="timetable_eighteen_degrees">18° timetable</string>
+    <string name="timetable_chicago_eighteen">Chicago 18° timetable</string>
+    <string name="timetable_rabita">Rabita Helsinki</string>
+
+    <!-- Qibla (plan 2) -->
+    <string name="qibla_no_sensor_title">No compass sensor</string>
+    <string name="qibla_no_sensor_body">This device has no magnetometer. Use a physical compass together with the bearing below.</string>
+
+    <!-- Widget background (Settings › Widgets, which took it over from Appearance; the keys keep
+         their names) -->
+    <string name="appearance_widget_background_label">WIDGET BACKGROUND</string>
+
+    <!-- Offering a widget that is not on the home screen (Settings › Widgets) -->
+    <string name="appearance_widget_add">Add to home screen</string>
+    <string name="widget_background_follow_theme">System</string>
+    <string name="widget_background_light">Light</string>
+    <string name="widget_background_dark">Dark</string>
+    <string name="widget_background_translucent_title">Translucent</string>
+    <string name="widget_background_translucent_subtitle">Blends into your wallpaper.</string>
+    <string name="widget_background_frosted_title">Frosted</string>
+    <string name="widget_background_frosted_subtitle">Uses the system widget material.</string>
+    <!-- Qibla screen (Task 22 sweep: qibla_no_sensor_title/body above already matched this
+         screen's copy verbatim and are reused there; everything else needed its own string. -->
+    <string name="qibla_title">Qibla</string>
+    <string name="qibla_back">Today</string>
+    <string name="qibla_hold_flat">Hold your phone flat</string>
+    <string name="qibla_facing_qibla">Facing qibla</string>
+    <string name="qibla_needs_calibrating">Compass needs calibrating</string>
+    <string name="qibla_calibration_help">Move your phone in a figure of eight a few times. Magnetic interference from metal, cases and speakers can throw the reading off.</string>
+    <!-- Qibla, magnetic-interference variant: the field around the phone is not the Earth's, so
+         a figure of eight cannot help and the advice is to move instead. -->
+    <string name="qibla_interference_title">Magnetic interference</string>
+    <string name="qibla_interference_help">Move away from metal, magnets, cases and cables. The compass cannot read the Earth’s field while something nearby is stronger.</string>
+    <!-- Qibla, best effort: the compass has been unusable for twenty seconds. The bearing and the
+         distance need no sensor, so they stay; the needle does not. -->
+    <string name="qibla_best_effort_title">Compass unavailable</string>
+    <string name="qibla_best_effort_calibration">This phone’s compass could not be calibrated. The bearing and distance shown are correct — use them with a separate compass.</string>
+    <string name="qibla_best_effort_interference">The magnetic interference here is too strong for this phone’s compass. The bearing and distance shown are correct — use them with a separate compass.</string>
+    <string name="qibla_distance">Makkah · %1$s km away</string>
+    <string name="qibla_bearing">%1$s°</string>
+    <string name="qibla_cardinal_north">N</string>
+    <string name="qibla_cardinal_east">E</string>
+    <string name="qibla_cardinal_south">S</string>
+    <string name="qibla_cardinal_west">W</string>
+    <string name="notifications_exact_alarms_off">Exact alarms are turned off for Taqvo, so a notification can arrive up to an hour late. Allow “Alarms &amp; reminders” so it can ring at the exact minute.</string>
+    <string name="notifications_allow_exact_alarms">Allow exact alarms</string>
+    <string name="notifications_blocked">Notifications are turned off for Taqvo in system settings, so no prayer alert can be shown until they are allowed again.</string>
+    <string name="notifications_open_settings">Open notification settings</string>
+    <string name="hijri_tabular">Tabular</string>
+    <!-- Bottom tab bar (iteration 1: the owner asked for it after seeing Today on a phone;
+         iteration 8: Qibla folded into the Prayer screen; slice 2: the Quran tab arrives). -->
+    <string name="tab_prayer">Prayer</string>
+    <string name="tab_quran">Quran</string>
+    <string name="tab_settings">Settings</string>
+    <!-- Prayer screen's Qibla card: bearing from north, then the great-circle distance. -->
+    <string name="prayer_qibla_detail">%1$s° · %2$s km to Makkah</string>
+    <!-- Quran tab root (slice 2a task 5) -->
+    <string name="quran_title">Quran</string>
+    <string name="quran_search_hint">Search the Quran</string>
+    <string name="quran_continue">CONTINUE READING</string>
+    <string name="quran_continue_detail">Ayah %1$s of %2$s · Juz %3$s</string>
+    <string name="quran_tab_surah">Surah</string>
+    <string name="quran_tab_juz">Juz</string>
+    <string name="quran_surah_subtitle">%1$s · %2$s ayahs · %3$s</string>
+    <!-- Surah row subtitle under an Arabic UI, where the primary label is already the Arabic name
+         (spec §5.3), so the meaning is dropped rather than repeated in a script the row is not in. -->
+    <string name="quran_surah_subtitle_arabic_ui">%1$s ayahs · %2$s</string>
+    <string name="quran_makki">Makki</string>
+    <string name="quran_madani">Madani</string>
+    <string name="quran_juz_n">Juz %1$s</string>
+    <string name="quran_juz_range">%1$s %2$s to %3$s %4$s</string>
+    <string name="quran_next_surah">Next: %1$s</string>
+    <string name="quran_juz_page">Juz %1$s · Page %2$s</string>
+    <string name="quran_reader_aa">Reading settings</string>
+    <string name="quran_reader_mushaf">Mushaf</string>
+    <string name="quran_sheet_size">Arabic size</string>
+    <string name="quran_sheet_transliteration">Transliteration</string>
+    <string name="quran_sheet_translation">Translation</string>
+    <string name="quran_translation_off">Off</string>
+    <string name="quran_translation_off_detail">Arabic only, one ayah per card</string>
+    <string name="quran_sheet_read_aloud">Read it aloud after each ayah</string>
+    <string name="quran_sheet_read_aloud_missing">Needs your phone’s free %1$s voice.</string>
+    <string name="quran_sheet_mode">Reading mode</string>
+    <string name="quran_mode_translation">Translation</string>
+    <string name="quran_mode_mushaf">Mushaf</string>
+    <string name="quran_size_mushaf_note">Page size follows the width in Mushaf mode.</string>
+    <!-- Quran search results and bookmarks (slice 2b) -->
+    <string name="quran_section_surahs">Surahs</string>
+    <string name="quran_section_ayahs">Ayahs · %1$s</string>
+    <string name="quran_search_empty">No ayahs match</string>
+    <string name="quran_tab_bookmarks">Bookmarks</string>
+    <string name="quran_bookmarks_empty">No bookmarks yet. Open an ayah and tap the bookmark.</string>
+    <string name="quran_remove_bookmark">Remove bookmark</string>
+    <string name="quran_ayah_n">Ayah %1$s</string>
+    <string name="quran_action_bookmark">Bookmark</string>
+    <string name="quran_action_bookmarked">Bookmarked</string>
+    <string name="quran_action_copy">Copy</string>
+    <string name="quran_action_copied">Copied</string>
+    <string name="quran_action_share">Share</string>
+    <string name="quran_a11y_read_aloud">Being read aloud</string>
+    <string name="quran_a11y_selected">Selected</string>
+    <!-- Spoken only. The Mushaf's page number under the frame and a surah band's ayah count,
+         both drawn as bare Arabic-Indic numerals. -->
+    <string name="quran_a11y_page_n">Page %1$s</string>
+    <plurals name="quran_a11y_ayah_count">
+        <item quantity="one">%1$s ayah</item>
+        <item quantity="other">%1$s ayahs</item>
+    </plurals>
+    <!-- Tasbeeh (spec Tasbeeh §2 and §4) -->
+    <string name="tasbeeh_title">Tasbeeh</string>
+    <string name="prayer_open_tasbeeh">Tasbeeh</string>
+    <string name="tasbeeh_add_custom">Add a dhikr</string>
+    <string name="tasbeeh_round">ROUND %1$s</string>
+    <string name="tasbeeh_of">of %1$s</string>
+    <string name="tasbeeh_hint">Tap anywhere to count</string>
+    <!-- The built-in phrases' meanings, shown under a Latin-script interface beside the
+         transliteration; Arabic-script interfaces show the phrase itself. -->
+    <string name="dhikr_meaning_subhanallah">Glory be to Allah</string>
+    <string name="dhikr_meaning_alhamdulillah">All praise is due to Allah</string>
+    <string name="dhikr_meaning_allahu_akbar">Allah is the Greatest</string>
+    <string name="dhikr_meaning_astaghfirullah">I seek Allah’s forgiveness</string>
+    <string name="dhikr_meaning_la_ilaha_illallah">There is no god but Allah</string>
+    <string name="dhikr_meaning_subhanallahi_wa_bihamdihi">Glory and praise be to Allah</string>
+    <string name="tasbeeh_preset_after_prayer">After prayer</string>
+    <string name="tasbeeh_preset_subhanallah">SubhanAllah</string>
+    <string name="tasbeeh_preset_alhamdulillah">Alhamdulillah</string>
+    <string name="tasbeeh_preset_allahu_akbar">Allahu Akbar</string>
+    <string name="tasbeeh_preset_astaghfirullah">Astaghfirullah</string>
+    <string name="tasbeeh_preset_la_ilaha_illallah">La ilaha illallah</string>
+    <string name="tasbeeh_preset_subhanallahi_wa_bihamdihi">SubhanAllahi wa bihamdihi</string>
+    <string name="tasbeeh_reset">Reset</string>
+    <string name="tasbeeh_reset_confirm">Reset the count for this dhikr?</string>
+    <string name="tasbeeh_custom_title">Custom dhikr</string>
+    <string name="tasbeeh_custom_edit_title">Edit dhikr</string>
+    <string name="tasbeeh_custom_phrase">Phrase</string>
+    <string name="tasbeeh_custom_target">Target</string>
+    <string name="tasbeeh_custom_add">Add</string>
+    <string name="tasbeeh_custom_save">Save</string>
+    <string name="tasbeeh_custom_delete">Delete</string>
+    <!-- Quran recitation (spec 3a §5) -->
+    <string name="recitation_play">Play</string>
+    <string name="recitation_reciter">Reciter</string>
+    <string name="recitation_style_murattal">Murattal</string>
+    <string name="recitation_kbps">%1$s kbps</string>
+    <string name="recitation_megabytes">%1$s MB</string>
+    <string name="recitation_on_phone">%1$s of %2$s surahs on this phone</string>
+    <string name="recitation_download">Download · %1$s</string>
+    <string name="recitation_downloading">%1$s of %2$s</string>
+    <string name="recitation_over_wifi">Over Wi-Fi.</string>
+    <string name="recitation_use_mobile_once">Use mobile data this once</string>
+    <string name="recitation_keep_reading">You can keep reading. Playback starts from the ayah you chose as soon as it lands.</string>
+    <string name="recitation_waiting_connection">Waiting for a connection. The download starts by itself once there is one.</string>
+    <string name="recitation_switch_ready">%1$s keeps playing until it arrives.</string>
+    <string name="recitation_switch_running">%1$s keeps playing. The voice changes to %2$s as soon as it lands.</string>
+    <string name="recitation_cancel">Cancel</string>
+    <string name="recitation_retry">Retry</string>
+    <string name="recitation_back_to_ayah">Back to ayah %1$s</string>
+    <string name="recitation_fail_no_network">There is no connection right now.</string>
+    <string name="recitation_fail_needs_wifi">This is set to download over Wi-Fi only.</string>
+    <string name="recitation_fail_no_space">There is not enough room on this phone.</string>
+    <string name="recitation_fail_server">The download did not finish. It can be started again.</string>
+    <string name="recitation_fail_checksum">What arrived was not the right file. It can be fetched again.</string>
+    <string name="recitation_fail_cancelled">The download stopped before it finished.</string>
+    <string name="recitation_a11y_recitation">Recitation</string>
+    <string name="recitation_a11y_pause">Pause</string>
+    <string name="recitation_a11y_downloading">Downloading the recitation</string>
+    <string name="recitation_a11y_next">Next surah</string>
+    <string name="recitation_a11y_previous">Previous surah</string>
+    <string name="recitation_a11y_next_ayah">Next ayah</string>
+    <string name="recitation_a11y_previous_ayah">Previous ayah</string>
+    <string name="recitation_auto_download">Download future surahs without asking</string>
+    <string name="recitation_arriving_next">Next: %1$s · %2$s</string>
+    <string name="recitation_arriving_voice">%1$s · %2$s</string>
+    <string name="recitation_percent">%1$s%</string>
+    <string name="recitation_a11y_close">Close the player</string>
+    <string name="recitation_a11y_change_reciter">Change reciter</string>
+    <string name="recitation_a11y_go_to_playing">Go to the ayah being recited</string>
+    <string name="recitation_a11y_preview">Hear this reciter</string>
+    <string name="recitation_bar_translation">Translation</string>
+    <string name="recitation_bar_tafsir">Tafsir</string>
+    <!-- Settings > Quran > Recitation, and its Downloads screen (spec 3a §5.6) -->
+    <string name="settings_group_quran">QURAN</string>
+    <string name="settings_recitation">Recitation</string>
+    <string name="recitation_settings_mobile_data">Download over mobile data</string>
+    <string name="recitation_settings_auto_download">Download without asking</string>
+    <string name="recitation_read_aloud_heading">AFTER EACH AYAH</string>
+    <string name="recitation_read_aloud_translation">Read the translation aloud</string>
+    <string name="recitation_read_aloud_tafsir">Read the tafsir aloud</string>
+    <string name="recitation_read_aloud_detail">%1$s, in %2$s. A voice on this phone reads it, so it works offline.</string>
+    <string name="recitation_read_aloud_missing">Your phone needs its free %1$s voice, a small one-time download.</string>
+    <string name="recitation_read_aloud_get_voice">Get the voice</string>
+    <string name="recitation_settings_downloads">DOWNLOADS · %1$s</string>
+    <string name="recitation_settings_surahs_one">%1$s surah · %2$s</string>
+    <string name="recitation_settings_surahs">%1$s surahs · %2$s</string>
+    <string name="recitation_settings_whole_quran">Download the whole Quran · %1$s</string>
+    <string name="recitation_settings_batch">Downloading · %1$s of %2$s</string>
+    <string name="recitation_settings_credit">Recitations are licensed by the reciters for free, non-commercial distribution through the Islamic Network. Credits in Attribution &amp; licences.</string>
+    <string name="recitation_downloads_delete">Delete</string>
+    <string name="recitation_downloads_delete_all">Delete all for this reciter</string>
+    <string name="recitation_downloads_confirm">Delete %1$s?</string>
+    <string name="recitation_downloads_empty">Nothing of this reciter is on the phone.</string>
+    <string name="recitation_gigabytes">%1$s GB</string>
+    <string name="credit_recitations">Recitations</string>
+    <string name="credit_recitations_detail">Per-ayah recitations from the Islamic Network (alquran.cloud), licensed to them by the reciters for free, non-commercial redistribution at the bitrates they publish. Mirrored unmodified, at those bitrates.</string>
+    <string name="prayer_times_time_format">Time format</string>
+    <string name="time_format_24">24-hour</string>
+    <string name="time_format_12">12-hour</string>
+    <string name="prayer_open_adhkar">Adhkar</string>
+    <string name="adhkar_morning">Morning adhkar</string>
+    <string name="adhkar_evening">Evening adhkar</string>
+    <string name="adhkar_segment_morning">Morning</string>
+    <string name="adhkar_segment_evening">Evening</string>
+    <string name="adhkar_progress">%1$s of %2$s</string>
+    <string name="adhkar_once">ONCE</string>
+    <plurals name="adhkar_times">
+        <item quantity="one">%1$s TIME</item>
+        <item quantity="other">%1$s TIMES</item>
+    </plurals>
+    <string name="adhkar_times_today">%1$s TIMES TODAY</string>
+    <string name="adhkar_of">of %1$s</string>
+    <string name="adhkar_until_sunrise">Until sunrise · %1$s</string>
+    <string name="adhkar_after_sunrise">After sunrise · until %1$s</string>
+    <string name="adhkar_until_maghrib">Until Maghrib · %1$s</string>
+    <string name="adhkar_after_maghrib">After Maghrib · until %1$s</string>
+    <string name="adhkar_window_morning">Fajr to sunrise</string>
+    <string name="adhkar_window_evening">Asr to Maghrib</string>
+    <string name="adhkar_a11y_count">Count</string>
+    <string name="adhkar_a11y_previous">Previous</string>
+    <string name="adhkar_a11y_next">Next</string>
+    <string name="source_quran">Quran</string>
+    <string name="source_bukhari">Bukhari</string>
+    <string name="source_muslim">Muslim</string>
+    <string name="source_abu_dawud">Abu Dawud</string>
+    <string name="source_tirmidhi">Tirmidhi</string>
+    <string name="source_ibn_majah">Ibn Majah</string>
+    <string name="source_nasai">an-Nasa’i</string>
+    <!-- an-Nasa’i’s as-Sunan al-Kubra and ʿAmal al-Yawm wa-l-Layla, each numbered on its own: the book is part of the name, so the reference line’s number is digits only (“an-Nasa’i al-Kubra 10731”). -->
+    <string name="source_nasai_kubra">an-Nasa’i al-Kubra</string>
+    <string name="source_nasai_amal">an-Nasa’i ʿAmal al-Yawm</string>
+    <string name="source_hakim">al-Hakim</string>
+    <string name="source_ahmad">Ahmad</string>
+    <string name="adhkar_done_morning">Morning adhkar · done</string>
+    <string name="adhkar_done_evening">Evening adhkar · done</string>
+    <string name="adhkar_next_evening">Evening adhkar open after Asr</string>
+    <string name="adhkar_next_morning">Morning adhkar open after Fajr</string>
+    <string name="adhkar_back">Back to prayer times</string>
+    <string name="adhkar_reading">Reading</string>
+    <string name="adhkar_translation">Translation</string>
+    <string name="notifications_adhkar">Morning and evening adhkar</string>
+    <string name="notifications_adhkar_subtitle">Half an hour after Fajr and Asr</string>
+    <string name="credit_adhkar">Adhkar</string>
+    <string name="credit_adhkar_detail">Morning and evening adhkar from Hisn al-Muslim by Sa‘id ibn ‘Ali ibn Wahf al-Qahtani; the Arabic text and its arrangement, the English translation and the transliteration from the OpenDua dataset (Human Development Fund), CC BY 4.0, with small edits recorded in the repository.</string>
+    <string name="adhkar_opens_at">From Asr · %1$s</string>
+    <!-- Duha and Iqama reminders (Duha and Iqama spec §4.5). Sound reuses notifications_tahajjud_sound and the sheet's minutes minutes_count. -->
+    <string name="notifications_duha">Duha</string>
+    <string name="notifications_duha_when">When</string>
+    <string name="notifications_section_when">WHEN</string>
+    <string name="notifications_duha_best">At its best time</string>
+    <string name="notifications_duha_best_detail">Midway between sunrise and Dhuhr</string>
+    <string name="notifications_duha_start">Once its time is in</string>
+    <string name="notifications_duha_start_detail">%1$s minutes or more after sunrise</string>
+    <string name="notifications_iqama">Iqama reminder</string>
+    <string name="notifications_iqama_subtitle">Minutes after the adhan, not your mosque’s own time</string>
+    <string name="notifications_iqama_note">Set each prayer’s minutes in its row under Prayers.</string>
+    <plurals name="notifications_iqama_after">
+        <item quantity="one">Iqama %1$s min after the adhan</item>
+        <item quantity="other">Iqama %1$s min after the adhan</item>
+    </plurals>
+    <string name="notifications_iqama_off">Off</string>
+    <string name="notifications_section_sound">SOUND</string>
+    <string name="notifications_section_iqama">IQAMA REMINDER</string>
+    <string name="notifications_iqama_not_friday">No iqama reminder on Fridays: the khutbah comes first.</string>
+    <string name="notifications_voluntary_label">VOLUNTARY</string>
+    <!-- Settings › Wallpapers: an ayah or a supplication drawn as a phone wallpaper. Android sets it
+         itself; iOS lets no app do that, so there it is saved to Photos with the steps to set it. -->
+    <string name="settings_wallpapers">Wallpapers</string>
+    <string name="wallpapers_words_label">TEXT</string>
+    <string name="wallpapers_source_ayahs">Ayahs</string>
+    <string name="wallpapers_source_duas">Duas</string>
+    <string name="wallpapers_previous">Previous</string>
+    <string name="wallpapers_next">Next</string>
+    <string name="wallpapers_position">%1$s of %2$s</string>
+    <string name="wallpapers_style_label">STYLE</string>
+    <string name="wallpapers_style_night">Night</string>
+    <string name="wallpapers_style_dawn">Dawn</string>
+    <string name="wallpapers_style_dusk">Dusk</string>
+    <string name="wallpapers_style_slate">Slate</string>
+    <string name="wallpapers_target_label">SET ON</string>
+    <string name="wallpapers_target_home">Home screen</string>
+    <string name="wallpapers_target_lock">Lock screen</string>
+    <string name="wallpapers_target_both">Home and lock screens</string>
+    <string name="wallpapers_set">Set as wallpaper</string>
+    <string name="wallpapers_save">Save to Photos</string>
+    <string name="wallpapers_save_note">iPhone does not let apps change the wallpaper. In Photos, open the picture, tap Share, then Use as Wallpaper.</string>
+    <string name="wallpapers_done_set">Wallpaper set.</string>
+    <string name="wallpapers_done_saved">Saved to Photos.</string>
+    <string name="wallpapers_refused_android">This phone does not let apps change the wallpaper.</string>
+    <string name="wallpapers_refused_ios">Taqvo may not add photos. Allow it in Settings › Taqvo › Photos.</string>
+    <string name="wallpapers_failed">The wallpaper could not be saved. Please try again.</string>
+    <string name="wallpapers_dua_reference">Hisn al-Muslim %1$s</string>
+    <string name="wallpapers_a11y_preview">Wallpaper preview: %1$s</string>
+</resources>

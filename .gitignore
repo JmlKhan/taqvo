@@ -1,0 +1,36 @@
+
+# Brainstorm companion
+# Gradle / KMP
+# IDE
+# Xcode
+# macOS
+*.iml
+*.xcworkspace/xcuserdata/
+.DS_Store
+.build-heartbeat
+.build-marker
+.gradle/
+.idea/
+.keepalive.sh
+.kotlin/
+.superpowers/
+DerivedData/
+build/
+local.properties
+xcuserdata/
+.claude/
+
+# Quran pipeline downloads
+tools/cache/
+
+# Python bytecode from tools/
+__pycache__/
+*.pyc
+
+# The built website (site/build.py) and the prayer timetables it is built from (tools/timetables)
+_site/
+_data/
+# Store signing: the upload key and its passwords never enter the repository
+keystore.properties
+*.jks
+*.keystore

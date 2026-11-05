@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Taqvo</string>
+    <string name="widget_small_label">Sonraki vakit</string>
+    <string name="widget_medium_label">Namaz vakitleri</string>
+    <string name="widget_ayah_label">Günün ayeti</string>
+    <string name="widget_small_description">Sonraki vakit ve canlı geri sayım.</string>
+    <string name="widget_medium_description">Sonraki vakit, geri sayım ve bugünün vakitleri.</string>
+    <string name="widget_ayah_description">Günün ayeti ve meali.</string>
+    <!-- Spoken only: the ayah widget's reference for a screen reader. %1$s the surah, %2$s the ayah number. -->
+    <string name="widget_ayah_a11y_reference">%1$s, %2$s. ayet</string>
+    <!-- The daily-dua widget's picker title and line, and its reference; %1$s the number in Hisn al-Muslim. -->
+    <string name="widget_dua_label">Günün duası</string>
+    <string name="widget_dua_description">Günün duası, mealiyle birlikte.</string>
+    <string name="widget_dua_reference">Hisnü’l-Müslim %1$s</string>
+</resources>

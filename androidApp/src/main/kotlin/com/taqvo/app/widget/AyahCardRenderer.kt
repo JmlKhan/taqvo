@@ -1,0 +1,623 @@
+package com.taqvo.app.widget
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Typeface
+import android.text.Layout
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.StaticLayout
+import android.text.TextDirectionHeuristics
+import android.text.TextPaint
+import android.text.TextUtils
+import android.text.style.ForegroundColorSpan
+import com.taqvo.app.quran.QuranText
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.sqrt
+
+/**
+ * Everything one draw of the ayah card's *text* needs.
+ *
+ * [widthPx] / [heightPx] are the cell Glance actually measured, in device pixels; [density] is
+ * what converts the spec's dp and sp figures into them. The colours arrive already resolved from
+ * `WidgetPalette` as plain ARGB ints — the renderer knows nothing about the background choice, it
+ * only ever draws on transparency (see [AyahCardRenderer]).
+ *
+ * [arabicIndicDigits] is the mirror's record of the digit set the app itself draws, not a guess
+ * from its language tag: the footer's reference has to agree with the numbers in the app behind it,
+ * and on an `ar-LY` device the tag rule and the device's own ICU data disagree (D2, S23 round).
+ */
+class AyahCardInput(
+    val widthPx: Int,
+    val heightPx: Int,
+    val density: Float,
+    val entry: AyahPoolEntry,
+    val arabicUi: Boolean,
+    val arabicIndicDigits: Boolean,
+    /** The mirror's language tag: with [arabicIndicDigits] it picks the digit set of the footer. */
+    val languageTag: String,
+    val translationRtl: Boolean,
+    val showTranslation: Boolean,
+    val textArgb: Int,
+    val accentArgb: Int,
+)
+
+/**
+ * Draws the ayah card's text to a transparent bitmap with `android.graphics` (design spec §2).
+ *
+ * Glance has no way to use a bundled font — its `TextStyle` carries no font family at all — and
+ * the Uthmani Hafs face is the whole point of a Quran card: the OS Arabic face does not carry the
+ * Hafs riwayah's glyph shapes, and the ayah roundel is a Hafs glyph. So the text is drawn here
+ * with `StaticLayout` and handed to Glance as a single `Image`.
+ *
+ * Only the *text* is in the bitmap. The card's background, corner radius and `appWidgetBackground`
+ * stay in the Glance tree, so the Translucent background choice keeps working — a bitmap baked
+ * with an opaque background would sit as a solid rectangle on top of the launcher blur.
+ */
+object AyahCardRenderer {
+
+    // -- Spec §2 metrics ------------------------------------------------------------------------
+
+    private const val PADDING_DP = 14f
+
+    /**
+     * Auto-fit range for the Arabic, in sp, walked from the top down in 1 sp steps. [ARABIC_MAX_SP]
+     * is the ceiling for a card the size the spec sizes the design at ([FIT_HEIGHT_DP]); taller
+     * cells raise it, up to [ARABIC_CEILING_SP] — see [maxArabicSp].
+     */
+    private const val ARABIC_MAX_SP = 28
+    private const val ARABIC_MIN_SP = 17
+
+    /**
+     * The largest the Arabic is ever drawn, whatever the cell.
+     *
+     * A 4x6 cell at the old flat 28 sp ceiling was about 60 % empty card (N1, S23 round): the fit
+     * only ever walked *down*, so extra height bought nothing. Past this the ayah stops reading as
+     * a card and starts reading as a poster, and a long ayah at 40 sp already needs most of a
+     * full-column cell.
+     */
+    private const val ARABIC_CEILING_SP = 40
+
+    /** The drawn height, in dp, at which the ceiling is exactly [ARABIC_MAX_SP]: the 4x3 cell the
+     * design is drawn at (320 x 236 dp, spec §2). */
+    private const val FIT_HEIGHT_DP = 236f
+
+    /** Extra sp of ceiling per dp of height past [FIT_HEIGHT_DP]. About 6 sp for a 4x4 cell and
+     * the full [ARABIC_CEILING_SP] by 4x6, which is where the empty card was. */
+    private const val ARABIC_GROWTH_PER_DP = 0.06f
+
+    private const val TRANSLATION_RATIO = 0.6f
+    private const val TRANSLATION_MIN_SP = 11.5f
+
+    /** Raised from 15 sp with the Arabic ceiling (N1): a 34 sp Arabic over a 15 sp translation
+     * reads as two unrelated blocks, and the x0.6 rule wants 17 sp long before the Arabic
+     * reaches its own ceiling. */
+    private const val TRANSLATION_MAX_SP = 17f
+
+    private const val ARABIC_LINE_HEIGHT = 1.75f
+    private const val TRANSLATION_LINE_HEIGHT = 1.45f
+
+    /** The translation is the primary text colour at this alpha; the reference and the rule are
+     * the two weaker steps of the same colour. */
+    private const val SECONDARY_ALPHA = 0.62f
+    private const val TERTIARY_ALPHA = 0.42f
+    private const val RULE_ALPHA = 0.12f
+
+    private const val TRANSLATION_GAP_DP = 8f
+    private const val FOOTER_GAP_DP = 9f
+    private const val FOOTER_RULE_GAP_DP = 8f
+    private const val COMPACT_FOOTER_GAP_DP = 6f
+
+    /** Under this drawn height the card takes the compact footer: no rule, a tighter gap and a
+     * smaller Arabic surah name. Android's 4x2 cell and iOS's Medium both land below it. */
+    private const val COMPACT_HEIGHT_DP = 170f
+
+    /** Between the surah's Latin name and its reference, as the reader's own headers set it. */
+    private const val REFERENCE_SEPARATOR = " \u00B7 "
+
+    private const val FOOTER_LATIN_SP = 12f
+    private const val FOOTER_ARABIC_SP = 16f
+    private const val FOOTER_ARABIC_UI_SP = 15f
+    private const val FOOTER_ARABIC_COMPACT_SP = 14f
+
+    // -- Fonts ----------------------------------------------------------------------------------
+
+    /** Where the Compose resources plugin packages the app's fonts inside the APK's assets. */
+    private const val FONT_DIR = "composeResources/com.taqvo.app.resources/font/"
+
+    private const val FONT_HAFS = "uthmanic_hafs.ttf"
+    private const val FONT_MANROPE = "Manrope-Regular.ttf"
+    private const val FONT_MANROPE_SEMIBOLD = "Manrope-SemiBold.ttf"
+
+    /**
+     * `createFromAsset` re-parses the file on every call, and the Hafs face is a megabyte; a
+     * widget redrawn on every unlock cannot pay that each time. Keyed by file name because the
+     * assets belong to the app process, which is the only process that ever draws this.
+     */
+    private val typefaceCache = ConcurrentHashMap<String, Typeface>()
+
+    /**
+     * The bundled face, or [Typeface.DEFAULT] when the asset cannot be read.
+     *
+     * A missing font must degrade to system text, never take the widget down: a crash inside
+     * `provideGlance` leaves the launcher showing the error view for good, while the wrong face
+     * still shows today's ayah.
+     */
+    private fun typeface(context: Context, file: String): Typeface {
+        typefaceCache[file]?.let { return it }
+        // Only a successful load goes into the cache. A transient failure — the asset briefly
+        // unreadable, say — must not poison every later draw for the rest of the process with the
+        // system face; the next call gets to try the real one again.
+        val loaded = runCatching { Typeface.createFromAsset(context.assets, FONT_DIR + file) }.getOrNull()
+        if (loaded != null) typefaceCache[file] = loaded
+        return loaded ?: Typeface.DEFAULT
+    }
+
+    // -- Entry point ------------------------------------------------------------------------------
+
+    /**
+     * Renders [input] to a fresh transparent `ARGB_8888` bitmap.
+     *
+     * The layout is chosen by auto-fit (spec §2): the largest Arabic size from this cell's own
+     * ceiling ([maxArabicSp], 28 sp at 4x3 and up to 40 sp on a tall cell or with the translation
+     * off) down to 17 sp at which the Arabic, the translation and the footer all fit the cell. Nothing fits at the
+     * floor only on a cell too short for the ayah it drew today — there the translation is
+     * clamped to the lines that remain and ellipsised, because the Arabic is never cut.
+     */
+    fun render(context: Context, input: AyahCardInput): Bitmap {
+        val maxPixels = maxBitmapPixels(context)
+        val scale = renderScale(input.widthPx, input.heightPx, maxPixels)
+        val width = max(1, (input.widthPx * scale).toInt())
+        val height = max(1, (input.heightPx * scale).toInt())
+        val density = input.density * scale
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        val padPx = PADDING_DP * density
+        val innerWidth = (width - padPx * 2f).toInt().coerceAtLeast(1)
+        val innerHeight = height - padPx * 2f
+        // The threshold is on the *drawn* height in dp, which is what the eye sees, so it is
+        // measured before the render scale above shrinks anything.
+        val compact = input.heightPx / input.density < COMPACT_HEIGHT_DP
+
+        val footer = buildFooter(context, input, density, compact)
+        val blocks = fit(context, input, density, innerWidth, innerHeight, footer, compact)
+        draw(canvas, blocks, width, height, padPx, innerWidth, input.textArgb)
+        return bitmap
+    }
+
+    /**
+     * How much to shrink the bitmap below the cell's true pixel size.
+     *
+     * Glance inlines a bitmap into the `RemoteViews` it hands the launcher, and an oversized one
+     * is a `TransactionTooLargeException` rather than a soft failure — a 5x5 cell on a 480 dpi
+     * phone is already 3.5 MB of ARGB. The budget below leaves every cell up to about 4x4 at full
+     * resolution and only starts costing sharpness past that, where `ContentScale.Fit` scales the
+     * bitmap back up.
+     */
+    private fun renderScale(widthPx: Int, heightPx: Int, maxPixels: Long): Float {
+        val pixels = widthPx.toLong() * heightPx.toLong()
+        if (pixels <= maxPixels) return 1f
+        return sqrt(maxPixels.toDouble() / pixels.toDouble()).toFloat()
+    }
+
+    /**
+     * A quarter of the *display's* own pixel count, not a fixed figure sized for whichever phone
+     * last measured it: a fixed 700k pixels rendered a 4x3 cell at about 0.72 scale and left the
+     * text visibly soft, and it either wastes headroom on a bigger screen or has none to spare on
+     * a smaller one. In ARGB_8888 a quarter of the screen is one screen's worth of *bytes*, and
+     * `dumpsys appwidget` reported the host counting a card's bitmap about three times over
+     * (`views_bitmap_memory`) against a ceiling of roughly 1.5 screens of ARGB — so this stays
+     * comfortably inside that budget on any display. Floored and ceilinged so a tiny or huge
+     * display still gets a sane number either way.
+     */
+    private fun maxBitmapPixels(context: Context): Long {
+        val metrics = context.resources.displayMetrics
+        val budget = metrics.widthPixels.toLong() * metrics.heightPixels.toLong() / 4L
+        return budget.coerceIn(500_000L, 1_200_000L)
+    }
+
+    // -- Auto-fit -----------------------------------------------------------------------------
+
+    /** The three text blocks of one candidate layout, with the gaps the spec puts between them. */
+    private class CardBlocks(
+        val arabic: StaticLayout,
+        val translation: StaticLayout?,
+        val footer: FooterRow,
+        val arabicUi: Boolean,
+        val translationGapPx: Float,
+        val footerGapPx: Float,
+        val rulePx: Float,
+        val ruleGapPx: Float,
+        /** True only for the last-resort layout where even the Arabic alone outgrows the space
+         * above the footer: the footer is left undrawn rather than painted over it. */
+        val hideFooter: Boolean = false,
+    ) {
+        /** Everything from the gap above the rule to the bottom of the footer row. */
+        val footerBlockHeight: Float
+            get() = if (hideFooter) 0f else footerGapPx + rulePx + ruleGapPx + footer.height
+
+        val contentHeight: Float
+            get() = arabic.height + (translation?.let { translationGapPx + it.height } ?: 0f)
+
+        val totalHeight: Float
+            get() = contentHeight + footerBlockHeight
+    }
+
+    /**
+     * The top of the auto-fit walk for this cell (N1/N2, S23 round).
+     *
+     * Two rules, both about the same complaint — a tall card that draws small text and leaves the
+     * rest blank:
+     * - the ceiling grows with the drawn height, [ARABIC_GROWTH_PER_DP] per dp past the 4x3 the
+     *   design is set at, capped at [ARABIC_CEILING_SP];
+     * - with the translation off the Arabic may reach that cap at *any* height, because it is then
+     *   the only thing on the card. At 4x3 with the translation on this ayah was already at the
+     *   old flat ceiling, so turning the translation off changed nothing at all (N2) — the fit had
+     *   nowhere higher to go.
+     *
+     * Only the ceiling moves. The walk still steps down 1 sp at a time and still floors at
+     * [ARABIC_MIN_SP], so nothing that fits today stops fitting.
+     */
+    private fun maxArabicSp(input: AyahCardInput): Int {
+        if (!input.showTranslation || input.entry.translation.isEmpty()) return ARABIC_CEILING_SP
+        val heightDp = input.heightPx / input.density
+        val grown = ARABIC_MAX_SP + (heightDp - FIT_HEIGHT_DP) * ARABIC_GROWTH_PER_DP
+        return grown.coerceIn(ARABIC_MAX_SP.toFloat(), ARABIC_CEILING_SP.toFloat()).toInt()
+    }
+
+    private fun fit(
+        context: Context,
+        input: AyahCardInput,
+        density: Float,
+        innerWidth: Int,
+        innerHeight: Float,
+        footer: FooterRow,
+        compact: Boolean,
+    ): CardBlocks {
+        for (sp in maxArabicSp(input) downTo ARABIC_MIN_SP) {
+            val blocks = blocksAt(context, input, density, innerWidth, footer, compact, sp.toFloat(), maxLines = null)
+            if (blocks.totalHeight <= innerHeight) return blocks
+        }
+        // Nothing fit even at the floor. The Arabic keeps its full height whatever that costs —
+        // half an ayah is not an ayah — and the translation takes whatever height is left.
+        val floorBlocks = blocksAt(context, input, density, innerWidth, footer, compact, ARABIC_MIN_SP.toFloat(), maxLines = null)
+        if (floorBlocks.arabic.height > innerHeight - floorBlocks.footerBlockHeight) {
+            // Even the Arabic alone, at the floor size, outgrows the space above the footer.
+            // Drawing the footer under it would mean painting over the Arabic instead — worse
+            // than not drawing it — so it is dropped outright and the Arabic gets the full inner
+            // height, top padding to bottom padding. draw() still centres inside that space with
+            // a floor of zero, so if it still does not fit the only edge that gives is the
+            // bottom; the top padding is never crossed.
+            return CardBlocks(
+                arabic = floorBlocks.arabic,
+                translation = null,
+                footer = floorBlocks.footer,
+                arabicUi = floorBlocks.arabicUi,
+                translationGapPx = floorBlocks.translationGapPx,
+                footerGapPx = 0f,
+                rulePx = 0f,
+                ruleGapPx = 0f,
+                hideFooter = true,
+            )
+        }
+        val translation = floorBlocks.translation ?: return floorBlocks
+        val available = innerHeight - floorBlocks.arabic.height - floorBlocks.translationGapPx -
+            floorBlocks.footerBlockHeight
+        val lineHeight = (translation.getLineBottom(0) - translation.getLineTop(0)).toFloat()
+        val lines = if (lineHeight <= 0f) 0 else floor(available / lineHeight).toInt()
+        if (lines >= translation.lineCount) return floorBlocks
+        return blocksAt(
+            context, input, density, innerWidth, footer, compact, ARABIC_MIN_SP.toFloat(),
+            maxLines = lines,
+        )
+    }
+
+    /**
+     * One candidate layout at [arabicSp]. A null [maxLines] lets the translation take as many
+     * lines as it needs; a positive one clamps it and ellipsises the end; zero drops it entirely,
+     * which is what a cell with no room left for even one line gets.
+     */
+    private fun blocksAt(
+        context: Context,
+        input: AyahCardInput,
+        density: Float,
+        innerWidth: Int,
+        footer: FooterRow,
+        compact: Boolean,
+        arabicSp: Float,
+        maxLines: Int?,
+    ): CardBlocks {
+        val arabic = arabicLayout(context, input, density, innerWidth, arabicSp)
+        val translationSp = (arabicSp * TRANSLATION_RATIO).coerceIn(TRANSLATION_MIN_SP, TRANSLATION_MAX_SP)
+        val translation = when {
+            !input.showTranslation || input.entry.translation.isEmpty() -> null
+            maxLines != null && maxLines <= 0 -> null
+            else -> translationLayout(context, input, density, innerWidth, translationSp, maxLines)
+        }
+        return CardBlocks(
+            arabic = arabic,
+            translation = translation,
+            footer = footer,
+            arabicUi = input.arabicUi,
+            translationGapPx = TRANSLATION_GAP_DP * density,
+            footerGapPx = (if (compact) COMPACT_FOOTER_GAP_DP else FOOTER_GAP_DP) * density,
+            // Spec §2 asks for a one-*pixel* rule, not one dp: a hairline that stays a hairline
+            // however dense the screen, as the in-app card dividers do.
+            rulePx = if (compact) 0f else 1f,
+            ruleGapPx = if (compact) 0f else FOOTER_RULE_GAP_DP * density,
+        )
+    }
+
+    // -- Blocks ---------------------------------------------------------------------------------
+
+    /**
+     * The ayah with its roundel: the database's own Uthmani text, the shared marker separator, and
+     * the ayah number in Arabic-Indic digits, which the Hafs face draws as the roundel (spec §5.2).
+     * The digit run alone takes the accent, exactly as the reader's `AyahCard` styles it.
+     */
+    private fun arabicLayout(
+        context: Context,
+        input: AyahCardInput,
+        density: Float,
+        widthPx: Int,
+        sp: Float,
+    ): StaticLayout {
+        val digits = QuranText.arabicIndic(input.entry.ayah)
+        val text = input.entry.arabic + QuranText.MARKER_SEPARATOR + digits
+        val spanned = SpannableString(text)
+        spanned.setSpan(
+            ForegroundColorSpan(input.accentArgb),
+            text.length - digits.length,
+            text.length,
+            Spanned.SPAN_INCLUSIVE_EXCLUSIVE,
+        )
+        val paint = textPaint(context, FONT_HAFS, sp, density, input.textArgb)
+        return StaticLayout.Builder.obtain(spanned, 0, spanned.length, paint, widthPx)
+            .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+            // ALIGN_NORMAL plus an RTL paragraph is what puts the Arabic hard against the right
+            // edge and wraps it right-to-left; ALIGN_OPPOSITE would flip it back.
+            .setTextDirection(TextDirectionHeuristics.RTL)
+            .setLineSpacing(0f, spacingMultiplier(paint, sp * density * ARABIC_LINE_HEIGHT))
+            .setIncludePad(false)
+            .build()
+    }
+
+    /** The translation paragraph, in its own language's direction — an Arabic UI reading an
+     * English translation still reads that paragraph left to right (spec §5.1). */
+    private fun translationLayout(
+        context: Context,
+        input: AyahCardInput,
+        density: Float,
+        widthPx: Int,
+        sp: Float,
+        maxLines: Int?,
+    ): StaticLayout {
+        val text = input.entry.translation
+        val paint = textPaint(context, FONT_MANROPE, sp, density, input.textArgb.withAlpha(SECONDARY_ALPHA))
+        val builder = StaticLayout.Builder.obtain(text, 0, text.length, paint, widthPx)
+            .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+            .setTextDirection(
+                if (input.translationRtl) TextDirectionHeuristics.RTL else TextDirectionHeuristics.LTR,
+            )
+            .setLineSpacing(0f, spacingMultiplier(paint, sp * density * TRANSLATION_LINE_HEIGHT))
+            .setIncludePad(false)
+        if (maxLines != null) {
+            builder.setMaxLines(maxLines).setEllipsize(TextUtils.TruncateAt.END)
+        }
+        return builder.build()
+    }
+
+    /**
+     * The multiplier that turns a face's *natural* line height into the spec's.
+     *
+     * `StaticLayout`'s spacing multiplier scales what the font asks for, and Hafs asks for a great
+     * deal — its stacked diacritics need it. Where the face already wants more room than the spec
+     * allots, it keeps it: 1f is the floor, because a multiplier below one would set the
+     * diacritics of one line into the line above, which is the exact failure the in-app reader's
+     * fixed 2.0x line height exists to avoid.
+     */
+    private fun spacingMultiplier(paint: TextPaint, desiredPx: Float): Float {
+        val metrics = paint.fontMetrics
+        val natural = metrics.descent - metrics.ascent
+        if (natural <= 0f) return 1f
+        return (desiredPx / natural).coerceAtLeast(1f)
+    }
+
+    // -- Footer -----------------------------------------------------------------------------------
+
+    /** One styled run of the footer row; its width is measured once, at construction. */
+    private class FooterRun(val text: String, val paint: TextPaint) {
+        val width: Float = paint.measureText(text)
+    }
+
+    /**
+     * The footer's two ends. Both are laid out on one shared baseline so the Latin name and the
+     * Hafs surah name beside it sit on the same line however differently the two faces are cut.
+     */
+    private class FooterRow(private val start: List<FooterRun>, private val end: List<FooterRun>) {
+        private val metrics = (start + end).map { it.paint.fontMetrics }
+        private val ascent = metrics.minOf { it.ascent }
+        private val descent = metrics.maxOf { it.descent }
+
+        val height: Float = descent - ascent
+
+        /**
+         * Draws the row between [left] and [right] with its top at [top]. The start end follows
+         * the *UI's* direction, not the text's: under an Arabic UI the surah name sits on the
+         * right and the reference on the left.
+         */
+        fun draw(canvas: Canvas, left: Float, right: Float, top: Float, rtl: Boolean) {
+            val baseline = top - ascent
+            val atLeft = if (rtl) end else start
+            val atRight = if (rtl) start else end
+            var x = left
+            atLeft.forEach { run ->
+                canvas.drawText(run.text, x, baseline, run.paint)
+                x += run.width
+            }
+            x = right - atRight.sumOf { it.width.toDouble() }.toFloat()
+            atRight.forEach { run ->
+                canvas.drawText(run.text, x, baseline, run.paint)
+                x += run.width
+            }
+        }
+    }
+
+    private fun buildFooter(
+        context: Context,
+        input: AyahCardInput,
+        density: Float,
+        compact: Boolean,
+    ): FooterRow {
+        val entry = input.entry
+        val primary = input.textArgb
+        val tertiary = input.textArgb.withAlpha(TERTIARY_ALPHA)
+        // Built by interpolation rather than pre-formatted upstream, so it needs the same pass
+        // through WidgetDigits every other number a widget composes itself gets — against the
+        // choice the app recorded in the mirror, so the two can never disagree (D2).
+        val reference = WidgetDigits.localize("${entry.surah}:${entry.ayah}", input.arabicIndicDigits, input.languageTag)
+        val arabicNameSp = when {
+            compact -> FOOTER_ARABIC_COMPACT_SP
+            input.arabicUi -> FOOTER_ARABIC_UI_SP
+            else -> FOOTER_ARABIC_SP
+        }
+        val arabicName = FooterRun(
+            entry.surahArabic,
+            textPaint(context, FONT_HAFS, arabicNameSp, density, primary),
+        )
+        val referenceRun = FooterRun(
+            reference,
+            referencePaint(context, FOOTER_LATIN_SP, density, tertiary, reference),
+        )
+        return if (input.arabicUi) {
+            // No Latin at all under an Arabic UI: the surah name is already in the reader's own
+            // script and a transliteration beside it would be noise.
+            FooterRow(start = listOf(arabicName), end = listOf(referenceRun))
+        } else {
+            FooterRow(
+                start = listOf(
+                    FooterRun(
+                        entry.surahLatin,
+                        textPaint(context, FONT_MANROPE_SEMIBOLD, FOOTER_LATIN_SP, density, primary),
+                    ),
+                    FooterRun(
+                        REFERENCE_SEPARATOR + reference,
+                        referencePaint(context, FOOTER_LATIN_SP, density, tertiary, reference),
+                    ),
+                ),
+                end = listOf(arabicName),
+            )
+        }
+    }
+
+    /**
+     * Manrope for the reference, unless the locale's digits are not in it.
+     *
+     * Manrope carries Latin only, so an `ar-EG` reference — «١٣:٢٨» — would come out as tofu
+     * boxes. The system face has those digits, and swapping to it is invisible for the Western
+     * digits every other locale uses.
+     */
+    private fun referencePaint(
+        context: Context,
+        sp: Float,
+        density: Float,
+        argb: Int,
+        text: String,
+    ): TextPaint {
+        val paint = textPaint(context, FONT_MANROPE, sp, density, argb)
+        if (!paint.hasGlyph(text)) paint.typeface = Typeface.DEFAULT
+        return paint
+    }
+
+    // -- Drawing ------------------------------------------------------------------------------
+
+    private fun draw(
+        canvas: Canvas,
+        blocks: CardBlocks,
+        width: Int,
+        height: Int,
+        padPx: Float,
+        innerWidth: Int,
+        textArgb: Int,
+    ) {
+        val left = padPx
+        val right = width - padPx
+        // The footer is pinned to the bottom rather than floated up under the translation. The
+        // spec's 9 dp is a minimum — it is what the auto-fit above checks — and the alternative
+        // leaves whatever height the chosen size did not use as a band of dead space *below* the
+        // footer, which reads as a card that failed to fill its cell.
+        //
+        // [CardBlocks.hideFooter] is the one exception: the footer has already been judged unable
+        // to share the cell with the Arabic at all, so it is left off the canvas entirely and the
+        // Arabic gets the full inner height instead of the space above where the footer would sit.
+        val footerTop = if (blocks.hideFooter) height - padPx else height - padPx - blocks.footer.height
+        val contentBottom = if (blocks.hideFooter) {
+            height - padPx
+        } else {
+            footerTop - blocks.footerGapPx - blocks.rulePx - blocks.ruleGapPx
+        }
+
+        // The Arabic and its translation are centred together in the space above the footer.
+        // Spec §2 asks for this outright when the translation is off; it is right with one too,
+        // and for the same reason. The launcher's 4x3 cell is nearer 380 dp tall than the 180 dp
+        // the provider asks for as a minimum, and the auto-fit stops at 28 sp, so on a real home
+        // screen there is always height the text cannot use. Top-aligned, all of it collects
+        // into one dead band between the translation and the rule; centred, it becomes margin.
+        //
+        // The `max(0f, ...)` floor matters most for [CardBlocks.hideFooter]: when the Arabic is
+        // taller than the space it was just given, this keeps it pinned to the top padding rather
+        // than pushed above it, so the one edge it is allowed to overrun is the bottom.
+        var y = padPx + max(0f, (contentBottom - padPx - blocks.contentHeight) / 2f)
+        canvas.withTranslation(left, y) { blocks.arabic.draw(canvas) }
+        y += blocks.arabic.height
+        blocks.translation?.let { translation ->
+            y += blocks.translationGapPx
+            canvas.withTranslation(left, y) { translation.draw(canvas) }
+        }
+
+        if (blocks.hideFooter) return
+        if (blocks.rulePx > 0f) {
+            val ruleTop = footerTop - blocks.ruleGapPx - blocks.rulePx
+            val rulePaint = Paint().apply { color = textArgb.withAlpha(RULE_ALPHA) }
+            canvas.drawRect(left, ruleTop, left + innerWidth, ruleTop + blocks.rulePx, rulePaint)
+        }
+        blocks.footer.draw(canvas, left, right, footerTop, rtl = blocks.arabicUi)
+    }
+
+    /** Runs [block] with the canvas translated to ([x], [y]) and restores it afterwards —
+     * `StaticLayout.draw` always draws at the canvas origin. */
+    private inline fun Canvas.withTranslation(x: Float, y: Float, block: () -> Unit) {
+        val saved = save()
+        translate(x, y)
+        block()
+        restoreToCount(saved)
+    }
+
+    // -- Paints ---------------------------------------------------------------------------------
+
+    private fun textPaint(
+        context: Context,
+        font: String,
+        sp: Float,
+        density: Float,
+        argb: Int,
+    ): TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+        typeface = typeface(context, font)
+        // sp, not dp: the card is drawn at the *design* size and does not follow the system font
+        // scale. A widget cell does not grow when the user enlarges system text, so honouring the
+        // scale here would only push the ayah out of a cell it already exactly fills.
+        textSize = sp * density
+        color = argb
+    }
+
+    /** The same ARGB colour at [fraction] of its own alpha. */
+    private fun Int.withAlpha(fraction: Float): Int {
+        val alpha = ((this ushr 24) * fraction).toInt().coerceIn(0, 255)
+        return (alpha shl 24) or (this and 0x00FFFFFF)
+    }
+}

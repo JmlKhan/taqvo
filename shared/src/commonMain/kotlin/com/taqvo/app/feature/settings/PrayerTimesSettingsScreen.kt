@@ -1,0 +1,471 @@
+package com.taqvo.app.feature.settings
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
+import org.jetbrains.compose.resources.stringResource
+import com.taqvo.app.design.LocalTaqvoColors
+import com.taqvo.app.design.TaqvoText
+import com.taqvo.app.design.components.CardDivider
+import com.taqvo.app.design.components.CheckMark
+import com.taqvo.app.design.components.TaqvoBottomSheet
+import com.taqvo.app.design.components.TaqvoCard
+import com.taqvo.app.design.components.RowToggle
+import com.taqvo.app.design.components.TaqvoRow
+import com.taqvo.app.domain.HighLatitudePreference
+import com.taqvo.app.domain.Prayer
+import com.taqvo.app.domain.PrayerSettings
+import com.taqvo.app.hijri.HijriFormatter
+import com.taqvo.app.hijri.TabularHijriCalendar
+import com.taqvo.app.i18n.ClockFormat
+import com.taqvo.app.i18n.LocalPlatformFormat
+import com.taqvo.app.i18n.createPlatformFormat
+import com.taqvo.app.i18n.highLatitudeDisplayName
+import com.taqvo.app.i18n.schoolDisplayName
+import com.taqvo.app.i18n.timetableDisplayName
+import com.taqvo.app.prayer.engine.method.AsrSchool
+import com.taqvo.app.resources.Res
+import com.taqvo.app.resources.adjustments_many
+import com.taqvo.app.resources.adjustments_none
+import com.taqvo.app.resources.adjustments_one
+import com.taqvo.app.resources.asr_note_automatic_authority
+import com.taqvo.app.resources.asr_note_automatic_majority
+import com.taqvo.app.resources.asr_note_automatic_unknown
+import com.taqvo.app.resources.asr_note_automatic_unknown_here
+import com.taqvo.app.resources.asr_note_hanafi
+import com.taqvo.app.resources.asr_note_standard
+import com.taqvo.app.resources.asr_shadow_hanafi
+import com.taqvo.app.resources.asr_shadow_standard
+import com.taqvo.app.resources.hijri_day_after
+import com.taqvo.app.resources.hijri_day_before
+import com.taqvo.app.resources.hijri_method_note
+import com.taqvo.app.resources.hijri_tabular
+import com.taqvo.app.resources.high_lat_picker_note
+import com.taqvo.app.resources.prayer_times_about_row
+import com.taqvo.app.resources.prayer_times_asr_label
+import com.taqvo.app.resources.prayer_times_hijri_label
+import com.taqvo.app.resources.prayer_times_high_latitude
+import com.taqvo.app.resources.prayer_times_manual
+import com.taqvo.app.resources.prayer_times_paused_value
+import com.taqvo.app.resources.prayer_times_show_sunrise
+import com.taqvo.app.resources.prayer_times_time_format
+import com.taqvo.app.resources.prayer_times_timetable
+import com.taqvo.app.resources.saudi_fajr_later
+import com.taqvo.app.resources.saudi_fajr_later_detail
+import com.taqvo.app.resources.settings_prayer_times
+import com.taqvo.app.resources.show_both_asr
+import com.taqvo.app.resources.show_where_differ
+import com.taqvo.app.resources.show_where_differ_detail
+import com.taqvo.app.resources.show_where_differ_detail_here
+import com.taqvo.app.resources.time_format_12
+import com.taqvo.app.resources.time_format_24
+import com.taqvo.app.resources.timetable_automatic_named
+import com.taqvo.app.resources.timetable_checking
+import com.taqvo.app.resources.timetable_keep_current
+import com.taqvo.app.resources.timetable_out_of_scope
+import com.taqvo.app.resources.timetable_paused_note
+
+/** Roughly where the sun stops dropping far enough below the horizon for a true Fajr and Isha. */
+private const val HIGH_LATITUDE_DEGREES = 48
+
+/** The Asr control's choices, as stored: the place's own school, then the two. */
+private val SCHOOLS = listOf("automatic", "standard", "hanafi")
+
+/**
+ * Settings › **Prayer times** (spec §2.2, mockup section 3). Every control writes its own field on
+ * touch: there is no save button anywhere in settings, so a change the user can see is a change
+ * that has already been stored.
+ *
+ * - The Timetable card: the timetable ("Automatic · London Unified"), Saudi Arabia's "Pray Fajr 5
+ *   minutes later" while Umm al-Qura applies there, the high-latitude rule for an Other method
+ *   only, Manual adjustments, and About these times. Under it, one line when the stored timetable
+ *   does not apply here (ruling R50) or waits to be confirmed (ruling R52).
+ * - Asr: Automatic, Standard, Hanafi, with a note naming the school by its shadow; the switches
+ *   for both Asr times and, where mosques differ, where their timetables differ.
+ * - Under it, Show sunrise and Time format (24-hour or 12-hour, chosen in a sheet): both say how
+ *   the list is shown, neither changes a time. Then Asr, then the Hijri date.
+ *
+ * [status] is null without a location: the rows then name the stored choice alone.
+ */
+@Composable
+fun PrayerTimesSettingsScreen(
+    settings: PrayerSettings,
+    status: TimetableStatus?,
+    adjustmentsPaused: Boolean,
+    placeName: String?,
+    today: LocalDate,
+    clockFormat: ClockFormat,
+    onClockFormat: (ClockFormat) -> Unit,
+    onSchool: (String) -> Unit,
+    onHijriOffset: (Int) -> Unit,
+    onShowSunrise: (Boolean) -> Unit,
+    onShowBothAsr: (Boolean) -> Unit,
+    onShowWhereDiffer: (Boolean) -> Unit,
+    onSaudiFajrLater: (Boolean) -> Unit,
+    onBack: () -> Unit,
+    onOpenTimetable: () -> Unit,
+    onOpenHighLatitudePicker: () -> Unit,
+    onOpenManualAdjustments: () -> Unit,
+    onOpenAboutTimes: () -> Unit,
+) {
+    var timeFormatOpen by remember { mutableStateOf(false) }
+    SettingsScaffold(stringResource(Res.string.settings_prayer_times), onBack) {
+        SettingsCard {
+            TaqvoRow(
+                stringResource(Res.string.prayer_times_timetable),
+                value = timetableValue(settings, status),
+                onClick = onOpenTimetable,
+            )
+            if (status?.saudiFajr == true) {
+                CardDivider()
+                TaqvoRow(
+                    stringResource(Res.string.saudi_fajr_later),
+                    subtitle = stringResource(Res.string.saudi_fajr_later_detail),
+                    toggle = RowToggle(settings.saudiFajrLater, onSaudiFajrLater),
+                )
+            }
+            if (status?.highLatitude ?: (settings.timetable.startsWith("other."))) {
+                CardDivider()
+                TaqvoRow(
+                    stringResource(Res.string.prayer_times_high_latitude),
+                    value = highLatitudeDisplayName(settings.legacyHighLatitude ?: HighLatitudePreference.AUTOMATIC),
+                    onClick = onOpenHighLatitudePicker,
+                )
+            }
+            CardDivider()
+            TaqvoRow(
+                stringResource(Res.string.prayer_times_manual),
+                value = adjustmentsSummary(settings.minuteAdjustments, adjustmentsPaused),
+                onClick = onOpenManualAdjustments,
+            )
+            // Where the times come from sits with the timetable that gives them, seen on arrival
+            // rather than at the foot of the screen.
+            CardDivider()
+            ChevronRow(stringResource(Res.string.prayer_times_about_row), onClick = onOpenAboutTimes)
+        }
+        if (status != null && (status.outOfScope || status.paused)) {
+            Spacer(Modifier.height(10.dp))
+            SettingsNote(
+                stringResource(
+                    if (status.outOfScope) Res.string.timetable_out_of_scope else Res.string.timetable_paused_note,
+                    chosenName(status),
+                ),
+            )
+        }
+
+        // How the list is shown, right under the timetable that gives the times (the owner's call,
+        // 4 Nov 2026): neither changes a time.
+        Spacer(Modifier.height(14.dp))
+        SettingsCard {
+            TaqvoRow(
+                stringResource(Res.string.prayer_times_show_sunrise),
+                toggle = RowToggle(settings.showSunrise, onShowSunrise),
+            )
+            CardDivider()
+            // The screen's other display preference sits with "Show sunrise": both say how the
+            // list is shown, neither changes a time.
+            TaqvoRow(
+                stringResource(Res.string.prayer_times_time_format),
+                value = clockFormatName(clockFormat),
+                onClick = { timeFormatOpen = true },
+            )
+        }
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(Res.string.prayer_times_asr_label))
+        SegmentedControl(
+            options = SCHOOLS.map { it to schoolDisplayName(it) },
+            selected = settings.school,
+            onSelect = onSchool,
+        )
+        asrNote(settings.school, status, placeName)?.let {
+            Spacer(Modifier.height(10.dp))
+            SettingsNote(it)
+        }
+        Spacer(Modifier.height(14.dp))
+        SettingsCard {
+            TaqvoRow(
+                stringResource(Res.string.show_both_asr),
+                toggle = RowToggle(settings.showBothAsr, onShowBothAsr),
+            )
+            if (status?.whereDiffer == true) {
+                CardDivider()
+                TaqvoRow(
+                    stringResource(Res.string.show_where_differ),
+                    subtitle = if (placeName != null) {
+                        stringResource(Res.string.show_where_differ_detail, placeName)
+                    } else {
+                        stringResource(Res.string.show_where_differ_detail_here)
+                    },
+                    toggle = RowToggle(settings.showWhereDiffer, onShowWhereDiffer),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(Res.string.prayer_times_hijri_label))
+        // "A day earlier" rather than "−1 day": a signed numeral inside a segmented control is
+        // the one place a minus sign would have to be mirrored by hand under RTL, and the words
+        // say the same thing without the problem.
+        SegmentedControl(
+            options = listOf(
+                -1 to stringResource(Res.string.hijri_day_before),
+                0 to stringResource(Res.string.hijri_tabular),
+                1 to stringResource(Res.string.hijri_day_after),
+            ),
+            selected = settings.hijriOffsetDays.coerceIn(-1, 1),
+            onSelect = onHijriOffset,
+        )
+        Spacer(Modifier.height(10.dp))
+        // The offset shifts the Gregorian date before conversion, exactly as the Prayer screen does
+        // it — never the Hijri day number, which can produce a day 0 or a day 31.
+        SettingsNote(
+            HijriFormatter.format(
+                TabularHijriCalendar.fromGregorian(today.plus(settings.hijriOffsetDays, DateTimeUnit.DAY)),
+                LocalPlatformFormat.current,
+            ),
+        )
+        Spacer(Modifier.height(6.dp))
+        // Says what the date is made of. A reader whose mosque is a day off and who finds no
+        // explanation concludes the app is wrong, not that it uses a different convention.
+        SettingsNote(stringResource(Res.string.hijri_method_note))
+
+    }
+    if (timeFormatOpen) {
+        TaqvoBottomSheet(onDismissRequest = { timeFormatOpen = false }) {
+            TimeFormatSheet(
+                current = clockFormat,
+                onPick = { onClockFormat(it); timeFormatOpen = false },
+            )
+        }
+    }
+}
+
+@Composable
+private fun clockFormatName(format: ClockFormat): String = when (format) {
+    ClockFormat.TWENTY_FOUR_HOUR -> stringResource(Res.string.time_format_24)
+    ClockFormat.TWELVE_HOUR -> stringResource(Res.string.time_format_12)
+}
+
+/**
+ * Two option rows in the "Remind me before" idiom, each showing the same sample time, 18:32, the
+ * way that format writes it, so the reader sees "٦:٣٢ م" or "ÖS 6:32" before committing.
+ */
+@Composable
+private fun TimeFormatSheet(current: ClockFormat, onPick: (ClockFormat) -> Unit) {
+    val colors = LocalTaqvoColors.current
+    Column(
+        Modifier
+            .padding(horizontal = SettingsGutter)
+            .padding(bottom = 24.dp)
+            .windowInsetsPadding(WindowInsets.navigationBars),
+    ) {
+        Text(stringResource(Res.string.prayer_times_time_format), style = TaqvoText.screenTitle, color = colors.textPrimary)
+        Spacer(Modifier.height(16.dp))
+        // Radio buttons in one group, as the remind-before sheet's are, so a screen reader says
+        // which clock is chosen. Android takes the click off the chosen one, which costs nothing
+        // here: choosing it again only closes the sheet, as back and the scrim do.
+        TaqvoCard(Modifier.selectableGroup()) {
+            ClockFormat.entries.forEachIndexed { index, option ->
+                if (index > 0) CardDivider()
+                val sample = remember(option) { createPlatformFormat(option).clockTime(18, 32) }
+                TaqvoRow(
+                    clockFormatName(option),
+                    subtitle = sample,
+                    onClick = { onPick(option) },
+                    selectable = true,
+                    selected = option == current,
+                    trailing = { if (option == current) CheckMark() },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The Timetable row's value: "Automatic · London Unified" while Automatic applies (chosen, or in
+ * place of a timetable that does not apply here), the timetable's name when one applies, and
+ * "· paused" after it until it is confirmed.
+ */
+@Composable
+private fun timetableValue(settings: PrayerSettings, status: TimetableStatus?): String {
+    if (status == null) return timetableDisplayName(settings.timetable)
+    if (status.selectedId == AUTOMATIC_TIMETABLE) {
+        return stringResource(Res.string.timetable_automatic_named, timetableNameText(status.automatic))
+    }
+    val name = chosenName(status)
+    return if (status.paused) stringResource(Res.string.prayer_times_paused_value, name) else name
+}
+
+/**
+ * The Asr note names the school by its shadow (spec §2.2, §3.7): "Automatic: twice the shadow,
+ * the later time, because Toronto's majority school isn't known", "Automatic: the shadow equal to
+ * its length, as Umm al-Qura", "Hanafi: twice the shadow". Null for Automatic without a place.
+ */
+@Composable
+private fun asrNote(school: String, status: TimetableStatus?, placeName: String?): String? {
+    val standard = stringResource(Res.string.asr_shadow_standard)
+    val hanafi = stringResource(Res.string.asr_shadow_hanafi)
+    return when (school) {
+        "standard" -> stringResource(Res.string.asr_note_standard, standard)
+        "hanafi" -> stringResource(Res.string.asr_note_hanafi, hanafi)
+        else -> {
+            status ?: return null
+            val shadow = if (status.school == AsrSchool.HANAFI) hanafi else standard
+            when {
+                !status.schoolKnown && placeName != null -> stringResource(Res.string.asr_note_automatic_unknown, shadow, placeName)
+                !status.schoolKnown -> stringResource(Res.string.asr_note_automatic_unknown_here, shadow)
+                status.automatic.source == SourceKind.AUTHORITY ->
+                    stringResource(Res.string.asr_note_automatic_authority, shadow, timetableNameText(status.automatic))
+                else -> stringResource(Res.string.asr_note_automatic_majority, shadow)
+            }
+        }
+    }
+}
+
+@Composable
+private fun adjustmentsSummary(adjustments: Map<Prayer, Int>, paused: Boolean): String {
+    val active = adjustments.count { it.value != 0 }
+    val summary = when (active) {
+        0 -> stringResource(Res.string.adjustments_none)
+        1 -> stringResource(Res.string.adjustments_one)
+        else -> stringResource(
+            Res.string.adjustments_many,
+            LocalPlatformFormat.current.localizedDigits(active),
+        )
+    }
+    return if (paused && active > 0) stringResource(Res.string.prayer_times_paused_value, summary) else summary
+}
+
+/** Amber is the only colour, so the selected segment carries it and everything else is quiet. */
+@Composable
+private fun <T> SegmentedControl(
+    options: List<Pair<T, String>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+) {
+    val colors = LocalTaqvoColors.current
+    Row(
+        Modifier
+            .padding(horizontal = SettingsGutter)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(colors.surface)
+            .border(1.dp, colors.hairline, RoundedCornerShape(18.dp))
+            .padding(4.dp)
+            .selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        options.forEach { (value, label) ->
+            val isSelected = value == selected
+            Box(
+                Modifier
+                    .weight(1f)
+                    .defaultMinSize(minHeight = 40.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(if (isSelected) colors.accent else colors.surface)
+                    .selectable(selected = isSelected, role = Role.Tab) { onSelect(value) }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    label,
+                    style = TaqvoText.caption,
+                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                    color = if (isSelected) colors.background else colors.textSecondary,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The high-latitude rule an Other method follows (spec §2.2); Automatic is the engine's own: the
+ * real time whenever the sign occurs, else the MWL Fiqh Council's proportion (spec §3.8).
+ *
+ * A confirmed Other method applies as it is, so a new rule is checked against Automatic first,
+ * as a new timetable is (review I1): [checking] while the check runs, then, if the new rule
+ * begins a prayer earlier, [warning] with "Follow it" and a button that keeps the rule in use
+ * ([keep]).
+ */
+@Composable
+fun HighLatitudePickerScreen(
+    current: HighLatitudePreference,
+    onPick: (HighLatitudePreference) -> Unit,
+    onBack: () -> Unit,
+    checking: Float? = null,
+    warning: PendingWarning? = null,
+    automatic: TimetableName? = null,
+    onKeep: () -> Unit = {},
+    onFollow: () -> Unit = {},
+) {
+    val colors = LocalTaqvoColors.current
+    SettingsScaffold(stringResource(Res.string.prayer_times_high_latitude), onBack) {
+        SettingsCard(Modifier.selectableGroup()) {
+            HighLatitudePreference.entries.forEachIndexed { i, preference ->
+                if (i > 0) CardDivider()
+                TaqvoRow(
+                    label = highLatitudeDisplayName(preference),
+                    onClick = { onPick(preference) },
+                    selectable = true,
+                    selected = preference == current,
+                    trailing = { if (preference == current) CheckMark() },
+                )
+            }
+        }
+        if (checking != null) {
+            Spacer(Modifier.height(14.dp))
+            Column(Modifier.padding(horizontal = SettingsGutter + 4.dp)) {
+                Text(stringResource(Res.string.timetable_checking), style = TaqvoText.caption, color = colors.textSecondary)
+                Spacer(Modifier.height(8.dp))
+                CheckProgressLine(checking)
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        SettingsNote(
+            stringResource(
+                Res.string.high_lat_picker_note,
+                LocalPlatformFormat.current.localizedDigits(HIGH_LATITUDE_DEGREES),
+            ),
+        )
+    }
+    if (warning != null && automatic != null) {
+        EarlierWarningSheet(
+            warning = warning,
+            automatic = automatic,
+            keep = stringResource(Res.string.timetable_keep_current, highLatitudeDisplayName(current)),
+            onKeep = onKeep,
+            onFollow = onFollow,
+        )
+    }
+}

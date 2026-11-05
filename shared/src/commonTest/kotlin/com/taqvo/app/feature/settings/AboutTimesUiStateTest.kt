@@ -1,0 +1,625 @@
+package com.taqvo.app.feature.settings
+
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
+import com.taqvo.app.domain.Prayer
+import com.taqvo.app.prayer.engine.EngineSettings
+import com.taqvo.app.prayer.engine.PrayerEngine
+import com.taqvo.app.prayer.engine.day.PrayerDay
+import com.taqvo.app.prayer.engine.registry.Place
+import com.taqvo.app.prayer.engine.registry.Registry
+import com.taqvo.app.prayer.engine.registry.data.ProofStamp
+import com.taqvo.app.resources.Res
+import com.taqvo.app.resources.about_not_followed_irn_tromso
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
+
+/**
+ * Task 11's template selection (spec §2.3, §6.1's class table): [aboutTimesUiState] must read each
+ * class into the right [AboutTimesUiState] branch — A and B both into [AboutTimesUiState.AuthorityChecked],
+ * a cautious place into [AboutTimesUiState.Cautious] with every member's own day alongside it, an
+ * authority-with-safety-minutes place into [AboutTimesUiState.AuthorityUnchecked], and a place with no
+ * authority at all into [AboutTimesUiState.Calculated] — the same four mockups the previews use.
+ */
+class AboutTimesUiStateTest {
+
+    private val date = LocalDate(2026, 9, 26)
+
+    private fun stateFor(place: Place, on: LocalDate = date): AboutTimesUiState {
+        val engineDay = PrayerEngine.dayTimes(place, on, EngineSettings())
+        return aboutTimesUiState(engineDay, place, on)
+    }
+
+    @Test
+    fun `class A resolves to AuthorityChecked`() {
+        val istanbul = Place(41.0082, 28.9784, "Europe/Istanbul", "TR")
+        val state = stateFor(istanbul)
+        assertIs<AboutTimesUiState.AuthorityChecked>(state)
+        assertEquals("tr.diyanet", state.resolution.entry.id)
+    }
+
+    @Test
+    fun `class B resolves to AuthorityChecked`() {
+        val singapore = Place(1.3521, 103.8198, "Asia/Singapore", "SG")
+        val state = stateFor(singapore)
+        assertIs<AboutTimesUiState.AuthorityChecked>(state)
+        assertEquals("sg.muis", state.resolution.entry.id)
+    }
+
+    @Test
+    fun `class D authority resolves to AuthorityUnchecked`() {
+        val tripoli = Place(32.88743, 13.18733, "Africa/Tripoli", "LY")
+        val state = stateFor(tripoli)
+        assertIs<AboutTimesUiState.AuthorityUnchecked>(state)
+        assertEquals("ly.awqaf", state.resolution.entry.id)
+    }
+
+    @Test
+    fun `class D none resolves to Calculated`() {
+        val zahedan = Place(29.4963, 60.8629, "Asia/Tehran", "IR", admin1 = "Sistan and Baluchestan")
+        val state = stateFor(zahedan)
+        assertIs<AboutTimesUiState.Calculated>(state)
+        assertEquals("ir.hanafi", state.resolution.entry.id)
+    }
+
+    @Test
+    fun `class C resolves to Cautious with each member's own day`() {
+        val toronto = Place(43.6532, -79.3832, "America/Toronto", "CA")
+        val state = stateFor(toronto)
+        assertIs<AboutTimesUiState.Cautious>(state)
+        assertEquals("ca.toronto", state.resolution.entry.id)
+        assertEquals(state.resolution.members.size, state.members.size)
+        // The most-followed member (share rank 1) is first, as ui-common.md's "Resolution.members"
+        // note and the Toronto mockup both expect.
+        assertEquals(1, state.resolution.members.first().shareRank)
+        assertTrue(state.members.all { (member, _) -> member in state.resolution.members })
+        // A cautious state carries the entry's proof stamp like the two authority states (ruling R100).
+        assertEquals("ca.toronto", state.stamp?.entryId)
+    }
+
+    /**
+     * Rulings R100, R105, R111 and R112 (city-pages spec §10): a measured cautious place shows two
+     * proof tiles — the stamp's place-days at its places, and the 0 starts before the timetable that
+     * decides each of them — and a sentence with no date; the same figures the site's cautious page
+     * shows from the same stamp. Toronto's are the committed `ca.toronto` stamp's: on 2 October 2026
+     * 1,400 days at 6 places, at least that since (the weekly monitor's prove only adds rows).
+     */
+    @Test
+    fun `a cautious place's proof is its stamp's place-days and places`() {
+        val toronto = Place(43.6532, -79.3832, "America/Toronto", "CA")
+        val state = stateFor(toronto)
+        assertIs<AboutTimesUiState.Cautious>(state)
+        assertTrue(state.resolution.measured)
+        val stamp = requireNotNull(state.stamp) { "Toronto is stamped" }
+        val proof = requireNotNull(cautiousProof(state.resolution, stamp)) { "Toronto is measured and stamped" }
+        assertEquals(CautiousProof(placeDays = stamp.placeDays, places = stamp.places), proof)
+        assertTrue(proof.placeDays >= 1400 && proof.places >= 6, proof.toString())
+    }
+
+    /**
+     * No figure is claimed where the proof does not reach (spec §10, as the checked template does):
+     * without a stamp, or at a place the members' proof does not measure — Vancouver lies beyond the
+     * places `ca.cautious`'s stamp was gated at, though the stamp itself exists.
+     */
+    @Test
+    fun `a cautious place claims no proof without a stamp or where it is not measured`() {
+        val toronto = stateFor(Place(43.6532, -79.3832, "America/Toronto", "CA"))
+        assertIs<AboutTimesUiState.Cautious>(toronto)
+        assertNull(cautiousProof(toronto.resolution, null))
+
+        val vancouver = stateFor(Place(49.2827, -123.1207, "America/Vancouver", "CA"))
+        assertIs<AboutTimesUiState.Cautious>(vancouver)
+        assertEquals("ca.cautious", vancouver.resolution.entry.id)
+        assertFalse(vancouver.resolution.measured)
+        assertTrue(vancouver.stamp != null, "ca.cautious carries a committed stamp")
+        assertNull(cautiousProof(vancouver.resolution, vancouver.stamp))
+    }
+
+    /** Oslo is measured (the city pages publish it) and shows its `no.cautious` stamp's own figures. */
+    @Test
+    fun `oslo is measured and shows its stamp's figures`() {
+        val oslo = stateFor(Place(59.91273, 10.74609, "Europe/Oslo", "NO"))
+        assertIs<AboutTimesUiState.Cautious>(oslo)
+        assertEquals("no.cautious", oslo.resolution.entry.id)
+        assertTrue(oslo.resolution.measured)
+        val stamp = requireNotNull(oslo.stamp)
+        assertTrue(stamp.worstLateByUnit.isEmpty(), "no cautious stamp has unit rows today")
+        assertEquals(CautiousProof(stamp.placeDays, stamp.places), cautiousProof(oslo.resolution, stamp))
+    }
+
+    /**
+     * Review M2 (the plan's units gate): a cautious stamp with unit rows proves only the units in
+     * them. A cautious resolution carries no unit today, so such a stamp shows nothing; a resolution
+     * placed in one of its units shows the stamp's figures; one placed outside them, or in a unit
+     * whose row lacks a start the entry is checked on elsewhere, shows nothing — as the checked
+     * template's [measuredStartsWorst] decides. The rows are lateness counts only, never a time.
+     */
+    @Test
+    fun `a cautious stamp with unit rows proves only the place's own complete unit row`() {
+        val toronto = stateFor(Place(43.6532, -79.3832, "America/Toronto", "CA"))
+        assertIs<AboutTimesUiState.Cautious>(toronto)
+        assertNull(toronto.resolution.unitId)
+        val byUnit = requireNotNull(toronto.stamp).copy(
+            worstLateByUnit = mapOf(
+                "toronto" to mapOf("fajr" to 6, "sunrise" to 3, "dhuhr" to 5, "asrStandard" to 6, "maghrib" to 5, "isha" to 7),
+                "milton" to mapOf("sunrise" to 3, "dhuhr" to 5, "asrStandard" to 6, "maghrib" to 5, "isha" to 7),
+            ),
+        )
+        assertNull(cautiousProof(toronto.resolution, byUnit), "no unit: nothing, as the site holds the page")
+        assertEquals(CautiousProof(byUnit.placeDays, byUnit.places), cautiousProof(toronto.resolution.copy(unitId = "toronto"), byUnit))
+        assertNull(cautiousProof(toronto.resolution.copy(unitId = "milton"), byUnit), "Milton's row lacks Fajr")
+        assertNull(cautiousProof(toronto.resolution.copy(unitId = "ottawa"), byUnit), "no row for Ottawa")
+    }
+
+    private fun instantFor(day: PrayerDay, prayer: Prayer): Instant = when (prayer) {
+        Prayer.FAJR -> day.fajr
+        Prayer.SUNRISE -> day.sunrise
+        Prayer.DHUHR -> day.dhuhr
+        Prayer.ASR -> day.asr
+        Prayer.MAGHRIB -> day.maghrib
+        Prayer.ISHA -> day.isha
+    }
+
+    /**
+     * Review fix: the cautious "which timetable decides" table used to compare each member's raw
+     * day against [com.taqvo.app.prayer.engine.EngineDay.day] — the *adjusted* one — so an active
+     * manual adjustment left a prayer with no matching member at all (a blank "decided by", and a
+     * stray leading "; " in the second line). [AboutTimesUiState.Cautious.combined] must stay the
+     * members combined before the adjustment, so every prayer always matches at least one member.
+     */
+    @Test
+    fun `an active adjustment still leaves every prayer matching a member's own day`() {
+        val toronto = Place(43.6532, -79.3832, "America/Toronto", "CA")
+        val settings = EngineSettings(adjustmentsMinutes = mapOf(Prayer.ISHA to 5))
+        val engineDay = PrayerEngine.dayTimes(toronto, date, settings)
+        val state = aboutTimesUiState(engineDay, toronto, date)
+        assertIs<AboutTimesUiState.Cautious>(state)
+
+        // The adjustment must actually have moved Isha away from the unadjusted combined day,
+        // or this test would not exercise the bug at all.
+        assertNotEquals(engineDay.day.isha, state.combined.isha)
+
+        for (prayer in Prayer.entries) {
+            val shown = instantFor(state.combined, prayer)
+            val agrees = state.members.any { (_, memberDay) -> instantFor(memberDay, prayer) == shown }
+            assertTrue(agrees, "no member's own $prayer time matches the unadjusted combined day")
+            val row = decidingRow(state, prayer)
+            assertEquals(shown, row.shown)
+            assertTrue(row.deciders.isNotEmpty(), "the table names a member for $prayer")
+        }
+    }
+
+    /**
+     * Review fix: the checked template's "at most N minutes after" tile must read the stamp's own
+     * measured worst (spec §2.3's İstanbul mockup: "figures from the release's proof stamp"), not
+     * the class's late-limit ceiling — the same source the unchecked template's "up to {worst}
+     * minutes after" sentence already reads.
+     */
+    @Test
+    fun `the checked tile's at-most figure is the worst start measured at the user's own unit`() {
+        // Review I3. The committed my.jakim stamp's entry-wide worst is 4, the end of eating (each
+        // zone's Subuh is printed for its latest point; the end-of-eating audit of 3 Oct 2026), and
+        // before it was 3, Perlis's PLS01 sunrise: ends either way. Kuala Lumpur's own zone (WLY01)
+        // measured every start within a minute (on 12 October 2026; the weekly monitor's prove adds
+        // JAKIM's next year to the row), and its row's worst start is the figure its tile claims.
+        val kualaLumpur = Place(3.1412, 101.68653, "Asia/Kuala_Lumpur", "MY")
+        val state = stateFor(kualaLumpur)
+        assertIs<AboutTimesUiState.AuthorityChecked>(state)
+        assertEquals("my.jakim", state.resolution.entry.id)
+        assertEquals("WLY01", state.resolution.unitId)
+        val stamp = requireNotNull(state.stamp) { "my.jakim should carry a committed stamp" }
+        assertEquals(4, stamp.worstLateMinutes.values.max())
+        assertEquals(4, stamp.worstLateMinutes.getValue("endOfEating"))
+        val wly01Starts = stamp.worstLateByUnit.getValue("WLY01")
+            .filterKeys { it in setOf("fajr", "dhuhr", "asrStandard", "maghrib", "isha") }.values.max()
+        assertEquals(wly01Starts, checkedAtMostMinutes(state.resolution, kualaLumpur, stamp))
+        assertTrue(wly01Starts <= 2, "WLY01's starts within class B's 2 minutes: $wly01Starts")
+    }
+
+    @Test
+    fun `kazan's at-most figure is its own unit's starts not another town's end of sahur`() {
+        // Review I3: the ru.dumrt stamp's entry-wide worst is Zelenodolsk's end of sahur (over two
+        // hours, on the white nights) and its Fajr; Kazan's own starts are within DUM RT's minutes.
+        val kazan = Place(55.7887, 49.1221, "Europe/Moscow", "RU", admin1 = "Tatarstan")
+        val state = stateFor(kazan)
+        assertIs<AboutTimesUiState.AuthorityChecked>(state)
+        assertEquals("ru.dumrt", state.resolution.entry.id)
+        assertEquals("kazan", state.resolution.unitId)
+        val stamp = requireNotNull(state.stamp)
+        assertTrue(stamp.worstLateMinutes.values.max() > 60)
+        val kazanStarts = stamp.worstLateByUnit.getValue("kazan")
+            .filterKeys { it != "sunrise" && it != "endOfEating" && it != "imsak" }.values.max()
+        assertEquals(kazanStarts, checkedAtMostMinutes(state.resolution, kazan, stamp))
+        assertTrue(kazanStarts <= 2)
+    }
+
+    @Test
+    fun `an entry checked without units claims its own worst start`() {
+        // MUIS is gated at Singapore's own point with no units: its figure is the entry's own, over
+        // the starts only.
+        val singapore = Place(1.28967, 103.85007, "Asia/Singapore", "SG")
+        val state = stateFor(singapore)
+        assertIs<AboutTimesUiState.AuthorityChecked>(state)
+        assertEquals("sg.muis", state.resolution.entry.id)
+        val stamp = requireNotNull(state.stamp)
+        assertTrue(stamp.worstLateByUnit.isEmpty())
+        val starts = listOf("fajr", "dhuhr", "asrStandard", "maghrib", "isha").mapNotNull { stamp.worstLateMinutes[it] }.max()
+        assertEquals(starts, checkedAtMostMinutes(state.resolution, singapore, stamp))
+    }
+
+    @Test
+    fun `a saudi city claims its own city table's worst start and not another city's`() {
+        // Ruling R44 (city points, 9 Oct 2026): Riyadh is its KACST place's unit, checked there and at the app's own
+        // point; Tayma's Fajr (KACST computes its table a degree north of the town) is not Riyadh's.
+        val riyadh = Place(24.68773, 46.72185, "Asia/Riyadh", "SA")
+        val state = stateFor(riyadh)
+        assertIs<AboutTimesUiState.AuthorityChecked>(state)
+        assertEquals("riyadh", state.resolution.unitId)
+        val stamp = requireNotNull(state.stamp)
+        val own = stamp.worstLateByUnit.getValue("riyadh").filterKeys { it in setOf("fajr", "dhuhr", "asrStandard", "maghrib", "isha") }
+        assertEquals(own.values.max(), checkedAtMostMinutes(state.resolution, riyadh, stamp))
+        assertTrue(checkedAtMostMinutes(state.resolution, riyadh, stamp) < stamp.worstLateMinutes.getValue("fajr"))
+        // The unit is the user's own city: About names it as the app does, not by KACST's spelling.
+        assertNull(state.resolution.unitLabel)
+        assertEquals("Riyadh", state.resolution.unitName)
+    }
+
+    @Test
+    fun `a saudi city's checked-through date is its own unit's as on its city page`() {
+        // Ruling R115's date, per unit: Madinah's own tables end before Makkah's (KACST's 2024-2030 at Makkah), and
+        // About gives each city the end of its own unit's checked run, not the entry's latest.
+        val makkah = stateFor(Place(21.42664, 39.82563, "Asia/Riyadh", "SA"))
+        val madinah = stateFor(Place(24.46861, 39.61417, "Asia/Riyadh", "SA"))
+        assertIs<AboutTimesUiState.AuthorityChecked>(makkah)
+        assertIs<AboutTimesUiState.AuthorityChecked>(madinah)
+        val stamp = requireNotNull(makkah.stamp)
+        assertEquals(stamp.lastChecked, checkedThrough(makkah.resolution, stamp, makkah.date))
+        val own = requireNotNull(checkedThrough(madinah.resolution, stamp, madinah.date))
+        assertEquals(stamp.checkedByUnit.getValue("madinah").last().substringAfter(".."), own)
+        // 31 December 2027 on 12 October 2026, before Makkah's 2030; the same day only once the weekly monitor's prove
+        // holds Madinah's tables through 2030, so never after it.
+        assertTrue(own <= stamp.lastChecked!!, "Madinah through $own")
+    }
+
+    @Test
+    fun `the checked-through date never runs past a day no table was checked on`() {
+        // Diyanet's tables are checked in runs with holes between them (from 25 September into November 2026, then
+        // through 2027): Istanbul's About says the end of the run holding the day, and on a day in a hole the end of
+        // the run before it, never a later run's (the review of track T4's fix). Read off the committed stamp's own
+        // runs, so the rule is held whatever the monitor has proven since (on 12 October the first run grew from
+        // 1 to 11 November, and the fixed dates this test once named stopped being true).
+        val istanbul = stateFor(Place(41.0082, 28.9784, "Europe/Istanbul", "TR"))
+        assertIs<AboutTimesUiState.AuthorityChecked>(istanbul)
+        val stamp = requireNotNull(istanbul.stamp)
+        // The unit's own runs where the stamp keeps them by unit, else the entry's (as checkedThrough reads them).
+        val stampRuns = istanbul.resolution.unitId?.let { stamp.checkedByUnit[it] } ?: stamp.checked
+        assertTrue(stampRuns.isNotEmpty(), "Diyanet's stamp has checked runs")
+        val ownRuns = stampRuns.map { run ->
+            LocalDate.parse(run.substringBefore("..")) to LocalDate.parse(run.substringAfter(".."))
+        }
+        assertEquals(ownRuns.maxOf { it.second }.toString(), stamp.lastChecked)
+        for ((i, run) in ownRuns.withIndex()) {
+            val (start, end) = run
+            assertEquals(end.toString(), checkedThrough(istanbul.resolution, stamp, start), "in the run from $start")
+            assertEquals(end.toString(), checkedThrough(istanbul.resolution, stamp, end), "on the run's last day $end")
+            val next = ownRuns.getOrNull(i + 1)?.first ?: continue
+            val inHole = end.plus(1, DateTimeUnit.DAY)
+            if (inHole < next) {
+                assertEquals(end.toString(), checkedThrough(istanbul.resolution, stamp, inHole), "in the hole after $end")
+            }
+        }
+        // A run of one day, a hole, a day past every run, and a day before every run.
+        val runs = listOf("2026-01-01..2026-03-31", "2026-04-02", "2026-05-01..2026-05-31")
+        assertEquals("2026-03-31", checkedRunEnd(runs, LocalDate(2026, 3, 31)))
+        assertEquals("2026-03-31", checkedRunEnd(runs, LocalDate(2026, 4, 1)))
+        assertEquals("2026-04-02", checkedRunEnd(runs, LocalDate(2026, 4, 2)))
+        assertEquals("2026-04-02", checkedRunEnd(runs, LocalDate(2026, 4, 30)))
+        assertEquals("2026-05-31", checkedRunEnd(runs, LocalDate(2026, 7, 1)))
+        assertNull(checkedRunEnd(runs, LocalDate(2025, 12, 31)))
+    }
+
+    @Test
+    fun `a saudi place beyond every city unit and a kazakh city qmdb serves no table for claim no figure`() {
+        // Turubah: no KACST place within a minute's reach, so Umm al-Qura's method at the user's own point, class D.
+        val turubah = Place(28.25849, 42.92457, "Asia/Riyadh", "SA")
+        val beyond = stateFor(turubah)
+        assertIs<AboutTimesUiState.AuthorityUnchecked>(beyond)
+        assertFalse(beyond.resolution.measured)
+        assertNull(uncheckedWorstMinutes(beyond.resolution, beyond.stamp))
+        // Shchuchinsk: QMDB lists its point twice and its year API serves no table there; Makinsk's figure, 37 km
+        // off, is not claimed.
+        val shchuchinsk = Place(52.93592, 70.18895, "Asia/Almaty", "KZ")
+        val unserved = stateFor(shchuchinsk)
+        assertIs<AboutTimesUiState.AuthorityUnchecked>(unserved)
+        assertEquals("shchuchinsk", unserved.resolution.unitId)
+        assertFalse(unserved.resolution.measured)
+        assertNull(uncheckedWorstMinutes(unserved.resolution, unserved.stamp))
+        // Baikonur's own point takes the nearest of QMDB's places, a village 3.5 km off (Akay, or Toretam at the app's
+        // rounded point), whose table is not checked: no figure, and About calls the place by the app's own name for
+        // it, not by the unit's.
+        val village = stateFor(Place(45.61667, 63.31667, "Asia/Qostanay", "KZ"))
+        assertIs<AboutTimesUiState.AuthorityUnchecked>(village)
+        assertTrue(village.resolution.unitId in setOf("qmdb-9351", "qmdb-9368"), village.resolution.unitId)
+        assertFalse(village.resolution.measured)
+        assertNull(village.resolution.unitLabel)
+        assertNull(village.resolution.unitCityId)
+        assertNull(uncheckedWorstMinutes(village.resolution, village.stamp))
+        // Inside a city's reach the city's table wins over a nearer village's (the owner's decision of 9 Oct 2026):
+        // 8 km north-east of QMDB's Almaty and 2 km from the village of Besagash, About measures Almaty, with Almaty's
+        // own figure, and names the app's Almaty (the route looks GeoNames 1526384 up in the reader's language).
+        val suburb = stateFor(Place(43.289, 77.015, "Asia/Almaty", "KZ"))
+        assertIs<AboutTimesUiState.AuthorityUnchecked>(suburb)
+        assertEquals("almaty", suburb.resolution.unitId)
+        assertTrue(suburb.resolution.measured)
+        assertEquals(1526384, suburb.resolution.unitCityId)
+        val almaty = stateFor(Place(43.238293, 76.945465, "Asia/Almaty", "KZ"))
+        assertIs<AboutTimesUiState.AuthorityUnchecked>(almaty)
+        assertEquals(uncheckedWorstMinutes(almaty.resolution, almaty.stamp), uncheckedWorstMinutes(suburb.resolution, suburb.stamp))
+        // Almaty's own figure across its reach (its own tables replayed there, the review of 9 Oct 2026): its row's worst
+        // start, 4 on 12 October 2026, moving only as the weekly monitor's prove holds QMDB's next years.
+        val almatyStarts = requireNotNull(suburb.stamp).worstLateByUnit.getValue("almaty")
+            .filterKeys { it in setOf("fajr", "dhuhr", "asrStandard", "asrHanafi", "maghrib", "isha") }.values.max()
+        assertEquals(almatyStarts, uncheckedWorstMinutes(suburb.resolution, suburb.stamp))
+    }
+
+    @Test
+    fun `about names the city whose table the unit is where that is not the location's own`() {
+        // Ash Shafa (GeoNames 410096) takes KACST's Taif, the app's Taif (107968): About names Taif there, and the
+        // location's own name at Taif itself. Sultanah (101760) takes Madinah's (109223).
+        val ashShafa = stateFor(Place(21.07268, 40.31842, "Asia/Riyadh", "SA"))
+        assertEquals("taif", ashShafa.resolution.unitId)
+        assertEquals(107968, aboutUnitCityId(ashShafa.resolution, 410096))
+        assertNull(aboutUnitCityId(stateFor(Place(21.27028, 40.41583, "Asia/Riyadh", "SA")).resolution, 107968))
+        assertEquals(109223, aboutUnitCityId(stateFor(Place(24.49258, 39.58572, "Asia/Riyadh", "SA")).resolution, 101760))
+        // A location with no city of the app's list (a fix the app could not name) still reads the unit's city.
+        assertEquals(1526384, aboutUnitCityId(stateFor(Place(43.289, 77.015, "Asia/Almaty", "KZ")).resolution, null))
+        // Beyond every unit, and at a village's unit, the location's own name.
+        assertNull(aboutUnitCityId(stateFor(Place(45.61667, 63.31667, "Asia/Qostanay", "KZ")).resolution, 1521368))
+    }
+
+    @Test
+    fun `a kazakh city claims its own unit's worst start`() {
+        // Almaty, a few kilometres from QMDB's own point: its own unit's worst start across its reach, not the north's.
+        val almaty = Place(43.25249, 76.9115, "Asia/Almaty", "KZ")
+        val state = stateFor(almaty)
+        assertIs<AboutTimesUiState.AuthorityUnchecked>(state)
+        assertEquals("almaty", state.resolution.unitId)
+        assertTrue(state.resolution.measured)
+        val stamp = requireNotNull(state.stamp)
+        val worst = requireNotNull(uncheckedWorstMinutes(state.resolution, stamp))
+        assertTrue(worst < stamp.worstLateMinutes.getValue("fajr"), "Almaty $worst")
+    }
+
+    @Test
+    fun `the unchecked template claims no figure for an unmeasured unit`() {
+        // Review I2 (spec §3.5): Ipoh lies beyond JAKIM's measured zones, so JAKIM is class D there
+        // and unmeasured; its stamp holds figures for other zones, none of them Ipoh's.
+        val ipoh = Place(4.5975, 101.0901, "Asia/Kuala_Lumpur", "MY")
+        val state = stateFor(ipoh)
+        assertIs<AboutTimesUiState.AuthorityUnchecked>(state)
+        assertEquals("my.jakim", state.resolution.entry.id)
+        assertFalse(state.resolution.measured)
+        assertTrue(state.stamp != null)
+        assertNull(uncheckedWorstMinutes(state.resolution, state.stamp))
+    }
+
+    @Test
+    fun `at tromso about says what of irn's makkah-time calendar is not followed and nowhere else`() {
+        // Ruling R82: "never before IRN's" holds on every cell but the declared ones, which the note names.
+        val tromso = stateFor(Place(69.6492, 18.9553, "Europe/Oslo", "NO"))
+        assertIs<AboutTimesUiState.AuthorityUnchecked>(tromso)
+        assertEquals("no.irn", tromso.resolution.entry.id)
+        assertEquals(Res.string.about_not_followed_irn_tromso, notFollowedNoteRes(tromso.resolution))
+        val trondheim = Registry.resolveEntry(Registry.byId("no.irn")!!, Place(63.43049, 10.39506, "Europe/Oslo", "NO"))
+        assertNull(notFollowedNoteRes(trondheim))
+        assertNull(notFollowedNoteRes(stateFor(Place(59.91273, 10.74609, "Europe/Oslo", "NO")).resolution)) // Oslo, cautious
+    }
+
+    private val trondheim = Place(63.43049, 10.39506, "Europe/Oslo", "NO")
+    private val bodo = Place(67.28267, 14.37513, "Europe/Oslo", "NO")
+
+    private fun cautiousOn(place: Place, on: LocalDate): AboutTimesUiState.Cautious {
+        val state = stateFor(place, on)
+        assertIs<AboutTimesUiState.Cautious>(state)
+        return state
+    }
+
+    private fun AboutTimesUiState.Cautious.day(id: String): PrayerDay = members.single { (member, _) -> member.id == id }.second
+
+    /**
+     * Ruling R155 (the owner's decision of 24 Oct 2026): south of the far north every member's Maghrib follows the
+     * sun and Maghrib is the latest member's, so "each prayer once all have begun it" holds and About says nothing
+     * more. Brussels shows Diyanet's, the later member's, every day; Toronto the latest; Trondheim outside Diyanet's
+     * five-hour winter day the latest too.
+     */
+    @Test
+    fun `no maghrib sentence where every member has begun maghrib by the minute shown`() {
+        val brussels = cautiousOn(Place(50.8503, 4.3517, "Europe/Brussels", "BE"), date)
+        assertEquals("be.cautious", brussels.resolution.entry.id)
+        assertEquals(brussels.day("tr.diyanet.europe").maghrib, brussels.combined.maghrib, "the later member's, Diyanet's")
+        assertNull(maghribGuardToday(brussels))
+        assertNull(maghribGuardToday(cautiousOn(Place(43.6532, -79.3832, "America/Toronto", "CA"), date)))
+        val spring = cautiousOn(trondheim, LocalDate(2027, 3, 15))
+        assertEquals("no.cautious", spring.resolution.entry.id)
+        assertTrue(spring.members.none { (_, day) -> day.maghribHeld })
+        assertNull(maghribGuardToday(spring))
+    }
+
+    /**
+     * The far-north guard's sentence (item D of the adversarial check): at Trondheim on 10 December 2026 Diyanet's
+     * five-hour winter day holds its own Maghrib later than the sun gives it, and IRN is the most followed, so the
+     * minute shown is Diyanet's from the sun (its sunset + 7), the latest from the sun, and About says Maghrib follows
+     * the sun as Diyanet calculates it rather than Diyanet's later Maghrib. The table names Diyanet for it (item A),
+     * never no one, and lists IRN's own beside it.
+     */
+    @Test
+    fun `trondheim's winter guard day names the sun's maghrib and diyanet's later one`() {
+        val state = cautiousOn(trondheim, LocalDate(2026, 12, 10))
+        assertEquals("no.cautious", state.resolution.entry.id)
+        assertTrue(state.realSunset != null, "the sun sets at Trondheim")
+        val diyanet = state.day("tr.diyanet.europe")
+        val irn = state.day("no.irn")
+        assertTrue(diyanet.maghribHeld, "Diyanet's winter day holds its Maghrib")
+        assertEquals(diyanet.maghribBeforeHold, state.combined.maghrib, "the shown Maghrib is Diyanet's from the sun")
+        assertTrue(diyanet.maghrib > state.combined.maghrib)
+        assertTrue(irn.maghrib < state.combined.maghrib)
+
+        val guard = assertNotNull(maghribGuardToday(state))
+        assertTrue(guard.sunSets)
+        assertEquals("tr.diyanet.europe", guard.followed.id)
+        assertEquals(listOf("tr.diyanet.europe"), guard.later.map { it.id })
+
+        val row = decidingRow(state, Prayer.MAGHRIB)
+        assertEquals(state.combined.maghrib, row.shown)
+        assertEquals(listOf("tr.diyanet.europe"), row.deciders.map { it.id })
+        assertEquals(listOf("no.irn" to irn.maghrib), row.others.map { (member, time) -> member.id to time })
+        for (prayer in Prayer.entries) {
+            assertTrue(decidingRow(state, prayer).deciders.isNotEmpty(), "the table names a member for $prayer")
+        }
+    }
+
+    /**
+     * At Bodø from 23 December 2026 IRN's own Maghrib is later than Diyanet's from the sun: About names IRN as the
+     * one followed and Diyanet's held Maghrib as the later one.
+     */
+    @Test
+    fun `bodo's winter guard day follows irn's maghrib from the sun`() {
+        val state = cautiousOn(bodo, LocalDate(2026, 12, 24))
+        assertTrue(state.realSunset != null, "the sun sets at Bodø")
+        assertTrue(state.day("tr.diyanet.europe").maghribHeld)
+        assertEquals(state.day("no.irn").maghrib, state.combined.maghrib)
+        val guard = assertNotNull(maghribGuardToday(state))
+        assertTrue(guard.sunSets)
+        assertEquals("no.irn", guard.followed.id)
+        assertEquals(listOf("tr.diyanet.europe"), guard.later.map { it.id })
+        assertEquals(listOf("no.irn"), decidingRow(state, Prayer.MAGHRIB).deciders.map { it.id })
+    }
+
+    /**
+     * Where the real sun does not set at the user's point (Bodø on 4 June 2027, under the midnight sun) only the
+     * most-followed member's own Maghrib counts, IRN's, itself set by rule: About says there is no sunset, never that
+     * Maghrib follows the sun. A member's own sun model setting the sun (Diyanet's) counts for nothing in the table
+     * either.
+     */
+    @Test
+    fun `a guard day without a sunset follows the most followed timetable`() {
+        val state = cautiousOn(bodo, LocalDate(2027, 6, 4))
+        assertNull(state.realSunset, "the midnight sun")
+        assertEquals(state.day("no.irn").maghrib, state.combined.maghrib, "IRN's own, the most followed")
+        val guard = assertNotNull(maghribGuardToday(state))
+        assertFalse(guard.sunSets)
+        assertEquals("no.irn", guard.followed.id)
+        assertEquals(listOf("tr.diyanet.europe"), guard.later.map { it.id })
+        assertEquals(listOf("no.irn"), decidingRow(state, Prayer.MAGHRIB).deciders.map { it.id })
+
+        // The same day read as if the sun did not set at Trondheim: Diyanet's time from the sun is no longer a
+        // decider, and the sentence falls back to the most-followed member.
+        val winter = cautiousOn(trondheim, LocalDate(2026, 12, 10))
+        val noSunset = winter.copy(realSunset = null)
+        assertTrue(decidingRow(noSunset, Prayer.MAGHRIB).deciders.isEmpty())
+        val fallback = assertNotNull(maghribGuardToday(noSunset))
+        assertFalse(fallback.sunSets)
+        assertEquals("no.irn", fallback.followed.id)
+    }
+
+    /** The mechanics on a synthetic day: every member later than the minute shown is named, in the members' order. */
+    @Test
+    fun `every member whose own maghrib is later than the one shown is named`() {
+        val state = cautiousOn(Place(50.8503, 4.3517, "Europe/Brussels", "BE"), date)
+        val shown = state.combined.maghrib
+        val embLater = state.copy(
+            members = state.members.map { (member, day) ->
+                member to day.copy(maghrib = if (member.id == "be.emb") shown + 3.minutes else shown)
+            },
+        )
+        val guard = assertNotNull(maghribGuardToday(embLater))
+        assertEquals("tr.diyanet.europe", guard.followed.id)
+        assertEquals(listOf("be.emb"), guard.later.map { it.id })
+        assertEquals(listOf("be.emb" to shown + 3.minutes), decidingRow(embLater, Prayer.MAGHRIB).others.map { (m, t) -> m.id to t })
+        val agreed = state.copy(members = state.members.map { (member, day) -> member to day.copy(maghrib = shown) })
+        assertNull(maghribGuardToday(agreed))
+        assertEquals(state.members.map { it.first }, decidingRow(agreed, Prayer.MAGHRIB).deciders)
+    }
+
+    @Test
+    fun `the unchecked template claims its own unit's worst start where it is measured`() {
+        val tripoli = Place(32.88743, 13.18733, "Africa/Tripoli", "LY")
+        val state = stateFor(tripoli)
+        assertIs<AboutTimesUiState.AuthorityUnchecked>(state)
+        assertTrue(state.resolution.measured)
+        val stamp = requireNotNull(state.stamp)
+        val unit = requireNotNull(state.resolution.unitId)
+        val starts = stamp.worstLateByUnit.getValue(unit)
+            .filterKeys { it != "sunrise" && it != "endOfEating" && it != "imsak" }.values.max()
+        assertEquals(starts, uncheckedWorstMinutes(state.resolution, stamp))
+    }
+
+    /**
+     * Ruling R73's shape of the ly.awqaf stamp (a fixture: lateness counts only, never a time). The
+     * entry is checked on every start somewhere; Tobruk's row, like the eleven other eastern and
+     * southern cities with no adhan of their own, holds sunrise, Dhuhr, Asr and Isha but not Fajr
+     * or Maghrib; Benghazi's holds all five starts, Fajr and Maghrib from the owner's adhan.
+     */
+    private val libyaAfterR73 = ProofStamp(
+        entryId = "ly.awqaf",
+        places = 22,
+        placeDays = 67,
+        ramadanDays = 3,
+        lastChecked = "2026-10-02",
+        worstLateMinutes = mapOf(
+            "fajr" to 2, "sunrise" to 3, "dhuhr" to 2, "asrStandard" to 3, "maghrib" to 2, "isha" to 3,
+            "endOfEating" to 1, "imsak" to 2,
+        ),
+        worstLateByUnit = mapOf(
+            "tobruk" to mapOf("sunrise" to 2, "dhuhr" to 1, "asrStandard" to 1, "isha" to 1),
+            "benghazi" to mapOf("fajr" to 1, "sunrise" to 2, "dhuhr" to 1, "asrStandard" to 2, "maghrib" to 1, "isha" to 1),
+        ),
+        lateLimits = emptyList(),
+    )
+
+    @Test
+    fun `a unit whose row lacks a start its entry is checked on elsewhere claims no figure`() {
+        // Review of R73: Tobruk's Fajr and Maghrib are measured nowhere, so its worst over the other
+        // starts must not read as "up to 1 minute after" for the whole day.
+        val tobruk = Place(32.08963, 23.95385, "Africa/Tripoli", "LY")
+        val state = stateFor(tobruk)
+        assertIs<AboutTimesUiState.AuthorityUnchecked>(state)
+        assertEquals("tobruk", state.resolution.unitId)
+        assertTrue(state.resolution.measured)
+        assertNull(measuredStartsWorst(state.resolution, libyaAfterR73))
+        assertNull(uncheckedWorstMinutes(state.resolution, libyaAfterR73))
+        // The checked template falls back to the class's own limit (D, 3 min), never the row's 1.
+        assertEquals(3, checkedAtMostMinutes(state.resolution, tobruk, libyaAfterR73))
+    }
+
+    @Test
+    fun `a unit whose row holds every start its entry is checked on still claims its own worst`() {
+        val benghazi = Place(32.11486, 20.06859, "Africa/Tripoli", "LY")
+        val state = stateFor(benghazi)
+        assertEquals("benghazi", state.resolution.unitId)
+        assertEquals(2, uncheckedWorstMinutes(state.resolution, libyaAfterR73))
+    }
+
+    @Test
+    fun `a unit checked on the hanafi asr where others are checked on the standard one is not missing asr`() {
+        // The gate writes the Standard and Hanafi Asr apart (London, Norway, South Africa): either
+        // counts as the unit's Asr.
+        val tobruk = Place(32.08963, 23.95385, "Africa/Tripoli", "LY")
+        val state = stateFor(tobruk)
+        val stamp = libyaAfterR73.copy(
+            worstLateByUnit = mapOf(
+                "tobruk" to mapOf("fajr" to 1, "dhuhr" to 1, "asrHanafi" to 2, "maghrib" to 1, "isha" to 1),
+            ),
+        )
+        assertEquals(2, measuredStartsWorst(state.resolution, stamp))
+    }
+}

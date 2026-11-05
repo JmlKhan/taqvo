@@ -1,0 +1,64 @@
+package com.taqvo.app.quran
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+
+class SearchQueryTest {
+    @Test
+    fun aQueryWithAnyArabicLetterIsArabic() {
+        assertTrue(SearchQuery.isArabic("الرحمن"))
+        assertTrue(SearchQuery.isArabic("rabb العالمين"))
+        assertFalse(SearchQuery.isArabic("mercy"))
+        assertFalse(SearchQuery.isArabic("2:255"))
+    }
+
+    @Test
+    fun arabicTokensFoldHarakatAndSplitOnWhitespace() {
+        // Harakat and the alef wasla fold away (QuranText.normaliseForSearch); runs of spaces
+        // collapse, so each token is a bare word the repository matches as a substring.
+        assertEquals(listOf("الرحمن"), SearchQuery.arabicTokens("ٱلرَّحْمَٰنِ"))
+        assertEquals(listOf("رب", "العالمين"), SearchQuery.arabicTokens("  رَبِّ   ٱلْعَالَمِينَ "))
+    }
+
+    @Test
+    fun arabicTokensDropPunctuationSoAQuotedQueryStillFindsItsAyah() {
+        // Pasted-and-quoted is how a query arrives from another app; the quotes are not in
+        // ayah.text_search, so a token that kept them would match nothing.
+        assertEquals(listOf("رب"), SearchQuery.arabicTokens("\"رَبِّ\""))
+        assertEquals(listOf("رب", "العالمين"), SearchQuery.arabicTokens("(رَبِّ ٱلْعَالَمِينَ)"))
+        // Punctuation between two words separates them rather than welding them into one token.
+        assertEquals(listOf("رب", "العالمين"), SearchQuery.arabicTokens("رب،العالمين"))
+        assertEquals(emptyList(), SearchQuery.arabicTokens("\"\" ()"))
+    }
+
+    @Test
+    fun arabicTokensAreEmptyWhenNothingSearchableRemains() {
+        // No token, so the caller runs no search at all.
+        assertEquals(emptyList(), SearchQuery.arabicTokens(""))
+        assertEquals(emptyList(), SearchQuery.arabicTokens("   "))
+    }
+
+    @Test
+    fun twoLettersIsTheMinimum() {
+        assertFalse(SearchQuery.isLongEnough("a"))
+        assertFalse(SearchQuery.isLongEnough(" ر "))
+        assertTrue(SearchQuery.isLongEnough("ab"))
+        assertTrue(SearchQuery.isLongEnough("رب"))
+    }
+
+
+    @Test
+    fun anArabicScriptQueryUnderAnUrduTranslationSearchesTheTranslationFirst() {
+        // Every Urdu letter is "Arabic" to the script test, the Urdu-only ones included.
+        assertTrue(SearchQuery.isArabic("ہدایت"))
+        assertTrue(SearchQuery.searchesTranslationFirst("ہدایت", "ur"))
+        assertTrue(SearchQuery.searchesTranslationFirst("رحمت", "ur"))
+        assertTrue(SearchQuery.searchesTranslationFirst("هدایت", "fa"))
+        // Arabic itself is still a quotation of the Quran, and Latin queries never take this path.
+        assertFalse(SearchQuery.searchesTranslationFirst("الرحمن", "ar"))
+        assertFalse(SearchQuery.searchesTranslationFirst("الرحمن", "en"))
+        assertFalse(SearchQuery.searchesTranslationFirst("mercy", "ur"))
+    }
+}

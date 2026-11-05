@@ -1,0 +1,405 @@
+package com.taqvo.app.feature.quran
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import com.taqvo.app.design.LocalTaqvoColors
+import com.taqvo.app.design.TaqvoText
+import com.taqvo.app.design.components.CardDivider
+import com.taqvo.app.design.components.CheckMark
+import com.taqvo.app.design.components.RowToggle
+import com.taqvo.app.design.components.TaqvoCard
+import com.taqvo.app.design.components.TaqvoRow
+import com.taqvo.app.design.components.TaqvoSegmented
+import com.taqvo.app.design.mushafFamily
+import com.taqvo.app.design.quran
+import com.taqvo.app.feature.recitation.ReadAloudState
+import com.taqvo.app.i18n.LocalPlatformFormat
+import com.taqvo.app.quran.QuranText
+import com.taqvo.app.quran.ReadingMode
+import com.taqvo.app.quran.ReadingSettings
+import com.taqvo.app.quran.TextKind
+import com.taqvo.app.quran.TranslationInfo
+import com.taqvo.app.resources.Res
+import com.taqvo.app.resources.quran_mode_mushaf
+import com.taqvo.app.resources.quran_mode_translation
+import com.taqvo.app.resources.quran_sheet_mode
+import com.taqvo.app.resources.quran_sheet_read_aloud
+import com.taqvo.app.resources.quran_sheet_read_aloud_missing
+import com.taqvo.app.resources.quran_sheet_size
+import com.taqvo.app.resources.quran_sheet_translation
+import com.taqvo.app.resources.quran_translation_off_detail
+import com.taqvo.app.resources.quran_translation_off
+import com.taqvo.app.resources.quran_sheet_transliteration
+import com.taqvo.app.resources.quran_size_mushaf_note
+import com.taqvo.app.resources.recitation_read_aloud_get_voice
+import kotlin.math.roundToInt
+
+/** Falls back to the bundled default's own name (spec §2.5) — matches [ReadingSettings]'s own
+ * "en.sahih" fallback in [ReaderViewModel], never a translated string, since a translation's name
+ * is data, not UI text. */
+private const val FALLBACK_TRANSLATION_NAME = "Saheeh International"
+private const val FALLBACK_TRANSLATION_ID = "en.sahih"
+
+/** The slider's discrete stops between 22 and 40 sp in steps of 2 (spec §2.5): ten sizes, so
+ * eight stops between the two ends — [Slider]'s own `steps` counts only the stops strictly
+ * between [ReadingSettings.MIN_SIZE] and [ReadingSettings.MAX_SIZE]. */
+private val SliderSteps = (ReadingSettings.MAX_SIZE - ReadingSettings.MIN_SIZE) / ReadingSettings.SIZE_STEP - 1
+
+/**
+ * The Arabic size row and its slider (spec §2.5): one knob for the whole app, drawn by this one
+ * composable wherever it appears — the reader's sheet ([ReadingSheet]) and the adhkar's (adhkar
+ * spec §3.6) — so the two can never drift apart.
+ *
+ * The drag moves only the number in the row and, through [onLiveChange], whatever preview the
+ * caller draws; [onChange] is called once, when the drag ends (`Slider.onValueChangeFinished`), with
+ * the whole of [settings] and the new size, so scrubbing never writes to disk on every frame and a
+ * commit never drops the mode, the translation or the transliteration. [enabled] false (the
+ * Mushaf, whose pages are images of a fixed size) draws it faded and still.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun ReadingSizeSlider(
+    settings: ReadingSettings,
+    enabled: Boolean,
+    onLiveChange: (Int) -> Unit = {},
+    onChange: (ReadingSettings) -> Unit,
+) {
+    val colors = LocalTaqvoColors.current
+    val format = LocalPlatformFormat.current
+
+    // Re-keyed to the persisted value: a commit from this same slider round-trips back through
+    // [onChange] and settles here again, and an external settings change (another device, a
+    // future sync) should also snap the slider to the new truth rather than keep a stale drag.
+    var liveSize by remember(settings.arabicSizeSp) { mutableStateOf(settings.arabicSizeSp.toFloat()) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        TaqvoRow(
+            label = stringResource(Res.string.quran_sheet_size),
+            value = format.localizedDigits(liveSize.roundToInt()),
+        )
+        val sliderInteractions = remember { MutableInteractionSource() }
+        val sliderColors = SliderDefaults.colors(
+            thumbColor = colors.accent,
+            activeTrackColor = colors.accent,
+            inactiveTrackColor = colors.hairline,
+            activeTickColor = Color.Transparent,
+            inactiveTickColor = Color.Transparent,
+            disabledThumbColor = colors.accent.copy(alpha = 0.4f),
+            disabledActiveTrackColor = colors.accent.copy(alpha = 0.4f),
+            disabledInactiveTrackColor = colors.hairline.copy(alpha = 0.4f),
+            disabledActiveTickColor = Color.Transparent,
+            disabledInactiveTickColor = Color.Transparent,
+        )
+        Slider(
+            value = liveSize,
+            onValueChange = {
+                liveSize = it
+                onLiveChange(it.roundToInt())
+            },
+            onValueChangeFinished = { onChange(settings.copy(arabicSizeSp = liveSize.roundToInt())) },
+            valueRange = ReadingSettings.MIN_SIZE.toFloat()..ReadingSettings.MAX_SIZE.toFloat(),
+            steps = SliderSteps,
+            enabled = enabled,
+            colors = sliderColors,
+            interactionSource = sliderInteractions,
+            // A plain round dot and an unbroken line (spec §2.5's mockup), not material3's own
+            // default "expressive" thumb (a thin vertical bar with a gap opening around it) or
+            // its stop-indicator dot at the track's end.
+            thumb = {
+                SliderDefaults.Thumb(
+                    interactionSource = sliderInteractions,
+                    colors = sliderColors,
+                    enabled = enabled,
+                    thumbSize = DpSize(20.dp, 20.dp),
+                )
+            },
+            track = { sliderState ->
+                SliderDefaults.Track(
+                    sliderState = sliderState,
+                    colors = sliderColors,
+                    enabled = enabled,
+                    drawStopIndicator = null,
+                    thumbTrackGapSize = 0.dp,
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/** [CheckMark]'s own canvas size, reserved on every translation row so the rows' language labels
+ * share one right edge whether or not the row is the selected one. */
+private val CheckMarkSize = 20.dp
+
+/**
+ * The reading-settings sheet's picker order (spec §2.5): the tafsir first (there is at most one —
+ * Tafsir al-Muyassar), then the remaining bundled translations by language, so the list groups by
+ * kind before it groups by anything else. A free function rather than inline sorting inside
+ * [ReadingSheet] so it is trivial to unit test on its own, and reusable by [ReaderViewModel], which
+ * exposes [ReaderUiState.Ready.translations] already in this order.
+ */
+internal fun orderForSheet(list: List<TranslationInfo>): List<TranslationInfo> {
+    val (tafsir, translations) = list.partition { it.kind == TextKind.TAFSIR }
+    return tafsir + translations.sortedBy { it.language }
+}
+
+/**
+ * The reading-settings sheet (spec §2.5, task 7): Arabic size slider with a live preview, the
+ * transliteration toggle, the translation picker, and the reading-mode switch. Hosted inside a
+ * `ModalBottomSheet` by the caller (currently [ReaderScreen]; the Mushaf screen, task 8, hosts the
+ * same component) — this composable only draws the sheet's contents, since the sheet chrome
+ * itself (container colour, shape, drag handle) is shared with every other sheet in the app.
+ *
+ * Every change here writes through [onChange] immediately except the Arabic size, which updates
+ * [previewAyah]'s rendered size live during the drag but only calls [onChange] once the drag ends
+ * (`Slider.onValueChangeFinished`), so scrubbing the slider does not write to disk on every frame.
+ *
+ * Picking a reading mode always dismisses the sheet (spec §2.5 point 4): [onChange] fires first
+ * only if the mode actually changed, so the caller's own mode-switch path — which persists the
+ * mode itself and navigates — runs exactly once, and picking the mode already showing is a no-op
+ * dismiss.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ReadingSheet(
+    settings: ReadingSettings,
+    translations: List<TranslationInfo>,
+    previewAyah: String,
+    mushafMode: Boolean,
+    onChange: (ReadingSettings) -> Unit,
+    onDismiss: () -> Unit,
+    readAloud: ReadAloudState? = null,
+    onReadAloud: (Boolean) -> Unit = {},
+    onGetVoice: () -> Unit = {},
+) {
+    val colors = LocalTaqvoColors.current
+    val format = LocalPlatformFormat.current
+
+    // The size the preview is drawn at: the slider's while it is dragged, the stored one
+    // otherwise — re-keyed to it as the slider's own value is (see [ReadingSizeSlider]).
+    var liveSize by remember(settings.arabicSizeSp) { mutableIntStateOf(settings.arabicSizeSp) }
+    var translationExpanded by remember { mutableStateOf(false) }
+
+    Column(
+        // Scrollable because material3 caps a ModalBottomSheet at the screen height and then lets
+        // its content overflow silently: with the seven-row translation picker open, the reading
+        // mode row was being drawn on top of the last picker row on a 1080p phone. The navigation
+        // bar inset is the column's own, not the sheet's, so it only costs height once the content
+        // actually reaches the gesture bar.
+        Modifier
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 24.dp)
+            .windowInsetsPadding(WindowInsets.navigationBars),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            ReadingSizeSlider(
+                settings = settings,
+                enabled = !mushafMode,
+                onLiveChange = { liveSize = it },
+                onChange = onChange,
+            )
+            if (mushafMode) {
+                Text(
+                    stringResource(Res.string.quran_size_mushaf_note),
+                    style = TaqvoText.caption,
+                    color = colors.textSecondary,
+                )
+            }
+        }
+
+        Column {
+            CardDivider()
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                // The roundel takes the accent here as it does on every ayah card: the preview
+                // must show the size the reader will actually use, colour included.
+                val (base, marker) = QuranText.splitMarker(previewAyah)
+                Text(
+                    buildAnnotatedString {
+                        append(base)
+                        withStyle(SpanStyle(color = colors.accent)) { append(marker) }
+                    },
+                    fontFamily = mushafFamily(),
+                    style = TaqvoText.quran(liveSize).copy(textAlign = TextAlign.Center),
+                    color = colors.textPrimary,
+                    // Quran text: not for a phone voice (design §5).
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp).clearAndSetSemantics {},
+                )
+            }
+            CardDivider()
+        }
+
+        TaqvoRow(
+            label = stringResource(Res.string.quran_sheet_transliteration),
+            toggle = RowToggle(
+                checked = settings.transliteration,
+                onCheckedChange = { onChange(settings.copy(transliteration = it)) },
+            ),
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val off = settings.translationId == ReadingSettings.NO_TRANSLATION
+            val current = translations.firstOrNull { it.id == settings.translationId }
+            // What the reader actually loads when the stored id is not bundled (ReaderViewModel
+            // falls back to Saheeh International), so the check mark agrees with the text shown.
+            val effectiveId = if (off) ReadingSettings.NO_TRANSLATION else current?.id ?: FALLBACK_TRANSLATION_ID
+            TaqvoRow(
+                label = stringResource(Res.string.quran_sheet_translation),
+                value = if (off) stringResource(Res.string.quran_translation_off) else current?.name ?: FALLBACK_TRANSLATION_NAME,
+                onClick = { translationExpanded = !translationExpanded },
+                // The list unfolding beneath is the tap's feedback; a ripple would be a second one.
+                ripple = false,
+            )
+            if (translationExpanded) {
+                TaqvoCard(Modifier.selectableGroup()) {
+                    // Translation off comes first: it is the one choice that is not a translation,
+                    // and an Arabic reader who wants the cards without any text beneath should not
+                    // have to scroll past seven languages to find it.
+                    TaqvoRow(
+                        label = stringResource(Res.string.quran_translation_off),
+                        subtitle = stringResource(Res.string.quran_translation_off_detail),
+                        selectable = true,
+                        selected = off,
+                        onClick = {
+                            onChange(settings.copy(translationId = ReadingSettings.NO_TRANSLATION))
+                            translationExpanded = false
+                        },
+                        trailing = {
+                            Box(Modifier.size(CheckMarkSize), contentAlignment = Alignment.Center) {
+                                if (off) CheckMark()
+                            }
+                        },
+                    )
+                    translations.forEach { info ->
+                        CardDivider()
+                        TaqvoRow(
+                            label = info.name,
+                            subtitle = info.translator,
+                            // The translation's own language, named in the reader's UI language:
+                            // the names in the list are the translators' own ("Muhammad Hamidullah"
+                            // says nothing about French to someone who does not read it), so the
+                            // language is the only part of the row a reader can choose by.
+                            value = format.languageName(info.language),
+                            selectable = true,
+                            selected = info.id == effectiveId,
+                            onClick = {
+                                onChange(settings.copy(translationId = info.id))
+                                translationExpanded = false
+                            },
+                            // A fixed slot on every row, empty or not: TaqvoRow lays the value out
+                            // against the trailing slot's width, so a missing check mark would let
+                            // each unselected row's language slide 20 dp further out than the
+                            // selected one's and break the column they otherwise line up in.
+                            trailing = {
+                                Box(Modifier.size(CheckMarkSize), contentAlignment = Alignment.Center) {
+                                    if (info.id == effectiveId) CheckMark()
+                                }
+                            },
+                        )
+                    }
+                }
+            }
+        }
+
+        // Read-aloud (spec §6), under the translation it reads. Hidden with Translation off or
+        // where the phone has no voice for the language: the controller hands in null then.
+        if (readAloud != null) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                TaqvoRow(
+                    label = stringResource(Res.string.quran_sheet_read_aloud),
+                    toggle = RowToggle(checked = readAloud.enabled, onCheckedChange = onReadAloud),
+                )
+                val missing = readAloud.missingEngine
+                if (missing != null) {
+                    // Both inset by TaqvoRow's own 16 dp, so they start under "Read it aloud after
+                    // each ayah" rather than 16 dp before it, at the sheet's edge.
+                    Text(
+                        stringResource(Res.string.quran_sheet_read_aloud_missing, format.languageNameInSentence(readAloud.language)),
+                        style = TaqvoText.caption,
+                        color = colors.textSecondary,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                    // 48 dp minimum, like Settings' own QuietRow: the row was 32 dp and as narrow as
+                    // the string before this fix, under the tap-target floor everywhere else in the app.
+                    // The inset is inside the clickable, so the whole width still takes the tap.
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = onGetVoice,
+                            )
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        Text(
+                            stringResource(Res.string.recitation_read_aloud_get_voice),
+                            style = TaqvoText.rowLabel.copy(fontWeight = FontWeight.SemiBold),
+                            color = colors.accent,
+                        )
+                    }
+                }
+            }
+        }
+
+        // The switch sits under its label rather than beside it: beside, the two-option pill left
+        // "Reading mode" (and its Arabic) about 120 dp on a phone, which wrapped the label onto
+        // two lines. Under, it is the same full-width control the Quran root's Surah | Juz switch is.
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            TaqvoRow(label = stringResource(Res.string.quran_sheet_mode))
+            TaqvoSegmented(
+                options = listOf(
+                    stringResource(Res.string.quran_mode_translation),
+                    stringResource(Res.string.quran_mode_mushaf),
+                ),
+                selectedIndex = if (settings.mode == ReadingMode.MUSHAF) 1 else 0,
+                onSelect = { index ->
+                    val newMode = if (index == 0) ReadingMode.TRANSLATION else ReadingMode.MUSHAF
+                    if (newMode != settings.mode) onChange(settings.copy(mode = newMode))
+                    onDismiss()
+                },
+            )
+        }
+    }
+}

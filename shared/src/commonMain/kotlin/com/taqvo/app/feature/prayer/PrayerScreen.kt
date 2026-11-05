@@ -1,0 +1,921 @@
+package com.taqvo.app.feature.prayer
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.unit.Constraints
+import com.taqvo.app.design.components.drawChevron
+import com.taqvo.app.i18n.uiLanguage
+import com.taqvo.app.i18n.uppercaseIn
+import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.unit.em
+import com.taqvo.app.resources.prayer_about_a11y
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
+import com.taqvo.app.design.LocalTaqvoColors
+import com.taqvo.app.design.TabRootTitleTop
+import com.taqvo.app.design.TaqvoText
+import com.taqvo.app.design.contentWidth
+import com.taqvo.app.design.components.CountdownRing
+import com.taqvo.app.design.components.CountdownRingSize
+import com.taqvo.app.design.components.TaqvoCard
+import com.taqvo.app.design.components.drawHorizon
+import com.taqvo.app.design.components.drawMisbaha
+import com.taqvo.app.design.components.TaqvoPrimaryButton
+import com.taqvo.app.design.components.TaqvoTextLink
+import com.taqvo.app.domain.Prayer
+import com.taqvo.app.domain.TimelineRow
+import com.taqvo.app.feature.common.authorityShortName
+import com.taqvo.app.prayer.engine.method.AsrSchool
+import com.taqvo.app.feature.qibla.QiblaMiniDial
+import com.taqvo.app.feature.qibla.localizedGroupedKm
+import com.taqvo.app.i18n.CountdownFormatter
+import com.taqvo.app.i18n.LocalPlatformFormat
+import com.taqvo.app.i18n.PlatformFormat
+import com.taqvo.app.i18n.isolated
+import com.taqvo.app.i18n.isolatedClock
+import com.taqvo.app.i18n.localizedPrayerName
+import com.taqvo.app.resources.Res
+import com.taqvo.app.resources.a11y_hours
+import com.taqvo.app.resources.a11y_minutes
+import com.taqvo.app.resources.duration_hours_minutes
+import com.taqvo.app.resources.notifications_allow_exact_alarms
+import com.taqvo.app.resources.onboarding_location_body
+import com.taqvo.app.resources.qibla_title
+import com.taqvo.app.resources.prayer_location_settings
+import com.taqvo.app.resources.prayer_choose_city
+import com.taqvo.app.resources.prayer_current_location
+import com.taqvo.app.resources.prayer_exact_alarms_body
+import com.taqvo.app.resources.prayer_exact_alarms_label
+import com.taqvo.app.resources.madhab_hanafi
+import com.taqvo.app.resources.madhab_standard
+import com.taqvo.app.resources.prayer_a11y_countdown
+import com.taqvo.app.resources.prayer_a11y_countdown_soon
+import com.taqvo.app.resources.prayer_about_these_times
+import com.taqvo.app.resources.prayer_differ_after
+import com.taqvo.app.resources.prayer_differ_before
+import com.taqvo.app.resources.prayer_polar_line
+import com.taqvo.app.resources.prayer_next_in
+import com.taqvo.app.resources.prayer_no_location_title
+import com.taqvo.app.resources.prayer_open_adhkar
+import com.taqvo.app.resources.prayer_open_tasbeeh
+import com.taqvo.app.resources.prayer_other_asr
+import com.taqvo.app.resources.prayer_qibla_detail
+import kotlin.time.Instant
+
+/** The page gutter, shared with every settings screen. */
+private val Gutter = 24.dp
+
+/**
+ * The Prayer tab (iteration 8). City and both dates, the
+ * countdown ring free on the page, the timeline in a card, and beneath it the Qibla card that
+ * opens the compass — the compass stopped being a tab so that the bar could stay small.
+ */
+@Composable
+fun PrayerScreen(
+    state: PrayerUiState,
+    onChooseCity: () -> Unit,
+    /** "No location yet"'s link: the app's own page in the system's settings. */
+    onOpenLocationSettings: () -> Unit,
+    onOpenQibla: () -> Unit,
+    /** The horizon button in the header: the morning and evening adhkar. */
+    onOpenAdhkar: () -> Unit,
+    onOpenTasbeeh: () -> Unit,
+    /** Android with notifications on and "Alarms & reminders" off; see [ExactAlarmsCard]. */
+    exactAlarmsOff: Boolean = false,
+    onAllowExactAlarms: () -> Unit = {},
+    /** About these times (Task 11), from the ⓘ's card, the source line and the Sunni card. */
+    onOpenAboutTimes: () -> Unit = {},
+    /** Match my mosque (Task 12), from the cautious-times card. */
+    onMatchMyMosque: () -> Unit = {},
+    /** A one-time card was answered, by either of its actions. */
+    onAnswerCard: (OneTimeCard) -> Unit = {},
+) {
+    val colors = LocalTaqvoColors.current
+    val actions = ReadyActions(
+        onOpenQibla = onOpenQibla,
+        onOpenAdhkar = onOpenAdhkar,
+        onOpenTasbeeh = onOpenTasbeeh,
+        onAllowExactAlarms = onAllowExactAlarms,
+        onOpenAboutTimes = onOpenAboutTimes,
+        onMatchMyMosque = onMatchMyMosque,
+        onAnswerCard = onAnswerCard,
+    )
+    Box(Modifier.fillMaxSize().background(colors.background)) {
+        when (state) {
+            PrayerUiState.Loading -> Unit
+            PrayerUiState.NeedsLocation -> NeedsLocationBody(onChooseCity, onOpenLocationSettings)
+            is PrayerUiState.Ready -> ReadyBody(state, actions, exactAlarmsOff)
+        }
+    }
+}
+
+/** Everything the ready screen can be asked to do, passed down as one. */
+private class ReadyActions(
+    val onOpenQibla: () -> Unit,
+    val onOpenAdhkar: () -> Unit,
+    val onOpenTasbeeh: () -> Unit,
+    val onAllowExactAlarms: () -> Unit,
+    val onOpenAboutTimes: () -> Unit,
+    val onMatchMyMosque: () -> Unit,
+    val onAnswerCard: (OneTimeCard) -> Unit,
+)
+
+@Composable
+private fun ReadyBody(
+    state: PrayerUiState.Ready,
+    actions: ReadyActions,
+    exactAlarmsOff: Boolean,
+) {
+    val zone = rememberZone(state.location.timeZoneId)
+    val format = LocalPlatformFormat.current
+    var clockSheetOpen by remember { mutableStateOf(false) }
+    val openClockSheet = { clockSheetOpen = true }
+    val warning = state.clockWarning
+    if (clockSheetOpen && warning != null) ClockSheet(warning, onDismiss = { clockSheetOpen = false })
+    // safeDrawing, not systemBars: held sideways the navigation bar and the camera cutout move to
+    // the left and right edges, which systemBars alone does not report.
+    BoxWithConstraints(
+        Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing),
+    ) {
+        if (maxWidth > maxHeight) {
+            // Two panes rather than one long scroll: upright, the ring sits above the fold and
+            // the timeline below it, which is the right order for a page you read top to bottom.
+            // Sideways there is no room for that order — the ring alone would fill the screen and
+            // push every prayer time off the bottom — so the two halves sit side by side instead.
+            LandscapeBody(state, zone, format, maxWidth, maxHeight, actions, exactAlarmsOff, openClockSheet)
+        } else {
+            PortraitBody(state, zone, format, actions, exactAlarmsOff, openClockSheet)
+        }
+    }
+}
+
+/** Upright: exactly what this screen has always been, now capped to the shared content width. */
+@Composable
+private fun PortraitBody(
+    state: PrayerUiState.Ready,
+    zone: TimeZone,
+    format: PlatformFormat,
+    actions: ReadyActions,
+    exactAlarmsOff: Boolean,
+    onOpenClockSheet: () -> Unit,
+) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Column(Modifier.contentWidth()) {
+            CityAndDates(state, actions)
+
+            // 32 dp here, not 44: CityAndDates already carries 4 dp under its dates, so this puts
+            // 36 dp of air above the ring — the same 36 dp that separates its bottom from the
+            // timeline card, so the ring sits in a band of its own rather than closer to the card
+            // than to the header it hangs beneath. The clock line, when it shows, sits in that air.
+            if (state.clockWarning != null) {
+                Spacer(Modifier.height(12.dp))
+                ClockLine(onClick = onOpenClockSheet, horizontalPadding = Gutter)
+                Spacer(Modifier.height(20.dp))
+            } else {
+                Spacer(Modifier.height(32.dp))
+            }
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Countdown(state, zone, format)
+            }
+            Spacer(Modifier.height(36.dp))
+
+            TimesAndNotes(state, zone, format, actions)
+
+            QiblaCard(state.qiblaBearingDegrees, state.qiblaDistanceKm, format, actions.onOpenQibla)
+            if (exactAlarmsOff) {
+                Spacer(Modifier.height(14.dp))
+                ExactAlarmsCard(actions.onAllowExactAlarms)
+            }
+            Spacer(Modifier.height(32.dp))
+        }
+    }
+}
+
+/**
+ * Sideways: who and when, with the ring, on the side the eye starts from; everything that is a
+ * list — the timeline, the Qibla card, the high-latitude note — scrolling on the other. Both
+ * halves are capped by the same rule the rest of the app uses, so on a tablet they stay two
+ * columns of readable width rather than two very wide ones.
+ */
+@Composable
+private fun LandscapeBody(
+    state: PrayerUiState.Ready,
+    zone: TimeZone,
+    format: PlatformFormat,
+    width: Dp,
+    height: Dp,
+    actions: ReadyActions,
+    exactAlarmsOff: Boolean,
+    onOpenClockSheet: () -> Unit,
+) {
+    // The ring gets whatever its own half can spare: never bigger than upright, and small enough
+    // that the city and the date above it still fit above the fold on a short sideways screen.
+    val ring = minOf(CountdownRingSize, width / 2 - Gutter * 2, height - 120.dp)
+        .coerceAtLeast(96.dp)
+    Row(Modifier.fillMaxSize()) {
+        Column(
+            Modifier.weight(1f).fillMaxHeight().contentWidth().padding(horizontal = Gutter),
+            verticalArrangement = Arrangement.Center,
+        ) {
+            CityAndDates(state, actions, horizontalPadding = 0.dp, topPadding = 12.dp)
+            Spacer(Modifier.height(20.dp))
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Countdown(state, zone, format, diameter = ring)
+            }
+        }
+        Column(
+            Modifier.weight(1f).fillMaxHeight().contentWidth().verticalScroll(rememberScrollState()),
+        ) {
+            Spacer(Modifier.height(16.dp))
+            if (state.clockWarning != null) {
+                ClockLine(onClick = onOpenClockSheet, horizontalPadding = Gutter)
+                Spacer(Modifier.height(12.dp))
+            }
+            TimesAndNotes(state, zone, format, actions)
+            QiblaCard(state.qiblaBearingDegrees, state.qiblaDistanceKm, format, actions.onOpenQibla)
+            if (exactAlarmsOff) {
+                Spacer(Modifier.height(14.dp))
+                ExactAlarmsCard(actions.onAllowExactAlarms)
+            }
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+/**
+ * The city, then both calendars — the same block in either orientation.
+ *
+ * [topPadding] is what puts the city on the same line as the Quran and Settings titles when the
+ * phone is upright. Sideways the whole left pane is centred vertically instead, so the caller
+ * passes the smaller inset it had before: 24 dp there would only push a centred block off centre.
+ */
+@Composable
+private fun CityAndDates(
+    state: PrayerUiState.Ready,
+    actions: ReadyActions,
+    horizontalPadding: Dp = Gutter,
+    topPadding: Dp = TabRootTitleTop,
+) {
+    val colors = LocalTaqvoColors.current
+    val density = LocalDensity.current
+    val place = state.cityDisplayName ?: stringResource(Res.string.prayer_current_location)
+    var whoseOpen by remember { mutableStateOf(false) }
+    // Where the block and the ⓘ sit in the window, for the card's width and its caret.
+    var blockLeft by remember { mutableFloatStateOf(0f) }
+    var blockWidth by remember { mutableIntStateOf(0) }
+    var infoCentre by remember { mutableStateOf<Float?>(null) }
+    // The horizon and the misbaha (spec Tasbeeh §5; adhkar spec §2.2) sit on the city's line at the
+    // end of the block, and only there: the dates below run the block's whole width, gutter to
+    // gutter, as they did before the horizon came. They are laid over the block's top corner rather
+    // than put in a Row beside the city, so they stay outside the block's clickable: a tap on one
+    // never opens the ⓘ's card, and neither joins its 48 dp target or its one screen-reader label.
+    // Laid over, they take no height of their own, so it is the city's line, held just clear of
+    // their targets ([CityLineMinHeight]), that keeps the dates below them rather than inside them.
+    Box(
+        Modifier.fillMaxWidth().padding(horizontal = horizontalPadding).padding(top = topPadding, bottom = 4.dp),
+    ) {
+        // The whole city-and-date block is the ⓘ's target, never under 48 dp (spec §2.1). With the
+        // city's line held to [CityLineMinHeight] it is always taller than that; the floor keeps
+        // the promise should that minimum ever go. No ripple, like every surface on this screen:
+        // the card opening is the feedback.
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned {
+                    blockLeft = it.positionInWindow().x
+                    blockWidth = it.size.width
+                }
+                .defaultMinSize(minHeight = 48.dp)
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null,
+                    role = Role.Button,
+                    onClick = { whoseOpen = true },
+                ),
+        ) {
+            // The minimum sits on a box around the city rather than on its Text, so the city's own
+            // bounds stay those of its words, which is what the header tests read as its lines; on
+            // screen the two are the same.
+            Box(Modifier.defaultMinSize(minHeight = CityLineMinHeight)) {
+                Text(
+                    // Resolved by the view model, in the interface's language; `location.cityName`
+                    // stays the English snapshot and is only what this falls back to.
+                    place,
+                    // The city shares its line with the two glyphs, so it stops short of them (and
+                    // wraps there when it is long); the dates below do not.
+                    modifier = Modifier.padding(end = HeaderGlyphSize * 2),
+                    style = TaqvoText.screenTitle,
+                    color = colors.textPrimary,
+                )
+            }
+            // Hijri first, then the Gregorian a step quieter: one line, the two calendars read
+            // as a pair. The separator is punctuation, not a translated string, so it is the
+            // same in both languages; the bidi algorithm orders the halves under Arabic.
+            //
+            // The Gregorian half is isolated (FSI…PDI). Without it, an English date that opens with a
+            // digit — "8 September 2026" — has that leading number swallowed by the surrounding
+            // right-to-left run and comes out as "September 2026 8"; inside the isolate the date takes
+            // its own direction from its own first strong character and lays out whole.
+            //
+            // The ⓘ ends the line (spec §2.1), held to the date by a no-break space so it never
+            // wraps alone and adds no line of its own; under Arabic the end is the left. Its
+            // alternate text is the block's one screen-reader label (spec §2.4).
+            val label = whoseLabel(state.whose, place)
+            val infoTint = if (whoseOpen) colors.accent else colors.textTertiary
+            Text(
+                buildAnnotatedString {
+                    append(state.hijri)
+                    withStyle(SpanStyle(color = colors.textTertiary)) {
+                        append(" · ")
+                        append("\u2068" + state.gregorian + "\u2069")
+                    }
+                    append("\u00A0")
+                    appendInlineContent(INFO_GLYPH, label)
+                },
+                style = TaqvoText.caption,
+                color = colors.textSecondary,
+                inlineContent = mapOf(
+                    INFO_GLYPH to InlineTextContent(
+                        Placeholder(1.em, 1.em, PlaceholderVerticalAlign.TextCenter),
+                    ) {
+                        InfoGlyph(
+                            infoTint,
+                            Modifier.fillMaxSize().onGloballyPositioned {
+                                infoCentre = it.boundsInWindow().center.x
+                            },
+                        )
+                    },
+                ),
+            )
+            if (whoseOpen) {
+                WhoseTimesPopup(
+                    whose = state.whose,
+                    place = place,
+                    width = with(density) { blockWidth.toDp() },
+                    caretX = infoCentre?.let { it - blockLeft },
+                    onOpenAboutTimes = actions.onOpenAboutTimes,
+                    onDismiss = { whoseOpen = false },
+                )
+            }
+        }
+        // The horizon before the misbaha, so the misbaha keeps the corner it has always had. After
+        // the block in the Box, so they are drawn and hit-tested on top of it.
+        Row(Modifier.align(Alignment.TopEnd)) {
+            HeaderGlyphButton(stringResource(Res.string.prayer_open_adhkar), actions.onOpenAdhkar) { drawHorizon(it) }
+            HeaderGlyphButton(stringResource(Res.string.prayer_open_tasbeeh), actions.onOpenTasbeeh) { drawMisbaha(it) }
+        }
+    }
+}
+
+private const val INFO_GLYPH = "info"
+
+/** The side of a header glyph's square target; the city stops two of them short of the block's end. */
+private val HeaderGlyphSize = 44.dp
+
+/** How far each header glyph is lifted above the block's top, onto the city's line ([HeaderGlyphButton]). */
+private val HeaderGlyphNudge = 4.dp
+
+/** The air between the bottom of the glyphs' targets and the top of the dates. */
+private val HeaderGlyphGap = 2.dp
+
+/**
+ * The least height of the city's line: down to where the glyphs' targets end, then
+ * [HeaderGlyphGap]. A one-line city is shorter than the targets reach (29 dp in English on the
+ * iPhone, 30 in Arabic, against 40), so without it the dates would begin inside the glyphs'
+ * targets, and a tap on the ⓘ that ends their first line, which can fall under either glyph, could
+ * open the adhkar or the tasbeeh instead of its card. A minimum and not a padding, so a city line
+ * already that tall (two lines, or a text size from about 1.45 times up) gets nothing added.
+ */
+private val CityLineMinHeight = HeaderGlyphSize - HeaderGlyphNudge + HeaderGlyphGap
+
+/** The air added above Fajr while the source label sits on the card's top edge. */
+internal val SourceLabelAir = 8.dp
+
+/** The edge label's own inset either side of its words, where it breaks the hairline. */
+internal val SourceLabelPad = 6.dp
+
+/**
+ * What sits between the prayer list and the Qibla card, each only where it applies (spec §2.1):
+ * the source line ("Cautious times ›", "Published method ›", "Calculated by Taqvo ›"), only when
+ * the source label could not fit the card's edge, and, on a polar day, the line that says some times
+ * follow a nearby latitude (both open About these times), then the one-time card due this launch.
+ * The exact-alarms card keeps its place under the Qibla card.
+ */
+@Composable
+private fun UnderTheList(state: PrayerUiState.Ready, actions: ReadyActions, sourceLine: SourceLabel?) {
+    val about = stringResource(Res.string.prayer_about_these_times)
+    val anyLine = sourceLine != null || state.polar
+    if (anyLine) Spacer(Modifier.height(2.dp))
+    if (sourceLine != null) {
+        TertiaryLine(
+            text = sourceLine.name,
+            label = sourceLine.label,
+            onClick = actions.onOpenAboutTimes,
+            horizontalPadding = Gutter + 6.dp,
+            onClickLabel = about,
+        )
+    }
+    if (state.polar) {
+        val sentence = stringResource(Res.string.prayer_polar_line)
+        TertiaryLine(
+            text = sentence,
+            label = sentence,
+            onClick = actions.onOpenAboutTimes,
+            horizontalPadding = Gutter + 6.dp,
+            onClickLabel = about,
+        )
+    }
+    val card = state.oneTimeCard
+    if (card != null) {
+        Spacer(Modifier.height(if (anyLine) 6.dp else 14.dp))
+        OneTimeCardView(
+            card = card,
+            onAction = {
+                actions.onAnswerCard(card)
+                when (card) {
+                    OneTimeCard.CAUTIOUS -> actions.onMatchMyMosque()
+                    OneTimeCard.SUNNI -> actions.onOpenAboutTimes()
+                }
+            },
+            onOk = { actions.onAnswerCard(card) },
+            horizontalPadding = Gutter,
+        )
+        Spacer(Modifier.height(14.dp))
+    } else {
+        Spacer(Modifier.height(if (anyLine) 2.dp else 14.dp))
+    }
+}
+
+/**
+ * A glyph at the end of the city's line: [draw] at the tab bar's 22 dp, in a 44 dp target — the
+ * misbaha that opens the tasbeeh, the horizon that opens the adhkar. No ripple, like the tab bar
+ * and the Qibla card — the pushed screen is the feedback. It carries a content description
+ * because it is a glyph with no words beside it, and the button role so that TalkBack says
+ * "button" after that name, as it does for the back chevron.
+ *
+ * Nudged up by [HeaderGlyphNudge], which puts the 22 dp glyph's centre 18 dp down the block rather
+ * than 22, on the city's own line rather than low against it. The target then ends 40 dp down,
+ * deeper than a one-line city reaches, which is why the city's line is held to
+ * [CityLineMinHeight]: the dates start [HeaderGlyphGap] below the target, never inside it.
+ */
+@Composable
+private fun HeaderGlyphButton(description: String, onOpen: () -> Unit, draw: DrawScope.(Color) -> Unit) {
+    val colors = LocalTaqvoColors.current
+    Box(
+        Modifier
+            .offset(y = -HeaderGlyphNudge)
+            .size(HeaderGlyphSize)
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClick = onOpen,
+            )
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.size(22.dp)) { draw(colors.textPrimary) }
+    }
+}
+
+@Composable
+private fun Countdown(
+    state: PrayerUiState.Ready,
+    zone: TimeZone,
+    format: PlatformFormat,
+    diameter: Dp = CountdownRingSize,
+) {
+    val name = localizedPrayerName(state.today.next.prayer)
+    val clock = formatClock(state.today.next.instant, zone, format)
+    // "FAJR IN", "4:10:02" and "5:10" read as three fragments, one of them like a clock time
+    // (audit sr-countdown); this is the same fact as one sentence, from whole minutes so it
+    // changes once a minute. Not a live region: the ring is read when reached, never announced.
+    // The time is the one drawn under the countdown, isolated as every sentence that splices a
+    // clock time is, so a 12-hour time stays one unit inside a sentence of the other direction.
+    val parts = countdownParts(state.today.countdown)
+    val description = if (parts.underAMinute) {
+        stringResource(Res.string.prayer_a11y_countdown_soon, name, isolatedClock(clock))
+    } else {
+        val hours = pluralStringResource(Res.plurals.a11y_hours, parts.hours, format.localizedDigits(parts.hours))
+        val minutes = pluralStringResource(Res.plurals.a11y_minutes, parts.minutes, format.localizedDigits(parts.minutes))
+        val duration = when {
+            parts.hours == 0 -> minutes
+            parts.minutes == 0 -> hours
+            else -> stringResource(Res.string.duration_hours_minutes, hours, minutes)
+        }
+        stringResource(Res.string.prayer_a11y_countdown, name, duration, isolatedClock(clock))
+    }
+    CountdownRing(
+        progress = state.today.ringProgress,
+        label = stringResource(Res.string.prayer_next_in, name),
+        countdown = CountdownFormatter.countdown(
+            state.today.countdown,
+            format,
+            CountdownFormatter.ARABIC_INDIC_DIGITS_VERIFIED_TABULAR,
+        ),
+        clockTime = clock,
+        diameter = diameter,
+        description = description,
+    )
+}
+
+/**
+ * The times card and the lines under it. Where the times are not an authority's own checked
+ * timetable, a label set into the card's top hairline says where they come from (spec §2.1):
+ * "Cautious times", "Published method" or "Calculated by Taqvo" ([sourceLabelRes]). It takes no
+ * line of its own, so the Qibla card keeps its place, lower than for any other city only by
+ * [SourceLabelAir]. The label is measured first, as it will be drawn: when it cannot fit that edge
+ * (a long language at a large text size on a narrow phone) it becomes a line under the list.
+ */
+@Composable
+private fun TimesAndNotes(state: PrayerUiState.Ready, zone: TimeZone, format: PlatformFormat, actions: ReadyActions) {
+    val place = state.cityDisplayName ?: stringResource(Res.string.prayer_current_location)
+    val language = uiLanguage()
+    val source = sourceLabelRes(state.whose)?.let { res ->
+        val name = stringResource(res)
+        SourceLabel(
+            words = name.uppercaseIn(language),
+            name = name,
+            label = stringResource(Res.string.prayer_about_a11y, name, isolated(place)),
+        )
+    }
+    SubcomposeLayout { constraints ->
+        val onEdge = source != null && run {
+            // Measured but never placed, and silent: only its width is wanted.
+            val label = subcompose(SourceMeasureSlot) {
+                SourceLabelWords(source.words, Modifier.clearAndSetSemantics {})
+            }.first().measure(Constraints())
+            val cardWidth = constraints.maxWidth - (Gutter * 2).roundToPx()
+            SourceLabelStart.roundToPx() + label.width <= cardWidth - CardCornerClearance.roundToPx()
+        }
+        val body = subcompose(SourceBodySlot) {
+            Column {
+                TimelineCard(state, zone, format, source = if (onEdge) source else null, onOpenAboutTimes = actions.onOpenAboutTimes)
+                UnderTheList(state, actions, sourceLine = if (onEdge) null else source)
+            }
+        }.first().measure(constraints)
+        layout(body.width, body.height) { body.place(0, 0) }
+    }
+}
+
+/** Where the times come from, in the three forms it is shown in. */
+private class SourceLabel(
+    /** On the card's edge: upper case where the script has one. */
+    val words: String,
+    /** On the line under the list, as written. */
+    val name: String,
+    /** For a screen reader, either way: "Cautious times, Cape Town. Opens About these times". */
+    val label: String,
+)
+
+private const val SourceMeasureSlot = "source-label"
+private const val SourceBodySlot = "times"
+
+/** The timeline's own inset inside the card, either side. */
+private val TimelineCardPadding = 16.dp
+
+/** Where the edge label begins: its words start where the prayer names start. */
+private val SourceLabelStart = TimelineCardPadding + TimelineNameInset - SourceLabelPad
+
+/**
+ * The inset after the chevron. Its 10 dp canvas leaves about 2.5 dp of air past the tip, and the
+ * first letter's side bearing about 0.5 dp before the words, so 4 dp here reads as the
+ * [SourceLabelPad] at the start: the hairline stops the same distance from the words and the tip.
+ */
+private val SourceChevronEndPad = 4.dp
+
+/** The card's corner radius ([TaqvoCard]): the label must end on the straight part of the edge. */
+private val CardCornerClearance = 18.dp
+
+@Composable
+private fun TimelineCard(
+    state: PrayerUiState.Ready,
+    zone: TimeZone,
+    format: PlatformFormat,
+    source: SourceLabel? = null,
+    onOpenAboutTimes: () -> Unit = {},
+) {
+    Box(Modifier.fillMaxWidth().padding(horizontal = Gutter)) {
+        TaqvoCard {
+            Spacer(Modifier.height(if (source != null) 4.dp + SourceLabelAir else 4.dp))
+            PrayerTimeline(
+                state.today.rows,
+                horizontalPadding = TimelineCardPadding,
+                setByRule = state.setByRule,
+                subLines = subLines(state, zone, format),
+                next = state.today.next,
+            ) { row: TimelineRow ->
+                formatClock(row.instant, zone, format)
+            }
+            Spacer(Modifier.height(4.dp))
+        }
+        if (source != null) SourceEdgeLabel(source.words, source.label, onOpenAboutTimes)
+    }
+}
+
+/**
+ * The source label ("Cautious times ›" …) on the card's top hairline. Its 48 dp target is centred
+ * on the hairline, half above the card and half inside it, and takes no height: it is laid over the
+ * card's top edge. The words carry a background split at the hairline, the screen's above and the
+ * card's below, which is what breaks the line around them. One stop for a screen reader, read like
+ * the line it becomes when it cannot fit.
+ */
+@Composable
+private fun SourceEdgeLabel(words: String, label: String, onClick: () -> Unit) {
+    val colors = LocalTaqvoColors.current
+    val about = stringResource(Res.string.prayer_about_these_times)
+    Box(
+        Modifier
+            .padding(start = SourceLabelStart)
+            // Centred on the 1 dp hairline the card draws inside its top edge.
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, placeable.height) {
+                    placeable.place(0, (0.5.dp.toPx() - placeable.height / 2f).roundToInt())
+                }
+            }
+            .heightIn(min = 48.dp)
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClickLabel = about,
+                onClick = onClick,
+            )
+            .clearAndSetSemantics { contentDescription = label },
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        SourceLabelWords(
+            words,
+            Modifier.drawBehind {
+                val edge = size.height / 2
+                drawRect(colors.background, size = Size(size.width, edge))
+                drawRect(colors.surface, topLeft = Offset(0f, edge), size = Size(size.width, size.height - edge))
+            },
+        )
+    }
+}
+
+/** The label's words and chevron with their inset either side: what is drawn, and what is measured. */
+@Composable
+private fun SourceLabelWords(words: String, modifier: Modifier = Modifier) {
+    val colors = LocalTaqvoColors.current
+    val pointsForward = LocalLayoutDirection.current == LayoutDirection.Ltr
+    Row(modifier.padding(start = SourceLabelPad, end = SourceChevronEndPad), verticalAlignment = Alignment.CenterVertically) {
+        Text(words, style = TaqvoText.sectionLabel, color = colors.textSecondary, maxLines = 1, softWrap = false)
+        Spacer(Modifier.width(4.dp))
+        Canvas(Modifier.size(10.dp)) { drawChevron(colors.textSecondary, pointsForward) }
+    }
+}
+
+/**
+ * The quiet lines under the rows (spec §2.1): the other school's Asr under Asr ("Standard {time}"),
+ * and where timetables differ under the current prayer. Names and times are isolated so each keeps
+ * its own direction inside the other script's sentence.
+ */
+@Composable
+private fun subLines(state: PrayerUiState.Ready, zone: TimeZone, format: PlatformFormat): Map<Prayer, List<String>> {
+    val lines = mutableMapOf<Prayer, MutableList<String>>()
+    state.otherAsr?.let { other ->
+        val school = stringResource(
+            if (other.school == AsrSchool.HANAFI) Res.string.madhab_hanafi else Res.string.madhab_standard,
+        )
+        lines.getOrPut(Prayer.ASR) { mutableListOf() } +=
+            stringResource(Res.string.prayer_other_asr, school, isolated(formatClock(other.instant, zone, format)))
+    }
+    state.differ?.let { d ->
+        val member = isolated(authorityShortName(d.memberNameKey))
+        val prayer = localizedPrayerName(d.prayer)
+        val line = if (d.begun) {
+            stringResource(Res.string.prayer_differ_after, member, prayer, isolated(formatClock(d.shownStart, zone, format)))
+        } else {
+            stringResource(Res.string.prayer_differ_before, member, prayer, isolated(formatClock(d.memberStart, zone, format)))
+        }
+        lines.getOrPut(d.under) { mutableListOf() } += line
+    }
+    return lines
+}
+
+/**
+ * Shown while notifications are on but Android's "Alarms & reminders" is off for Taqvo, which is
+ * the default from Android 14: without it a notification can be up to an hour late, and
+ * Settings › Notifications is too far away for a promise this central. The whole card is the tap
+ * target, like the Qibla card below it; it opens the system page, and the card leaves on the next
+ * foreground once the grant is there. Never on iOS, which has no such permission.
+ */
+@Composable
+private fun ExactAlarmsCard(onAllow: () -> Unit) {
+    val colors = LocalTaqvoColors.current
+    TaqvoCard(Modifier.padding(horizontal = Gutter)) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null,
+                    onClick = onAllow,
+                )
+                .padding(16.dp),
+        ) {
+            Text(
+                stringResource(Res.string.prayer_exact_alarms_label),
+                style = TaqvoText.sectionLabel,
+                color = colors.accent,
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                stringResource(Res.string.prayer_exact_alarms_body),
+                style = TaqvoText.caption,
+                color = colors.textSecondary,
+            )
+            Spacer(Modifier.height(10.dp))
+            Text(
+                stringResource(Res.string.notifications_allow_exact_alarms),
+                style = TaqvoText.caption.copy(fontWeight = FontWeight.SemiBold),
+                color = colors.accent,
+            )
+        }
+    }
+}
+
+/**
+ * The way to the compass, where the thumb rests: a still north-up dial, the bearing and the
+ * distance, and a chevron. The whole card is the tap target; no ripple, like every other
+ * surface in the app — the pushed screen is the feedback.
+ */
+@Composable
+private fun QiblaCard(bearingDegrees: Double, distanceKm: Double, format: PlatformFormat, onOpen: () -> Unit) {
+    val colors = LocalTaqvoColors.current
+    TaqvoCard(Modifier.padding(horizontal = Gutter)) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null,
+                    onClick = onOpen,
+                )
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            QiblaMiniDial(bearingDegrees)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(Res.string.qibla_title), style = TaqvoText.rowLabel, color = colors.textPrimary)
+                Text(
+                    stringResource(
+                        Res.string.prayer_qibla_detail,
+                        format.localizedDigits(bearingDegrees.toInt()),
+                        localizedGroupedKm(distanceKm, format),
+                    ),
+                    style = TaqvoText.caption.copy(fontSize = 13.sp),
+                    color = colors.textSecondary,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            ForwardChevron()
+        }
+    }
+}
+
+/** The settings back chevron's mirror image: "onwards", so it points the way the text runs. */
+@Composable
+private fun ForwardChevron() {
+    val colors = LocalTaqvoColors.current
+    val pointsRight = LocalLayoutDirection.current == LayoutDirection.Ltr
+    Canvas(Modifier.size(14.dp)) {
+        val w = size.width
+        fun x(fraction: Float) = if (pointsRight) w * fraction else w * (1f - fraction)
+        val path = Path().apply {
+            moveTo(x(0.36f), w * 0.14f)
+            lineTo(x(0.68f), w * 0.50f)
+            lineTo(x(0.36f), w * 0.86f)
+        }
+        drawPath(
+            path = path,
+            color = colors.textTertiary,
+            style = Stroke(width = w * 0.12f, cap = StrokeCap.Round, join = StrokeJoin.Round),
+        )
+    }
+}
+
+@Composable
+private fun NeedsLocationBody(onChooseCity: () -> Unit, onOpenLocationSettings: () -> Unit) {
+    val colors = LocalTaqvoColors.current
+    Column(
+        Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing)
+            .contentWidth()
+            .padding(horizontal = 32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            stringResource(Res.string.prayer_no_location_title),
+            style = TaqvoText.screenTitle,
+            color = colors.textPrimary,
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            // The same sentence onboarding used to ask the question, because it is the same
+            // question — a user who declined there is reading it a second time, not a new one.
+            stringResource(Res.string.onboarding_location_body),
+            style = TaqvoText.caption,
+            color = colors.textSecondary,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(28.dp))
+        TaqvoPrimaryButton(stringResource(Res.string.prayer_choose_city), onChooseCity)
+        Spacer(Modifier.height(4.dp))
+        // To the system's settings, never to the system prompt: iOS asks only once, so after a
+        // refusal the prompt cannot come back, and a screen that explains and then raises the
+        // prompt beside a second button is what App Review rejects (guideline 5.1.1(iv)).
+        TaqvoTextLink(stringResource(Res.string.prayer_location_settings), onOpenLocationSettings)
+    }
+}
+
+/** `TimeZone.of` parses an IANA id; the zone only changes when the location does. */
+@Composable
+private fun rememberZone(id: String): TimeZone = remember(id) { TimeZone.of(id) }
+
+/**
+ * A clock time in the location's zone and the device locale's own digits — "3:42" for a Libyan
+ * reader, "٣:٤٢" for an Egyptian one, with no setting between them (spec §4.2). Unlike the
+ * countdown, a clock time never falls back to Western digits.
+ */
+internal fun formatClock(instant: Instant, zone: TimeZone, format: PlatformFormat): String {
+    val t = instant.toLocalDateTime(zone)
+    return format.clockTime(t.hour, t.minute)
+}

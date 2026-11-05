@@ -1,0 +1,200 @@
+package com.taqvo.app.notifications
+
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import com.taqvo.app.adhkar.AdhkarSet
+import com.taqvo.app.domain.AdhanVoice
+import com.taqvo.app.domain.Prayer
+import com.taqvo.app.domain.PrayerSound
+import com.taqvo.app.di.appContainer
+import com.taqvo.app.nav.LaunchRequests
+import com.taqvo.app.widget.WidgetMirrorRefresher
+import com.taqvo.app.widget.androidWidgetUpdateHook
+import kotlin.time.Clock
+import kotlin.time.Instant
+
+/** Set once from `TaqvoApplication` — `shared` cannot see androidApp's generated `R` class. */
+var notificationSmallIconResId: Int = android.R.drawable.ic_popup_reminder
+
+/**
+ * How a notification's tap starts `MainActivity`: in a task of its own when Taqvo is not running,
+ * and otherwise handed to the instance already there.
+ *
+ * SINGLE_TOP is the part that matters (B18). `MainActivity` has the default `standard` launch
+ * mode, and against it CLEAR_TOP alone finishes the running instance and creates a new one: a
+ * tap over an open Reader threw the reader's place away, and an adhkar reminder's tap could land
+ * on the Prayer screen instead of its set, because the dying instance's collector took the
+ * request before the new one had composed. With SINGLE_TOP the running instance is kept and gets
+ * the tap through `onNewIntent`, which reads the extras exactly as `onCreate` does. The ayah
+ * widget's tap (`TaqvoAyahGlanceWidget`) met the identical race first and settled on the same
+ * three flags, and the media notification's tap (`RecitationService`) is SINGLE_TOP too.
+ */
+internal const val NOTIFICATION_TAP_FLAGS: Int =
+    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+/**
+ * Fires exactly once per scheduled alarm. It never re-derives content: title, body and which
+ * channel to post into all travel in the intent extras baked in at schedule time, so this class
+ * has no locale, no settings lookup and nothing to get wrong at 3am.
+ */
+class PrayerAlarmReceiver : BroadcastReceiver() {
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val id = intent.getStringExtra(EXTRA_ID) ?: return
+        val prayer = intent.getStringExtra(EXTRA_PRAYER)?.let { Prayer.valueOf(it) } ?: return
+        val sound = intent.getStringExtra(EXTRA_SOUND)?.let { PrayerSound.valueOf(it) } ?: return
+        // Absent on an alarm scheduled by a build older than the voice setting, and on one
+        // naming a voice this build does not know: either way the original is what played
+        // when that alarm was set, and the original is what its channel carries.
+        val voice = intent.getStringExtra(EXTRA_VOICE)
+            ?.let { name -> AdhanVoice.entries.firstOrNull { it.name == name } }
+            ?: AdhanVoice.ORIGINAL
+        // Absent on an alarm set by a build older than Tahajjud, which only ever set prayers.
+        val kind = intent.getStringExtra(EXTRA_KIND)
+            ?.let { name -> NotificationKind.entries.firstOrNull { it.name == name } }
+            ?: NotificationKind.PRAYER
+        val title = intent.getStringExtra(EXTRA_TITLE) ?: return
+        val body = intent.getStringExtra(EXTRA_BODY) ?: return
+
+        // The scheduler's own sequential request code, not id.hashCode(): two ids that folded
+        // to the same 32-bit hash used to overwrite each other's notification.
+        val notificationId = intent.getIntExtra(EXTRA_REQUEST_CODE, id.hashCode())
+
+        // The window of the adhkar reminder (it closes at sunrise or Maghrib), of Duha (ten minutes
+        // before noon) and of the iqama (ten minutes after it was due), carried because each alarm
+        // can arrive late. Absent on the prayers, their reminders and Tahajjud.
+        val windowEnd = intent.getLongExtra(EXTRA_WINDOW_END, 0L)
+            .takeIf { it > 0L }
+            ?.let { Instant.fromEpochMilliseconds(it) }
+        val now = Clock.System.now()
+        if (windowEnd != null && !AdhkarReminderDelivery.shouldPost(now, windowEnd)) {
+            // "Until sunrise" after sunrise would be wrong, so nothing is posted. The alarm still
+            // woke the process, and the widget and the plan's top-up are as worth doing as ever.
+            afterAlarm(context)
+            return
+        }
+
+        val builder = NotificationCompat.Builder(context, NotificationChannels.channelId(prayer, sound, voice, kind))
+            .setSmallIcon(notificationSmallIconResId)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(openAppIntent(context, notificationId, kind.adhkarSet))
+        // And it leaves the shade when its window closes, rather than staying to say "Until
+        // sunrise" about a sunrise that has passed.
+        windowEnd?.let { AdhkarReminderDelivery.timeout(now, it) }
+            ?.let { builder.setTimeoutAfter(it.inWholeMilliseconds.coerceAtLeast(1L)) }
+        // Tagged with its id for the adhkar reminder, so a finished set can withdraw it from the
+        // shade by id alone (AndroidNotificationScheduler.cancel). Null, as always, for the rest.
+        NotificationManagerCompat.from(context).notify(AdhkarReminderDelivery.tagFor(kind, id), notificationId, builder.build())
+
+        afterAlarm(context)
+    }
+
+    /**
+     * Tapping the notification opens the app. The launcher intent rather than `MainActivity`
+     * by name: `shared` cannot see androidApp's classes, and the launcher intent is what the
+     * home screen icon fires, so the result is the same as opening the app by hand.
+     * [NOTIFICATION_TAP_FLAGS] keep that true when Taqvo is already open: the running activity
+     * is brought forward as it was, not recreated.
+     *
+     * An adhkar reminder's tap goes one step further, to that set's session (adhkar spec §5):
+     * `MainActivity` reads [LaunchRequests.ANDROID_EXTRA_OPEN_ADHKAR] and strips it, as it does
+     * the media notification's. Each notification's intent is its own (the request code is the
+     * notification's), so the extra never leaks onto another notification's tap.
+     */
+    private fun openAppIntent(context: Context, requestCode: Int, adhkar: AdhkarSet?): PendingIntent? {
+        val launch = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return null
+        launch.addFlags(NOTIFICATION_TAP_FLAGS)
+        if (adhkar != null) launch.putExtra(LaunchRequests.ANDROID_EXTRA_OPEN_ADHKAR, LaunchRequests.adhkarExtra(adhkar))
+        return PendingIntent.getActivity(
+            context,
+            requestCode,
+            launch,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+    }
+
+    /**
+     * The two things worth doing while this alarm has the process briefly awake: redraw the
+     * widget, and top the plan up before it runs out.
+     *
+     * `goAsync` rather than [com.taqvo.app.widget.refreshWidgets]: that helper is deliberately
+     * fire-and-forget on a process-lifetime scope, which is right for a running app but not here —
+     * a broadcast receiver's process may be reclaimed the moment `onReceive` returns, killing the
+     * work halfway. The budget is well inside `goAsync`'s own ten-second allowance.
+     *
+     * Nothing here may throw: this is the notification path, and neither a widget that failed to
+     * redraw nor a top-up that failed must ever cost the user their adhan.
+     */
+    private fun afterAlarm(context: Context) {
+        val pendingResult = goAsync()
+        CoroutineScope(Dispatchers.Default).launch {
+            try {
+                withTimeout(WORK_BUDGET_MILLIS) {
+                    refreshWidgets()
+                    topUpPlan(context)
+                }
+            } catch (_: TimeoutCancellationException) {
+                // The half-hourly update and the next window alarm will both catch up.
+            } finally {
+                pendingResult.finish()
+            }
+        }
+    }
+
+    /**
+     * The one instant in the day when the home-screen widget is guaranteed to be wrong.
+     *
+     * This alarm is already exact, and it fires precisely when "ASR IN 0:01" has to become
+     * "MAGHRIB IN 3:12" — the moment the widget's rolling five-minute refresh would be most
+     * visibly late. Riding along costs one extra redraw per prayer and needs no alarm of its own.
+     */
+    private suspend fun refreshWidgets() {
+        val hook = androidWidgetUpdateHook ?: return
+        // A prayer has just arrived, so the mirror's two-day horizon has moved on by one prayer:
+        // rewrite it from the stored location first, then redraw. This is what keeps the widget
+        // counting for days on end without the app being opened. Same process-wide container and
+        // DataStore as the app itself.
+        runCatching {
+            WidgetMirrorRefresher.refresh(appContainer.settingsRepository, appContainer.prayerTimesEngine)
+        }
+        runCatching { hook() }
+    }
+
+    /**
+     * The plan is a rolling window — six days with reminders on — and the only Android events
+     * that rebuild it are opening the app, changing a setting, and boot. A reader who keeps the
+     * widget on the home screen and does not open the app for a week would run out of adhan
+     * without ever being told; this alarm is the one thing that reliably runs in between.
+     *
+     * Gated on [NotificationCoordinator.needsTopUp] rather than done every time: a reschedule
+     * cancels and re-arms every pending alarm, and paying that five times a day to extend a
+     * window that still has days left in it is waste. The horizon comes from the scheduler's own
+     * preference file because this process has no plan in memory (see [scheduledPlanHorizon]).
+     */
+    private suspend fun topUpPlan(context: Context) {
+        runCatching {
+            val coordinator = appContainer.notificationCoordinator
+            // Or the phone has moved (spec §16.5): the plan was built for somewhere else, and
+            // this alarm is the one moment a closed app gets to notice before the next prayer.
+            if (coordinator.needsTopUp(scheduledPlanHorizon(context)) || appContainer.locationRefresher.hasMoved()) {
+                coordinator.reschedule(RescheduleTrigger.ALARM_FIRED)
+            }
+        }
+    }
+
+    private companion object {
+        const val WORK_BUDGET_MILLIS = 8_000L
+    }
+}

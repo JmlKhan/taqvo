@@ -1,0 +1,64 @@
+name: Tests
+
+# The app's own checks on every push and pull request: the shared and widget suites (the domain
+# logic, run as Android unit tests on the JVM), a debug build of the Android app, and the
+# translation check. The iOS suites need a Mac and still run through scripts/test.sh.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    # A pull request from a branch of this repository is already covered by its push.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - name: Android SDK platform 37
+        # compileSdk 37 is newer than the runner's image may carry. The package is named
+        # android-37.0, not android-37 (docs/BUILD-LOG.md).
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" > /dev/null
+      - name: Shared and widget tests
+        run: ./gradlew --no-daemon :shared:testAndroidHostTest :widgetcore:testAndroidHostTest
+      - name: Android app builds
+        run: ./gradlew --no-daemon :androidApp:assembleDebug
+      - name: The APK carries the shared module's sounds and bundled files
+        # They reach the app from `shared` (res/raw, and Compose resources as assets), and a build
+        # that drops them still succeeds: the adhan goes silent, or the Quran and cities are gone.
+        run: |
+          unzip -l androidApp/build/outputs/apk/debug/*.apk > apk-contents.txt
+          for f in res/raw/adhan_full.ogg res/raw/takbir.ogg res/raw/chime.ogg \
+                   files/quran.db files/cities.csv files/city-names-ar.csv; do
+            grep -q "$f" apk-contents.txt || { echo "::error::$f is missing from the APK"; exit 1; }
+          done
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        if: failure()
+        with:
+          name: test-reports
+          path: "**/build/reports/tests/"
+          if-no-files-found: ignore
+
+  strings:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - run: ./scripts/check-strings.sh

@@ -1,0 +1,42 @@
+# Lebanon, Dar al-Fatwa: fit on its own mosque-screen feed (Masjidi TV id 26, Ras Beirut), all 365
+# printable rows of the perpetual table mapped onto the real 2024 calendar (archive/tables/
+# normalized-7e/lb-fatwa-beirut-2024.txt; found printed on a FIXED winter/standard UTC+02:00 clock all
+# year, unlike the engine's real Asia/Beirut civil zone -- hence `clock` differs from `zone`, exactly
+# as ps.iftaa's table; see proof.md for how this was found); test on 19 dated captures spanning
+# 2019-2026 from the older homepage widget and Al-Liwaa's daily reprint of the same table, a genuine
+# cross-year, cross-source holdout. One more dated capture (1 Apr 2023) prints on a clock that does
+# not match Asia/Beirut's real DST for that date -- Lebanon's government decreed the 2023 clock
+# change delayed to 20 Apr, and this capture (before that date) matches the fixed +2 clock within 0-2
+# min on every event -- so it is included with its own fixed clock. 25 Jan 2023 and 28 Mar 2024 are
+# excluded (see proof.md): the first a genuine widget bug, the second real on every other event but
+# with a sunrise that would be 10 min late under the same reading, which no margin may ever be (an
+# end, not a start), and which is not worth 11 more minutes of everyone else's sunrise to accommodate.
+# End of eating (audit of 3 Oct 2026, before Ramadan 1448): Dar al-Fatwa prints no end-of-eating column; the fast begins at its
+# printed Fajr, so the Fajr column is also checked as the end of eating (F+E). The 20 deg end, its fitted
+# margin and its recorded limit are in Levant.kt.
+path	entry	lat	lon	zone	clock	columns	format	school	split	note
+archive/tables/normalized-7e/lb-fatwa-beirut-2024.txt	lb.fatwa	33.894	35.502	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	fit	Masjidi TV id 26 (Ras Beirut), 2024
+archive/tables/normalized-7e/lb-fatwa-beirut-dated.txt	lb.fatwa	33.894	35.502	Asia/Beirut		F+E S D A M I	daily	standard	test	Dar al-Fatwa homepage widget + Al-Liwaa, 2019-2026, held out
+archive/tables/normalized-7e/lb-fatwa-beirut-dated-2023-04-01.txt	lb.fatwa	33.894	35.502	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	test	1 Apr 2023, Lebanon's decreed delay to the clock change that year
+# 2025-2027 (track T4 and its review, 11 Oct 2026): the same perpetual table assigned to 2025, 2026 and 2027 dates (archive:
+# lb-fatwa-beirut-<yyyy>.txt, derived exactly as the 2027 file is from the 2024 mapping; on its fixed UTC+02:00 clock, as
+# the 2024 row), so that every year of the leap cycle the stamp claims, 2 October to 31 December 2026 among them, is
+# checked against the table: held out, the engine against each year's own sun.
+archive/tables/normalized-7e/lb-fatwa-beirut-2025.txt	lb.fatwa	33.894	35.502	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	test	Masjidi TV id 26 (Ras Beirut), the perpetual table on 2025
+archive/tables/normalized-7e/lb-fatwa-beirut-2026.txt	lb.fatwa	33.894	35.502	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	test	Masjidi TV id 26 (Ras Beirut), the perpetual table on 2026
+archive/tables/normalized-7e/lb-fatwa-beirut-2027.txt	lb.fatwa	33.894	35.502	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	test	Masjidi TV id 26 (Ras Beirut), the perpetual table on 2027
+
+# The app's own points (the city-point audit of 10–11 Oct 2026, rulings R30, R40 and R44): every Lebanese city of the app's list within a minute's reach of
+# Dar al-Fatwa's Beirut point (Levant.lebanonUnits), held out at its own point against its tables, as `lb.fatwa/beirut`.
+archive/tables/normalized-7e/lb-fatwa-beirut-2024.txt	lb.fatwa/beirut	33.89332	35.50157	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	test	Beirut, the app's own point (0.1 km from Beirut), against Masjidi TV id 26 (Ras Beirut), 2024
+archive/tables/normalized-7e/lb-fatwa-beirut-dated.txt	lb.fatwa/beirut	33.89332	35.50157	Asia/Beirut		F+E S D A M I	daily	standard	test	Beirut, the app's own point (0.1 km from Beirut), against Dar al-Fatwa homepage widget + Al-Liwaa, 2019-2026, held out
+archive/tables/normalized-7e/lb-fatwa-beirut-dated-2023-04-01.txt	lb.fatwa/beirut	33.89332	35.50157	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	test	Beirut, the app's own point (0.1 km from Beirut), against 1 Apr 2023, Lebanon's decreed delay to the clock change that year
+archive/tables/normalized-7e/lb-fatwa-beirut-2024.txt	lb.fatwa/beirut	33.9	35.48333	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	test	Ra’s Bayrūt, the app's own point (1.8 km from Beirut), against Masjidi TV id 26 (Ras Beirut), 2024
+archive/tables/normalized-7e/lb-fatwa-beirut-dated.txt	lb.fatwa/beirut	33.9	35.48333	Asia/Beirut		F+E S D A M I	daily	standard	test	Ra’s Bayrūt, the app's own point (1.8 km from Beirut), against Dar al-Fatwa homepage widget + Al-Liwaa, 2019-2026, held out
+archive/tables/normalized-7e/lb-fatwa-beirut-dated-2023-04-01.txt	lb.fatwa/beirut	33.9	35.48333	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	test	Ra’s Bayrūt, the app's own point (1.8 km from Beirut), against 1 Apr 2023, Lebanon's decreed delay to the clock change that year
+archive/tables/normalized-7e/lb-fatwa-beirut-2024.txt	lb.fatwa/beirut	33.80528	35.6	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	test	Aley, the app's own point (13.4 km from Beirut), against Masjidi TV id 26 (Ras Beirut), 2024
+archive/tables/normalized-7e/lb-fatwa-beirut-dated.txt	lb.fatwa/beirut	33.80528	35.6	Asia/Beirut		F+E S D A M I	daily	standard	test	Aley, the app's own point (13.4 km from Beirut), against Dar al-Fatwa homepage widget + Al-Liwaa, 2019-2026, held out
+archive/tables/normalized-7e/lb-fatwa-beirut-dated-2023-04-01.txt	lb.fatwa/beirut	33.80528	35.6	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	test	Aley, the app's own point (13.4 km from Beirut), against 1 Apr 2023, Lebanon's decreed delay to the clock change that year
+archive/tables/normalized-7e/lb-fatwa-beirut-2024.txt	lb.fatwa/beirut	33.98083	35.61778	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	test	Jounieh, the app's own point (14.4 km from Beirut), against Masjidi TV id 26 (Ras Beirut), 2024
+archive/tables/normalized-7e/lb-fatwa-beirut-dated.txt	lb.fatwa/beirut	33.98083	35.61778	Asia/Beirut		F+E S D A M I	daily	standard	test	Jounieh, the app's own point (14.4 km from Beirut), against Dar al-Fatwa homepage widget + Al-Liwaa, 2019-2026, held out
+archive/tables/normalized-7e/lb-fatwa-beirut-dated-2023-04-01.txt	lb.fatwa/beirut	33.98083	35.61778	Asia/Beirut	UTC+02:00	F+E S D A M I	daily	standard	test	Jounieh, the app's own point (14.4 km from Beirut), against 1 Apr 2023, Lebanon's decreed delay to the clock change that year

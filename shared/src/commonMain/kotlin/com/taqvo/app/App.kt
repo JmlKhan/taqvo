@@ -1,0 +1,672 @@
+package com.taqvo.app
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.first
+import org.jetbrains.compose.resources.stringResource
+import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import com.taqvo.app.audio.createSoundPreviewPlayer
+import com.taqvo.app.design.LocalTaqvoColors
+import com.taqvo.app.design.TaqvoTheme
+import com.taqvo.app.design.ThemeMode
+import com.taqvo.app.di.AppContainer
+import com.taqvo.app.domain.GeoLocation
+import com.taqvo.app.domain.LocationSource
+import com.taqvo.app.domain.NotificationSettings
+import com.taqvo.app.domain.PrayerSettings
+import com.taqvo.app.feature.onboarding.OnboardingStep
+import com.taqvo.app.i18n.ClockFormat
+import com.taqvo.app.i18n.LocalPlatformFormat
+import com.taqvo.app.i18n.createPlatformFormat
+import com.taqvo.app.i18n.isRtlLocale
+import com.taqvo.app.i18n.uiLanguage
+import com.taqvo.app.design.components.TaqvoTabScaffold
+import com.taqvo.app.nav.LaunchRequests
+import com.taqvo.app.nav.ReaderSheet
+import com.taqvo.app.nav.followSurahSkip
+import com.taqvo.app.nav.ownLinkUriHandler
+import com.taqvo.app.nav.openReading
+import com.taqvo.app.nav.recitationTarget
+import com.taqvo.app.nav.Navigator
+import com.taqvo.app.nav.Screen
+import com.taqvo.app.nav.SystemBackHandler
+import com.taqvo.app.nav.Tab
+import com.taqvo.app.nav.tabOf
+import com.taqvo.app.notifications.NotificationOnboarding
+import com.taqvo.app.notifications.canScheduleExactAlarms
+import com.taqvo.app.notifications.isNotificationPermissionGranted
+import com.taqvo.app.notifications.RescheduleTrigger
+import com.taqvo.app.notifications.returnToFrontReschedules
+import com.taqvo.app.resources.Res
+import com.taqvo.app.resources.ui_language
+import com.taqvo.app.feature.quran.QuranRootScreen
+import com.taqvo.app.feature.recitation.PlayerBar
+import com.taqvo.app.feature.recitation.playerBarShown
+import com.taqvo.app.feature.recitation.playerBarSpace
+import com.taqvo.app.feature.recitation.PlayerBarHost
+import com.taqvo.app.resources.recitation_a11y_next_ayah
+import com.taqvo.app.resources.recitation_a11y_previous_ayah
+import com.taqvo.app.feature.recitation.rememberSurahName
+import com.taqvo.app.quran.displayName
+import kotlin.time.Clock
+
+@Composable
+fun App(container: AppContainer) {
+    val settings = container.settingsRepository
+    val themeModeState = settings.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
+    val themeMode by themeModeState
+    // How clock times are written. It is an input to the one format every screen reads (below),
+    // so a change in Prayer times reaches every time on screen at once; the Prayer times screen
+    // reads its row from this same state.
+    val clockFormatState = settings.clockFormat.collectAsState(initial = ClockFormat.TWENTY_FOUR_HOUR)
+    val clockFormat by clockFormatState
+    val prayerSettingsState = settings.prayerSettings.collectAsState(initial = PrayerSettings())
+    val notificationSettingsState = settings.notificationSettings.collectAsState(initial = NotificationSettings())
+    val widgetBackgroundState = settings.widgetBackground.collectAsState(
+        initial = com.taqvo.app.domain.WidgetBackground.FOLLOW_THEME,
+    )
+    val locationState = settings.location.collectAsState(initial = null)
+    val location by locationState
+    val locationSourceState = settings.locationSource.collectAsState(initial = LocationSource.MANUAL)
+    val navigator = remember { Navigator(Screen.Prayer) }
+    val backStackState = navigator.backStack.collectAsState()
+    val backStack by backStackState
+    val scope = rememberCoroutineScope()
+    val soundPreviewPlayer = remember { createSoundPreviewPlayer() }
+    // Recitation (spec 3a §5). One controller for the process, held by the container, so the bar
+    // and the voice survive every navigation this screen can perform.
+    val recitation = container.recitationController
+    val recitationStateState = recitation.state.collectAsState()
+    val recitationState by recitationStateState
+    // Re-read each time the app comes to the front (below, with the lifecycle): both are granted
+    // or revoked in system settings, which the Notifications screen can now send someone to, and
+    // its notes have to show the answer they come back with.
+    val exactAlarmsAllowedState = remember { mutableStateOf(true) }
+    var exactAlarmsAllowed by exactAlarmsAllowedState
+    val notificationsGrantedState = remember { mutableStateOf(true) }
+    var notificationsGranted by notificationsGrantedState
+    suspend fun refreshPermissions() {
+        exactAlarmsAllowed = canScheduleExactAlarms()
+        notificationsGranted = runCatching { isNotificationPermissionGranted() }.getOrDefault(true)
+    }
+
+    // The device locale decides both halves of localisation: which `values-*` strings Compose
+    // resolves, and — through this — whether the whole tree is laid out right-to-left. Compose's
+    // Row, Arrangement and padding(start=/end=) all consult LocalLayoutDirection, which is what
+    // moves the timeline's pip gutter and the header's icon buttons across with no bespoke
+    // mirroring code. Only Canvas geometry drawn from literal coordinates needs help; the
+    // countdown ring's arc and the settings back chevron do that for themselves.
+    //
+    // Keyed on the resolved `ui_language` string, not on `Unit`: MainActivity declares `locale`
+    // in configChanges, so switching the app's language recreates nothing, and a format built on
+    // first composition would go on reporting the language the app *started* in for the rest of
+    // the run. Everything downstream — the city search's language, the Prayer view model's, the
+    // Quran screens', the widget mirror's — reads its language from this one value, so there is
+    // exactly one place that decides what language the app is in.
+    val uiLanguage = stringResource(Res.string.ui_language)
+    val platformFormat = remember(uiLanguage, clockFormat) { createPlatformFormat(clockFormat) }
+    // From the resolved strings, not the locale tag, for the reason given on isRtlLocale(): the
+    // tree mirrors exactly when the words on it are Arabic.
+    val layoutDirection = if (isRtlLocale()) LayoutDirection.Rtl else LayoutDirection.Ltr
+    // The lock screen's two lines are baked when a surah is loaded, and a service outlives the
+    // composition that started it, so the controller is told the language rather than asked.
+    // Arabic-script interfaces (Arabic, Urdu) get the Arabic names; the rest the Latin ones.
+    val arabicUi = uiLanguage().arabicScript
+    LaunchedEffect(arabicUi) { recitation.setArabicUi(arabicUi) }
+    // Read-aloud (spec §5.4) needs the reading translation's language default.
+    LaunchedEffect(platformFormat) { recitation.setLanguageTag(platformFormat.languageTag()) }
+    // The Android notification's two ayah buttons (spec §15.1), in the interface's language.
+    val previousAyahLabel = stringResource(Res.string.recitation_a11y_previous_ayah)
+    val nextAyahLabel = stringResource(Res.string.recitation_a11y_next_ayah)
+    LaunchedEffect(previousAyahLabel, nextAyahLabel) {
+        recitation.setAyahButtonLabels(previousAyahLabel, nextAyahLabel)
+    }
+
+    // "Show me the ayah being recited" (spec §15.5), from the bar's words, the media
+    // notification's tap, or - on iOS, which has no such tap - the app in front again with a
+    // voice going (jumpToPlaying). A screen already showing the surah is asked to scroll (the
+    // token); any other is replaced or pushed with the reader the user reads in, at the ayah, and
+    // follows the voice from the moment it opens (recitationTarget marks it followVoice, as
+    // followSurahSkip does the reader the voice moving on to the next surah opens), where a screen
+    // opened any other way counts its opening as a touch. A return to the front passes the request
+    // count from when the app left, and the jump yields to any request counted since.
+    val jumpTokenState = remember { mutableStateOf(0) }
+    var jumpToken by jumpTokenState
+    // The reader's reading-settings sheet, held here so it outlives the voice's own move to the
+    // next surah (the follow below); it comes back once that surah has loaded (ReaderSheet).
+    val readerSheet = remember { ReaderSheet() }
+    val openReading: (Screen) -> Unit = { target -> readerSheet.openReading(navigator, target) }
+    val jumpScope = rememberCoroutineScope()
+    val openPlaying: (yieldToRequestsSince: Long?) -> Unit = { since ->
+        jumpScope.launch {
+            jumpToPlaying(
+                playing = recitation.state.value.bar?.let { it.surah to it.ayah },
+                yieldToRequestsSince = since,
+                requestsMade = { LaunchRequests.count },
+                showsSurah = { surah ->
+                    val current = navigator.current
+                    navigator.currentTab == Tab.QURAN &&
+                        ((current is Screen.Reader && current.surah == surah) || current is Screen.Mushaf)
+                },
+                scroll = { jumpToken++ },
+                target = { surah, ayah ->
+                    val reading = settings.readingSettings(platformFormat.languageTag()).first()
+                    recitationTarget(reading.mode, surah, ayah) { s, a -> container.quranRepository.pageOf(s, a) }
+                },
+                open = openReading,
+            )
+        }
+    }
+    PlayingLaunchRequests(
+        settings = settings,
+        openPlaying = { openPlaying(null) },
+    )
+    AdhkarLaunchRequests(
+        settings = settings,
+        navigator = navigator,
+    )
+    DebugScreenRequests(
+        settings = settings,
+        navigator = navigator,
+    )
+    ForegroundEffect(
+        refreshPermissions = ::refreshPermissions,
+        recitation = recitation,
+        openPlaying = openPlaying,
+        // The widgets with the plan: the return's location check can have moved the place, and
+        // the Home and Lock Screen widgets would otherwise keep the old city until the Prayer
+        // screen opens. Each return rewrites the mirror at the current minute and reloads the
+        // widgets, in the foreground; it does not skip an unmoved return.
+        reschedule = { scope.launch { refreshForNewTimes(container, settings, RescheduleTrigger.APP_FOREGROUND) } },
+    )
+
+    // Onboarding's Continue on the notifications screen: the system ask has already happened by
+    // the time this runs, so `requestSystemPermission` just returns the already-known answer
+    // rather than asking again.
+    fun notificationOnboarding(granted: Boolean) = NotificationOnboarding(
+        requestSystemPermission = { granted },
+        setNotificationsEnabled = { enabled ->
+            settings.setNotificationSettings(settings.notificationSettings.first().copy(enabled = enabled))
+        },
+        rescheduleIfEnabled = {
+            container.notificationCoordinator.reschedule(RescheduleTrigger.SETTINGS_CHANGED)
+        },
+    )
+
+    // Onboarding's step lives here rather than inside the screen: "choose a city instead"
+    // navigates away to the city search, which would otherwise reset the flow to its first page.
+    val onboardingStepState = remember { mutableStateOf(OnboardingStep.WELCOME) }
+
+    // Resolved before anything renders, so a returning user never sees the Prayer screen flash
+    // behind onboarding on launch.
+    var startResolved by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (!settings.onboardingComplete.first()) {
+            navigator.replaceAll(Screen.Onboarding)
+        }
+        startResolved = true
+        // On iOS the launch's plan is made the first time the app is in front (ForegroundEffect),
+        // which is not always when it first composes: a scene composed in the background is
+        // planned when the person opens it, and a background launch that never comes to the front
+        // (a refresh task or a download wake) keeps the plan already armed; the refresh task also
+        // makes its own. Android plans here, as it always has.
+        if (!returnToFrontReschedules) {
+            container.notificationCoordinator.reschedule(com.taqvo.app.notifications.RescheduleTrigger.APP_FOREGROUND)
+        }
+    }
+
+    RecitationLibraryStartUp(
+        container = container,
+    )
+
+    LanguageChangeReschedule(
+        uiLanguage = uiLanguage,
+        container = container,
+        settings = settings,
+        platformFormat = platformFormat,
+    )
+
+    AyahPoolMirror(
+        uiLanguage = uiLanguage,
+        platformFormat = platformFormat,
+        settings = settings,
+        container = container,
+    )
+
+    WidgetLaunchRequests(
+        settings = settings,
+        platformFormat = platformFormat,
+        container = container,
+        openReading = openReading,
+    )
+
+    fun useGpsFix() {
+        scope.launch {
+            container.locationRepository.resolveGpsLocation(container.cityRepository)?.let {
+                settings.setLocation(it)
+                // Only on a fix that actually arrived: a granted permission that then fails to
+                // produce coordinates must not leave "Use my location" claiming to be on.
+                settings.setLocationSource(LocationSource.GPS)
+                // A location save no longer writes a calculation method (spec §8): the never-early
+                // engine's Automatic timetable already follows the resolved place on its own.
+                // The alarms and widgets armed for the old place follow it now (ruling R53).
+                refreshForNewTimes(container, settings)
+            }
+        }
+    }
+
+    // Both the Hijri preview and the adjusted times in manual adjustments are "today" in the
+    // location's own zone, which is the zone the Prayer screen's rows are already drawn in.
+    val zone = remember(location) {
+        location?.let { TimeZone.of(it.timeZoneId) } ?: TimeZone.currentSystemDefault()
+    }
+    val today = remember(zone) { Clock.System.now().toLocalDateTime(zone).date }
+
+    // Straight off the shared format, which is already rebuilt on a language change.
+    val languageTag = platformFormat.languageTag()
+
+    // The stored location's city in the interface's language, for the Settings row and the
+    // Location screen. Resolved once, here, rather than in each of those screens: they show the
+    // same city and must never disagree about its name, and the lookup parses the bundled city
+    // list on first use — twice would be twice that cost. Keyed on the language tag as well as
+    // the location so a language change re-resolves; produceState rather than remember because
+    // the lookup suspends, and its initial value is the stored English snapshot, which is what
+    // both rows showed before this existed.
+    val cityDisplayNameState = produceState(location?.cityName, location, languageTag) {
+        val current = location
+        val id = current?.cityId
+        value = if (current == null || id == null) {
+            current?.cityName
+        } else {
+            container.cityRepository.setLanguage(languageTag)
+            container.cityRepository.displayName(id) ?: current.cityName
+        }
+    }
+
+    // Every link the app opens itself (a web page, a mail) goes through here, so the iOS return
+    // from it comes back to the screen it left from rather than to the recited ayah.
+    val platformUriHandler = LocalUriHandler.current
+    val uriHandler = remember(platformUriHandler) { ownLinkUriHandler(platformUriHandler) }
+
+    CompositionLocalProvider(
+        LocalLayoutDirection provides layoutDirection,
+        LocalPlatformFormat provides platformFormat,
+        LocalUriHandler provides uriHandler,
+    ) {
+        TaqvoTheme(themeMode) {
+            Box(Modifier.fillMaxSize().background(LocalTaqvoColors.current.background)) {
+                if (!startResolved) return@Box
+                val screen = backStack.last()
+                LaunchedEffect(screen) { readerSheet.onTop(screen) }
+                // The bar belongs to the three tab roots. A pushed sub-screen keeps the whole
+                // screen and the back link it already had; onboarding has neither.
+                val tab = tabOf(screen)
+
+                // Android's back button walks the same stack as the on-screen chevron, and then
+                // — the platform convention — falls back from any other tab root to Prayer. Only
+                // the Prayer screen itself lets the gesture through to leave the app.
+                SystemBackHandler(enabled = backStack.size > 1 || (tab != null && tab != Tab.PRAYER)) {
+                    if (!navigator.pop()) navigator.selectTab(Tab.PRAYER)
+                }
+
+                // The Quran field's text lives out here, not in QuranRootScreen: opening a hit
+                // pushes the reader, which disposes the root and its view model both, and spec 2b
+                // §2.1 says the query is still in the field when you come back. A TextFieldValue,
+                // so the caret comes back with it rather than jumping to the start of the text.
+                val quranQueryState = remember { mutableStateOf(TextFieldValue()) }
+                var quranQuery by quranQueryState
+
+                // The bar belongs to the Quran tab (spec §5.3): on Prayer and Settings it is
+                // hidden and playback simply goes on, which is what a media app does when you
+                // leave the screen you started it from.
+                val quranTab = navigator.currentTab == Tab.QURAN
+                // A search belongs to one visit to the Quran tab. It survives the walk into a hit
+                // and back, which never leaves the tab; going to Prayer or Settings ends the
+                // visit, and coming back finds the surah list rather than last hour's results.
+                LaunchedEffect(quranTab) {
+                    if (!quranTab) quranQuery = TextFieldValue()
+                }
+                val bar = recitationState.bar
+                val barSurahName = rememberSurahName(bar?.surah) { container.quranRepository.surah(it) }
+                val incomingSurahName = rememberSurahName(bar?.incoming?.surah) { container.quranRepository.surah(it) }
+                val barShown = playerBarShown(bar, quranTab)
+                val barSpace = playerBarSpace(bar, quranTab)
+                // A surah skip (spec §15.1) takes the page with the voice: a reader on the surah
+                // that was playing is moved to the one now playing, at its first ayah, as the
+                // "Next" row at the foot of a surah would move them. A reader on some other surah
+                // is left where they are - they were not following. The Mushaf follows by page
+                // on its own, since its pages run across surahs.
+                val playingSurah = bar?.surah
+                var followedSurah by remember { mutableStateOf<Int?>(null) }
+                LaunchedEffect(playingSurah) {
+                    val before = followedSurah
+                    // A bar that goes away keeps its surah remembered: a surah that played out and
+                    // whose successor had to be fetched first (spec §16.1) comes back as a new
+                    // surah on a reader still open on the old one, and that reader follows too.
+                    if (playingSurah == null) return@LaunchedEffect
+                    followedSurah = playingSurah
+                    if (before == null || before == playingSurah) return@LaunchedEffect
+                    navigator.followSurahSkip(before, playingSurah)
+                }
+                TaqvoTabScaffold(
+                    tab,
+                    navigator::selectTab,
+                    bar = {
+                        PlayerBarHost(visible = barShown) {
+                            if (bar != null) {
+                                PlayerBar(
+                                    bar = bar,
+                                    surahName = barSurahName,
+                                    onToggle = recitation::toggle,
+                                    onNext = recitation::nextSurah,
+                                    onPrevious = recitation::previousSurah,
+                                    onNextAyah = recitation::next,
+                                    onPreviousAyah = recitation::previous,
+                                    onOpenPicker = recitation::openPicker,
+                                    onDismiss = recitation::dismissBar,
+                                    incomingSurahName = incomingSurahName,
+                                    onOpenPlaying = { openPlaying(null) },
+                                    onSeek = recitation::seekToFraction,
+                                )
+                            }
+                        }
+                    },
+                ) {
+                    when (screen) {
+                        Screen.Onboarding -> OnboardingRoute(
+                            onboardingStepState = onboardingStepState,
+                            container = container,
+                            useGpsFix = ::useGpsFix,
+                            navigator = navigator,
+                            scope = scope,
+                            notificationOnboarding = ::notificationOnboarding,
+                            settings = settings,
+                            exactAlarmsAllowedState = exactAlarmsAllowedState,
+                        )
+
+                        Screen.Prayer -> {
+                            PrayerRoute(
+                                languageTag = languageTag,
+                                container = container,
+                                settings = settings,
+                                platformFormat = platformFormat,
+                                useGpsFix = ::useGpsFix,
+                                navigator = navigator,
+                                notificationSettingsState = notificationSettingsState,
+                                exactAlarmsAllowedState = exactAlarmsAllowedState,
+                            )
+                        }
+
+                        Screen.Quran -> {
+                            QuranRootRoute(
+                                container = container,
+                                settings = settings,
+                                platformFormat = platformFormat,
+                                quranQueryState = quranQueryState,
+                                navigator = navigator,
+                                barSpace = barSpace,
+                            )
+                        }
+
+                        // Keyed by the screen: a Reader replaced by another Reader (the next surah, a
+                        // widget tap, a surah skip) or a Mushaf by another Mushaf composes at the same
+                        // place, and without the key it kept what the old one held above its content:
+                        // the Mushaf's tapped ayah and reference bar, the header's starting point, an
+                        // open reading sheet, and two frames of the old page. The list and the pager
+                        // were rebuilt anyway, with the new view model. The reader's sheet is held
+                        // here, above the key, so the voice moving on keeps it open.
+                        is Screen.Reader -> key(screen) {
+                            ReaderRoute(
+                                screen = screen,
+                                container = container,
+                                settings = settings,
+                                platformFormat = platformFormat,
+                                navigator = navigator,
+                                scope = scope,
+                                layoutDirection = layoutDirection,
+                                recitationStateState = recitationStateState,
+                                bar = bar,
+                                barSpace = barSpace,
+                                jumpTokenState = jumpTokenState,
+                                recitation = recitation,
+                                sheetOpenState = readerSheet.open,
+                            )
+                        }
+
+                        is Screen.Mushaf -> key(screen) {
+                            MushafRoute(
+                                screen = screen,
+                                container = container,
+                                settings = settings,
+                                platformFormat = platformFormat,
+                                navigator = navigator,
+                                scope = scope,
+                                layoutDirection = layoutDirection,
+                                recitationStateState = recitationStateState,
+                                bar = bar,
+                                barSpace = barSpace,
+                                jumpTokenState = jumpTokenState,
+                                recitation = recitation,
+                            )
+                        }
+
+                        Screen.Settings -> SettingsRootRoute(
+                            locationState = locationState,
+                            cityDisplayNameState = cityDisplayNameState,
+                            prayerSettingsState = prayerSettingsState,
+                            themeModeState = themeModeState,
+                            notificationSettingsState = notificationSettingsState,
+                            container = container,
+                            navigator = navigator,
+                            recitationStateState = recitationStateState,
+                        )
+
+                        Screen.RecitationSettings -> {
+                            RecitationSettingsRoute(
+                                recitationStateState = recitationStateState,
+                                recitation = recitation,
+                                navigator = navigator,
+                            )
+                        }
+
+                        is Screen.RecitationDownloads -> {
+                            RecitationDownloadsRoute(
+                                screen = screen,
+                                recitationStateState = recitationStateState,
+                                arabicUi = arabicUi,
+                                container = container,
+                                recitation = recitation,
+                                navigator = navigator,
+                                scope = scope,
+                            )
+                        }
+
+                        Screen.NotificationSettings -> NotificationSettingsRoute(
+                            notificationSettingsState = notificationSettingsState,
+                            exactAlarmsAllowedState = exactAlarmsAllowedState,
+                            notificationsGrantedState = notificationsGrantedState,
+                            scope = scope,
+                            refreshPermissions = ::refreshPermissions,
+                            navigator = navigator,
+                            settings = settings,
+                            container = container,
+                            soundPreviewPlayer = soundPreviewPlayer,
+                        )
+
+                        Screen.PrayerTimesSettings -> PrayerTimesSettingsRoute(
+                            prayerSettingsState = prayerSettingsState,
+                            clockFormatState = clockFormatState,
+                            locationState = locationState,
+                            cityDisplayNameState = cityDisplayNameState,
+                            today = today,
+                            scope = scope,
+                            settings = settings,
+                            container = container,
+                            navigator = navigator,
+                        )
+
+                        Screen.Timetable -> TimetableRoute(
+                            prayerSettingsState = prayerSettingsState,
+                            locationState = locationState,
+                            container = container,
+                            today = today,
+                            scope = scope,
+                            settings = settings,
+                            navigator = navigator,
+                        )
+
+                        Screen.OtherMethods -> OtherMethodsRoute(
+                            prayerSettingsState = prayerSettingsState,
+                            locationState = locationState,
+                            container = container,
+                            today = today,
+                            scope = scope,
+                            settings = settings,
+                            navigator = navigator,
+                        )
+
+                        Screen.MatchMyMosque -> MatchMyMosqueRoute(
+                            prayerSettingsState = prayerSettingsState,
+                            locationState = locationState,
+                            container = container,
+                            today = today,
+                            scope = scope,
+                            settings = settings,
+                            navigator = navigator,
+                        )
+
+                        Screen.HighLatitudePicker -> HighLatitudePickerRoute(
+                            prayerSettingsState = prayerSettingsState,
+                            locationState = locationState,
+                            today = today,
+                            scope = scope,
+                            settings = settings,
+                            container = container,
+                            navigator = navigator,
+                        )
+
+                        Screen.AboutTimes -> AboutTimesRoute(
+                            prayerSettingsState = prayerSettingsState,
+                            locationState = locationState,
+                            cityDisplayNameState = cityDisplayNameState,
+                            today = today,
+                            container = container,
+                            navigator = navigator,
+                        )
+
+                        Screen.ManualAdjustments -> ManualAdjustmentsRoute(
+                            prayerSettingsState = prayerSettingsState,
+                            locationState = locationState,
+                            container = container,
+                            today = today,
+                            scope = scope,
+                            settings = settings,
+                            navigator = navigator,
+                        )
+
+                        Screen.LocationSettings -> LocationSettingsRoute(
+                            locationState = locationState,
+                            cityDisplayNameState = cityDisplayNameState,
+                            locationSourceState = locationSourceState,
+                            container = container,
+                            useGpsFix = ::useGpsFix,
+                            navigator = navigator,
+                        )
+
+                        Screen.CitySearch -> CitySearchRoute(
+                            container = container,
+                            scope = scope,
+                            settings = settings,
+                            languageTag = languageTag,
+                            backStackState = backStackState,
+                            onboardingStepState = onboardingStepState,
+                            navigator = navigator,
+                        )
+
+                        Screen.Appearance -> AppearanceRoute(
+                            themeModeState = themeModeState,
+                            scope = scope,
+                            settings = settings,
+                            navigator = navigator,
+                        )
+
+                        Screen.Widgets -> WidgetsRoute(
+                            container = container,
+                            scope = scope,
+                            settings = settings,
+                            widgetBackgroundState = widgetBackgroundState,
+                            navigator = navigator,
+                        )
+
+                        Screen.Wallpapers -> WallpapersRoute(
+                            container = container,
+                            settings = settings,
+                            languageTag = languageTag,
+                            navigator = navigator,
+                        )
+
+                        Screen.About -> AboutRoute(navigator = navigator)
+
+                        Screen.Attribution -> {
+                            AttributionRoute(
+                                container = container,
+                                recitationStateState = recitationStateState,
+                                navigator = navigator,
+                            )
+                        }
+
+                        Screen.Qibla -> {
+                            QiblaRoute(
+                                locationState = locationState,
+                                navigator = navigator,
+                            )
+                        }
+
+                        Screen.Tasbeeh -> {
+                            TasbeehRoute(
+                                container = container,
+                                navigator = navigator,
+                            )
+                        }
+
+                        is Screen.Adhkar -> {
+                            AdhkarRoute(
+                                container = container,
+                                navigator = navigator,
+                                set = screen.set,
+                            )
+                        }
+                    }
+                }
+
+                CrashReportSheetHost()
+
+                RecitationSheets(
+                    recitationStateState = recitationStateState,
+                    container = container,
+                    recitation = recitation,
+                )
+            }
+        }
+    }
+}

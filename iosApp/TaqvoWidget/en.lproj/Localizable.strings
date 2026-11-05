@@ -1,0 +1,22 @@
+/* The ayah widget as it appears in the widget gallery (design spec §7). */
+"ayah_widget_name" = "Ayah of the day";
+"ayah_widget_description" = "Today’s ayah, with its translation.";
+
+/* Shown on the card until the app has run once and written the pool mirror (design spec §2). */
+"ayah_widget_placeholder" = "Open Taqvo once to load today’s ayah";
+
+/* The two prayer widgets as they appear in the widget gallery. */
+"home_widget_name" = "Prayer times";
+"home_widget_description" = "Next prayer, countdown and today’s times.";
+"lock_widget_name" = "Taqvo Lock Screen";
+"lock_widget_description" = "Next prayer at a glance.";
+
+/* Shown on the prayer cards until the app has run once and written the snapshot mirror. */
+"prayer_widget_placeholder_title" = "Taqvo";
+"prayer_widget_placeholder_body" = "Open Taqvo to load your prayer times.";
+
+/* The daily-dua widget in the gallery, its placeholder until the app has run once, and its reference (%@ the number in Hisn al-Muslim). */
+"dua_widget_name" = "Dua of the day";
+"dua_widget_description" = "Today’s dua, with its translation.";
+"dua_widget_placeholder" = "Open Taqvo once to load today’s dua";
+"dua_widget_reference" = "Hisn al-Muslim %@";

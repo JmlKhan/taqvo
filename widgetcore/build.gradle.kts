@@ -1,0 +1,38 @@
+plugins {
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidKotlinMultiplatformLibrary)
+}
+
+// The widget model, and nothing else. Deliberately *not* a Compose module: the iOS WidgetKit
+// extension links this framework instead of `shared`, and a WidgetKit extension runs under a
+// ~30 MB memory ceiling that a framework carrying Compose/Skia blows straight through. Keep
+// this module's dependencies empty — every one added here lands in the extension.
+kotlin {
+    android {
+        namespace = "com.taqvo.app.widgetcore"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
+        // src/androidHostTest: NoComposeOnClasspathTest, the guard on this module's classpath.
+        withHostTest {}
+    }
+
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "widgetcore"
+            isStatic = true
+        }
+    }
+
+    sourceSets {
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+    }
+}
+
+kotlin {
+    jvmToolchain(21)
+}

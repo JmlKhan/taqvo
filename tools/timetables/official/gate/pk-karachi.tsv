@@ -1,0 +1,52 @@
+# Pakistan, pk.karachi: no binding state timetable; the Karachi convention (18/18, Hanafi) is the
+# massive majority. Fit on the Deobandi Karachi Daimi (permanent) timetable's June and December
+# pages (both solstices, Banuri Town / Prof. Abdul Latif; banuri.edu.pk, all rights reserved).
+# September (the equinox month) and Dawat-e-Islami's Karachi AJAX (a later, Barelvi member whose
+# sharing is "not allowed"; used only to fit and prove) were first tried as held-out rows: both
+# showed early starts against the June+December margins (proof.md), so both are folded into the
+# fit set (never tuned on the holdout silently: the shortfall and widening are recorded in
+# proof.md); nothing is held out for this entry. Subh sadiq is one printed time serving as both the
+# Fajr start and the end of eating (F+E). Zawal is skipped: it prints the noon caution window, not
+# a Dhuhr start. Both Asr columns are printed in the Daimi table (As, Ah); the entry itself is
+# Hanafi.
+# End of eating (audit of 3 Oct 2026, before Ramadan 1448): Dawat-e-Islami's Karachi Fajr is likewise the dawn at which sehri
+# ends, so its row is checked as F+E too.
+# Lenient by up to 59 s (fix round of 3 Oct 2026): the AJAX source prints seconds, and the table rounds
+# its Fajr UP to the minute (right for a start), so as the end of eating's reference it can stand up
+# to 59 s after the authority's moment; a floored Fajr is the strict reference. No held day sits in
+# that window: the end comes at least 1 min before the rounded-up Fajr on every day here, so it is
+# never after the floored one either. A later capture with a day at +0 must be checked against the
+# floored seconds (to-do: an E column from the source seconds rounded down, next archive round).
+path	entry	lat	lon	zone	columns	format	school	split	note
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-06.txt	pk.karachi	24.8607	67.0011	Asia/Karachi	F+E S - As Ah M I	daily	-	fit	Banuri Daimi, June 2026 (summer solstice)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-12.txt	pk.karachi	24.8607	67.0011	Asia/Karachi	F+E S - As Ah M I	daily	-	fit	Banuri Daimi, December 2026 (winter solstice)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-09.txt	pk.karachi	24.8607	67.0011	Asia/Karachi	F+E S - As Ah M I	daily	-	fit	Banuri Daimi, September 2026 (equinox; folded in, see above)
+archive/tables/moral-auth-world/southasia/off-di-karachi-2026-09.txt	pk.karachi	24.8607	67.0011	Asia/Karachi	F+E S D Ah M I	daily	-	fit	Dawat-e-Islami Karachi AJAX, September 2026 (a later member; folded in, see above)
+# 2027 (track T4, 11 Oct 2026): the same Daimi (permanent) pages assigned to 2027 dates (archive: off-banuri-daimi-karachi-2027-<mm>.txt,
+# derived; a permanent timetable prints the same month-day times every year), held out: the engine against the year's own sun.
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2027-06.txt	pk.karachi	24.8607	67.0011	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Banuri Daimi, June 2027 (assigned)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2027-09.txt	pk.karachi	24.8607	67.0011	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Banuri Daimi, September 2027 (assigned)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2027-12.txt	pk.karachi	24.8607	67.0011	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Banuri Daimi, December 2027 (assigned)
+
+# The app's own points (the city-point audit of 10–11 Oct 2026, rulings R30, R40 and R44): every Pakistani city of the app's list within a minute's reach of
+# the Karachi tables' point (SouthAsia.pakistanUnits), held out at its own point against its tables, as `pk.karachi/karachi`.
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-06.txt	pk.karachi/karachi	24.8608	67.0104	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Karachi, the app's own point (0.9 km from Karachi), against Banuri Daimi, June 2026 (summer solstice)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-12.txt	pk.karachi/karachi	24.8608	67.0104	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Karachi, the app's own point (0.9 km from Karachi), against Banuri Daimi, December 2026 (winter solstice)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-09.txt	pk.karachi/karachi	24.8608	67.0104	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Karachi, the app's own point (0.9 km from Karachi), against Banuri Daimi, September 2026 (equinox; folded in, see above)
+archive/tables/moral-auth-world/southasia/off-di-karachi-2026-09.txt	pk.karachi/karachi	24.8608	67.0104	Asia/Karachi	F+E S D Ah M I	daily	-	test	Karachi, the app's own point (0.9 km from Karachi), against Dawat-e-Islami Karachi AJAX, September 2026 (a later member; folded in, see above)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-06.txt	pk.karachi/karachi	24.94343	67.20591	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Malir Cantonment, the app's own point (22.6 km from Karachi), against Banuri Daimi, June 2026 (summer solstice)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-12.txt	pk.karachi/karachi	24.94343	67.20591	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Malir Cantonment, the app's own point (22.6 km from Karachi), against Banuri Daimi, December 2026 (winter solstice)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-09.txt	pk.karachi/karachi	24.94343	67.20591	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Malir Cantonment, the app's own point (22.6 km from Karachi), against Banuri Daimi, September 2026 (equinox; folded in, see above)
+archive/tables/moral-auth-world/southasia/off-di-karachi-2026-09.txt	pk.karachi/karachi	24.94343	67.20591	Asia/Karachi	F+E S D Ah M I	daily	-	test	Malir Cantonment, the app's own point (22.6 km from Karachi), against Dawat-e-Islami Karachi AJAX, September 2026 (a later member; folded in, see above)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-06.txt	pk.karachi/karachi	25.02555	66.88534	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Hub, the app's own point (21.7 km from Karachi), against Banuri Daimi, June 2026 (summer solstice)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-12.txt	pk.karachi/karachi	25.02555	66.88534	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Hub, the app's own point (21.7 km from Karachi), against Banuri Daimi, December 2026 (winter solstice)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-09.txt	pk.karachi/karachi	25.02555	66.88534	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Hub, the app's own point (21.7 km from Karachi), against Banuri Daimi, September 2026 (equinox; folded in, see above)
+archive/tables/moral-auth-world/southasia/off-di-karachi-2026-09.txt	pk.karachi/karachi	25.02555	66.88534	Asia/Karachi	F+E S D Ah M I	daily	-	test	Hub, the app's own point (21.7 km from Karachi), against Dawat-e-Islami Karachi AJAX, September 2026 (a later member; folded in, see above)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-06.txt	pk.karachi/karachi	24.96281	67.11937	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Karachi University Employees Co-operative Housing Society, the app's own point (16.5 km from Karachi), against Banuri Daimi, June 2026 (summer solstice)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-12.txt	pk.karachi/karachi	24.96281	67.11937	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Karachi University Employees Co-operative Housing Society, the app's own point (16.5 km from Karachi), against Banuri Daimi, December 2026 (winter solstice)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-09.txt	pk.karachi/karachi	24.96281	67.11937	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Karachi University Employees Co-operative Housing Society, the app's own point (16.5 km from Karachi), against Banuri Daimi, September 2026 (equinox; folded in, see above)
+archive/tables/moral-auth-world/southasia/off-di-karachi-2026-09.txt	pk.karachi/karachi	24.96281	67.11937	Asia/Karachi	F+E S D Ah M I	daily	-	test	Karachi University Employees Co-operative Housing Society, the app's own point (16.5 km from Karachi), against Dawat-e-Islami Karachi AJAX, September 2026 (a later member; folded in, see above)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-06.txt	pk.karachi/karachi	24.87417	67.06419	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Pakistan Employees Cooperative Housing Society, the app's own point (6.5 km from Karachi), against Banuri Daimi, June 2026 (summer solstice)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-12.txt	pk.karachi/karachi	24.87417	67.06419	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Pakistan Employees Cooperative Housing Society, the app's own point (6.5 km from Karachi), against Banuri Daimi, December 2026 (winter solstice)
+archive/tables/moral-auth-world/southasia/off-banuri-daimi-karachi-2026-09.txt	pk.karachi/karachi	24.87417	67.06419	Asia/Karachi	F+E S - As Ah M I	daily	-	test	Pakistan Employees Cooperative Housing Society, the app's own point (6.5 km from Karachi), against Banuri Daimi, September 2026 (equinox; folded in, see above)
+archive/tables/moral-auth-world/southasia/off-di-karachi-2026-09.txt	pk.karachi/karachi	24.87417	67.06419	Asia/Karachi	F+E S D Ah M I	daily	-	test	Pakistan Employees Cooperative Housing Society, the app's own point (6.5 km from Karachi), against Dawat-e-Islami Karachi AJAX, September 2026 (a later member; folded in, see above)

@@ -1,0 +1,845 @@
+<resources>
+    <string name="app_name">Taqvo</string>
+    <!-- Bu dosyadaki metinlerin dili; “arayüz Arapça mı?” kararlarının okuduğu tek bilgi. -->
+    <string name="ui_language">tr</string>
+
+    <!-- Bu dosyanın kendi dilinin adı; Ayarlar › Görünüm › Dil altında görünür. -->
+    <string name="language_name">Türkçe</string>
+
+    <!-- Navigation: what a screen reader calls the drawn back chevron. -->
+    <string name="nav_a11y_back">Geri</string>
+    <!-- The sound and adhan-voice sheets' preview buttons; %1$s is the option's own name. -->
+    <string name="sound_a11y_preview">Dinle: %1$s</string>
+    <string name="sheet_a11y_drag_handle">Sürükleme tutamacı</string>
+
+    <!-- Tanıtım -->
+    <string name="onboarding_welcome_title">Taqvo</string>
+    <string name="onboarding_welcome_body">Namaz vakitleri, kıble ve Kur’an. Sonsuza dek ücretsiz. Reklam yok, hesap yok, çevrimdışı çalışır.</string>
+    <string name="onboarding_welcome_cta">Başlayalım</string>
+    <string name="onboarding_location_title">Neredesiniz?</string>
+    <string name="onboarding_location_body">Namaz vakitleri konumunuza bağlıdır. Her şey cihazınızda hesaplanır. Konumunuz telefonunuzdan hiç çıkmaz.</string>
+    <string name="onboarding_continue">Devam</string>
+    <string name="onboarding_notifications_title">Namaz bildirimleri</string>
+    <string name="onboarding_notifications_body">Her namaz için bir bildirim. Sesi her vakit için ayrı seçersiniz, dilediğiniz zaman da değiştirebilirsiniz.</string>
+    <string name="onboarding_notifications_secondary">Şimdi değil</string>
+    <string name="onboarding_exact_title">Alarmlar ve hatırlatıcılar</string>
+    <string name="onboarding_exact_body">Android, tam namaz vaktinde ancak Taqvo için “Alarmlar ve hatırlatıcılar” izni verilmişse çalabilir. İzin olmadan bildirim bir saate kadar gecikebilir.</string>
+    <string name="onboarding_widget_title">Ana ekranınızda</string>
+    <string name="onboarding_widget_body">Taqvo widget’ı, uygulamayı açmadan sonraki vakti ve canlı geri sayımı gösterir.</string>
+    <string name="onboarding_widget_body_ios">Taqvo widget’ı, uygulamayı açmadan sonraki vakti ve canlı geri sayımı gösterir. Eklemek için ana ekrandaki Taqvo simgesine basılı tutun ve bir widget boyutu seçin.</string>
+    <string name="onboarding_widget_body_ios_legacy">Taqvo widget’ı, uygulamayı açmadan sonraki vakti ve canlı geri sayımı gösterir. Eklemek için ana ekrana basılı tutun, üst köşedeki artı işaretine dokunun, sonra Taqvo’yı aratın.</string>
+    <string name="onboarding_widget_cta_add">Widget ekle</string>
+    <string name="onboarding_widget_cta_done">Tamam</string>
+    <string name="onboarding_widget_secondary">Belki sonra</string>
+    <string name="onboarding_widget_steps_android">Ana ekranınız uygulamaların widget eklemesine izin vermiyor, bu yüzden kendiniz ekleyin: ana ekranda boş bir yere basılı tutun (veya iki parmağınızla sıkıştırın), Widget’lar bölümüne dokunun, Taqvo’yı bulun ve widget’ı yerine sürükleyin.</string>
+
+    <!-- Vakit adları. Yanlarında duran Arapça ad hiçbir zaman bir kaynak dizesi değildir: her
+         dilde aynı olduğu için PrayerNaming içinde yaşar. -->
+    <string name="prayer_fajr">Sabah</string>
+    <string name="prayer_sunrise">Güneş</string>
+    <string name="prayer_dhuhr">Öğle</string>
+    <string name="prayer_asr">İkindi</string>
+    <string name="prayer_maghrib">Akşam</string>
+    <string name="prayer_isha">Yatsı</string>
+
+    <!-- Namaz ekranı -->
+    <string name="prayer_current_location">Mevcut konum</string>
+    <!-- Geri sayım halkasının etiketi. Halka bu metni büyük harfe çevirir; Türkçedeki İ’lerin
+         doğru kalması için burada zaten büyük harfle yazılmıştır. -->
+    <string name="prayer_next_in">%1$s vaktine</string>
+    <string name="prayer_a11y_prayer_next">Sonraki namaz</string>
+    <string name="prayer_a11y_prayer_current">Şu anki namaz</string>
+    <string name="prayer_a11y_prayer_passed">Geçti</string>
+    <string name="prayer_a11y_countdown">%2$s sonra %1$s, saat %3$s</string>
+    <string name="prayer_a11y_countdown_soon">Bir dakikadan az sonra %1$s, saat %2$s</string>
+    <string name="duration_hours_minutes">%1$s %2$s</string>
+    <plurals name="a11y_hours">
+        <item quantity="one">%1$s saat</item>
+        <item quantity="other">%1$s saat</item>
+    </plurals>
+    <plurals name="a11y_minutes">
+        <item quantity="one">%1$s dakika</item>
+        <item quantity="other">%1$s dakika</item>
+    </plurals>
+    <string name="prayer_exact_alarms_label">TAM ALARMLAR KAPALI</string>
+    <string name="prayer_exact_alarms_body">Taqvo için “Alarmlar ve hatırlatıcılar” izni verilmediği sürece Android bir saate kadar geç çalabilir.</string>
+    <string name="prayer_no_location_title">Henüz konum yok</string>
+    <string name="prayer_choose_city">Şehir seç</string>
+    <string name="prayer_location_settings">Konumu Ayarlar’dan aç</string>
+    <string name="prayer_jumuah">Cuma</string>
+
+    <!-- Prayer engine: the Prayer screen (Task 10) -->
+    <string name="prayer_whose_checked_title">%1$s takvimi</string>
+    <string name="prayer_whose_checked_body">%2$s için %1$s vakitleri; Taqvo bunları yeniden hesaplayıp yayımlanan takvimle karşılaştırdı.</string>
+    <string name="prayer_whose_unchecked_title">%1$s yöntemi, henüz tam doğrulanmadı</string>
+    <string name="prayer_whose_unchecked_body">Taqvo, %2$s vakitlerini %1$s yöntemiyle, bir güvenlik payı ekleyerek hesaplar.</string>
+    <string name="prayer_whose_cautious_body">Buradaki camiler farklı takvimlere uyuyor; Taqvo her namazı, hepsinde vakit girdikten sonra gösterir.</string>
+    <string name="prayer_whose_calculated_body">Burada bilinen yerel bir takvim yok; Taqvo bu vakitleri ihtiyatlı biçimde hesaplar.</string>
+    <string name="prayer_about_these_times">Bu vakitler hakkında</string>
+    <string name="prayer_times_by">%1$s vakitleri</string>
+    <string name="prayer_whose_a11y">%1$s, %2$s. Vakitlerin kaynağını açar</string>
+    <string name="prayer_about_a11y">%1$s, %2$s. “Bu vakitler hakkında” sayfasını açar</string>
+    <string name="prayer_set_by_rule">Takdirî</string>
+    <string name="prayer_source_published_method">Yayımlanan yöntem</string>
+    <string name="prayer_polar_line">Güneş bugün burada ne doğuyor ne batıyor; bu yüzden bazı vakitler, güneşin doğup battığı en yakın enleme göre belirlenir.</string>
+    <string name="prayer_card_cautious_title">Buradaki camiler farklı takvimlere uyuyor</string>
+    <string name="prayer_card_cautious_body">Taqvo her namazı, hepsinde vakit girdikten sonra gösterir.</string>
+    <string name="prayer_card_sunni_title">Bunlar Sünni namaz vakitleridir</string>
+    <string name="prayer_card_sunni_body">Şii (Caferî) uygulamasında akşam namazı ve iftar daha geçtir.</string>
+    <string name="prayer_match_my_mosque">Camimle eşleştir</string>
+    <string name="prayer_card_ok">Tamam</string>
+    <string name="prayer_clock_line">Namaz vakitleri bir saat farklı olabilir</string>
+    <string name="prayer_clock_stale_early">%1$s, %2$s tarihinde resmî saatini değiştirdi ve telefonunuz bunu henüz bilmiyor; bu yüzden namaz vakitleri bir saat erken görünebilir. Varsa en son sistem güncellemesini yükleyin ve tarih ile saati otomatik ayarda tutun: uyarılar yalnızca saat otomatikken doğru çalışır.</string>
+    <string name="prayer_clock_stale_late">%1$s, %2$s tarihinde resmî saatini değiştirdi ve telefonunuz bunu henüz bilmiyor; bu yüzden namaz vakitleri bir saat geç görünebilir. Varsa en son sistem güncellemesini yükleyin ve tarih ile saati otomatik ayarda tutun: uyarılar yalnızca saat otomatikken doğru çalışır.</string>
+    <string name="prayer_clock_manual_early">%1$s, %2$s tarihinde resmî saatini değiştirdi. Saati elle ayarladıysanız namaz vakitleri bir saat erken görünebilir. Otomatik tarih ve saati açın: uyarılar yalnızca saat otomatikken doğru çalışır.</string>
+    <string name="prayer_clock_manual_late">%1$s, %2$s tarihinde resmî saatini değiştirdi. Saati elle ayarladıysanız namaz vakitleri bir saat geç görünebilir. Otomatik tarih ve saati açın: uyarılar yalnızca saat otomatikken doğru çalışır.</string>
+    <string name="prayer_clock_kept_stale_early">%1$s, %2$s tarihinden beri yıl boyunca tek bir saat kullanıyor ve telefonunuz bunu henüz bilmiyor; bu yüzden namaz vakitleri bir saat erken görünebilir. Varsa en son sistem güncellemesini yükleyin ve tarih ile saati otomatik ayarda tutun: uyarılar yalnızca saat otomatikken doğru çalışır.</string>
+    <string name="prayer_clock_kept_stale_late">%1$s, %2$s tarihinden beri yıl boyunca tek bir saat kullanıyor ve telefonunuz bunu henüz bilmiyor; bu yüzden namaz vakitleri bir saat geç görünebilir. Varsa en son sistem güncellemesini yükleyin ve tarih ile saati otomatik ayarda tutun: uyarılar yalnızca saat otomatikken doğru çalışır.</string>
+    <string name="prayer_clock_kept_manual_early">%1$s, %2$s tarihinden beri yıl boyunca tek bir saat kullanıyor. Saati elle ayarladıysanız namaz vakitleri bir saat erken görünebilir. Otomatik tarih ve saati açın: uyarılar yalnızca saat otomatikken doğru çalışır.</string>
+    <string name="prayer_clock_kept_manual_late">%1$s, %2$s tarihinden beri yıl boyunca tek bir saat kullanıyor. Saati elle ayarladıysanız namaz vakitleri bir saat geç görünebilir. Otomatik tarih ve saati açın: uyarılar yalnızca saat otomatikken doğru çalışır.</string>
+    <string name="prayer_clock_region_morocco">Fas</string>
+    <string name="prayer_clock_region_british_columbia">Britanya Kolumbiyası</string>
+    <string name="prayer_clock_region_alberta">Alberta</string>
+    <string name="prayer_clock_region_manitoba">Manitoba</string>
+    <string name="prayer_clock_region_kazakhstan">Kazakistan</string>
+    <string name="prayer_clock_region_yukon">Yukon</string>
+    <string name="prayer_clock_region_syria">Suriye</string>
+    <string name="prayer_clock_region_jordan">Ürdün</string>
+    <string name="prayer_clock_region_chihuahua">Chihuahua</string>
+    <string name="prayer_clock_region_paraguay">Paraguay</string>
+    <string name="prayer_differ_before">%1$s takviminde %2$s %3$s itibarıyla başlıyor</string>
+    <string name="prayer_differ_after">%1$s takviminde %2$s başladı · Taqvo %3$s itibarıyla gösteriyor</string>
+    <string name="prayer_other_asr">%1$s %2$s</string>
+
+    <!-- Ayarlar kökü -->
+    <string name="settings_title">Ayarlar</string>
+    <string name="settings_group_prayer">NAMAZ</string>
+    <string name="settings_group_app">UYGULAMA</string>
+    <string name="settings_group_about">HAKKINDA</string>
+    <string name="settings_location">Konum</string>
+    <string name="settings_prayer_times">Namaz vakitleri</string>
+    <string name="settings_notifications">Bildirimler</string>
+    <string name="settings_appearance">Görünüm</string>
+    <string name="settings_appearance_value">%1$s · %2$s</string>
+    <string name="settings_language">Dil</string>
+    <string name="settings_about">Taqvo hakkında</string>
+    <string name="settings_attribution">Kaynaklar ve lisanslar</string>
+    <string name="settings_rate">Taqvo’yı değerlendir</string>
+    <string name="settings_share">Taqvo’yı paylaş</string>
+    <string name="settings_share_message">Taqvo: namaz vakitleri, Kur’an ve kıble. Ücretsiz, reklamsız, hesapsız.</string>
+    <string name="settings_not_set">Belirlenmedi</string>
+    <string name="settings_notifications_off">Kapalı</string>
+    <string name="settings_notifications_on_count">%1$s açık</string>
+    <string name="settings_version_value">1.5.0</string>
+
+    <!-- “Taqvo hakkında” ekranı. Ürün adı, simgede olduğu gibi Latin harfleriyle kalır. -->
+    <string name="about_tagline">Ücretsiz, herkes için, kalıcı olarak.</string>
+    <string name="about_privacy_label">GİZLİLİK</string>
+    <string name="about_stays_title">Telefonunuzda kalır</string>
+    <string name="about_stays_body">Konum, ayarlar, yer imleri ve sayaçlar telefonunuzdan çıkmaz.</string>
+    <string name="about_online_title">Yalnızca siz isteyince çevrimiçi</string>
+    <string name="about_online_body">İnternet tek bir şey için kullanılır: Taqvo’nın GitHub’daki herkese açık deposundan indirmeyi seçtiğiniz tilavetler.</string>
+    <string name="about_nothing_title">Hesap yok, reklam yok, analiz yok</string>
+    <string name="about_nothing_body">Giriş yapılacak bir şey yok, satılacak bir şey yok.</string>
+    <string name="about_privacy_policy">Gizlilik politikası</string>
+    <string name="about_source">Kaynak kodu</string>
+    <string name="about_source_value">GitHub</string>
+    <string name="about_licence">Lisans</string>
+    <string name="about_licence_value">GPL-3.0</string>
+    <string name="about_website">Web sitesi</string>
+    <string name="about_website_value">taqwa.world</string>
+    <string name="about_icon_open_website">taqwa.world adresini aç</string>
+    <string name="about_report_problem">Sorun bildir</string>
+
+    <!-- Ayarlar › Widget’lar ve Taqvo hakkında (ayarların yeniden tasarım belirtimi, 30 Ekim 2026). Widget’lar
+         satırının değeri ana ekrandaki widget’ları sayar: %1$s eklenenler, %2$s toplam. -->
+    <string name="settings_widgets">Widget’lar</string>
+    <string name="settings_widgets_all">Hepsi eklendi</string>
+    <string name="settings_widgets_none">Eklenmedi</string>
+    <string name="settings_widgets_count">%1$s / %2$s eklendi</string>
+    <!-- Widget’lar ekranı. _ios ikizleri iOS’un Türkçe adlarını kullanır: Ana Ekran, Kilitli Ekran, Özelleştir,
+         Araç Takımı Ekle. Ana Ekranın köşesindeki bu menüyü açan düğme Türkçe iOS 26’da “+” olarak
+         görünür (VoiceOver “Düzenle” der), iOS 27’den itibaren ise bir fırçadır; widgets_ios_fallback bu yüzden
+         ikisini de anar, diğer altı dil de kendi sözcüğünü ve fırçayı anar. + işaretli adımlar yalnızca iOS
+         18’den önce çıkar; orada köşedeki “+” galeriyi menüsüz doğrudan açar, bu yüzden widgets_step_ios_plus_2
+         yalnızca onu anar. iOS 26.2, 27.0 ve 27.1 simülatörlerinde 31 Ekim 2026’da görüldü. widgets_lock_then
+         Kilitli Ekran resminin ikinci satırıdır, %1$s ondan sonraki namazdır (widget’taki lock_widget_then gibi). Adımlarda
+         %1$s, widget’ın kartındaki adıdır (widgets_prayer_name, widgets_ayah_name); ek almasın diye hep
+         “widget’ını” ya da “önce … sonra” ile kullanılır. Android’in widget listesi ve iPhone’un
+         galerisi de widget’ı bu adla gösterir (iosApp/TaqvoWidget’taki home_widget_name ve
+         ayah_widget_name). ** ile ** arasındaki sözcükler okurun telefonda arayacağı sözcüklerdir; yıldızsız
+         ve kalın gösterilir. -->
+    <string name="widgets_intro">Sonraki vakit ve günün ayeti, Taqvo’yı açmadan ana ekranınızda.</string>
+    <string name="widgets_intro_ios">Sonraki vakit ve günün ayeti, Taqvo’yı açmadan Ana Ekranınızda ve Kilitli Ekranınızda.</string>
+    <string name="widgets_background_note">Tüm Taqvo widget’ları için. Sistem seçeneği, telefonunuzun açık ve koyu tema ayarını izler.</string>
+    <string name="widgets_prayer_label">NAMAZ VAKİTLERİ</string>
+    <string name="widgets_prayer_name">Namaz vakitleri</string>
+    <string name="widgets_prayer_body">Canlı geri sayımla sonraki vakit ve bugünün vakitleri. Küçük ya da geniş.</string>
+    <string name="widgets_prayer_body_ios">Canlı geri sayımla sonraki vakit ve bugünün vakitleri. Küçük ya da orta.</string>
+    <string name="widgets_ayah_label">GÜNÜN AYETİ</string>
+    <string name="widgets_ayah_name">Günün ayeti</string>
+    <string name="widgets_ayah_body">Her gün yeni bir ayet, mealiyle birlikte. Geniş ya da büyük.</string>
+    <string name="widgets_ayah_body_ios">Her gün yeni bir ayet, mealiyle birlikte. Orta ya da büyük.</string>
+    <string name="widgets_dua_label">GÜNÜN DUASI</string>
+    <string name="widgets_dua_name">Günün duası</string>
+    <string name="widgets_dua_body">Her gün, her saatte okunabilen yeni bir dua, mealiyle birlikte. Geniş ya da büyük.</string>
+    <string name="widgets_dua_body_ios">Her gün, her saatte okunabilen yeni bir dua, mealiyle birlikte. Orta ya da büyük.</string>
+    <string name="widgets_on_home">Ana ekranınızda</string>
+    <string name="widgets_on_home_ios">Ana Ekranınızda</string>
+    <string name="widgets_on_lock_ios">Kilitli Ekranınızda</string>
+    <string name="widgets_refused_title">Ana ekranınız uygulamaların widget eklemesine izin vermiyor.</string>
+    <string name="widgets_refused_body">Elle eklemek yalnızca birkaç saniye sürer:</string>
+    <string name="widgets_step_android_1">Ana ekranınızda boş bir yere basılı tutun (veya iki parmağınızla sıkıştırın).</string>
+    <string name="widgets_step_android_2">**Widget’lar** bölümüne dokunun.</string>
+    <string name="widgets_step_android_3">**Taqvo**’yı bulun, sonra %1$s widget’ını sürükleyip yerine bırakın.</string>
+    <string name="widgets_how_label">NASIL EKLENİR</string>
+    <string name="widgets_step_ios_hold_1">Ana Ekranınızdaki **Taqvo** simgesine basılı tutun.</string>
+    <string name="widgets_step_ios_hold_2">Önce %1$s, sonra bir boyut seçin.</string>
+    <string name="widgets_step_ios_hold_3">Widget Ana Ekranınıza yerleşir. Dilediğiniz yere sürükleyin.</string>
+    <string name="widgets_ios_fallback">Simgeye basılı tutunca widget çıkmıyor mu? Ana Ekranda boş bir yere basılı tutun, üstteki **+** işaretine (iOS 27 ve sonrasında bir fırça), sonra **Araç Takımı Ekle**’ye dokunun ve Taqvo’yı aratın.</string>
+    <string name="widgets_step_ios_plus_1">Ana Ekranınızda boş bir yere basılı tutun.</string>
+    <string name="widgets_step_ios_plus_2">Üst köşedeki **+** işaretine dokunun.</string>
+    <string name="widgets_step_ios_plus_3">Taqvo’yı aratın ve %1$s widget’ını seçin.</string>
+    <string name="widgets_show_how">Nasıl yapılacağını göster</string>
+    <string name="widgets_lock_label">KİLİTLİ EKRAN</string>
+    <string name="widgets_lock_name">Sonraki vakit bir bakışta</string>
+    <string name="widgets_lock_body">Kilitli Ekranınızda saatin altında, yuvarlak ya da geniş.</string>
+    <string name="widgets_lock_then">sonra %1$s</string>
+    <string name="widgets_step_lock_1">Kilitli Ekranınıza basılı tutun, sonra **Özelleştir**’e dokunun.</string>
+    <string name="widgets_step_lock_2">Kilitli Ekran’ı seçin, sonra saatin altındaki boşluğa dokunun.</string>
+    <string name="widgets_step_lock_3">**Taqvo**’yı, sonra yuvarlak ya da geniş widget’ı seçin.</string>
+    <!-- Taqvo hakkında: sloganın altındaki etiket (%1$s sürüm, settings_version_value) ve son iki kartın
+         başlıkları. Değerlendir ve Paylaş orada settings_rate, settings_share ve settings_share_message’ı
+         kullanır. -->
+    <string name="about_version_chip">Sürüm %1$s</string>
+    <string name="about_open_source_label">AÇIK KAYNAK</string>
+    <string name="about_help_label">YARDIM</string>
+
+    <!-- Çökme raporu: çökmeden sonraki açılışta gösterilen sayfa ve gönderilecek rapor olmadığında e-postadaki satır. -->
+    <string name="crash_sheet_title">Taqvo beklenmedik şekilde kapandı</string>
+    <string name="crash_sheet_body">Telefonunuza teknik bir rapor kaydedildi. Bunu support@taqwa.world adresine göndermeniz sorunun düzeltilmesine yardımcı olur. Raporda yalnızca uygulama sürümü, telefonunuzun modeli ve hata bilgisi bulunur.</string>
+    <string name="crash_send">Raporu gönder</string>
+    <string name="crash_not_now">Şimdi değil</string>
+    <string name="crash_mail_no_report">Bu telefonda kayıtlı bir çökme raporu yok.</string>
+
+    <!-- Görünüm -->
+    <string name="appearance_theme_label">TEMA</string>
+    <string name="appearance_language_label">DİL</string>
+    <string name="theme_system">Sistem</string>
+    <string name="theme_light">Açık</string>
+    <string name="theme_dark">Koyu</string>
+    <string name="appearance_note">Sistem seçeneği, cihazınızın açık ve koyu tema ayarını izler.</string>
+
+    <!-- Konum ayarları -->
+    <string name="location_use_my_location">Konumumu kullan</string>
+    <string name="location_in_use">KULLANIMDA</string>
+    <string name="location_city">Şehir</string>
+    <string name="location_country">Ülke</string>
+    <string name="location_timezone">Saat dilimi</string>
+    <string name="location_choose_city_instead">Bunun yerine şehir seç</string>
+    <string name="location_privacy_note">Koordinatlar cihazınızda saklanır ve yalnızca vakitleri hesaplamak için kullanılır. Hiçbir yere hiçbir şey gönderilmez.</string>
+    <string name="location_denied_note">Konum erişimi şu anda reddedilmiş durumda. Cihaz ayarlarınızdan izin verebilir ya da bunun yerine bir şehir seçebilirsiniz.</string>
+
+    <!-- Şehir arama -->
+    <string name="city_search_title">Şehir seç</string>
+    <string name="city_search_placeholder">Şehir ara</string>
+    <string name="city_search_hint">Şehir adını yazmaya başlayın. Veritabanı uygulamayla birlikte gelir, arama çevrimdışı çalışır.</string>
+    <string name="city_search_no_results">“%1$s” ile eşleşen şehir yok.</string>
+
+    <!-- Bildirim ayarları -->
+    <string name="notifications_master_toggle">Namaz bildirimleri</string>
+    <string name="notifications_remind_before">Önceden hatırlat</string>
+    <string name="notifications_prayers_label">VAKİTLER</string>
+    <string name="notifications_tahajjud">Teheccüd</string>
+    <string name="notifications_tahajjud_subtitle">Gecenin son üçte biri başladığında</string>
+    <string name="notifications_tahajjud_sound">Ses</string>
+    <string name="notifications_remind_never">Hatırlatma yok</string>
+    <!--
+        Dakika sayısı. Türkçede sayıdan sonra çoğul eki gelmez, bu yüzden iki biçim de aynıdır;
+        yine de her biçim %1$s’i korur: çağıranlar rakamları kendileri biçimlendirir ve biri
+        rakamlara yapışık kalması gereken bir işaret ekler.
+    -->
+    <plurals name="minutes_count">
+        <item quantity="one">%1$s dk</item>
+        <item quantity="other">%1$s dk</item>
+    </plurals>
+
+    <!-- Ses sayfası -->
+    <string name="sound_sheet_title">Bildirim sesi</string>
+    <string name="sound_silent">Sessiz</string>
+    <string name="sound_notification">Bildirim</string>
+    <string name="sound_takbir">Tekbir</string>
+    <string name="sound_adhan">Ezan</string>
+    <string name="sound_silent_detail">Yalnızca bildirim, ses yok</string>
+    <string name="sound_notification_detail">Net bir uyarı tonu, %1$s saniye</string>
+    <string name="sound_takbir_detail">Allahu ekber, Allahu ekber, yaklaşık %1$s sn</string>
+    <string name="sound_adhan_detail">Ezanın ilk %1$s saniyesi</string>
+    <string name="sound_sheet_footnote">Namaz bildirimi, sesinin ilk %1$s saniyesini çalar. Ezanın tamamı uygulama içinde dinlenebilir.</string>
+    <string name="sound_adhan_detail_full">Ezanın tamamı</string>
+    <string name="sound_sheet_muted_hint">Telefonunuz sessizde veya “Rahatsız etmeyin” modunda; bu yüzden önizlemeler ve namaz bildirimleri ses çıkarmaz.</string>
+
+    <!-- Ezan sesi -->
+    <string name="adhan_voice_row">Ezan</string>
+    <string name="adhan_voice_sheet_title">Ezan</string>
+    <string name="adhan_voice_original">Orijinal</string>
+    <string name="adhan_voice_azeez">Aaqib Azeez</string>
+    <string name="adhan_voice_azemi">Besim Azemi</string>
+    <string name="adhan_voice_original_detail">Makamlı, %1$s</string>
+    <string name="adhan_voice_azeez_detail">Sade ve hızlı, %1$s</string>
+    <string name="adhan_voice_azemi_detail">Malmö Camii’nden canlı, %1$s</string>
+    <string name="adhan_voice_makkah">Mekke</string>
+    <string name="adhan_voice_madinah">Medine</string>
+    <string name="adhan_voice_makkah_detail">Mescid-i Haram, %1$s</string>
+    <string name="adhan_voice_madinah_detail">Mescid-i Nebevî, %1$s</string>
+    <string name="adhan_voice_taqvo_label">TAQVO EZANLARI</string>
+    <string name="adhan_voice_phone_label">TELEFONUNUZDAN</string>
+    <string name="adhan_voice_choose">Bir kayıt seçin</string>
+    <string name="adhan_voice_choose_detail">Bu telefonda kayıtlı bir ezan. Burada kalır.</string>
+    <string name="adhan_voice_custom">Kaydınız</string>
+    <string name="adhan_voice_choose_another">Başka birini seçin</string>
+    <string name="adhan_voice_remove">Kaldır</string>
+    <string name="adhan_voice_pick_failed">Bu dosya ses olarak okunamadı.</string>
+    <string name="adhan_voice_custom_detail">%1$s · %2$s</string>
+
+    <!-- Namaz vakti ayarları -->
+    <!-- Prayer engine: Settings (Task 12) -->
+    <string name="prayer_times_timetable">Vakit takvimi</string>
+    <string name="timetable_automatic">Otomatik</string>
+    <string name="timetable_automatic_named">Otomatik · %1$s</string>
+    <string name="prayer_times_paused_value">%1$s · beklemede</string>
+    <string name="timetable_out_of_scope">%1$s burada geçerli değil; siz dönene kadar Otomatik uygulanır.</string>
+    <string name="timetable_paused_note">%1$s beklemede: Vakit takvimi’nde onaylayana kadar hiçbir namaz Otomatik vaktinden önce gösterilmez.</string>
+    <string name="saudi_fajr_later">Sabah vaktini 5 dakika geciktir</string>
+    <string name="saudi_fajr_later_detail">Bazı âlimler Ümmü’l-Kura’nın sabah vaktinden sonra birkaç dakika beklemeyi tavsiye eder. Gösterilen sabah vakti ve uyarısı kayar; yemeyi ise Ümmü’l-Kura’nın sabah vaktinde, yani 5 dakika önce bırakın.</string>
+    <string name="prayer_times_asr_label">İKİNDİ</string>
+    <string name="asr_automatic">Otomatik</string>
+    <string name="asr_shadow_standard">gölge bir misli</string>
+    <string name="asr_shadow_hanafi">gölge iki misli</string>
+    <string name="asr_note_automatic_authority">Otomatik: %1$s, %2$s takvimindeki gibi.</string>
+    <string name="asr_note_automatic_majority">Otomatik: %1$s, buradaki camilerin çoğundaki gibi.</string>
+    <string name="asr_note_automatic_unknown">Otomatik: %1$s, yani daha geç vakit; çünkü %2$s için çoğunluğun mezhebi bilinmiyor.</string>
+    <string name="asr_note_automatic_unknown_here">Otomatik: %1$s, yani daha geç vakit; çünkü burada çoğunluğun mezhebi bilinmiyor.</string>
+    <string name="asr_note_standard">Standart: %1$s.</string>
+    <string name="asr_note_hanafi">Hanefi: %1$s.</string>
+    <string name="show_both_asr">İkindinin iki vaktini de göster</string>
+    <string name="show_where_differ">Takvim farklarını göster</string>
+    <string name="show_where_differ_detail">%1$s takvimleri bir namazı farklı saatlerde başlattığında</string>
+    <string name="show_where_differ_detail_here">Buradaki takvimler bir namazı farklı saatlerde başlattığında</string>
+    <string name="prayer_times_about_row">Bu vakitler hakkında</string>
+    <string name="timetable_auto_authority">%1$s tarafından bu yer için yayımlanan takvim</string>
+    <string name="timetable_auto_majority">%1$s; buradaki camilerin çoğu buna uyuyor</string>
+    <string name="timetable_auto_cautious">İhtiyatlı vakitler: her namaz, buradaki takvimlerin hepsinde başladıktan sonra</string>
+    <string name="timetable_auto_calculated">Taqvo hesabı: bu yer için bilinen bir takvim yok</string>
+    <string name="timetable_times_today">Bugün Sabah %1$s, Akşam %2$s, Yatsı %3$s</string>
+    <string name="timetable_nearby_label">ÇEVREDE DE KULLANILANLAR</string>
+    <string name="timetable_other_methods">Diğer yöntemler</string>
+    <string name="timetable_other_examples">%1$s, %2$s, %3$s…</string>
+    <string name="timetable_match_mosque">Camimle eşleştir</string>
+    <string name="timetable_checking">Önümüzdeki 12 ay kontrol ediliyor…</string>
+    <string name="timetable_paused_row">Beklemede: onaylayana kadar Otomatik’ten erken gösterilmez</string>
+    <string name="timetable_earlier_start">Bazı günlerde %1$s vakti %3$s %2$s önce başlıyor. Yalnızca camiiniz bu takvime uyuyorsa izleyin.</string>
+    <string name="timetable_earlier_asr_other">Bazı günlerde %1$s ikindi vakti %3$s %2$s önce başlıyor. Yalnızca camiiniz bu takvime uyuyorsa izleyin.</string>
+    <string name="timetable_later_sunrise">Bazı günlerde güneş %2$s %1$s sonra doğuyor. Yalnızca camiiniz bu takvime uyuyorsa izleyin.</string>
+    <string name="timetable_later_fast">Bazı günlerde imsak %2$s %1$s sonra başlıyor. Yalnızca camiiniz bu takvime uyuyorsa izleyin.</string>
+    <string name="timetable_of_authority">%1$s vaktinden</string>
+    <string name="timetable_of_cautious">ihtiyatlı vakitlerden</string>
+    <string name="timetable_of_taqvo">Taqvo vaktinden</string>
+    <plurals name="timetable_minutes">
+        <item quantity="one">%1$s dakika</item>
+        <item quantity="other">%1$s dakika</item>
+    </plurals>
+    <string name="timetable_keep_automatic">Otomatik kalsın</string>
+    <string name="timetable_keep_current">%1$s kalsın</string>
+    <string name="timetable_follow_it">Bu takvime uy</string>
+    <string name="match_note">Camiinizin panosundan, bugün (%1$s) için. Namazın başladığı vakti (ezan vaktini) girin, cemaat vaktini değil.</string>
+    <string name="match_fajr_begins">Sabah (imsak)</string>
+    <string name="match_isha_begins">Yatsı</string>
+    <string name="match_both">İki vakit de tutuyor. Diğer vakitlerini panoyla karşılaştırın: Öğle %1$s, İkindi %2$s, Akşam %3$s.</string>
+    <string name="match_hour_apart">İki vakit de tam bir saat farklı: panonuz yaz ya da kış saatine göre olabilir. Bu takvimde Sabah %1$s, Yatsı %2$s.</string>
+    <string name="match_one_fajr">Sabah vakti tutuyor, ama Yatsı %1$s.</string>
+    <string name="match_one_isha">Yatsı vakti tutuyor, ama Sabah %1$s.</string>
+    <string name="match_none">Taqvo’nın bildiği hiçbir takvim iki vakte de uymuyor.</string>
+    <string name="match_fajr_isha">Sabah %1$s, Yatsı %2$s</string>
+    <string name="match_use">Bu takvimi kullan</string>
+    <string name="match_in_use">Taqvo zaten bu takvime uyuyor.</string>
+    <string name="timetable_source_authority">%1$s vakti</string>
+    <string name="timetable_source_cautious">ihtiyatlı vakit</string>
+    <string name="timetable_source_taqvo">Taqvo vakti</string>
+    <string name="timetable_source_latest">buradaki en geç takvim</string>
+    <string name="adjust_paused_for">%1$s · beklemede (%2$s için ayarlandı)</string>
+    <string name="adjust_timetable_paused_note">Vakti öne alan düzeltmeler, %1$s Vakit takvimi’nde onaylanana kadar bekler.</string>
+    <string name="adjust_confirm_title">%1$s, %2$s öncesinde gösterilsin mi?</string>
+    <string name="adjust_confirm_body">Vaktinden önce kılınan namaz yeniden kılınmalıdır. Bunu yalnızca camiinizin takvimi daha erkense yapın.</string>
+    <string name="adjust_confirm_body_maghrib">Vaktinden önce kılınan namaz yeniden kılınmalı, vaktinden önce açılan oruç da kaza edilmelidir. Bunu yalnızca camiinizin takvimi daha erkense yapın.</string>
+    <string name="adjust_strong_body">Taqvo’daki %1$s vakti ile %3$s arasındaki fark en fazla %2$s; %4$s onu bu vaktin öncesine alır. Vaktinden önce kılınan namaz yeniden kılınmalıdır. Bunu yalnızca camiinizin takvimi bu kadar erkense yapın.</string>
+    <string name="adjust_strong_body_maghrib">Taqvo’daki %1$s vakti ile %3$s arasındaki fark en fazla %2$s; %4$s onu bu vaktin öncesine alır. Vaktinden önce kılınan namaz yeniden kılınmalı, vaktinden önce açılan oruç da kaza edilmelidir. Bunu yalnızca camiinizin takvimi bu kadar erkense yapın.</string>
+    <string name="adjust_keep">%1$s kalsın</string>
+    <string name="adjust_use">%1$s uygula</string>
+    <string name="adjust_note">Bir vakti, takvimdeki vakitten en fazla bir saat kaydırır. Yalnızca camiinizin panosu farklıysa kullanın.</string>
+    <!-- /Prayer engine: Settings (Task 12) -->
+    <string name="prayer_times_high_latitude">Yüksek enlem kuralı</string>
+    <string name="prayer_times_manual">Elle düzeltme</string>
+    <string name="madhab_standard">Standart</string>
+    <string name="madhab_hanafi">Hanefi</string>
+    <string name="prayer_times_hijri_label">HİCRİ TARİH</string>
+    <string name="hijri_day_before">Bir gün önce</string>
+    <string name="hijri_day_after">Bir gün sonra</string>
+    <string name="hijri_method_note">Rüyete değil hesaba dayanan bir takvim. Ümmü’l-Kura takviminden ve yerel hilal gözleminden bir gün farklı olabilir; cemaatinizle aynı güne getirmek için düzeltmeyi kullanın.</string>
+    <string name="prayer_times_show_sunrise">Güneşi göster</string>
+    <string name="adjustments_none">Yok</string>
+    <string name="adjustments_one">1 vakit</string>
+    <string name="adjustments_many">%1$s vakit</string>
+
+    <string name="method_muslim_world_league">Dünya İslam Birliği</string>
+    <string name="method_isna">ISNA (Kuzey Amerika)</string>
+    <string name="method_egyptian">Mısır Genel Harita Kurumu</string>
+    <string name="method_umm_al_qura">Ümmü’l-Kura (Mekke)</string>
+    <string name="method_karachi">İslami İlimler Üniversitesi, Karaçi</string>
+    <string name="method_dubai">Dubai (BAE)</string>
+    <string name="method_kuwait">Kuveyt</string>
+    <string name="method_qatar">Katar</string>
+    <string name="method_singapore">Singapur</string>
+    <string name="method_turkey">Diyanet İşleri Başkanlığı</string>
+    <string name="method_moonsighting">Hilal Gözlem Komitesi</string>
+    <string name="method_picker_note">Kurumlar, Sabah ve Yatsı için güneşin ufkun ne kadar altına inmesi gerektiği konusunda farklı görüştedir. Mahallenizdeki caminin uyduğu yöntemi seçin.</string>
+
+    <string name="high_lat_automatic">Otomatik</string>
+    <string name="high_lat_middle">Gece yarısı</string>
+    <string name="high_lat_seventh">Gecenin yedide biri</string>
+    <string name="high_lat_twilight">Tan açısı</string>
+    <string name="high_lat_picker_note">Yaklaşık %1$s derecenin üstünde güneş, gerçek bir Sabah ve Yatsı için ufkun yeterince altına inmez; bu yüzden onların yerine bir kural devreye girer.</string>
+
+    <!-- Prayer engine: About these times (Task 11) -->
+    <string name="about_times_title">Bu vakitler hakkında</string>
+    <string name="about_prayer_times_settings">Namaz vakitleri ayarları</string>
+    <string name="timetable_cautious">İhtiyatlı vakitler</string>
+    <string name="timetable_calculated">Taqvo hesabı</string>
+    <string name="about_who_publishes">Vakitleri kim yayımlıyor</string>
+    <string name="about_who_publishes_body">%2$s için kullanılan namaz vakitlerini %1$s yayımlar.</string>
+    <string name="about_not_affiliated">Taqvo’nın %1$s ile bir bağı yoktur.</string>
+    <string name="about_how_reproduces">Taqvo bu vakitleri nasıl hesaplıyor</string>
+    <string name="about_method_intro">%1$s hesaplama yöntemi: %2$s.</string>
+    <string name="about_method_fajr_angle">sabah (imsak) ufkun %1$s° altında</string>
+    <string name="about_method_isha_angle">yatsı ufkun %1$s° altında</string>
+    <string name="about_method_fajr_curve">sabah, yıl boyunca değişen ve ufkun %1$s° ile %2$s° altında kalan bir şafak açısında</string>
+    <string name="about_method_isha_curve">yatsı, yıl boyunca değişen ve ufkun %1$s° ile %2$s° altında kalan bir şafak açısında</string>
+    <string name="about_method_isha_after_maghrib">yatsı akşamdan %1$s dakika sonra</string>
+    <string name="about_method_minutes_note">kendi dakikaları (%1$s)</string>
+    <string name="about_method_rounding_note">ve her başlangıç bir sonraki dakikaya yuvarlanır (güneşin doğuşu ve imsak bir önceki dakikaya)</string>
+    <string name="about_method_daily_sun">güneşin konumu günde bir kez alınır</string>
+    <string name="about_method_horizon_dip">yükseklik ve pus için alçaltılmış kendi ufku</string>
+    <string name="about_how_checked">Nasıl doğrulandı</string>
+    <string name="about_stat_days_at_places">gün, %1$s yerde</string>
+    <string name="about_stat_never_before">%1$s vaktinden önce başlangıç</string>
+    <string name="about_stat_minutes_value">%1$s dk</string>
+    <string name="about_stat_at_most_after">en fazla gecikme</string>
+    <string name="about_checked_through">%1$s tarafından yayımlanan takvimle %2$s tarihine kadar karşılaştırıldı.</string>
+    <string name="about_not_measured_unit">%1$s için ölçülmedi.</string>
+    <string name="about_checked_so_far_with_data">Şimdiye kadar %1$s gün kontrol edildi: hiçbir vakit %2$s vaktinden önce değil, en fazla %3$s dakika sonra.</string>
+    <string name="about_checked_so_far_without_data">Taqvo bu vakitleri henüz %1$s takvimiyle karşılaştırmadı.</string>
+    <string name="about_not_followed_irn_tromso">%1$s takviminin Mekke saatine göre sabah vakti, güneş doğduktan sonraya düştüğü nisan sonundan mayıs ortasına kadar ve temmuz sonundan ağustos ortasına kadar izlenmez; gece yarısı güneşi günlerindeki güneş doğuşu da izlenmez ve akşam vakti hiçbir zaman gerçek gün batımından önce girmez.</string>
+    <string name="about_authority_method_title">%1$s yöntemi</string>
+    <string name="about_authority_unchecked_body">%2$s için namaz vakitlerini %1$s yayımlar. Taqvo bunları %1$s yöntemiyle, bir güvenlik payı ekleyerek hesaplar.</string>
+    <string name="about_majority_unchecked_body">%2$s camilerinin çoğu %1$s yöntemine uyuyor. Taqvo vakitleri bu yöntemle, bir güvenlik payı ekleyerek hesaplar.</string>
+    <string name="about_nearby_heading">Bazı yerel camilerin bunun yerine uyduğu takvimler</string>
+    <string name="about_cautious_body">%1$s camileri iyi niyetle farklı takvimlere uyuyor ve hiçbirine çoğunluk uymuyor. Taqvo %2$s takvimlerini birleştirir: her namaz, hepsinde vakit girdikten sonra gösterilir.</string>
+    <string name="about_cautious_maghrib_guard">Akşam bugün istisnadır: vakti %1$s takviminin gün batımı hesabına göre girer, %2$s takviminin yüksek enlem kuralıyla belirlediği daha geç akşam vaktine göre değil.</string>
+    <string name="about_cautious_maghrib_no_sunset">Akşam bugün istisnadır, çünkü burada gün batımı yok: en çok uyulan takvim olan %1$s takvimine uyar, %2$s takviminin daha geç akşam vaktine değil.</string>
+    <string name="about_which_decides">Bugün her vakti hangi takvim belirliyor</string>
+    <string name="about_stat_never_before_decider">onu belirleyen takvimin vaktinden önce başlangıç</string>
+    <string name="about_cautious_checked">Burada uyulan takvimlerle karşılaştırıldı.</string>
+    <string name="about_calculated_body">Taqvo, %1$s için resmî bir Sünni takvim bulamadı; bu yüzden ihtiyatlı biçimde hesaplıyor: %2$s.</string>
+    <string name="about_asr_heading">İkindi</string>
+    <string name="about_asr_known">%1$s: %3$s; çünkü %2$s camilerinin çoğu buna uyuyor.</string>
+    <string name="about_asr_unknown">%1$s: %3$s, yani daha geç vakit; çünkü %2$s için çoğunluğun mezhebi bilinmiyor. Bunu Ayarlar’dan değiştirebilirsiniz.</string>
+    <string name="about_sunni_heading">Sünni vakitler</string>
+    <string name="about_sunni_body">Bunlar Sünni namaz vakitleridir. Şii (Caferî) uygulamasında akşam namazı ve iftar daha geçtir.</string>
+    <string name="about_check_mosque_heading">Camiinizle karşılaştırın</string>
+    <string name="about_check_mosque_body">Hesaplanan vakitler bir caminin vakitlerinden birkaç dakika farklı olabilir. Camiinizinki farklıysa onun takvimini seçin veya Ayarlar’dan bir vakti düzeltin.</string>
+    <string name="about_if_fasting">Oruçluysanız</string>
+    <string name="about_stop_eating">Bugün en geç %1$s itibarıyla yemeyi bırakın.</string>
+
+    <!-- Kaynaklar -->
+    <string name="attribution_intro">Taqvo, başkalarının karşılıksız verdiği emeğin üzerine kuruldu. Lisansları anılmalarını gerektiriyor; zaten hakları da bu.</string>
+    <string name="credit_calculation">Namaz vakti hesaplaması</string>
+    <string name="credit_calculation_detail">Taqvo’nın kendi motoru. Kıble yönü, Batoul Apps’in Adhan kütüphanesiyle hesaplanır (MIT lisansı).</string>
+    <string name="credit_cities">Şehir veritabanı</string>
+    <string name="credit_cities_detail">GeoNames cities15000, CC BY 4.0 lisansı.</string>
+    <string name="credit_typeface">Manrope yazı tipi</string>
+    <string name="credit_typeface_detail">SIL Open Font Licence 1.1 kapsamında.</string>
+    <string name="credit_audio">Ezan ve tekbir kaydı</string>
+    <string name="credit_audio_detail">“Beautiful adhan”, Adam-synagda, CC0 1.0, Wikimedia Commons üzerinden. “The Adhan – Muslim Call to Prayer – Aaqib Azeez”, CC BY-SA 4.0, Wikimedia Commons üzerinden. “Eid al-Fitr Fajr azan at Malmö Mosque”, Islamic Center Malmö, CC BY 3.0, Wikimedia Commons üzerinden. “Adhan, Great Mosque of Mecca”, Seyfula Islam, CC BY 3.0, Wikimedia Commons üzerinden. “Call to prayer from the Prophet’s Mosque”, ejaz215, CC BY 3.0, Wikimedia Commons üzerinden.</string>
+    <string name="credit_chime">Bildirim tonu</string>
+    <string name="credit_chime_detail">Mixkit’ten “Clear announce tones”, Mixkit Ses Efektleri Ücretsiz Lisansı.</string>
+    <string name="credit_quran_text">Kur’an metni</string>
+    <string name="credit_quran_text_detail">Tanzil Kur’an Metni v1.1, Creative Commons Attribution 3.0. Birebir aktarıldı.</string>
+    <string name="credit_quran_font">Mushaf yazı tipi</string>
+    <string name="credit_quran_font_detail">Kral Fahd Kur’an-ı Kerim Basım Kompleksi’nin KFGQPC Uthmanic Script Hafs yazı tipi. Değiştirilmeden kullanılabilir ve dağıtılabilir.</string>
+    <string name="credit_quran_layout">Sayfa düzeni</string>
+    <string name="credit_quran_layout_detail">Medine Mushafı’nın sayfa ve satır sonları, Quranic Universal Library verilerinden.</string>
+    <string name="credit_translations">Mealler</string>
+    <string name="credit_translations_detail">Ticari olmayan kullanım için Tanzil Projesi’nden alındı. Her mealin sahibi aşağıda anılmıştır.</string>
+
+    <!-- Prayer engine: authority names (Task 10) -->
+    <string name="authority_awqaf_jordan">Ürdün Evkafı</string>
+    <string name="authority_awqaf_kuwait">Kuveyt Evkafı</string>
+    <string name="authority_awqaf_libya">Libya Evkafı</string>
+    <string name="authority_awqaf_syria">Suriye Evkafı</string>
+    <string name="authority_awqaf_uae">BAE Evkafı</string>
+    <string name="authority_bahrain_council">Bahreyn Yüksek Konseyi</string>
+    <string name="authority_bik">Kosova İslam Birliği</string>
+    <string name="authority_cape_calendar">Cape Town topluluk takvimi</string>
+    <string name="authority_chicago">Chicago 18°/15°</string>
+    <string name="authority_dar_al_fatwa">Darülfetva</string>
+    <string name="authority_diyanet">Diyanet</string>
+    <string name="authority_diyanet_europe">Diyanet Avrupa</string>
+    <string name="authority_dum_rd">Dağıstan Müftülüğü</string>
+    <string name="authority_dum_rf">DUM RF</string>
+    <string name="authority_dum_rt">Tataristan Müftülüğü</string>
+    <string name="authority_emb">EMB Belçika</string>
+    <string name="authority_esa">Mısır Harita Kurumu</string>
+    <string name="authority_fazilet">Fazilet</string>
+    <string name="authority_fianz">FIANZ</string>
+    <string name="authority_fids">FIDS</string>
+    <string name="authority_gaza_awqaf">Gazze Evkafı</string>
+    <string name="authority_grande_mosquee_paris">Paris Büyük Camii</string>
+    <string name="authority_habous">Fas Evkafı</string>
+    <string name="authority_iacad">IACAD Dubai</string>
+    <string name="authority_icci">ICCI Dublin</string>
+    <string name="authority_ifb">Bangladeş İslam Vakfı</string>
+    <string name="authority_ifi">IFI İrlanda</string>
+    <string name="authority_ift">Islamic Foundation Toronto</string>
+    <string name="authority_iggo">IGGÖ</string>
+    <string name="authority_iit">Islamic Institute</string>
+    <string name="authority_inm">INM Tunus</string>
+    <string name="authority_irn">IRN Norveç</string>
+    <string name="authority_isna">ISNA</string>
+    <string name="authority_iz_bih">Bosna-Hersek İslam Birliği</string>
+    <string name="authority_izcg">Karadağ İslam Birliği</string>
+    <string name="authority_jakim">JAKIM</string>
+    <string name="authority_jamiat">Cemiyetü’l-Ulema</string>
+    <string name="authority_karachi">Karaçi</string>
+    <string name="authority_kemenag">Kemenag</string>
+    <string name="authority_kmsh">KMSH Arnavutluk</string>
+    <string name="authority_kyrgyz_muftiate">Kırgızistan Müftülüğü</string>
+    <string name="authority_lakemba">Lakemba Camii</string>
+    <string name="authority_london_unified">London Unified</string>
+    <string name="authority_mac_toronto">MAC Masjid</string>
+    <string name="authority_marw">Cezayir Din İşleri Bakanlığı</string>
+    <string name="authority_mauritania">Moritanya İslami İşler Bakanlığı</string>
+    <string name="authority_mjc">MJC</string>
+    <string name="authority_mora_brunei">MORA Brunei</string>
+    <string name="authority_muhammadiyah">Muhammediye</string>
+    <string name="authority_muis">MUIS</string>
+    <string name="authority_oman_awqaf">Umman Evkafı</string>
+    <string name="authority_pa_iftaa">Filistin Darülifta</string>
+    <string name="authority_qatar_calendar">Katar Takvim Evi</string>
+    <string name="authority_qmdb">Kazakistan Müftülüğü</string>
+    <string name="authority_sudan_fiqh">Sudan Fıkıh Akademisi</string>
+    <string name="authority_sunni_endowment">Sünni Vakıflar Divanı</string>
+    <string name="authority_umm_al_qura">Ümmü’l-Kura</string>
+    <string name="authority_uzbek_board">Özbekistan Müftülüğü</string>
+    <string name="authority_wifaqul_ulama">Vifakul Ulema</string>
+    <string name="timetable_twelve_degrees">12° takvimi</string>
+    <string name="timetable_late_dawn">Geç şafak takvimi</string>
+    <string name="timetable_moroccan_calendar">Fas takvimi</string>
+    <string name="timetable_isha_ninety">90 dakikalık yatsı takvimi</string>
+    <string name="timetable_fifteen_degrees">15° takvimi</string>
+    <string name="timetable_eighteen_degrees">18° takvimi</string>
+    <string name="timetable_chicago_eighteen">Chicago 18° takvimi</string>
+    <string name="timetable_rabita">Rabita Helsinki</string>
+
+    <!-- Kıble (plan 2) -->
+    <string name="qibla_no_sensor_title">Pusula sensörü yok</string>
+    <string name="qibla_no_sensor_body">Bu cihazda manyetometre yok. Aşağıdaki açıyla birlikte gerçek bir pusula kullanın.</string>
+
+    <!-- Widget arka planı (Ayarlar › Widget’lar; Görünüm’den taşındı, anahtarlar adlarını
+         korur) -->
+    <string name="appearance_widget_background_label">WIDGET ARKA PLANI</string>
+
+    <!-- Ana ekranda olmayan bir widget’ı önermek (Ayarlar › Widget’lar) -->
+    <string name="appearance_widget_add">Ana ekrana ekle</string>
+    <string name="widget_background_follow_theme">Sistem</string>
+    <string name="widget_background_light">Açık</string>
+    <string name="widget_background_dark">Koyu</string>
+    <string name="widget_background_translucent_title">Yarı saydam</string>
+    <string name="widget_background_translucent_subtitle">Duvar kâğıdınıza karışır.</string>
+    <string name="widget_background_frosted_title">Buzlu cam</string>
+    <string name="widget_background_frosted_subtitle">Sistemin widget dokusunu kullanır.</string>
+    <!-- Kıble ekranı -->
+    <string name="qibla_title">Kıble</string>
+    <string name="qibla_back">Bugün</string>
+    <string name="qibla_hold_flat">Telefonunuzu düz tutun</string>
+    <string name="qibla_facing_qibla">Kıbleye dönüksünüz</string>
+    <string name="qibla_needs_calibrating">Pusulanın kalibre edilmesi gerekiyor</string>
+    <string name="qibla_calibration_help">Telefonunuzu birkaç kez havada sekiz çizerek hareket ettirin. Metalden, kılıftan ve hoparlörlerden gelen manyetik girişim okumayı bozabilir.</string>
+    <!-- Kıble, manyetik girişim durumu: telefonun çevresindeki alan Dünya’nınki olmadığı için
+         sekiz çizmek işe yaramaz; tavsiye, oradan uzaklaşmaktır. -->
+    <string name="qibla_interference_title">Manyetik girişim</string>
+    <string name="qibla_interference_help">Metalden, mıknatıslardan, kılıflardan ve kablolardan uzaklaşın. Yakında daha güçlü bir alan varken pusula Dünya’nın alanını okuyamaz.</string>
+    <!-- Kıble, elden gelenin en iyisi: pusula yirmi saniyedir kullanılamıyor. Açı ile mesafe
+         sensör istemediği için kalır; iğne kalmaz. -->
+    <string name="qibla_best_effort_title">Pusula kullanılamıyor</string>
+    <string name="qibla_best_effort_calibration">Bu telefonun pusulası kalibre edilemedi. Gösterilen açı ve mesafe doğru — bunları ayrı bir pusulayla kullanın.</string>
+    <string name="qibla_best_effort_interference">Buradaki manyetik girişim bu telefonun pusulası için fazla güçlü. Gösterilen açı ve mesafe doğru — bunları ayrı bir pusulayla kullanın.</string>
+    <string name="qibla_distance">Mekke · %1$s km uzakta</string>
+    <string name="qibla_bearing">%1$s°</string>
+    <string name="qibla_cardinal_north">K</string>
+    <string name="qibla_cardinal_east">D</string>
+    <string name="qibla_cardinal_south">G</string>
+    <string name="qibla_cardinal_west">B</string>
+    <string name="notifications_exact_alarms_off">Taqvo için tam alarmlar kapalı; bu yüzden bildirim bir saate kadar geç gelebilir. Tam dakikasında çalabilmesi için “Alarmlar ve hatırlatıcılar” iznini verin.</string>
+    <string name="notifications_allow_exact_alarms">Tam alarmlara izin ver</string>
+    <string name="notifications_blocked">Sistem ayarlarında Taqvo için bildirimler kapalı; yeniden izin verilene kadar hiçbir namaz uyarısı gösterilemez.</string>
+    <string name="notifications_open_settings">Bildirim ayarlarını aç</string>
+    <string name="hijri_tabular">Hesaplanan</string>
+    <!-- Alt sekme çubuğu (yineleme 1; yineleme 8: Kıble Namaz ekranına katlandı; dilim 2: Kur’an
+         sekmesi geldi). -->
+    <string name="tab_prayer">Namaz</string>
+    <string name="tab_quran">Kur’an</string>
+    <string name="tab_settings">Ayarlar</string>
+    <!-- Namaz ekranındaki Kıble kartı: kuzeyden açı, sonra büyük daire mesafesi. -->
+    <string name="prayer_qibla_detail">%1$s° · Mekke’ye %2$s km</string>
+    <!-- Kur’an sekmesinin kökü (dilim 2a görev 5) -->
+    <string name="quran_title">Kur’an</string>
+    <string name="quran_search_hint">Kur’an’da ara</string>
+    <string name="quran_continue">OKUMAYA DEVAM ET</string>
+    <string name="quran_continue_detail">Ayet %1$s / %2$s · %3$s. cüz</string>
+    <string name="quran_tab_surah">Sureler</string>
+    <string name="quran_tab_juz">Cüzler</string>
+    <string name="quran_surah_subtitle">%1$s · %2$s ayet · %3$s</string>
+    <!-- Arapça arayüzde sure satırının alt başlığı: ana etiket zaten Arapça addır, bu yüzden
+         anlam yinelenmez. -->
+    <string name="quran_surah_subtitle_arabic_ui">%1$s ayet · %2$s</string>
+    <string name="quran_makki">Mekki</string>
+    <string name="quran_madani">Medeni</string>
+    <string name="quran_juz_n">%1$s. cüz</string>
+    <string name="quran_juz_range">%1$s %2$s – %3$s %4$s</string>
+    <string name="quran_next_surah">Sonraki: %1$s</string>
+    <string name="quran_juz_page">%1$s. cüz · %2$s. sayfa</string>
+    <string name="quran_reader_aa">Okuma ayarları</string>
+    <string name="quran_reader_mushaf">Mushaf görünümü</string>
+    <string name="quran_sheet_size">Arapça yazı boyutu</string>
+    <string name="quran_sheet_transliteration">Okunuş</string>
+    <string name="quran_sheet_translation">Meal</string>
+    <string name="quran_translation_off">Kapalı</string>
+    <string name="quran_translation_off_detail">Yalnızca Arapça, her kartta bir ayet</string>
+    <string name="quran_sheet_read_aloud">Her ayetten sonra sesli oku</string>
+    <string name="quran_sheet_read_aloud_missing">Telefonunuzun ücretsiz %1$s sesi gerekir.</string>
+    <string name="quran_sheet_mode">Okuma modu</string>
+    <string name="quran_mode_translation">Meal</string>
+    <string name="quran_mode_mushaf">Mushaf sayfası</string>
+    <string name="quran_size_mushaf_note">Mushaf modunda sayfa boyutu ekran genişliğini izler.</string>
+    <!-- Kur’an arama sonuçları ve yer imleri (dilim 2b) -->
+    <string name="quran_section_surahs">Sureler</string>
+    <string name="quran_section_ayahs">Ayetler · %1$s</string>
+    <string name="quran_search_empty">Eşleşen ayet yok</string>
+    <string name="quran_tab_bookmarks">Yer imleri</string>
+    <string name="quran_bookmarks_empty">Henüz yer imi yok. Bir ayeti açıp yer imi simgesine dokunun.</string>
+    <string name="quran_remove_bookmark">Yer imini kaldır</string>
+    <string name="quran_ayah_n">%1$s. ayet</string>
+    <string name="quran_action_bookmark">Yer imi</string>
+    <string name="quran_action_bookmarked">Eklendi</string>
+    <string name="quran_action_copy">Kopyala</string>
+    <string name="quran_action_copied">Kopyalandı</string>
+    <string name="quran_action_share">Paylaş</string>
+    <string name="quran_a11y_read_aloud">Sesli okunuyor</string>
+    <string name="quran_a11y_selected">Seçili</string>
+    <string name="quran_a11y_page_n">%1$s. sayfa</string>
+    <plurals name="quran_a11y_ayah_count">
+        <item quantity="one">%1$s ayet</item>
+        <item quantity="other">%1$s ayet</item>
+    </plurals>
+    <!-- Tesbih -->
+    <string name="tasbeeh_title">Tesbih</string>
+    <string name="prayer_open_tasbeeh">Tesbih</string>
+    <string name="tasbeeh_add_custom">Zikir ekle</string>
+    <string name="tasbeeh_round">%1$s. TUR</string>
+    <string name="tasbeeh_of">/ %1$s</string>
+    <string name="tasbeeh_hint">Saymak için herhangi bir yere dokunun</string>
+    <!-- Hazır zikirlerin anlamları; Latin harfli arayüzde okunuşun altında görünür, Arap harfli
+         arayüzde ise zikrin kendisi gösterilir. -->
+    <string name="dhikr_meaning_subhanallah">Allah’ı her türlü eksiklikten tenzih ederim</string>
+    <string name="dhikr_meaning_alhamdulillah">Hamd yalnızca Allah’a mahsustur</string>
+    <string name="dhikr_meaning_allahu_akbar">Allah her şeyden yücedir</string>
+    <string name="dhikr_meaning_astaghfirullah">Allah’tan bağışlanma dilerim</string>
+    <string name="dhikr_meaning_la_ilaha_illallah">Allah’tan başka ilah yoktur</string>
+    <string name="dhikr_meaning_subhanallahi_wa_bihamdihi">Allah’ı hamd ile tenzih ederim</string>
+    <string name="tasbeeh_preset_after_prayer">Namaz sonrası</string>
+    <string name="tasbeeh_preset_subhanallah">Sübhanallah</string>
+    <string name="tasbeeh_preset_alhamdulillah">Elhamdülillah</string>
+    <string name="tasbeeh_preset_allahu_akbar">Allahu ekber</string>
+    <string name="tasbeeh_preset_astaghfirullah">Estağfirullah</string>
+    <string name="tasbeeh_preset_la_ilaha_illallah">La ilahe illallah</string>
+    <string name="tasbeeh_preset_subhanallahi_wa_bihamdihi">Sübhanallahi ve bihamdihi</string>
+    <string name="tasbeeh_reset">Sıfırla</string>
+    <string name="tasbeeh_reset_confirm">Bu zikrin sayacı sıfırlansın mı?</string>
+    <string name="tasbeeh_custom_title">Özel zikir</string>
+    <string name="tasbeeh_custom_edit_title">Zikri düzenle</string>
+    <string name="tasbeeh_custom_phrase">İfade</string>
+    <string name="tasbeeh_custom_target">Hedef</string>
+    <string name="tasbeeh_custom_add">Ekle</string>
+    <string name="tasbeeh_custom_save">Kaydet</string>
+    <string name="tasbeeh_custom_delete">Sil</string>
+    <!-- Kur’an tilaveti (dilim 3a §5) -->
+    <string name="recitation_play">Dinle</string>
+    <string name="recitation_reciter">Kari</string>
+    <string name="recitation_style_murattal">Murattal tarzı</string>
+    <string name="recitation_kbps">%1$s kb/sn</string>
+    <string name="recitation_megabytes">%1$s MB</string>
+    <string name="recitation_on_phone">Bu telefonda %2$s sureden %1$s tanesi</string>
+    <string name="recitation_download">İndir · %1$s</string>
+    <string name="recitation_downloading">%1$s / %2$s</string>
+    <string name="recitation_over_wifi">Wi-Fi üzerinden.</string>
+    <string name="recitation_use_mobile_once">Bu seferlik mobil veri kullan</string>
+    <string name="recitation_keep_reading">Okumaya devam edebilirsiniz. İndirme biter bitmez seçtiğiniz ayetten çalmaya başlar.</string>
+    <string name="recitation_waiting_connection">Bağlantı bekleniyor. Bağlantı gelir gelmez indirme kendiliğinden başlar.</string>
+    <string name="recitation_switch_ready">%1$s, indirme tamamlanana kadar okumayı sürdürür.</string>
+    <string name="recitation_switch_running">%1$s okumayı sürdürür. İndirme biter bitmez okumayı %2$s devralır.</string>
+    <string name="recitation_cancel">Vazgeç</string>
+    <string name="recitation_retry">Yeniden dene</string>
+    <string name="recitation_back_to_ayah">%1$s. ayete dön</string>
+    <string name="recitation_fail_no_network">Şu anda bağlantı yok.</string>
+    <string name="recitation_fail_needs_wifi">İndirme yalnızca Wi-Fi ile yapılacak şekilde ayarlı.</string>
+    <string name="recitation_fail_no_space">Bu telefonda yeterli yer yok.</string>
+    <string name="recitation_fail_server">İndirme tamamlanmadı. Yeniden başlatılabilir.</string>
+    <string name="recitation_fail_checksum">Gelen dosya doğru dosya değil. Yeniden alınabilir.</string>
+    <string name="recitation_fail_cancelled">İndirme tamamlanmadan durdu.</string>
+    <string name="recitation_a11y_recitation">Tilavet</string>
+    <string name="recitation_a11y_pause">Duraklat</string>
+    <string name="recitation_a11y_downloading">Tilavet indiriliyor</string>
+    <string name="recitation_a11y_next">Sonraki sure</string>
+    <string name="recitation_a11y_previous">Önceki sure</string>
+    <string name="recitation_a11y_next_ayah">Sonraki ayet</string>
+    <string name="recitation_a11y_previous_ayah">Önceki ayet</string>
+    <string name="recitation_auto_download">Sonraki sureleri sormadan indir</string>
+    <string name="recitation_arriving_next">Sonraki: %1$s · %2$s</string>
+    <string name="recitation_arriving_voice">%1$s · %2$s</string>
+    <string name="recitation_percent">%1$s%</string>
+    <string name="recitation_a11y_close">Oynatıcıyı kapat</string>
+    <string name="recitation_a11y_change_reciter">Kariyi değiştir</string>
+    <string name="recitation_a11y_go_to_playing">Okunan ayete git</string>
+    <string name="recitation_a11y_preview">Bu kariyi dinle</string>
+    <string name="recitation_bar_translation">Meal</string>
+    <string name="recitation_bar_tafsir">Tefsir</string>
+    <!-- Ayarlar › Kur’an › Tilavet ve İndirilenler ekranı (dilim 3a §5.6) -->
+    <string name="settings_group_quran">KUR’AN</string>
+    <string name="settings_recitation">Tilavet</string>
+    <string name="recitation_settings_mobile_data">Mobil veriyle indir</string>
+    <string name="recitation_settings_auto_download">Sormadan indir</string>
+    <string name="recitation_read_aloud_heading">HER AYETTEN SONRA</string>
+    <string name="recitation_read_aloud_translation">Meali sesli oku</string>
+    <string name="recitation_read_aloud_tafsir">Tefsiri sesli oku</string>
+    <string name="recitation_read_aloud_detail">%1$s, %2$s. Bu telefondaki bir ses okur, bu yüzden çevrimdışı çalışır.</string>
+    <string name="recitation_read_aloud_missing">Telefonunuzun ücretsiz %1$s sesine ihtiyacı var; küçük, tek seferlik bir indirme.</string>
+    <string name="recitation_read_aloud_get_voice">Sesi indir</string>
+    <string name="recitation_settings_downloads">İNDİRİLENLER · %1$s</string>
+    <string name="recitation_settings_surahs_one">%1$s sure · %2$s</string>
+    <string name="recitation_settings_surahs">%1$s sure · %2$s</string>
+    <string name="recitation_settings_whole_quran">Kur’an’ın tamamını indir · %1$s</string>
+    <string name="recitation_settings_batch">İndiriliyor · %1$s / %2$s</string>
+    <string name="recitation_settings_credit">Tilavetler, kariler tarafından Islamic Network üzerinden ücretsiz ve ticari olmayan dağıtım için lisanslanmıştır. Künye, “Kaynaklar ve lisanslar” bölümünde.</string>
+    <string name="recitation_downloads_delete">Sil</string>
+    <string name="recitation_downloads_delete_all">Bu kariye ait olanların tümünü sil</string>
+    <string name="recitation_downloads_confirm">%1$s silinsin mi?</string>
+    <string name="recitation_downloads_empty">Bu kariden telefonda hiçbir şey yok.</string>
+    <string name="recitation_gigabytes">%1$s GB</string>
+    <string name="credit_recitations">Tilavetler</string>
+    <string name="credit_recitations_detail">Ayet ayet tilavetler Islamic Network’ten (alquran.cloud); kariler bu kuruma, yayımladıkları bit hızlarında ücretsiz ve ticari olmayan yeniden dağıtım için lisans vermiştir. Aynı bit hızlarında, değiştirilmeden yansıtıldı.</string>
+    <string name="prayer_times_time_format">Saat biçimi</string>
+    <string name="time_format_24">24 saat</string>
+    <string name="time_format_12">12 saat</string>
+    <string name="prayer_open_adhkar">Zikirler</string>
+    <string name="adhkar_morning">Sabah zikirleri</string>
+    <string name="adhkar_evening">Akşam zikirleri</string>
+    <string name="adhkar_segment_morning">Sabah</string>
+    <string name="adhkar_segment_evening">Akşam</string>
+    <string name="adhkar_progress">%1$s / %2$s</string>
+    <string name="adhkar_once">BİR KEZ</string>
+    <plurals name="adhkar_times">
+        <item quantity="one">%1$s KEZ</item>
+        <item quantity="other">%1$s KEZ</item>
+    </plurals>
+    <string name="adhkar_times_today">BUGÜN %1$s KEZ</string>
+    <string name="adhkar_of">/ %1$s</string>
+    <string name="adhkar_until_sunrise">Güneş doğana kadar · %1$s</string>
+    <string name="adhkar_after_sunrise">Güneş doğduktan sonra · en geç %1$s</string>
+    <string name="adhkar_until_maghrib">Akşama kadar · %1$s</string>
+    <string name="adhkar_after_maghrib">Akşamdan sonra · en geç %1$s</string>
+    <string name="adhkar_window_morning">Sabahtan güneş doğana kadar</string>
+    <string name="adhkar_window_evening">İkindiden akşama kadar</string>
+    <string name="adhkar_a11y_count">Say</string>
+    <string name="adhkar_a11y_previous">Önceki</string>
+    <string name="adhkar_a11y_next">Sonraki</string>
+    <string name="source_quran">Kur’an</string>
+    <string name="source_bukhari">Buhârî</string>
+    <string name="source_muslim">Müslim</string>
+    <string name="source_abu_dawud">Ebû Dâvûd</string>
+    <string name="source_tirmidhi">Tirmizî</string>
+    <string name="source_ibn_majah">İbn Mâce</string>
+    <string name="source_nasai">Nesâî</string>
+    <!-- an-Nasa’i’s as-Sunan al-Kubra and ʿAmal al-Yawm wa-l-Layla, each numbered on its own: the book is part of the name, so the reference line’s number is digits only (“Nesâî, es-Sünenü’l-kübrâ 10731”). -->
+    <string name="source_nasai_kubra">Nesâî, es-Sünenü’l-kübrâ</string>
+    <string name="source_nasai_amal">Nesâî, Amelü’l-yevm ve’l-leyle</string>
+    <string name="source_hakim">Hâkim</string>
+    <string name="source_ahmad">Ahmed</string>
+    <string name="adhkar_done_morning">Sabah zikirleri · tamamlandı</string>
+    <string name="adhkar_done_evening">Akşam zikirleri · tamamlandı</string>
+    <string name="adhkar_next_evening">Akşam zikirleri ikindiden sonra</string>
+    <string name="adhkar_next_morning">Sabah zikirleri sabah namazından sonra</string>
+    <string name="adhkar_back">Namaz vakitlerine dön</string>
+    <string name="adhkar_reading">Okuma</string>
+    <string name="adhkar_translation">Çeviri</string>
+    <string name="notifications_adhkar">Sabah ve akşam zikirleri</string>
+    <string name="notifications_adhkar_subtitle">Sabah ve ikindiden yarım saat sonra</string>
+    <string name="credit_adhkar">Zikirler</string>
+    <string name="credit_adhkar_detail">Sabah ve akşam zikirleri, Saîd b. Ali b. Vehf el-Kahtânî’nin Hısnü’l-Müslim’inden; Arapça metin ve yapısı, İngilizce çeviri ve okunuş OpenDua veri setinden (Human Development Fund), CC BY 4.0 lisansı; küçük düzeltmeler depoda kayıtlıdır.</string>
+    <string name="adhkar_opens_at">İkindiden itibaren · %1$s</string>
+    <string name="notifications_duha">Kuşluk</string>
+    <string name="notifications_duha_when">Ne zaman</string>
+    <string name="notifications_section_when">NE ZAMAN</string>
+    <string name="notifications_duha_best">En faziletli vaktinde</string>
+    <string name="notifications_duha_best_detail">Güneşin doğuşu ile öğlenin ortasında</string>
+    <string name="notifications_duha_start">Vakti girince</string>
+    <string name="notifications_duha_start_detail">Güneş doğduktan %1$s dakika veya daha sonra</string>
+    <string name="notifications_iqama">Kamet hatırlatması</string>
+    <string name="notifications_iqama_subtitle">Ezandan belirlediğiniz dakika sonra, caminizin kendi vakti değil</string>
+    <string name="notifications_iqama_note">Her vaktin dakikasını Vakitler altındaki satırından ayarlayın.</string>
+    <plurals name="notifications_iqama_after">
+        <item quantity="one">Kamet ezandan %1$s dk sonra</item>
+        <item quantity="other">Kamet ezandan %1$s dk sonra</item>
+    </plurals>
+    <string name="notifications_iqama_off">Kapalı</string>
+    <string name="notifications_section_sound">SES</string>
+    <string name="notifications_section_iqama">KAMET HATIRLATMASI</string>
+    <string name="notifications_iqama_not_friday">Cuma günleri kamet hatırlatması yok: önce hutbe okunur.</string>
+    <string name="notifications_voluntary_label">NAFİLE İBADETLER</string>
+    <!-- Settings › Wallpapers: an ayah or a supplication drawn as a phone wallpaper. Android sets it
+         itself; iOS lets no app do that, so there it is saved to Photos with the steps to set it. -->
+    <string name="settings_wallpapers">Duvar kâğıtları</string>
+    <string name="wallpapers_words_label">METİN</string>
+    <string name="wallpapers_source_ayahs">Ayetler</string>
+    <string name="wallpapers_source_duas">Dualar</string>
+    <string name="wallpapers_previous">Önceki</string>
+    <string name="wallpapers_next">Sonraki</string>
+    <string name="wallpapers_position">%1$s / %2$s</string>
+    <string name="wallpapers_style_label">TARZ</string>
+    <string name="wallpapers_style_night">Gece</string>
+    <string name="wallpapers_style_dawn">Şafak</string>
+    <string name="wallpapers_style_dusk">Akşam</string>
+    <string name="wallpapers_style_slate">Arduvaz</string>
+    <string name="wallpapers_target_label">NEREYE</string>
+    <string name="wallpapers_target_home">Ana ekran</string>
+    <string name="wallpapers_target_lock">Kilit ekranı</string>
+    <string name="wallpapers_target_both">Ana ekran ve kilit ekranı</string>
+    <string name="wallpapers_set">Duvar kâğıdı yap</string>
+    <string name="wallpapers_save">Fotoğraflar’a kaydet</string>
+    <string name="wallpapers_save_note">iPhone, uygulamaların duvar kâğıdını değiştirmesine izin vermez. Fotoğraflar’da resmi açın, Paylaş’a, ardından Duvar Kâğıdı Olarak Kullan’a dokunun.</string>
+    <string name="wallpapers_done_set">Duvar kâğıdı ayarlandı.</string>
+    <string name="wallpapers_done_saved">Fotoğraflar’a kaydedildi.</string>
+    <string name="wallpapers_refused_android">Bu telefon, uygulamaların duvar kâğıdını değiştirmesine izin vermiyor.</string>
+    <string name="wallpapers_refused_ios">Taqvo’nın fotoğraf eklemesine izin verilmiyor. Ayarlar › Taqvo › Fotoğraflar’dan izin verin.</string>
+    <string name="wallpapers_failed">Duvar kâğıdı kaydedilemedi. Lütfen tekrar deneyin.</string>
+    <string name="wallpapers_dua_reference">Hisnü’l-Müslim %1$s</string>
+    <string name="wallpapers_a11y_preview">Duvar kâğıdı önizlemesi: %1$s</string>
+</resources>

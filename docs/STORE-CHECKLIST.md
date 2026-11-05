@@ -1,0 +1,460 @@
+# Store launch runbook
+
+Everything between the code on `main` and Taqvo being live on Google Play and the App Store, in
+the order to do it. Rewritten 14 September 2026 for the accounts Mohamed decided on: a new Google
+account **mohamed.abulgasem.ly@gmail.com** for Google Play and a new Apple Account with the same
+address for the App Store. LOOPDL LIMITED (team 5S5P2Q72MV) is his employer and is never used to
+publish. The code side is done (§8); what remains is two accounts, one key, listings, uploads and
+waiting.
+
+Two clocks decide the order. Google lets a personal account publish only after a closed test with
+12 testers opted in for 14 consecutive days; Apple's enrolment takes a day or two. Start both
+accounts on day one: the App Store can be live within about a week, Google Play in three to five.
+
+## 1. Decisions (made, so nobody re-decides at the keyboard)
+
+- **Store version 1.0.0 (28)**, cut on 16 September for Play's internal test: the first bundle
+  signed with the upload key, and the version the iOS archive carries too. Every later store
+  build takes the next code (29, 30, …); codes 18–27 were device builds and never left the Mac.
+- **Public identity:** seller/developer name "Mohamed Abulgasem" on both stores (Apple shows an
+  individual's legal name; Play matches it), public contact email **support@taqwa.world**
+  (already forwards to Gmail), website https://taqwa.world, privacy policy
+  https://taqwa.world/privacy/ (App Store localisations may use https://taqwa.world/<lang>/privacy/).
+  mohamed.abulgasem.ly@gmail.com is the login, not the public contact.
+- **Names in the stores:** Play title "Taqvo: Prayer, Quran & Qibla" (28 of 30 characters). App
+  Store name "Taqvo" if it is free (App Store names are unique across the whole store and a
+  five-letter Arabic word is probably taken), otherwise the same 28-character title; subtitle
+  "Prayer times, Quran & Qibla". Outcome, 22 September: the App Store record is named "Taqvo:
+  Prayer, Quran & Qibla", because plain "Taqvo" is taken (so are a dozen look-alikes such as
+  "Taqvo - Prayer Times & Quran", checked 24 September), and that subtitle repeats the name. From
+  the next version each App Store language gets a translated name carrying prayer, Quran and
+  Qibla, a subtitle carrying adhan, tasbeeh and no ads, and keywords with neither's words: the
+  values sit in `docs/store/listing/<lang>.md` (App Information for name and subtitle, the
+  version page for keywords). A translated name refused as taken keeps the English title and the
+  1.0.0 subtitle for that language. Cancelling the release of 1.0.0 (32) on 29 September made
+  them editable again, so they go in with 1.0.0 (34) rather than waiting for the next version.
+- **Category:** Lifestyle on both (Apple secondary: Reference). Primary language English (United
+  Kingdom); listings in all seven languages.
+- **Age:** Play target audience 13+ (an under-13 band triggers the Families review); content
+  rating questionnaire as "Reference, News, or Educational" with every restricted-content answer
+  "No" → rated for everyone. Apple's age rating questionnaire all "None" → 4+.
+- **EU trader status:** declare **non-trader** on both stores (free app, no monetisation, no
+  business). Both consoles ask; it is a legal statement Mohamed makes, not a build setting.
+- **iOS identifiers:** Xcode registered `com.taqvo.app`, `com.taqvo.app.widget` and
+  `group.taqvo.app` under LOOPDL's team, and Apple identifiers are unique across all
+  teams. **Done 22 September:** the iOS identity is `com.taqvo.ios`, `com.taqvo.ios.widget`
+  and `group.taqvo.app` (and `com.taqvo.app.refresh` for the background task). One
+  source of truth: `iosApp/Configuration/Config.xcconfig` holds `TEAM_ID` and `BUNDLE_ID`, and
+  both targets read them (the widget is `$(BUNDLE_ID).widget`); the app group is literal in the
+  two `.entitlements`, `TaqvoWidgetViews.swift` and `widgetcore/…/KeyValueStore.ios.kt`, which
+  must agree. `TEAM_ID` is `3K93P4PA5H`, Mohamed's individual team, set on 22 September — never
+  LOOPDL's `5S5P2Q72MV`. Nobody sees a bundle id and the Android package stays `com.taqvo.app`.
+- **The launch is split by store: iOS first, Android after production access.** iOS 1.0.0 goes
+  to App Review with **"Manually release this version"**: approval parks it in Pending Developer
+  Release, and Mohamed presses Release This Version when he chooses (a soft launch while
+  Google's closed test runs). Android reaches production only after the closed test (12 testers
+  opted in for 14 days) and Google's answer to the production-access application (§5.6–5.7), so
+  some days or weeks later. The site's store buttons, the beta section and the README go live
+  one store at a time: the steps for each are below and in §6.10.
+- **Screenshots:** Play gets framed 1080 × 1920 images (the phone slot wants 16:9 or 9:16 and
+  flags a raw 1080 × 2340 capture as too tall); the App Store gets framed 1320 × 2868 images made
+  from simulator captures (the 6.9-inch slot, which Apple scales down for smaller phones). Seven
+  languages each. Play has eight screens: 1 Prayer, 2 Notifications, 3 Reader, 4 Mushaf,
+  5 Recitation, 6 Qibla, 8 Prayer in Dark, 9 Morning and evening adhkar (the adhkar took Tasbeeh's place in
+  1.1.0); the App Store has eight too, with 7 Tasbeeh and without Qibla, because the simulator has no compass. 1 and 8 show the Prayer screen, so a change to its
+  times or its ⓘ means re-shooting both, as the engine did (launch audit A8).
+- **The framed sets are checked in** at `docs/store/screenshots/{play,appstore}/<lang>/` (since
+  18 September). A feature that changes a screen re-shoots that screen in the same piece of work
+  — `ONLY="2-notifications" tools/store/capture-android.sh <serial> en ar fr tr id ur bn`, the
+  same for `capture-ios.sh`, then `tools/store/assemble.sh` — and commits the result.
+  `git status docs/store/screenshots` (or the commit's file list) is what to upload to each
+  store by hand. Play's release notes per build live in `docs/store/release-notes/`.
+  **Re-shoot only from the main checkout** (`~/Desktop/Workspace/apps/Taqvo`), never from a
+  worktree: `assemble.sh` starts with `rm -rf docs/store/screenshots/play docs/store/screenshots/appstore`
+  and frames back only what `build/store-shots/{android,ios}/<lang>/` holds. `build/` is
+  git-ignored, so the raw captures, all eight per language, exist only in the main checkout's
+  `build/store-shots`; run from a worktree, `assemble.sh` deletes both sets and writes back only
+  the screens just shot.
+- **Recruiting testers (since 20 September):** the closed track takes its testers from the Google
+  Group `taqvo-testers@googlegroups.com` (anyone can join; the console allows email lists *or*
+  groups, not both). The site's home pages and the README carry a "Join the Android beta"
+  section with the three links — group, `play.google.com/apps/testing/com.taqvo.app`, store
+  page. **At Android production**, not at the iOS release: `tools/site-beta.py remove && python3
+  site/build.py`, and delete the README block between its `beta:start`/`beta:end` markers. The
+  hero's "Join the Android beta" button goes with the section by itself. **At the iOS release**
+  the section stays, because the closed test is still running, but its heading "Help test Taqvo
+  before it launches." stops being true: re-word it for Android in all seven languages in
+  `tools/site-beta.py` (en: "Help test Taqvo for Android before it reaches Google Play.") and
+  run `tools/site-beta.py add && python3 site/build.py` (`add` strips and re-inserts, so it can
+  run again). **Done 8 October 2026,** with Taqvo live on Google Play: the section is off all
+  seven home pages and the README's block is gone. `tools/site-beta.py add` puts the section back
+  for a future test.
+- **The site's store badges** come from `site/stores.json`, one address per store, `null` until
+  live: set `google_play` to `https://play.google.com/store/apps/details?id=com.taqvo.app`
+  when production opens, `app_store` to `https://apps.apple.com/app/id6814975544` when Apple
+  releases it (check the id in App Store Connect first), and push. Each store's official badge
+  then replaces its "coming" wording on all seven home pages, and the App Store one also turns on
+  Safari's Smart App Banner on every page. Once the Play listing is public, request its report at
+  reports.exodus-privacy.eu.org and set `exodus` to its address: the privacy section links it.
+  The city pages' two app places — the desktop pitch and the section `#app` at the foot of every
+  city page (`site/timetables.py`, through `site/stores.py`, the same function as the hero) —
+  switch with the same edit; the Today card's foot keeps its "Get Taqvo" pill, which points to
+  `#app`. After the build open one city page and check the badge shows in the pitch and in `#app`.
+  **Done 8 October 2026:** `google_play` is set, so every home page and city page carries both
+  badges and no "coming" line. **Done 9 October 2026:** Exodus's report of the Play build 1.0.0
+  (35) (report 787937: 0 trackers, 13 permissions) is published, and `exodus` points to the
+  package's latest report (`/reports/com.taqvo.app/latest/`, no language prefix, so Exodus
+  serves the reader's language where it has one and each new Play version's report replaces it).
+  Request a new analysis at reports.exodus-privacy.eu.org/en/analysis/submit/ after each Play
+  release so the latest report is the current version.
+- **Campaign tags on the badges, and the download links (since 11 October 2026):** the badges
+  appear in three places: every home page's hero, the two app places on every city page (the
+  desktop pitch and `#app`), and the download links at `taqwa.world/get/` and
+  `taqwa.world/get/<channel>/` (English, one per channel). Each place's badges lead to the stores
+  with that place's tags from `site/campaigns.json`, built in `site/campaigns.py` from the bare
+  addresses in `site/stores.json` (whose validation stays strict: never put a tagged link there):
+  the home pages as channel `site-home`, the city pages as `site-city`, each `/get/<channel>/`
+  page as its channel, and `/get/` itself untagged. On a phone a `/get/` page goes straight on to
+  the phone's store; a computer sees the two badges. Google Play's link carries the tags in
+  `&referrer=` (Play Console's acquisition reports, by UTM source and UTM campaign; only visits in
+  the Play Store app count, not play.google.com in a browser). The structured data keeps the bare
+  addresses, and so does Safari's Smart App Banner: Apple documents no syntax for campaign tokens
+  there (see `app_banner` in `site/stores.py`). The pages count no one (no cookie, no analytics,
+  nothing stored); the stores count, in aggregate, in their own consoles.
+  **The App Store provider token** (only Mohamed can do this): in App Store Connect open Taqvo in
+  Analytics → Acquisition → Campaigns → **+**, name a campaign `poster`, and copy the generated
+  link. Its `pt=` number is the provider token, the same for every campaign of the account (Apple
+  shows the button only once the app has analytics data). Set it in `site/stores.json` as a string
+  of digits, `"app_store_provider_token": "123456789"`, run `python3 site/test_campaigns.py &&
+  python3 site/build.py --check`, and push. Until then every App Store link stays the bare address,
+  since a campaign token without the provider token counts nothing; from then the App Store badges
+  and `/get/` links carry `pt`, `ct=<channel>` and `mt=8`. App Store Connect shows a campaign's
+  figures only once they reach Apple's minimum (five, in its help).
+  **Adding a channel:** one line in `site/campaigns.json`. The name becomes the address
+  `taqwa.world/get/<name>/` and the App Store's campaign token, so it is at most 30 characters of
+  a-z, 0-9 and single hyphens; give it `utm_source` (where the link sits), `utm_medium` (what kind of
+  place) and `utm_campaign` (the name itself, so both consoles list the same name), all lower case.
+  The build refuses anything malformed, a name used twice, and two channels with the same three
+  tags. Run the two commands above and push; the page is live after the Pages run. A channel whose
+  address is printed or posted is never renamed or removed: its page would be gone (a 404) under
+  every poster and post that carries it.
+- **Version until production:** the name stays 1.0.0 and only the code moves (28, 29, …); see
+  `scripts/bump-version.sh`. Settings › About shows the name alone; Mohamed tells testers which
+  build they are on.
+- **Versioning for a split launch** (proposed 29 September; Mohamed decides the tag): a code
+  means the same build on both stores and only goes up (33 and 34 were cut for both). iOS 1.0.0
+  (34) is the first production release. Until Apple releases 1.0.0, a replacement build keeps
+  the name and takes the next code (1.0.0 (35)). Once 1.0.0 is live on the App Store, App Store
+  Connect needs a new version name for any new iOS release, so every later release build follows
+  the rule in `scripts/bump-version.sh` on both platforms (1.0.1 for fixes only, 1.1.0 if
+  anything visible changed): one name per code everywhere. Android's first production release
+  is whatever the closed track carries when production access comes: 1.0.0 (34) if nothing newer
+  was cut, otherwise that newer name, since Play needs only a higher code. `v1.0.0` still points
+  at 500f1e5f (1.0.0 (28), Play internal); moving it to 4af923ac, the build that reaches
+  production first, is Mohamed's call.
+
+## 2. Accounts (Mohamed, about an hour at the keyboard, then waiting)
+
+### 2a. The Google account
+
+1. In a private window → https://accounts.google.com/signup → "For my personal use" → name and
+   birthday → choose the address mohamed.abulgasem.ly@gmail.com (Google proposes alternatives if it
+   is taken) → password → phone number (SMS code) → recovery email algiriany93@gmail.com.
+2. Security → turn on **2-Step Verification** (Play Console requires it for the account owner;
+   the Google prompt on the S23 or an authenticator app both work). Add a passkey if offered.
+3. Keep this account for Taqvo only; the S23 keeps its own main account. The new account's
+   YouTube channel is where the two foreground-service demo videos go later (unlisted).
+
+### 2b. Google Play Console (25 USD once)
+
+1. https://play.google.com/console/signup, signed in as the new account → **Yourself** (a
+   personal account; an organisation would need a D-U-N-S number).
+2. Developer account details: **developer name** "Mohamed Abulgasem" (public), legal name and
+   address exactly as on the ID and the card, **contact email** support@taqwa.world (Google sends
+   a code there; it lands in Gmail), contact phone (SMS code), preferred language.
+3. "About you": no other developer accounts (the one closed in April 2024 is history), one app,
+   free, personal project.
+4. Pay the 25 USD registration with a card in the same name; the payments profile is created as
+   **Individual**. Then **verify identity**: a government photo ID (passport or driving licence),
+   sometimes a proof of address as well. Google answers by email, usually within a couple of
+   days, and nothing can be published until it does.
+5. The console shows exactly what will be public on the listing before the account is finished
+   (developer name, contact email, country); read that screen before confirming. It also asks the
+   EU trader question → non-trader.
+6. Optional: Users and permissions → invite algiriany93@gmail.com as an Admin, so the old account
+   can also sign in to the console.
+
+### 2c. Apple Account and the Developer Program (99 USD a year)
+
+1. https://account.apple.com → **Create Your Apple Account** → legal name, country of residence
+   (must match the ID and the card), birthday, email mohamed.abulgasem.ly@gmail.com, password, phone
+   (SMS code); verify the email code. Turn on **two-factor authentication** (Sign-In and Security)
+   with the phone number; the Developer Program refuses accounts without it.
+2. On the iPhone 12: install the **Apple Developer** app from the App Store → Account tab → sign
+   in with the **new** account (this does not touch the phone's own iCloud account) → **Enroll
+   Now** → Individual / Sole Proprietor → personal details as on the ID → scan the ID (and a
+   selfie if asked) → agree to the licence agreement → buy the membership. The 99 USD purchase
+   goes through the App Store on that phone, so its payment method is charged. Web enrolment
+   (https://developer.apple.com/enroll) is the fallback if the app misbehaves.
+3. If enrolment complains about a brand-new account, wait a day and retry; Apple's identity check
+   on fresh accounts is known to stall. The welcome email normally arrives within 48 hours.
+4. After the welcome email: https://appstoreconnect.apple.com → sign in → accept the Apple
+   Developer Program License Agreement if a banner asks (only the Account Holder can). A free app
+   needs no Paid Apps agreement, bank account or tax forms.
+5. Read the **Team ID** at https://developer.apple.com/account → Membership details (ten
+   characters) and pass it on; it replaces `TEAM_ID` in `iosApp/Configuration/Config.xcconfig`
+   and the widget target's team.
+6. On this Mac: Xcode → Settings → Accounts → **+** → Apple Account → sign in with the new account.
+   The account that carries LOOPDL may stay signed in, but that team is never selected for Taqvo
+   again. From then on automatic signing also works from the command line
+   (`-allowProvisioningUpdates`), and the first archive registers the bundle ids and the App Group
+   under the new team.
+
+### 2d. Testers for Google's closed test
+
+Recruit **15–20 people** with an Android phone and a Google account (12 is the minimum and the
+count must never dip below it during the 14 days). Each needs: their Gmail address on the tester
+list, one tap on the opt-in link, the app installed from Play, and to keep it installed for two
+weeks. Family and friends anywhere in the world count. Ask now; the list is needed the day the
+first bundle is uploaded.
+
+## 3. The upload key (Mohamed, two minutes)
+
+```bash
+scripts/make-upload-key.sh
+```
+
+It asks for one password (12+ characters), writes `~/keys/taqvo-upload.jks` and the git-ignored
+`keystore.properties` that `scripts/release.sh` reads, and prints the certificate fingerprint.
+Back up the `.jks` and the password in two places (password manager plus an offline copy). With
+Play App Signing, on by default for every new app, Google holds the key that signs what phones
+install and this one only signs uploads; a lost upload key is reset through Play support, which
+costs days.
+
+## 4. Built here before the uploads (nothing needs an account)
+
+- Listing copy in seven languages: title and subtitle, short description (≤ 80), full description
+  (≤ 4000), App Store promotional text (≤ 170) and keywords (≤ 100 bytes, which is how App Store
+  Connect Help states it: an Arabic or Urdu letter takes two, a Bengali one three;
+  `tools/store-listing-check.py` counts them that way), release notes for 1.0.0, review notes.
+  Mohamed reads English and Arabic; the native reviewers read the rest.
+- Screenshots per §1, plus the 512 icon (`androidApp/src/main/ic_launcher-playstore.png`)
+  and the 1024 × 500 feature graphics already in `assets/store/`.
+- Two screen recordings for Play's foreground-service declarations, recorded on the emulator on
+  16 September: `~/Downloads/Taqvo-fgs-media-playback.mp4` (a surah playing, the app left, the
+  media notification with its controls, 29 s) and `~/Downloads/Taqvo-fgs-data-sync.mp4` ("Download
+  the whole Quran", the app left, the download notification counting up, 44 s). Mohamed uploads
+  them unlisted to the new account's YouTube channel and pastes the two links into the
+  declaration form (mediaPlayback and dataSync).
+- The store build: `scripts/test.sh`, `scripts/ios-build.sh`, the bump (done for 1.0.0 (28)),
+  the iOS identifier rename and Team ID, then `scripts/release.sh` →
+  `androidApp/build/outputs/bundle/release/androidApp-release.aab` (+ APK). The APK goes on the
+  S23 once before upload. The S23 and the LoopPhone carry debug-key-signed builds, so the Play copy
+  will not install over them: uninstall first (bookmarks and tasbeeh counts are lost; backup is
+  off by design).
+- Site: `site/pages/<lang>/home.html` store buttons get their real links as each store goes live,
+  and the city pages' app sections with them (no edit there: `site/stores.json` drives both).
+
+## 5. Google Play, in console order
+
+1. **Create app**: All apps → Create app → name "Taqvo: Prayer, Quran & Qibla", default language
+   English (United Kingdom), App, Free (a free app can never become paid), tick the declarations
+   → Create.
+2. **Dashboard → Set up your app**, every answer from `docs/STORE-PRIVACY.md`: privacy policy URL;
+   App access (all functionality available without special access); Ads (no); Content rating
+   (questionnaire, category Reference/News/Educational, everything "No"); Target audience (13–15,
+   16–17, 18+; does not unintentionally appeal to children); News (no); COVID-19 (no); Data
+   safety (does not collect or share any user data); Government app (no); Financial features
+   (none); Health (none); Advertising ID (no); **Foreground service permissions** (mediaPlayback
+   and dataSync, each with a sentence from STORE-PRIVACY and the YouTube link); Store settings
+   (category Lifestyle, tags, contact email support@taqwa.world, website).
+3. **Main store listing**: title, short and full description, the 512 icon, the feature graphic
+   (`assets/store/feature-graphic-en.png`), 4–8 phone screenshots; then Manage translations →
+   Add languages for ar, fr, tr, id, ur, bn with their own text and screenshots (and the Arabic
+   feature graphic).
+4. **Internal testing** first: Testing → Internal testing → Testers (an email list with Mohamed's
+   own Gmail addresses) → Releases → Create → upload the `.aab`; on the first upload Play App
+   Signing offers a Google-generated key, accept it → Save → Review → Start rollout. The opt-in
+   link is under Testers; install on the S23 from Play and open every tab once. The
+   **pre-launch report** (real devices, crashes, accessibility) appears here too: read it.
+5. **Closed testing**: Testing → Closed testing → the default Alpha track → Testers → a list with
+   the 15–20 addresses → Releases → Create → add the same bundle from the library → Save → Review →
+   Start rollout. Copy the opt-in link from the Testers tab and send it to everyone. The dashboard
+   counts opted-in testers and days; **12 for 14 consecutive days** is the bar. Builds may be
+   updated during the fortnight without resetting the clock.
+6. **Apply for production access**: when the dashboard offers it (after the 14 days), answer the
+   questions about the test (who tested, what feedback came back, what changed). Google answers
+   within about seven days.
+7. **Production**: Production → Countries/regions → add all → Releases → Create → add the bundle
+   → release notes → Review → Start rollout (staged or 100 %, both fine). A new account's first
+   production review can take up to a week. Then the listing is live at
+   https://play.google.com/store/apps/details?id=com.taqvo.app. **Live by 8 October 2026**;
+   the site and README switched that day (§1).
+
+## 6. App Store, in App Store Connect order
+
+1. **Signing**: with the Team ID in `Config.xcconfig` and the widget target, and the new account
+   in Xcode, one device archive registers `com.taqvo.ios`, `com.taqvo.ios.widget` and the App
+   Group under the new team (visible at https://developer.apple.com/account/resources/identifiers/list).
+2. **Archive and upload**: `scripts/test.sh` and `scripts/ios-build.sh` green, then
+   `scripts/ios-release.sh archive` (the archive lands in `build/ios-archive/`, and the script
+   prints the built identifiers, team, app group and widget size back), the app record (step 3),
+   then `scripts/ios-release.sh upload`. The script signs automatically through the Apple account
+   signed into Xcode and refuses an empty or LOOPDL team. If the command-line upload is refused,
+   open the `.xcarchive` in Xcode (Window › Organizer) → Distribute App → App Store Connect →
+   Upload, automatic signing, symbols included. The build appears under TestFlight after 10–30
+   minutes of processing. Export compliance is answered by `ITSAppUsesNonExemptEncryption =
+   false`, so no encryption question appears. Tag the archived commit `ios-build-<code>`.
+3. **New app record**: My Apps → + → New App → iOS, name (§1), primary language English (U.K.),
+   bundle ID `com.taqvo.ios` from the list, SKU `taqvo-ios`, full access → Create. Done 22
+   September: Apple ID **6814975544**, so the store link is https://apps.apple.com/app/id6814975544
+   (`app_store` in `site/stores.json` at the iOS release). Build 1.0.0 (32) uploaded the same night.
+4. **App Information**: subtitle, categories Lifestyle + Reference, content rights (contains
+   third-party content, rights held: `docs/ATTRIBUTION.md`), age rating questionnaire (all None →
+   4+), standard licence agreement. Localizations: add ar, fr, tr, id (name, subtitle, privacy
+   URL per language). App Store Connect offered no Urdu or Bengali listing in September 2026, so
+   those users see the English one; the app itself still opens in their language. Apple listed
+   both as App Store languages on 31 March 2026, but developers reported that adding them failed
+   ("The language specified is not listed for localization"); look again at every new version,
+   since `ur.md` and `bn.md` and their screenshots are ready.
+5. **Pricing and Availability**: Free, all countries and regions. **App Privacy**: Get started →
+   no data collected → Publish ("Data Not Collected"). **Trader status** when the banner asks:
+   non-trader.
+   **App Accessibility** (app level, voluntary, not tied to a version, so it can wait): declare
+   **Dark Interface only for now**, and only after walking the common tasks in Dark Mode on an
+   iPhone running the submitted build: Prayer with the ⓘ card, About these times, Settings ›
+   Prayer times › Timetable and Match my mosque; the Quran reader, the Mushaf and recitation;
+   Qibla; Tasbeeh; Settings; and the Home Screen and Lock Screen widgets. Declare nothing else
+   yet (launch audit of 29 September, §6): VoiceOver and Voice Control wait for the accessibility
+   round (unnamed controls, a silent Mushaf page), Larger Text for the Mushaf at large sizes,
+   Differentiate Without Color Alone and Sufficient Contrast for their fixes, Reduced Motion and
+   Captions for a device check; Audio Descriptions do not apply (no video).
+6. **Version 1.0.0 page**: screenshots (the 6.9-inch set per language; a localisation without its
+   own falls back to English), promotional text, description, keywords, support URL
+   https://taqwa.world/support/, marketing URL https://taqwa.world, copyright
+   "2026 Mohamed Abulgasem", App Review contact (name, phone, email), sign-in required: No,
+   **App Review Information › Notes** from `docs/store/app-review/2026-10-02-notes-1.0.0-35.txt` (the
+   Guideline 2.1 answers, which Apple asked to find there on every submission), select the
+   processed build, and under Version Release choose **Manually release this version**. A first
+   version has no "What's New" field, so Play's release notes have no App Store twin until the
+   next version.
+   The promotional text is the one field that can change at any time, even after release, with
+   no review.
+7. **TestFlight** before submitting: TestFlight → Internal Testing → a group with Mohamed as
+   tester → the TestFlight app on the iPhone 12 installs the exact store build. Caution: TestFlight
+   uses the Apple Account signed into the phone's App Store, and a tester links to one Apple
+   Account only — accepting Mohamed's invitation on the work iPhone (signed in with a work Apple
+   Account) would bind that account to his tester slot, and undoing it can take up to 90 days.
+   Without TestFlight, `build/ios-archive/dev-<v>-<code>/` holds the archive re-signed for
+   development (`xcodebuild -exportArchive`, method `debugging`): the same compiled binary as the
+   upload, installable on a registered phone with `xcrun devicectl device install app`. This is the first
+   hardware run of the whole app on iOS; the simulator cannot prove the compass heading, the
+   lock-screen controls or the widget timelines, so check those three.
+8. **Submit for Review** → Waiting for Review → In Review → Ready for Distribution, typically one
+   to three days. A new developer account first gets "Guideline 2.1 - Information Needed - New
+   App Submission" (it happened on 23 September 2026, answered and resubmitted on 24 September
+   with the recording attached): a screen recording on a physical iPhone on
+   the latest iOS, starting at launch, plus six written answers, sent as a reply (Resolve → Reply
+   to App Review → Attach File) and pasted into App Review Information → Notes, then Edit → Add for
+   Review → Resubmit to App Review with the same build. The answers are in
+   `docs/store/app-review/2026-09-23-guideline-2.1-reply.txt` (3,814 of the 4,000 characters both
+   fields allow), kept as the record of that reply; the Notes, last brought up to date for build 35, are
+   `docs/store/app-review/2026-10-02-notes-1.0.0-35.txt` (3,969 bytes; App Store Connect Help gives
+   the Notes field 4,000 bytes). Keep Notes in step with the app on every later submission.
+   "Metadata Rejected" or "Information Needed" is answered in App Store Connect's
+   App Review messages without a new build; a binary rejection needs a fix, the next build number
+   (35, 36, …, shared with Android) and a resubmission.
+9. **Replacing an approved build** (done on 29 September: 1.0.0 (32) was approved but calculates
+   with the old presets, so it was never released, and 1.0.0 (34) goes in its place; 33 stays
+   unused in TestFlight). It works only while the approved version waits in Pending Developer
+   Release, which is what manual release is for; a version already released cannot be withdrawn
+   this way and needs a new version name instead.
+   1. On the version page, **Cancel this release**. The version returns to Developer Rejected,
+      and every field on it is editable again, as are the name and subtitle under App Information.
+   2. Upload the replacement: `scripts/ios-release.sh archive`, then `scripts/ios-release.sh
+      upload`, and wait until TestFlight shows the build processed.
+   3. Edit whatever metadata changed: App Information (name, subtitle), then per localisation the
+      promotional text, description, keywords and screenshots, then App Review Information ›
+      Notes. Every value is in `docs/store/listing/<lang>.md` and `docs/store/app-review/`, and
+      `python3 tools/store-listing-check.py` counts them against the limits.
+   4. Under Build, remove the old build (the remove button beside it) and **Add Build** → the new
+      one.
+   5. Version Release: **Manually release this version**. Save.
+   6. **Add for Review**, then **Submit to App Review**. Review starts again from Waiting for
+      Review.
+10. **At the iOS release** (after approval, when Mohamed presses Release This Version): check the
+    live page at https://apps.apple.com/app/id6814975544, then set `app_store` in
+    `site/stores.json`, build and push the site (§1, "The site's store badges"), re-word the site's
+    beta heading for Android (§1, "Recruiting testers"), and update the README's "Get it" section.
+    Nothing Android-side changes until production access.
+
+## 7. Cost and calendar
+
+| | Google Play | App Store |
+|---|---|---|
+| Fee | 25 USD once | 99 USD every year |
+| Account ready | 1–3 days (identity check) | 1–2 days (enrolment) |
+| Before publishing | closed test 14 days, then production access ≤ 7 days | TestFlight, no waiting period |
+| Review | 1–7 days | 1–3 days |
+| Live, starting today | 3–5 weeks | about a week |
+
+## 8. Already in the code (listed so nobody re-checks)
+
+- **targetSdk 36** (`gradle/libs.versions.toml`), the level Play requires for new apps since
+  31 August 2026; verified on an Android 16 emulator and on the S23.
+- **Release signing** reads `keystore.properties` (git-ignored; `scripts/make-upload-key.sh`
+  writes it); `scripts/release.sh` builds the signed App Bundle and APK with the R8 mapping
+  inside the bundle.
+- **Prayer-time stamps**: `scripts/release.sh` and `scripts/ios-release.sh` both run
+  `./gradlew -p tools/timetables checkStamps` first and refuse to build on a stale or red stamp
+  (spec §5, ruling R86).
+- **Manifest**: `MY_PACKAGE_REPLACED` re-arms prayer alarms after every update; `USE_EXACT_ALARM`
+  removed, `SCHEDULE_EXACT_ALARM` kept with an in-app route to "Alarms & reminders"; location and
+  compass hardware optional; `localeConfig` lists the seven languages; backup opted out twice
+  (`allowBackup`, `dataExtractionRules`); dark window background at launch.
+- **iOS**: `PrivacyInfo.xcprivacy` in the app and the widget extension; `InfoPlist.strings` in the
+  seven languages; iPhone-only (`TARGETED_DEVICE_FAMILY 1`, `tools/configure-store-targets.rb`);
+  `arm64`; export compliance answered in `Info.plist`.
+- **Content and licences**: `NOTICE` and `docs/ATTRIBUTION.md` say the GPL covers the code only;
+  the Manrope OFL text is in `docs/licences/` (and beside the fonts the site serves itself, which
+  `site/build.py` copies from the app); the Mixkit source clip is no longer in the
+  repository; the privacy policy is live at taqwa.world in seven languages and the About screen
+  opens it.
+- **Store assets in the repo**: 512 px icon `androidApp/src/main/ic_launcher-playstore.png`;
+  feature graphics `assets/store/feature-graphic-{en,ar}.png` (1024 × 500, `tools/feature-graphic.py`).
+- **Store answers**: `docs/STORE-PRIVACY.md` has every Data safety, App content and App Privacy
+  answer with the reason.
+
+## 9. After launch, or when time allows (from the audits, none blocks a submission)
+
+- A reciter withdrawn from the catalogue leaves their downloads on the phone with no card to
+  delete them from (`RecitationController.allDownloaded` is catalogue-bounded).
+- A phone with under ~25 MB free crashes on first launch while installing the Quran database
+  (both platforms throw rather than showing "free some space").
+- Android: with the 5-minute reminder on and the phone in deep Doze, the adhan can arrive up to
+  4 minutes late (one allow-while-idle alarm per 9 minutes); `setAlarmClock()` for the prayer
+  entries would fix it at the cost of an alarm icon in the status bar.
+- iOS: the widget timeline is reloaded about once a minute while the Prayer screen is open
+  (the countdown minute is part of the change key); WidgetKit may throttle.
+- iOS: a `CLLocationManager` is retained per Qibla visit (small leak); notification categories
+  and actions are not registered (no "snooze"); the whole-Quran download's 6-hour daily data-sync
+  budget on Android 15+ has not been exercised on a slow connection.
+- `androidx.activity` 1.9.3 predates predictive-back polish; back works but without the system's
+  back-to-home animation.
+- The Mixkit WAV remains in git history from before the repository was public; purging history
+  would rewrite every clone, so it was left.
+- Surah meanings and city regions are English in every language (data, not strings); Urdu and
+  Bengali still deserve a human native read.
+
+## 10. What the store-readiness sweep verified (13 September 2026), and where
+
+- Android 16 emulator, release build, targetSdk 36: launch, tab and reader back navigation, per-app
+  Arabic through `cmd locale`, exact alarms present in `dumpsys alarm`, no crashes in logcat.
+- S23 (Android 16): installed and launched.
+- Release APK: 16 KB page-size alignment check passes; only two tiny AndroidX native libraries;
+  R8 mapping and baseline profile inside the bundle.
+- iOS simulator build: both privacy manifests and the localised `InfoPlist.strings` present in the
+  bundle, `UIDeviceFamily` 1, widget extension 3 MB.
+- Lint (release): no errors; the remaining warnings are icon-shape notes on legacy PNGs the
+  adaptive icon supersedes, dependency-update notices, and deliberate choices already commented
+  in the build file.

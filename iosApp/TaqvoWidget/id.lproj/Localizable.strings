@@ -1,0 +1,30 @@
+/* The ayah widget as it appears in the widget gallery (design spec §7). */
+"ayah_widget_name" = "Ayat hari ini";
+"ayah_widget_description" = "Ayat hari ini beserta terjemahannya.";
+
+/* Shown on the card until the app has run once and written the pool mirror (design spec §2). */
+"ayah_widget_placeholder" = "Buka Taqvo sekali untuk memuat ayat hari ini";
+
+/* Spoken only: the ayah widget's reference for VoiceOver. %1$@ the surah, %2$@ the ayah number. */
+"ayah_widget_a11y_reference" = "%1$@, ayat %2$@";
+
+/* The two prayer widgets as they appear in the widget gallery. The Home Screen widget is listed under
+   the name its card in Settings › Widgets gives it (widgets_prayer_name), so that the steps there
+   name what the gallery shows; tools/i18n-check.py holds the two together. */
+"home_widget_name" = "Waktu salat";
+"home_widget_description" = "Salat berikutnya, hitung mundur, dan waktu salat hari ini.";
+"lock_widget_name" = "Taqvo Layar Terkunci";
+"lock_widget_description" = "Salat berikutnya dalam sekilas pandang.";
+
+/* Shown on the prayer cards until the app has run once and written the snapshot mirror. */
+"prayer_widget_placeholder_title" = "Taqvo";
+"prayer_widget_placeholder_body" = "Buka Taqvo untuk memuat waktu salat Anda.";
+
+/* The prayer after the next one on the rectangular complication; %@ is its display name. */
+"lock_widget_then" = "lalu %@";
+
+/* The daily-dua widget in the gallery, its placeholder until the app has run once, and its reference (%@ the number in Hisn al-Muslim). */
+"dua_widget_name" = "Doa hari ini";
+"dua_widget_description" = "Doa hari ini, beserta terjemahannya.";
+"dua_widget_placeholder" = "Buka Taqvo sekali untuk memuat doa hari ini";
+"dua_widget_reference" = "Hisnul Muslim %@";

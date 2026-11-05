@@ -1,0 +1,225 @@
+package com.taqvo.app.notifications
+
+import com.taqvo.app.domain.AdhanVoice
+import com.taqvo.app.domain.Prayer
+import com.taqvo.app.domain.PrayerSound
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
+
+class NotificationChannelsTest {
+
+    @Test
+    fun changingTheSoundProducesADifferentChannelId() {
+        assertNotEquals(
+            NotificationChannels.channelId(Prayer.FAJR, PrayerSound.TAKBIR),
+            NotificationChannels.channelId(Prayer.FAJR, PrayerSound.ADHAN),
+        )
+    }
+
+    @Test
+    fun theSamePrayerAndSoundAlwaysProduceTheSameId() {
+        assertEquals(
+            NotificationChannels.channelId(Prayer.ISHA, PrayerSound.NOTIFICATION),
+            NotificationChannels.channelId(Prayer.ISHA, PrayerSound.NOTIFICATION),
+        )
+    }
+
+    @Test
+    fun differentPrayersWithTheSameSoundStillGetDifferentChannels() {
+        assertNotEquals(
+            NotificationChannels.channelId(Prayer.FAJR, PrayerSound.TAKBIR),
+            NotificationChannels.channelId(Prayer.DHUHR, PrayerSound.TAKBIR),
+        )
+    }
+
+    @Test
+    fun allChannelIdsForCoversEverySoundExactlyOnce() {
+        val ids = NotificationChannels.allChannelIdsFor(Prayer.MAGHRIB)
+        PrayerSound.entries.forEach { sound ->
+            assertEquals(1, ids.count { it == NotificationChannels.channelId(Prayer.MAGHRIB, sound) }, "$sound")
+        }
+    }
+
+    // The whole upgrade story: a user who never opens the new setting must keep the channels they
+    // already have, which means the original voice has to spell every id exactly as the
+    // voice-less build did. These literals are that build's output, written out rather than
+    // derived, so a refactor of the id format cannot quietly agree with itself.
+    @Test
+    fun theOriginalVoiceProducesExactlyTheChannelIdsTheAppAlreadyShipped() {
+        assertEquals("prayer_fajr_silent", NotificationChannels.channelId(Prayer.FAJR, PrayerSound.SILENT))
+        assertEquals("prayer_fajr_notification_chime3", NotificationChannels.channelId(Prayer.FAJR, PrayerSound.NOTIFICATION))
+        assertEquals("prayer_fajr_takbir", NotificationChannels.channelId(Prayer.FAJR, PrayerSound.TAKBIR))
+        // 1.5.0: Android plays the whole adhan, a new sound, so the Adhan level has new ids.
+        assertEquals("prayer_fajr_adhan_full", NotificationChannels.channelId(Prayer.FAJR, PrayerSound.ADHAN))
+        PrayerSound.entries.forEach { sound ->
+            assertEquals(
+                NotificationChannels.channelId(Prayer.ISHA, sound),
+                NotificationChannels.channelId(Prayer.ISHA, sound, AdhanVoice.ORIGINAL),
+                "$sound",
+            )
+        }
+    }
+
+    @Test
+    fun anotherVoiceSuffixesTheIdOfTheTwoLevelsThatAreARecording() {
+        assertEquals("prayer_asr_takbir_azeez", NotificationChannels.channelId(Prayer.ASR, PrayerSound.TAKBIR, AdhanVoice.AZEEZ))
+        assertEquals("prayer_asr_adhan_azemi_full", NotificationChannels.channelId(Prayer.ASR, PrayerSound.ADHAN, AdhanVoice.AZEMI))
+    }
+
+    // Silent has no sound and the chime is the same clip whichever adhan was picked, so neither
+    // may fork into one channel per voice.
+    @Test
+    fun silentAndTheChimeKeepOneChannelAcrossEveryVoice() {
+        listOf(PrayerSound.SILENT, PrayerSound.NOTIFICATION).forEach { sound ->
+            val ids = AdhanVoice.entries.map { NotificationChannels.channelId(Prayer.DHUHR, sound, it) }
+            assertEquals(1, ids.toSet().size, "$sound: $ids")
+        }
+    }
+
+    @Test
+    fun everyPrayerSoundAndVoiceCombinationGetsItsOwnChannel() {
+        val voiced = listOf(PrayerSound.TAKBIR, PrayerSound.ADHAN)
+        val ids = voiced.flatMap { sound ->
+            AdhanVoice.entries.map { NotificationChannels.channelId(Prayer.ISHA, sound, it) }
+        }
+        assertEquals(voiced.size * AdhanVoice.entries.size, ids.toSet().size, "$ids")
+    }
+
+    // A channel the sweep cannot name is a channel the user cannot get rid of.
+    @Test
+    fun allChannelIdsForContainsEveryIdChannelIdCanProduce() {
+        Prayer.entries.forEach { prayer ->
+            val all = NotificationChannels.allChannelIdsFor(prayer)
+            PrayerSound.entries.forEach { sound ->
+                AdhanVoice.entries.forEach { voice ->
+                    val id = NotificationChannels.channelId(prayer, sound, voice)
+                    assertEquals(1, all.count { it == id }, "$prayer $sound $voice -> $id")
+                }
+            }
+        }
+    }
+
+    // The Notification level has carried four sounds under four ids: the phone's default tone,
+    // the 2.4 s chime, the six-second bell motif and the Mixkit announce tone. The scheduler
+    // deletes whatever is not live, so
+    // every superseded id has to be in the set for an upgrade to drop it, and the live id must
+    // differ from both or Android would keep an old sound under an old channel.
+    @Test
+    fun theLiveChimeChannelReplacesBothSupersededNotificationChannels() {
+        val ids = NotificationChannels.allChannelIdsFor(Prayer.MAGHRIB)
+        val live = NotificationChannels.channelId(Prayer.MAGHRIB, PrayerSound.NOTIFICATION)
+        assertEquals("prayer_maghrib_notification_chime3", live)
+        listOf("prayer_maghrib_notification", "prayer_maghrib_notification_chime", "prayer_maghrib_notification_chime2").forEach { stale ->
+            assertNotEquals(stale, live)
+            assertEquals(1, ids.count { it == stale }, stale)
+        }
+        // Four sounds, of which two fork per voice, plus the three retired chime ids and every
+        // voice's clip-era Adhan id.
+        val voicedExtras = 2 * (AdhanVoice.entries.size - 1)
+        assertEquals(PrayerSound.entries.size + voicedExtras + 3 + AdhanVoice.entries.size, ids.toSet().size)
+        AdhanVoice.entries.forEach { voice ->
+            val clipEra = NotificationChannels.channelId(Prayer.MAGHRIB, PrayerSound.ADHAN, voice).removeSuffix("_full")
+            assertTrue(clipEra in ids, clipEra)
+        }
+    }
+
+    @Test
+    fun staleNotificationIdsAreExactlyTheSupersededOnesAndNeverTheLiveOne() {
+        val stale = NotificationChannels.staleNotificationIds(Prayer.FAJR)
+        assertEquals(listOf("prayer_fajr_notification", "prayer_fajr_notification_chime", "prayer_fajr_notification_chime2"), stale)
+        assertTrue(NotificationChannels.channelId(Prayer.FAJR, PrayerSound.NOTIFICATION) !in stale)
+        assertTrue(stale.all { it in NotificationChannels.allChannelIdsFor(Prayer.FAJR) })
+    }
+
+    @Test
+    fun tahajjudHasChannelsOfItsOwnAndNeverFajrs() {
+        val id = NotificationChannels.channelId(Prayer.FAJR, PrayerSound.NOTIFICATION, kind = NotificationKind.TAHAJJUD)
+        assertEquals("tahajjud_notification_chime3", id)
+        assertTrue(id !in NotificationChannels.allChannelIdsFor(Prayer.FAJR))
+        assertTrue(id in NotificationChannels.allTahajjudChannelIds())
+    }
+
+    @Test
+    fun aReminderStillRidesItsPrayersChannel() {
+        assertEquals(
+            NotificationChannels.channelId(Prayer.ASR, PrayerSound.NOTIFICATION),
+            NotificationChannels.channelId(Prayer.ASR, PrayerSound.NOTIFICATION, kind = NotificationKind.REMINDER),
+        )
+    }
+
+    @Test
+    fun everyTahajjudChannelIsOneTheSweepCanDelete() {
+        val all = NotificationChannels.allTahajjudChannelIds()
+        PrayerSound.entries.forEach { sound ->
+            AdhanVoice.entries.forEach { voice ->
+                assertTrue(NotificationChannels.channelId(Prayer.FAJR, sound, voice, NotificationKind.TAHAJJUD) in all)
+            }
+        }
+    }
+
+    @Test
+    fun `the adhkar reminder has one channel of its own for morning and evening`() {
+        val morning = NotificationChannels.channelId(Prayer.FAJR, PrayerSound.NOTIFICATION, kind = NotificationKind.ADHKAR_MORNING)
+        assertEquals("adhkar_notification_chime3", morning)
+        assertEquals(morning, NotificationChannels.channelId(Prayer.ASR, PrayerSound.NOTIFICATION, kind = NotificationKind.ADHKAR_EVENING))
+        assertEquals("adhkar_silent", NotificationChannels.channelId(Prayer.ASR, PrayerSound.SILENT, kind = NotificationKind.ADHKAR_EVENING))
+        assertEquals("adhkar_takbir_azeez", NotificationChannels.channelId(Prayer.FAJR, PrayerSound.TAKBIR, AdhanVoice.AZEEZ, NotificationKind.ADHKAR_MORNING))
+        val prayers = NotificationChannels.allChannelIdsFor(Prayer.FAJR) + NotificationChannels.allChannelIdsFor(Prayer.ASR)
+        assertTrue(NotificationChannels.allAdhkarChannelIds().none { it in prayers || it in NotificationChannels.allTahajjudChannelIds() })
+    }
+
+    @Test
+    fun `every adhkar channel is one the sweep can delete`() {
+        val all = NotificationChannels.allAdhkarChannelIds()
+        for (kind in listOf(NotificationKind.ADHKAR_MORNING, NotificationKind.ADHKAR_EVENING)) {
+            for (prayer in listOf(Prayer.FAJR, Prayer.ASR)) {
+                PrayerSound.entries.forEach { sound ->
+                    AdhanVoice.entries.forEach { voice ->
+                        assertTrue(NotificationChannels.channelId(prayer, sound, voice, kind) in all, "$kind $prayer $sound $voice")
+                    }
+                }
+            }
+        }
+    }
+
+    // Duha and Iqama spec §3.4: each has channels of its own, so either can be silenced in the
+    // system's list without silencing an adhan; all five prayers' iqamas share one.
+    @Test
+    fun `Duha and the iqama have channels of their own`() {
+        val duha = NotificationChannels.channelId(Prayer.SUNRISE, PrayerSound.NOTIFICATION, kind = NotificationKind.DUHA_BEST)
+        assertEquals("duha_notification_chime3", duha)
+        assertEquals(duha, NotificationChannels.channelId(Prayer.SUNRISE, PrayerSound.NOTIFICATION, kind = NotificationKind.DUHA_START))
+        assertEquals("duha_silent", NotificationChannels.channelId(Prayer.SUNRISE, PrayerSound.SILENT, kind = NotificationKind.DUHA_START))
+        assertEquals("iqama_notification_chime3", NotificationChannels.channelId(Prayer.FAJR, PrayerSound.NOTIFICATION, kind = NotificationKind.IQAMA))
+        assertEquals("iqama_takbir_azeez", NotificationChannels.channelId(Prayer.ISHA, PrayerSound.TAKBIR, AdhanVoice.AZEEZ, NotificationKind.IQAMA))
+        val iqamas = Prayer.entries.map { NotificationChannels.channelId(it, PrayerSound.NOTIFICATION, kind = NotificationKind.IQAMA) }
+        assertEquals(1, iqamas.toSet().size, "$iqamas")
+
+        val others = Prayer.entries.flatMap { NotificationChannels.allChannelIdsFor(it) } +
+            NotificationChannels.allTahajjudChannelIds() + NotificationChannels.allAdhkarChannelIds()
+        val allDuha = NotificationChannels.allDuhaChannelIds()
+        val allIqama = NotificationChannels.allIqamaChannelIds()
+        assertTrue(allDuha.none { it in others || it in allIqama }, "$allDuha")
+        assertTrue(allIqama.none { it in others }, "$allIqama")
+        assertEquals(allDuha.size, allDuha.toSet().size)
+        assertEquals(allIqama.size, allIqama.toSet().size)
+    }
+
+    @Test
+    fun `every Duha and iqama channel is one the sweep can delete`() {
+        val allDuha = NotificationChannels.allDuhaChannelIds()
+        val allIqama = NotificationChannels.allIqamaChannelIds()
+        for (kind in listOf(NotificationKind.DUHA_BEST, NotificationKind.DUHA_START, NotificationKind.IQAMA)) {
+            val all = if (kind == NotificationKind.IQAMA) allIqama else allDuha
+            for (prayer in Prayer.entries) {
+                PrayerSound.entries.forEach { sound ->
+                    AdhanVoice.entries.forEach { voice ->
+                        assertTrue(NotificationChannels.channelId(prayer, sound, voice, kind) in all, "$kind $prayer $sound $voice")
+                    }
+                }
+            }
+        }
+    }
+}

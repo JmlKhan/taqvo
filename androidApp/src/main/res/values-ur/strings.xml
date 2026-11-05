@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">تقفو</string>
+    <string name="widget_small_label">اگلی نماز</string>
+    <string name="widget_medium_label">نماز کے اوقات</string>
+    <string name="widget_ayah_label">آج کی آیت</string>
+    <string name="widget_small_description">اگلی نماز اور چلتی ہوئی الٹی گنتی۔</string>
+    <string name="widget_medium_description">اگلی نماز، الٹی گنتی اور آج کے اوقات۔</string>
+    <string name="widget_ayah_description">آج کی آیت، اپنے ترجمے کے ساتھ۔</string>
+    <!-- Spoken only: the ayah widget's reference for a screen reader. %1$s the surah, %2$s the ayah number. -->
+    <string name="widget_ayah_a11y_reference">%1$s، آیت %2$s</string>
+    <!-- The daily-dua widget's picker title and line, and its reference; %1$s the number in Hisn al-Muslim. -->
+    <string name="widget_dua_label">آج کی دعا</string>
+    <string name="widget_dua_description">آج کی دعا، ترجمے کے ساتھ۔</string>
+    <string name="widget_dua_reference">حصن المسلم %1$s</string>
+</resources>

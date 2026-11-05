@@ -1,0 +1,383 @@
+{
+  "entry": "at.iggo",
+  "class": "D (authority)",
+  "engineHash": "acd4cad6dd32ae7a",
+  "broken": 0,
+  "places": 1,
+  "first": "2026-03-01",
+  "last": "2026-12-31",
+  "checked": ["2026-03-01..2026-03-31", "2026-05-01..2026-07-31", "2026-09-01..2026-09-30", "2026-12-01..2026-12-31"],
+  "placeDays": 184,
+  "heldOutDays": 92,
+  "ramadanDays": 19,
+  "outOfOrderDays": 0,
+  "unreadableLines": 0,
+  "repeatedLines": 0,
+  "events": {
+    "fajr": {
+      "checked": 184,
+      "early": 0,
+      "late": {
+        "0": 73,
+        "1": 63,
+        "2": 35,
+        "3+": 13
+      },
+      "exactShare": 0.3967,
+      "worstLate": 3,
+      "lateLimit": 4,
+      "lateLimitFrom": "unit at.iggo",
+      "overLimit": 0
+    },
+    "sunrise": {
+      "checked": 184,
+      "lateEnd": 0,
+      "late": {
+        "0": 166,
+        "1": 18,
+        "2": 0,
+        "3+": 0
+      },
+      "exactShare": 0.9022,
+      "worstLate": 1,
+      "lateLimit": 3,
+      "lateLimitFrom": "class D (authority)",
+      "overLimit": 0
+    },
+    "dhuhr": {
+      "checked": 184,
+      "early": 0,
+      "late": {
+        "0": 156,
+        "1": 28,
+        "2": 0,
+        "3+": 0
+      },
+      "exactShare": 0.8478,
+      "worstLate": 1,
+      "lateLimit": 3,
+      "lateLimitFrom": "class D (authority)",
+      "overLimit": 0
+    },
+    "asrStandard": {
+      "checked": 184,
+      "early": 0,
+      "late": {
+        "0": 168,
+        "1": 16,
+        "2": 0,
+        "3+": 0
+      },
+      "exactShare": 0.913,
+      "worstLate": 1,
+      "lateLimit": 3,
+      "lateLimitFrom": "class D (authority)",
+      "overLimit": 0
+    },
+    "maghrib": {
+      "checked": 184,
+      "early": 0,
+      "late": {
+        "0": 167,
+        "1": 17,
+        "2": 0,
+        "3+": 0
+      },
+      "exactShare": 0.9076,
+      "worstLate": 1,
+      "lateLimit": 3,
+      "lateLimitFrom": "class D (authority)",
+      "overLimit": 0
+    },
+    "isha": {
+      "checked": 184,
+      "early": 0,
+      "late": {
+        "0": 78,
+        "1": 63,
+        "2": 31,
+        "3+": 12
+      },
+      "exactShare": 0.4239,
+      "worstLate": 3,
+      "lateLimit": 4,
+      "lateLimitFrom": "unit at.iggo",
+      "overLimit": 0
+    },
+    "endOfEating": {
+      "checked": 184,
+      "lateEnd": 0,
+      "late": {
+        "0": 56,
+        "1": 70,
+        "2": 36,
+        "3+": 22
+      },
+      "exactShare": 0.3043,
+      "worstLate": 4,
+      "lateLimit": 4,
+      "lateLimitFrom": "unit at.iggo",
+      "overLimit": 0
+    }
+  },
+  "heldOut": {
+    "placeDays": 92,
+    "ramadanDays": 0,
+    "events": {
+      "fajr": {
+        "checked": 92,
+        "early": 0,
+        "late": {
+          "0": 43,
+          "1": 25,
+          "2": 14,
+          "3+": 10
+        },
+        "exactShare": 0.4674,
+        "worstLate": 3,
+        "lateLimit": 4,
+        "lateLimitFrom": "unit at.iggo",
+        "overLimit": 0
+      },
+      "sunrise": {
+        "checked": 92,
+        "lateEnd": 0,
+        "late": {
+          "0": 87,
+          "1": 5,
+          "2": 0,
+          "3+": 0
+        },
+        "exactShare": 0.9457,
+        "worstLate": 1,
+        "lateLimit": 3,
+        "lateLimitFrom": "class D (authority)",
+        "overLimit": 0
+      },
+      "dhuhr": {
+        "checked": 92,
+        "early": 0,
+        "late": {
+          "0": 75,
+          "1": 17,
+          "2": 0,
+          "3+": 0
+        },
+        "exactShare": 0.8152,
+        "worstLate": 1,
+        "lateLimit": 3,
+        "lateLimitFrom": "class D (authority)",
+        "overLimit": 0
+      },
+      "asrStandard": {
+        "checked": 92,
+        "early": 0,
+        "late": {
+          "0": 83,
+          "1": 9,
+          "2": 0,
+          "3+": 0
+        },
+        "exactShare": 0.9022,
+        "worstLate": 1,
+        "lateLimit": 3,
+        "lateLimitFrom": "class D (authority)",
+        "overLimit": 0
+      },
+      "maghrib": {
+        "checked": 92,
+        "early": 0,
+        "late": {
+          "0": 81,
+          "1": 11,
+          "2": 0,
+          "3+": 0
+        },
+        "exactShare": 0.8804,
+        "worstLate": 1,
+        "lateLimit": 3,
+        "lateLimitFrom": "class D (authority)",
+        "overLimit": 0
+      },
+      "isha": {
+        "checked": 92,
+        "early": 0,
+        "late": {
+          "0": 50,
+          "1": 31,
+          "2": 11,
+          "3+": 0
+        },
+        "exactShare": 0.5435,
+        "worstLate": 2,
+        "lateLimit": 4,
+        "lateLimitFrom": "unit at.iggo",
+        "overLimit": 0
+      },
+      "endOfEating": {
+        "checked": 92,
+        "lateEnd": 0,
+        "late": {
+          "0": 36,
+          "1": 37,
+          "2": 19,
+          "3+": 0
+        },
+        "exactShare": 0.3913,
+        "worstLate": 2,
+        "lateLimit": 4,
+        "lateLimitFrom": "unit at.iggo",
+        "overLimit": 0
+      }
+    }
+  },
+  "lateLimits": {
+    "class D (authority): 3 min": {
+      "events": ["sunrise", "dhuhr", "asrStandard", "maghrib"]
+    },
+    "unit at.iggo: 4 min (endOfEating)": {
+      "reason": "In spring Diyanet's takdir moves the dawn by several minutes a day here, in steps; the end of eating takes the earliest of three neighbouring days so that the leap cycle cannot make it late, and so comes before the printed time by as much as a day's step on those days.",
+      "events": ["endOfEating"]
+    },
+    "unit at.iggo: 4 min (fajr)": {
+      "reason": "In spring Diyanet's takdir moves Fajr by several minutes a day here, in steps; its curve takes the latest of three neighbouring days so that the leap cycle cannot make Fajr early, and so runs after the printed time by as much as a day's step on those days. On its takdir days the curve is the latest moment Diyanet's own could be under its rounding to the minute, so that the next year's rounding cannot make it early, and shows the printed minute or the one after.",
+      "events": ["fajr"]
+    },
+    "unit at.iggo: 4 min (isha)": {
+      "reason": "In spring and in August Diyanet's takdir moves Isha by several minutes a day here, in steps; its curve takes the latest of three neighbouring days so that the leap cycle cannot make Isha early, and so runs after the printed time by as much as a day's step on those days. On its takdir days the curve is the latest moment Diyanet's own could be under its rounding to the minute, so that the next year's rounding cannot make it early, and shows the printed minute or the one after.",
+      "events": ["isha"]
+    }
+  },
+  "units": {
+    "at.iggo": {
+      "name": "Wien",
+      "placeDays": 184,
+      "checked": ["2026-03-01..2026-03-31", "2026-05-01..2026-07-31", "2026-09-01..2026-09-30", "2026-12-01..2026-12-31"],
+      "broken": 0,
+      "lateLimits": {
+        "class D (authority): 3 min": {
+          "events": ["sunrise", "dhuhr", "asrStandard", "maghrib"]
+        },
+        "unit at.iggo: 4 min (endOfEating)": {
+          "reason": "In spring Diyanet's takdir moves the dawn by several minutes a day here, in steps; the end of eating takes the earliest of three neighbouring days so that the leap cycle cannot make it late, and so comes before the printed time by as much as a day's step on those days.",
+          "events": ["endOfEating"]
+        },
+        "unit at.iggo: 4 min (fajr)": {
+          "reason": "In spring Diyanet's takdir moves Fajr by several minutes a day here, in steps; its curve takes the latest of three neighbouring days so that the leap cycle cannot make Fajr early, and so runs after the printed time by as much as a day's step on those days. On its takdir days the curve is the latest moment Diyanet's own could be under its rounding to the minute, so that the next year's rounding cannot make it early, and shows the printed minute or the one after.",
+          "events": ["fajr"]
+        },
+        "unit at.iggo: 4 min (isha)": {
+          "reason": "In spring and in August Diyanet's takdir moves Isha by several minutes a day here, in steps; its curve takes the latest of three neighbouring days so that the leap cycle cannot make Isha early, and so runs after the printed time by as much as a day's step on those days. On its takdir days the curve is the latest moment Diyanet's own could be under its rounding to the minute, so that the next year's rounding cannot make it early, and shows the printed minute or the one after.",
+          "events": ["isha"]
+        }
+      },
+      "events": {
+        "fajr": {
+          "checked": 184,
+          "early": 0,
+          "late": {
+            "0": 73,
+            "1": 63,
+            "2": 35,
+            "3+": 13
+          },
+          "exactShare": 0.3967,
+          "worstLate": 3,
+          "lateLimit": 4,
+          "lateLimitFrom": "unit at.iggo",
+          "overLimit": 0
+        },
+        "sunrise": {
+          "checked": 184,
+          "lateEnd": 0,
+          "late": {
+            "0": 166,
+            "1": 18,
+            "2": 0,
+            "3+": 0
+          },
+          "exactShare": 0.9022,
+          "worstLate": 1,
+          "lateLimit": 3,
+          "lateLimitFrom": "class D (authority)",
+          "overLimit": 0
+        },
+        "dhuhr": {
+          "checked": 184,
+          "early": 0,
+          "late": {
+            "0": 156,
+            "1": 28,
+            "2": 0,
+            "3+": 0
+          },
+          "exactShare": 0.8478,
+          "worstLate": 1,
+          "lateLimit": 3,
+          "lateLimitFrom": "class D (authority)",
+          "overLimit": 0
+        },
+        "asrStandard": {
+          "checked": 184,
+          "early": 0,
+          "late": {
+            "0": 168,
+            "1": 16,
+            "2": 0,
+            "3+": 0
+          },
+          "exactShare": 0.913,
+          "worstLate": 1,
+          "lateLimit": 3,
+          "lateLimitFrom": "class D (authority)",
+          "overLimit": 0
+        },
+        "maghrib": {
+          "checked": 184,
+          "early": 0,
+          "late": {
+            "0": 167,
+            "1": 17,
+            "2": 0,
+            "3+": 0
+          },
+          "exactShare": 0.9076,
+          "worstLate": 1,
+          "lateLimit": 3,
+          "lateLimitFrom": "class D (authority)",
+          "overLimit": 0
+        },
+        "isha": {
+          "checked": 184,
+          "early": 0,
+          "late": {
+            "0": 78,
+            "1": 63,
+            "2": 31,
+            "3+": 12
+          },
+          "exactShare": 0.4239,
+          "worstLate": 3,
+          "lateLimit": 4,
+          "lateLimitFrom": "unit at.iggo",
+          "overLimit": 0
+        },
+        "endOfEating": {
+          "checked": 184,
+          "lateEnd": 0,
+          "late": {
+            "0": 56,
+            "1": 70,
+            "2": 36,
+            "3+": 22
+          },
+          "exactShare": 0.3043,
+          "worstLate": 4,
+          "lateLimit": 4,
+          "lateLimitFrom": "unit at.iggo",
+          "overLimit": 0
+        }
+      }
+    }
+  }
+}

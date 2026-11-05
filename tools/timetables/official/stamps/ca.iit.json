@@ -1,0 +1,367 @@
+{
+  "entry": "ca.iit",
+  "class": "D (authority)",
+  "engineHash": "29b6c8b65334ed31",
+  "broken": 0,
+  "places": 1,
+  "first": "2026-01-01",
+  "last": "2026-12-31",
+  "checked": ["2026-01-01..2026-03-07", "2026-03-13..2026-03-27", "2026-03-29..2026-12-31"],
+  "placeDays": 359,
+  "heldOutDays": 184,
+  "ramadanDays": 25,
+  "outOfOrderDays": 0,
+  "unreadableLines": 0,
+  "repeatedLines": 0,
+  "events": {
+    "fajr": {
+      "checked": 442,
+      "early": 0,
+      "late": {
+        "0": 105,
+        "1": 277,
+        "2": 57,
+        "3+": 3
+      },
+      "exactShare": 0.2376,
+      "worstLate": 3,
+      "lateLimit": 3,
+      "lateLimitFrom": "class D (authority)",
+      "overLimit": 0
+    },
+    "sunrise": {
+      "checked": 442,
+      "lateEnd": 0,
+      "late": {
+        "0": 121,
+        "1": 190,
+        "2": 75,
+        "3+": 56
+      },
+      "exactShare": 0.2738,
+      "worstLate": 4,
+      "lateLimit": 4,
+      "lateLimitFrom": "entry ca.iit",
+      "overLimit": 0
+    },
+    "dhuhr": {
+      "checked": 442,
+      "early": 0,
+      "late": {
+        "0": 265,
+        "1": 177,
+        "2": 0,
+        "3+": 0
+      },
+      "exactShare": 0.5995,
+      "worstLate": 1,
+      "lateLimit": 3,
+      "lateLimitFrom": "class D (authority)",
+      "overLimit": 0
+    },
+    "asrStandard": {
+      "checked": 442,
+      "early": 0,
+      "late": {
+        "0": 65,
+        "1": 224,
+        "2": 153,
+        "3+": 0
+      },
+      "exactShare": 0.1471,
+      "worstLate": 2,
+      "lateLimit": 3,
+      "lateLimitFrom": "class D (authority)",
+      "overLimit": 0
+    },
+    "maghrib": {
+      "checked": 442,
+      "early": 0,
+      "late": {
+        "0": 91,
+        "1": 75,
+        "2": 200,
+        "3+": 76
+      },
+      "exactShare": 0.2059,
+      "worstLate": 4,
+      "lateLimit": 4,
+      "lateLimitFrom": "entry ca.iit",
+      "overLimit": 0
+    },
+    "isha": {
+      "checked": 442,
+      "early": 0,
+      "late": {
+        "0": 91,
+        "1": 75,
+        "2": 186,
+        "3+": 90
+      },
+      "exactShare": 0.2059,
+      "worstLate": 4,
+      "lateLimit": 4,
+      "lateLimitFrom": "entry ca.iit",
+      "overLimit": 0
+    },
+    "endOfEating": {
+      "checked": 442,
+      "lateEnd": 0,
+      "late": {
+        "0": 26,
+        "1": 222,
+        "2": 185,
+        "3+": 9
+      },
+      "exactShare": 0.0588,
+      "worstLate": 3,
+      "lateLimit": 3,
+      "lateLimitFrom": "class D (authority)",
+      "overLimit": 0
+    }
+  },
+  "heldOut": {
+    "placeDays": 184,
+    "ramadanDays": 0,
+    "events": {
+      "fajr": {
+        "checked": 267,
+        "early": 0,
+        "late": {
+          "0": 69,
+          "1": 184,
+          "2": 14,
+          "3+": 0
+        },
+        "exactShare": 0.2584,
+        "worstLate": 2,
+        "lateLimit": 3,
+        "lateLimitFrom": "class D (authority)",
+        "overLimit": 0
+      },
+      "sunrise": {
+        "checked": 267,
+        "lateEnd": 0,
+        "late": {
+          "0": 121,
+          "1": 120,
+          "2": 26,
+          "3+": 0
+        },
+        "exactShare": 0.4532,
+        "worstLate": 2,
+        "lateLimit": 4,
+        "lateLimitFrom": "entry ca.iit",
+        "overLimit": 0
+      },
+      "dhuhr": {
+        "checked": 267,
+        "early": 0,
+        "late": {
+          "0": 166,
+          "1": 101,
+          "2": 0,
+          "3+": 0
+        },
+        "exactShare": 0.6217,
+        "worstLate": 1,
+        "lateLimit": 3,
+        "lateLimitFrom": "class D (authority)",
+        "overLimit": 0
+      },
+      "asrStandard": {
+        "checked": 267,
+        "early": 0,
+        "late": {
+          "0": 57,
+          "1": 122,
+          "2": 88,
+          "3+": 0
+        },
+        "exactShare": 0.2135,
+        "worstLate": 2,
+        "lateLimit": 3,
+        "lateLimitFrom": "class D (authority)",
+        "overLimit": 0
+      },
+      "maghrib": {
+        "checked": 267,
+        "early": 0,
+        "late": {
+          "0": 91,
+          "1": 68,
+          "2": 108,
+          "3+": 0
+        },
+        "exactShare": 0.3408,
+        "worstLate": 2,
+        "lateLimit": 4,
+        "lateLimitFrom": "entry ca.iit",
+        "overLimit": 0
+      },
+      "isha": {
+        "checked": 267,
+        "early": 0,
+        "late": {
+          "0": 91,
+          "1": 68,
+          "2": 108,
+          "3+": 0
+        },
+        "exactShare": 0.3408,
+        "worstLate": 2,
+        "lateLimit": 4,
+        "lateLimitFrom": "entry ca.iit",
+        "overLimit": 0
+      },
+      "endOfEating": {
+        "checked": 267,
+        "lateEnd": 0,
+        "late": {
+          "0": 0,
+          "1": 150,
+          "2": 110,
+          "3+": 7
+        },
+        "exactShare": 0,
+        "worstLate": 3,
+        "lateLimit": 3,
+        "lateLimitFrom": "class D (authority)",
+        "overLimit": 0
+      }
+    }
+  },
+  "lateLimits": {
+    "class D (authority): 3 min": {
+      "events": ["fajr", "dhuhr", "asrStandard", "endOfEating"]
+    },
+    "entry ca.iit: 4 min": {
+      "reason": "IIT's own table drifts over its year: its sunrise from 2 min before to 2 min after the sun's, its Maghrib from sunset to sunset + 2.5 (and Isha, 90 min after it, with it); the margins hold it never early all year, so in spring they run up to 4 min.",
+      "events": ["sunrise", "maghrib", "isha"]
+    }
+  },
+  "units": {
+    "ca.iit": {
+      "name": "Islamic Institute of Toronto",
+      "placeDays": 359,
+      "checked": ["2026-01-01..2026-03-07", "2026-03-13..2026-03-27", "2026-03-29..2026-12-31"],
+      "broken": 0,
+      "lateLimits": {
+        "class D (authority): 3 min": {
+          "events": ["fajr", "dhuhr", "asrStandard", "endOfEating"]
+        },
+        "entry ca.iit: 4 min": {
+          "reason": "IIT's own table drifts over its year: its sunrise from 2 min before to 2 min after the sun's, its Maghrib from sunset to sunset + 2.5 (and Isha, 90 min after it, with it); the margins hold it never early all year, so in spring they run up to 4 min.",
+          "events": ["sunrise", "maghrib", "isha"]
+        }
+      },
+      "events": {
+        "fajr": {
+          "checked": 442,
+          "early": 0,
+          "late": {
+            "0": 105,
+            "1": 277,
+            "2": 57,
+            "3+": 3
+          },
+          "exactShare": 0.2376,
+          "worstLate": 3,
+          "lateLimit": 3,
+          "lateLimitFrom": "class D (authority)",
+          "overLimit": 0
+        },
+        "sunrise": {
+          "checked": 442,
+          "lateEnd": 0,
+          "late": {
+            "0": 121,
+            "1": 190,
+            "2": 75,
+            "3+": 56
+          },
+          "exactShare": 0.2738,
+          "worstLate": 4,
+          "lateLimit": 4,
+          "lateLimitFrom": "entry ca.iit",
+          "overLimit": 0
+        },
+        "dhuhr": {
+          "checked": 442,
+          "early": 0,
+          "late": {
+            "0": 265,
+            "1": 177,
+            "2": 0,
+            "3+": 0
+          },
+          "exactShare": 0.5995,
+          "worstLate": 1,
+          "lateLimit": 3,
+          "lateLimitFrom": "class D (authority)",
+          "overLimit": 0
+        },
+        "asrStandard": {
+          "checked": 442,
+          "early": 0,
+          "late": {
+            "0": 65,
+            "1": 224,
+            "2": 153,
+            "3+": 0
+          },
+          "exactShare": 0.1471,
+          "worstLate": 2,
+          "lateLimit": 3,
+          "lateLimitFrom": "class D (authority)",
+          "overLimit": 0
+        },
+        "maghrib": {
+          "checked": 442,
+          "early": 0,
+          "late": {
+            "0": 91,
+            "1": 75,
+            "2": 200,
+            "3+": 76
+          },
+          "exactShare": 0.2059,
+          "worstLate": 4,
+          "lateLimit": 4,
+          "lateLimitFrom": "entry ca.iit",
+          "overLimit": 0
+        },
+        "isha": {
+          "checked": 442,
+          "early": 0,
+          "late": {
+            "0": 91,
+            "1": 75,
+            "2": 186,
+            "3+": 90
+          },
+          "exactShare": 0.2059,
+          "worstLate": 4,
+          "lateLimit": 4,
+          "lateLimitFrom": "entry ca.iit",
+          "overLimit": 0
+        },
+        "endOfEating": {
+          "checked": 442,
+          "lateEnd": 0,
+          "late": {
+            "0": 26,
+            "1": 222,
+            "2": 185,
+            "3+": 9
+          },
+          "exactShare": 0.0588,
+          "worstLate": 3,
+          "lateLimit": 3,
+          "lateLimitFrom": "class D (authority)",
+          "overLimit": 0
+        }
+      }
+    }
+  }
+}

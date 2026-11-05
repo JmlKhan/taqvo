@@ -1,0 +1,113 @@
+# Store listing — French (fr-FR)
+
+Mêmes champs et mêmes limites que la fiche anglaise ; `tools/store-listing-check.py fr`
+les vérifie. Copiez chaque bloc tel quel dans la console.
+
+## Google Play
+
+### Title (30)
+Taqvo : Prière, Coran & Qibla
+
+### Short description (80)
+Horaires de prière, adhan, Coran récité, adhkar et qibla. Fonctionne hors ligne.
+
+### Full description (4000)
+Taqvo réunit l’essentiel de la journée en un seul endroit paisible : des horaires de prière là où vous êtes, un takbir ou l’adhan à chaque prière, le Coran entier à lire et à écouter, les adhkar du matin et du soir, et la qibla. Elle fonctionne hors ligne, ne coûte rien, n’affiche aucune publicité et ne demande aucun compte.
+
+HORAIRES DE PRIÈRE
+• Les horaires là où vous êtes, par la localisation du téléphone ou une ville parmi plus de 34 000.
+• Les horaires du calendrier que suivent les mosquées proches de chez vous. Là où Taqvo le détient, elle le reproduit et le vérifie jour après jour d’après les tableaux publiés : pour chaque jour vérifié, aucune prière ne commence avant l’heure publiée. Là où un calendrier n’est pas encore entièrement vérifié, Taqvo ajoute une marge de sécurité ; là où les mosquées suivent des calendriers différents, elle affiche des horaires par précaution, chaque prière une fois que tous l’ont commencée ; et là où aucun calendrier n’est connu, elle calcule avec prudence.
+• Le (i) de l’écran Prière indique de qui viennent ces horaires, et « À propos de ces horaires », comment ils sont établis et vérifiés. « Aligner sur ma mosquée » cherche le calendrier de votre mosquée d’après deux horaires de son tableau ; les méthodes de calcul habituelles (Ligue islamique mondiale, égyptienne, Karachi, ISNA…) et un ajustement par prière sont aussi proposés.
+• Des règles pour les hautes latitudes, où la nuit est trop courte pour les angles habituels.
+• Une notification par prière (tonalité claire, takbir ou adhan, voix au choix dont La Mecque et Médine) et des rappels facultatifs avant, à l’iqama (délai au choix) et à la Douha.
+• Une pastille Joumou’a sur le Dhuhr du vendredi, des widgets d’écran d’accueil avec les horaires du jour et le compte à rebours de la prochaine prière, et la date hégirienne à côté de la grégorienne.
+• Le format 24 ou 12 heures.
+
+LE CORAN
+• Le texte othmanien complet, dans la graphie du Mushaf de Médine, avec la mise en page traditionnelle pour lire comme dans le Mushaf imprimé.
+• Des traductions en anglais, français, turc, indonésien, ourdou et bengali, et un tafsir en arabe, sous chaque verset.
+• La recherche dans le texte arabe et les traductions.
+• Des signets, la copie et le partage, et une carte qui vous ramène là où vous vous êtes arrêté.
+• La récitation par dix récitateurs, téléchargée une fois par sourate et lue hors ligne, avec les commandes de l’écran verrouillé ; à la fin d’une sourate, la suivante enchaîne.
+• Pendant la récitation, la voix du téléphone peut lire la traduction ou le tafsir après chaque verset, s’il a une voix pour cette langue.
+• Un widget du verset du jour.
+
+QIBLA
+• Une boussole pointant vers La Mecque, avec l’azimut et la distance, et un mot honnête quand celle du téléphone n’est pas fiable.
+
+ADHKAR
+• Les adhkar du matin et du soir en arabe, traduits dans votre langue et comptés à l’écran.
+• Ceux du Coran récités par votre récitateur, et un rappel pour chaque série si vous voulez.
+
+TASBIH
+• Un compteur de dhikr, avec la série d’après la prière intégrée.
+
+CONÇUE POUR ÊTRE DIGNE DE CONFIANCE
+• Sans compte, sans publicité, sans mesure d’audience et sans suivi d’aucune sorte.
+• Votre position sert, sur votre téléphone, à calculer les horaires, et n’est jamais envoyée nulle part.
+• Internet ne sert qu’à la récitation : l’audio demandé et, dès lors, une vérification quotidienne de la liste des récitateurs.
+• Gratuite et libre (GPL), avec chaque source et licence créditée dans l’application.
+
+Disponible en anglais, arabe, français, turc, indonésien, ourdou et bengali.
+
+Horaires calculés par le moteur propre à Taqvo ; direction de la qibla par la bibliothèque Adhan. Texte du Coran du Projet Tanzil. Textes des adhkar d’OpenDua. Récitations de l’Islamic Network, concédées par les récitateurs pour une diffusion gratuite. Taqvo n’est pas affiliée aux autorités religieuses dont elle suit les calendriers.
+
+Site web : https://taqwa.world/fr/
+Assistance : support@taqwa.world
+
+### Release notes (500)
+Nouveautés de la 1.5.0 :
+• Deux nouvelles voix d’adhan : La Mecque et Médine
+• Les notifications jouent désormais l’adhan en entier ; balayez la notification pour l’arrêter
+• Votre propre adhan : choisissez un enregistrement sur votre téléphone
+• « Afficher le lever du soleil » et « Format de l’heure » en haut des Horaires de prière
+• Horaires : Kuala Lumpur, George Town et Kangar mis à jour pour 2027
+
+## App Store
+
+### Name (30)
+Taqvo : Prière, Coran & Qibla
+
+(From the next version. 1.0.0 went out under the name App Store Connect accepted on 22 September 2026; the listing said "Taqvo", but plain "Taqvo" is taken on the store, so it is probably the English title. If this name is refused as taken, keep that one and the 1.0.0 subtitle, which then adds the local words the name lacks.)
+
+### Subtitle (30)
+Adhan & tasbih, sans publicité
+
+(From the next version. In 1.0.0: "Prière, Coran & Qibla". Names and subtitles change only with a new version.)
+
+### Promotional text (170)
+Les horaires du calendrier de vos mosquées, vérifiés jour après jour là où Taqvo le détient. L’adhan, le Coran récité, les adhkar du matin et du soir, et la qibla.
+
+(Proposal of 29 September, the owner's to take or leave; editable at any time. Until then: "Les horaires de prière là où vous êtes, l’adhan quand ils arrivent, le Coran entier à lire et à écouter, et la qibla. Gratuit, hors ligne, sans compte ni publicité.")
+
+### Keywords (100)
+horaires,salat,azan,quran,mushaf,mosquée,islam,musulman,récitation,chapelet,dhikr,ramadan,boussole
+
+(From the next version, trimmed of words the new name and subtitle already carry. In 1.0.0: horaires,salat,adhan,azan,quran,mushaf,kibla,islam,musulman,récitation,tasbih,dhikr,ramadan,namaz)
+
+(Apple states the limit as 100 bytes, and é takes two. "mosquée" for "kibla" (the name carries Qibla), for Aligner sur ma mosquée, is a proposal of 29 September; without it: horaires,salat,azan,quran,mushaf,kibla,islam,musulman,récitation,chapelet,dhikr,ramadan,boussole)
+
+### Description (4000)
+(Le même texte que la description complète Play ci-dessus.)
+
+### What's new (4000)
+Nouveautés de la 1.5.0 :
+• Deux nouvelles voix d’adhan : La Mecque et Médine
+• Votre propre adhan : choisissez un enregistrement sur votre téléphone ; la notification en joue les 30 premières secondes
+• Le widget de l’écran verrouillé nomme la prochaine prière à côté de son heure
+• « Afficher le lever du soleil » et « Format de l’heure » en haut des Horaires de prière
+• Horaires : Kuala Lumpur, George Town et Kangar mis à jour pour 2027
+
+## Screenshot captions (one short line each, set over the framed screenshot)
+1. Les horaires là où vous êtes
+2. L’adhan, son rappel, et celui de l’iqama
+3. Tout le Coran, avec traduction
+4. Lisez comme dans le Mushaf
+5. Dix récitateurs, hors ligne
+6. Trouvez la qibla
+7. Comptez vos dhikr
+8. Sombre, et en sept langues
+9. Adhkar du matin et du soir
+
+## Review notes (App Store and Play, English only)
+No account or sign-in. Location is optional: Settings › Location lets a reviewer choose any city instead. Everything works offline except recitation downloads, which fetch audio from a public GitHub release on request. To see the lock-screen player, play a surah and lock the phone. Widgets are added from the home screen's widget gallery. Nothing is collected or sent anywhere; the privacy policy is at https://taqwa.world/privacy/.

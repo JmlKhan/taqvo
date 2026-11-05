@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Defaults to 4x2: a supplication is shorter than the ayah pool's longest, and the card drops
+     its translation below 150dp of height rather than shrinking the Arabic further. Resizable up
+     without a cap. updatePeriodMillis is the 6h backstop; the ayah card's midnight alarm is what
+     turns it over (TaqvoDuaWidgetReceiver).-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="110dp"
+    android:maxResizeWidth="0dp"
+    android:maxResizeHeight="0dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="21600000"
+    android:initialLayout="@layout/widget_loading"
+    android:previewLayout="@layout/widget_dua_preview"
+    android:description="@string/widget_dua_description"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen" />

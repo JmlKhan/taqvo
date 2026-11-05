@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">তাকভো</string>
+    <!-- Widget picker titles (android:label on each receiver). -->
+    <string name="widget_small_label">পরবর্তী নামাজ</string>
+    <string name="widget_medium_label">নামাজের সময়</string>
+    <string name="widget_ayah_label">আজকের আয়াত</string>
+    <string name="widget_small_description">পরবর্তী নামাজ ও চলমান কাউন্টডাউন।</string>
+    <string name="widget_medium_description">পরবর্তী নামাজ, কাউন্টডাউন ও আজকের সময়সূচি।</string>
+    <string name="widget_ayah_description">আজকের আয়াত, তার অনুবাদসহ।</string>
+    <!-- Spoken only: the ayah widget's reference for a screen reader. %1$s the surah, %2$s the ayah number. -->
+    <string name="widget_ayah_a11y_reference">%1$s, আয়াত %2$s</string>
+    <!-- The daily-dua widget's picker title and line, and its reference; %1$s the number in Hisn al-Muslim. -->
+    <string name="widget_dua_label">আজকের দোয়া</string>
+    <string name="widget_dua_description">আজকের দোয়া, অনুবাদসহ।</string>
+    <string name="widget_dua_reference">হিসনুল মুসলিম %1$s</string>
+</resources>

@@ -1,0 +1,275 @@
+package com.taqvo.app.feature.quran
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import com.taqvo.app.quran.Ayah
+import com.taqvo.app.quran.AyahShareText
+import com.taqvo.app.quran.QuranSource
+import com.taqvo.app.quran.QuranText
+import com.taqvo.app.quran.ReadingMode
+import com.taqvo.app.quran.ReadingPosition
+import com.taqvo.app.quran.ReadingSettings
+import com.taqvo.app.quran.Surah
+import com.taqvo.app.quran.TextKind
+import com.taqvo.app.quran.TranslationInfo
+import com.taqvo.app.settings.BookmarkStore
+import com.taqvo.app.settings.SettingsRepository
+
+sealed interface ReaderUiState {
+    data object Loading : ReaderUiState
+
+    data class Ready(
+        val surah: Surah,
+        /** `ayahs(1).first().text` read from the database, never a literal (spec §2.3) — null for
+         * Al-Faatiha (where it is ayah 1 already) and At-Tawbah (which has none). */
+        val basmala: String?,
+        val ayahs: List<Ayah>,
+        val translation: Map<Int, String>,
+        val transliteration: Map<Int, String>?,
+        val settings: ReadingSettings,
+        /** The next surah's card (spec §2.3), null after An-Nas (114). */
+        val nextSurah: Surah?,
+        val currentAyah: Int,
+        /** Juz, then page — the caption's two numbers (spec §2.2), formatted by the screen. */
+        val caption: Pair<Int, Int>,
+        /** The language of [translation]'s current text, for the reading direction the translation
+         * paragraph itself is drawn in (spec §5.1) — never the UI's own direction. */
+        val translationLanguage: String,
+        /** Ayah 1:2 with the ayah marker, read from the database like [basmala] — the reading-settings
+         * sheet's (task 7) live size preview, never a literal. */
+        val previewAyah: String,
+        /** The reading-settings sheet's translation picker (task 7, spec §2.5): every bundled text
+         * except the transliteration, tafsir first then the rest by language. */
+        val translations: List<TranslationInfo>,
+        /** The ayah numbers of *this* surah that are bookmarked (spec 2b §2.2) — the card draws
+         * the badge and the action row its label from this, so a bookmark set on another device
+         * or removed in the Bookmarks tab lands here through the store's own flow. */
+        val bookmarked: Set<Int>,
+        /** The name of the translation actually being shown, null with translation off — the
+         * share text names its translation (spec 2b §2.3) and must never invent that name. */
+        val translationName: String?,
+    ) : ReaderUiState
+}
+
+/** Surahs 1 (Al-Faatiha, where the basmala is ayah 1 itself) and 9 (At-Tawbah, which has none). */
+private val SURAHS_WITHOUT_A_LEADING_BASMALA = setOf(1, 9)
+
+/** How long a scroll has to sit still before its position is worth persisting (spec §2.3). */
+private const val POSITION_DEBOUNCE_MS = 500L
+
+/**
+ * Translation mode's reader (spec §2.3): one surah, its ayahs as cards, the chosen translation and
+ * optional transliteration, and the "next surah" footer. Follows [QuranRootViewModel] and
+ * [com.taqvo.app.feature.qibla.QiblaViewModel]'s shape — a plain class over a
+ * [MutableStateFlow], [start] taking the caller's [CoroutineScope] rather than owning one, so it
+ * needs no platform ViewModel base class and stays testable under `runTest`.
+ *
+ * [start] both loads the surah once and subscribes to [SettingsRepository.readingSettings] for as
+ * long as the caller's scope lives, so a change made in the reading-settings sheet (task 7) —
+ * arabic size, transliteration, translation, mode — re-renders this screen without it doing
+ * anything else. Only the parts that actually depend on the changed setting are re-fetched: the
+ * surah, its ayahs, the basmala and the next surah are loaded once and cached; the translation
+ * text is re-fetched only when [ReadingSettings.translationId] itself changes, and the
+ * transliteration text only when [ReadingSettings.transliteration] flips on.
+ */
+class ReaderViewModel(
+    private val source: QuranSource,
+    private val settings: SettingsRepository,
+    private val bookmarks: BookmarkStore,
+    private val languageTag: String,
+    private val surah: Int,
+) {
+    private val _state = MutableStateFlow<ReaderUiState>(ReaderUiState.Loading)
+    val state: StateFlow<ReaderUiState> = _state.asStateFlow()
+
+    private var scope: CoroutineScope? = null
+    private var positionJob: Job? = null
+
+    // Loaded once per screen instance (the surah number never changes under it) and reused across
+    // every settings update, so a slider tweak in the sheet does not re-hit the database for data
+    // that has not changed.
+    private var surahInfo: Surah? = null
+    private var ayahList: List<Ayah>? = null
+    private var basmalaText: String? = null
+    private var nextSurahInfo: Surah? = null
+    private var previewAyahText: String? = null
+
+    /** The last set the bookmark collection saw, so [applySettings]'s own re-emission (a slider
+     * tweak, say) carries the bookmarks forward instead of dropping them until the store's flow
+     * happens to emit again. */
+    private var bookmarkedAyahs: Set<Int> = emptySet()
+
+    private var loadedTranslationId: String? = null
+    private var loadedTranslation: Map<Int, String> = emptyMap()
+    private var transliterationLoaded = false
+    private var loadedTransliteration: Map<Int, String>? = null
+
+    /** Call once, from a `LaunchedEffect(viewModel) { viewModel.start(this) }` — the same shape as
+     * [com.taqvo.app.feature.qibla.QiblaViewModel.start]. */
+    fun start(scope: CoroutineScope) {
+        this.scope = scope
+        scope.launch {
+            // The same DataStore also receives every debounced reading position, so without the
+            // filter each scroll stop re-ran applySettings and refetched the translations.
+            settings.readingSettings(languageTag).distinctUntilChanged().collect { applySettings(it) }
+        }
+        // A second collection rather than a combine: the bookmarks change far more often than the
+        // settings, and folding them together would re-run applySettings — and its translation
+        // lookups — on every toggle.
+        scope.launch {
+            bookmarks.bookmarks.collect { list ->
+                bookmarkedAyahs = list.filter { it.surah == surah }.map { it.ayah }.toSet()
+                _state.update { (it as? ReaderUiState.Ready)?.copy(bookmarked = bookmarkedAyahs) ?: it }
+            }
+        }
+    }
+
+    private suspend fun applySettings(newSettings: ReadingSettings) {
+        if (surahInfo == null) {
+            surahInfo = source.surah(surah)
+            ayahList = source.ayahs(surah)
+            nextSurahInfo = if (surah < 114) source.surah(surah + 1) else null
+            // Al-Faatiha's own ayahs, fetched once regardless of which surah is open: ayah 1 for
+            // the basmala (spec §2.3), ayah 2 for the reading-settings sheet's size preview
+            // (task 7, spec §2.5) — never a literal, either way.
+            val alFatiha = source.ayahs(1)
+            basmalaText = if (surah in SURAHS_WITHOUT_A_LEADING_BASMALA) null else alFatiha.first().text
+            previewAyahText = QuranText.withMarker(alFatiha[1].text, 2)
+        }
+
+        // A translation id the sheet stored that this build no longer bundles (e.g. dropped
+        // between versions) falls back to Saheeh International rather than showing empty cards;
+        // "none" is the one id that legitimately means empty cards (spec §2.5, translation off).
+        val translations = source.translations()
+        val translationId = when {
+            newSettings.translationId == ReadingSettings.NO_TRANSLATION -> ReadingSettings.NO_TRANSLATION
+            translations.any { it.id == newSettings.translationId } -> newSettings.translationId
+            else -> "en.sahih"
+        }
+        if (translationId != loadedTranslationId) {
+            loadedTranslation = if (translationId == ReadingSettings.NO_TRANSLATION) emptyMap() else source.translationTexts(translationId, surah)
+            loadedTranslationId = translationId
+        }
+
+        if (newSettings.transliteration) {
+            if (!transliterationLoaded) {
+                loadedTransliteration = source.translationTexts("en.transliteration", surah)
+                transliterationLoaded = true
+            }
+        } else {
+            transliterationLoaded = false
+            loadedTransliteration = null
+        }
+
+        val previous = _state.value as? ReaderUiState.Ready
+        val ayahs = ayahList.orEmpty()
+        val currentAyah = previous?.currentAyah ?: 1
+        val ayah = ayahs.firstOrNull { it.number == currentAyah } ?: ayahs.firstOrNull()
+        val sheetTranslations = orderForSheet(translations.filter { it.kind != TextKind.TRANSLITERATION })
+        _state.value = ReaderUiState.Ready(
+            surah = surahInfo!!,
+            basmala = basmalaText,
+            ayahs = ayahs,
+            translation = loadedTranslation,
+            transliteration = loadedTransliteration,
+            settings = newSettings,
+            nextSurah = nextSurahInfo,
+            currentAyah = currentAyah,
+            caption = (ayah?.juz ?: surahInfo!!.startJuz) to (ayah?.page ?: surahInfo!!.startPage),
+            // The "en" default is unreachable and only keeps the type non-null: translationId is
+            // either NO_TRANSLATION (and then the language is never read, the cards having no
+            // translation to lay out) or an id this same catalogue was just checked to contain.
+            translationLanguage = translations.firstOrNull { it.id == translationId }?.language ?: "en",
+            previewAyah = previewAyahText!!,
+            translations = sheetTranslations,
+            bookmarked = bookmarkedAyahs,
+            // Null exactly when translation is off. Beyond that the lookup cannot miss, for
+            // translationLanguage's reason above: translationId came out of this catalogue.
+            translationName = if (translationId == ReadingSettings.NO_TRANSLATION) {
+                null
+            } else {
+                translations.firstOrNull { it.id == translationId }?.name
+            },
+        )
+    }
+
+    /**
+     * Persists a change made in the reading-settings sheet (task 7): writes through
+     * [SettingsRepository.setReadingSettings] on the scope handed to [start], and [applySettings]
+     * picks the change straight back up through the same collection [start] already subscribes
+     * to — this never touches [_state] directly, exactly like [switchToMushaf].
+     */
+    fun updateSettings(newSettings: ReadingSettings) {
+        scope?.launch { settings.setReadingSettings(newSettings) }
+    }
+
+    /**
+     * The mode toggle's translation-to-Mushaf half (spec §2.2): persists Mushaf as the reading
+     * mode and resolves the page containing the current ayah, so the caller (App.kt, which alone
+     * knows about [com.taqvo.app.nav.Navigator]) only has to call `Navigator.replace` with the
+     * result — this view model, like every other one in the app, never imports `nav` itself.
+     */
+    suspend fun switchToMushaf(): Int {
+        val ready = _state.value as? ReaderUiState.Ready
+        if (ready != null) settings.setReadingSettings(ready.settings.copy(mode = ReadingMode.MUSHAF))
+        return source.pageOf(surah, ready?.currentAyah ?: 1)
+    }
+
+    /**
+     * The ayah action row's bookmark (spec 2b §2.2, §2.4): writes through [BookmarkStore], and the
+     * collection [start] began is what puts the change back into [_state] — so the badge and the
+     * label follow the stored truth, never an optimistic local flip that a failed write would
+     * leave lying. Mirrors [QuranRootViewModel.removeBookmark].
+     */
+    fun toggleBookmark(ayah: Int) {
+        scope?.launch { bookmarks.toggle(surah, ayah) }
+    }
+
+    /**
+     * The one text copy and share both put out (spec 2b §2.3), or null before the surah is loaded
+     * or for an ayah this surah does not have. [surahName] and [digits] come from the screen
+     * because both are localisation the view model has no business resolving: the surah's name
+     * follows the UI language and the reference digits the UI's own numerals.
+     */
+    fun shareTextFor(ayah: Int, surahName: String, digits: (Int) -> String): String? {
+        val ready = _state.value as? ReaderUiState.Ready ?: return null
+        val found = ready.ayahs.firstOrNull { it.number == ayah } ?: return null
+        val name = ready.translationName
+        return AyahShareText.format(
+            arabic = found.text,
+            ayahNumber = found.number,
+            // Only when a translation is actually on screen, and then under its own name.
+            translation = if (name == null) null else ready.translation[found.number]?.let { it to name },
+            surahName = surahName,
+            surah = surah,
+            ayah = found.number,
+            digits = digits,
+        )
+    }
+
+    /**
+     * The first ayah whose card top is on screen (spec §2.3): debounced 500 ms so a fast scroll
+     * does not write the last-read position, or move the caption, once per frame. Cancelling and
+     * relaunching the same [Job] — rather than tracking a timestamp — means only the last call in
+     * a burst ever survives to write anything.
+     */
+    fun onFirstVisibleAyah(ayah: Int) {
+        val activeScope = scope ?: return
+        positionJob?.cancel()
+        positionJob = activeScope.launch {
+            delay(POSITION_DEBOUNCE_MS)
+            val found = ayahList.orEmpty().firstOrNull { it.number == ayah } ?: return@launch
+            settings.setReadingPosition(ReadingPosition(surah, found.number, found.page))
+            (_state.value as? ReaderUiState.Ready)?.let {
+                _state.value = it.copy(currentAyah = found.number, caption = found.juz to found.page)
+            }
+        }
+    }
+}

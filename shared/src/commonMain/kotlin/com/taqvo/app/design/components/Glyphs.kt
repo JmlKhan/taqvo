@@ -1,0 +1,418 @@
+package com.taqvo.app.design.components
+
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
+
+/**
+ * Hand-drawn glyph paths shared by more than one component — originally private to
+ * [TaqvoTabBar], moved here once the reader header (spec §2.2) needed the same book mark for its
+ * mode-toggle button and the tab bar's own "Quran" tab icon. Kept `internal`: these are drawn from
+ * literal 16-unit coordinates tuned for a specific `Canvas` size, not a general-purpose icon API.
+ */
+
+/** Line weight of every glyph here: the mockup's 1.4 px in a 16 px box. */
+internal fun DrawScope.glyphStroke() = Stroke(width = size.width * 0.0875f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+
+/** An open book: two facing pages and the spine between them. Reads as "Quran" the way the
+ * mihrab reads as "prayer" — a shape borrowed from the design mockups, not a generic glyph. */
+internal fun DrawScope.drawBook(tint: Color) {
+    val u = size.width / 16f
+    val pages = Path().apply {
+        moveTo(8f * u, 3.2f * u)
+        cubicTo(6.6f * u, 2.1f * u, 4.4f * u, 1.9f * u, 1.8f * u, 2.4f * u)
+        lineTo(1.8f * u, 12.8f * u)
+        cubicTo(4.4f * u, 12.3f * u, 6.6f * u, 12.5f * u, 8f * u, 13.7f * u)
+        cubicTo(9.4f * u, 12.5f * u, 11.6f * u, 12.3f * u, 14.2f * u, 12.8f * u)
+        lineTo(14.2f * u, 2.4f * u)
+        cubicTo(11.6f * u, 1.9f * u, 9.4f * u, 2.1f * u, 8f * u, 3.2f * u)
+        close()
+    }
+    drawPath(pages, tint, style = glyphStroke())
+    drawLine(tint, Offset(8f * u, 3.2f * u), Offset(8f * u, 13.7f * u), strokeWidth = size.width * 0.0875f, cap = StrokeCap.Round)
+}
+
+/** A bookmark: a pennant with a notch at the foot. Filled when the ayah is kept. */
+internal fun DrawScope.drawBookmark(tint: Color, filled: Boolean) {
+    val u = size.width / 16f
+    val path = Path().apply {
+        moveTo(3.5f * u, 2f * u)
+        lineTo(12.5f * u, 2f * u)
+        lineTo(12.5f * u, 14f * u)
+        lineTo(8f * u, 10.6f * u)
+        lineTo(3.5f * u, 14f * u)
+        close()
+    }
+    drawPath(path, tint, style = if (filled) Fill else glyphStroke())
+}
+
+/** Copy: two overlapping rounded rectangles, the back one peeking out top-start. */
+internal fun DrawScope.drawCopy(tint: Color) {
+    val u = size.width / 16f
+    val corner = CornerRadius(1.2f * u)
+    drawRoundRect(tint, topLeft = Offset(5.5f * u, 5.5f * u), size = Size(8f * u, 8f * u), cornerRadius = corner, style = glyphStroke())
+    val back = Path().apply {
+        moveTo(3.2f * u, 10.5f * u)
+        lineTo(3.2f * u, 3.4f * u)
+        quadraticTo(3.2f * u, 2.5f * u, 4.1f * u, 2.5f * u)
+        lineTo(10.5f * u, 2.5f * u)
+    }
+    drawPath(back, tint, style = glyphStroke())
+}
+
+/** Share: a tray with an arrow rising out of it. */
+internal fun DrawScope.drawShare(tint: Color) {
+    val u = size.width / 16f
+    val tray = Path().apply {
+        moveTo(5f * u, 7.5f * u); lineTo(3.2f * u, 7.5f * u); lineTo(3.2f * u, 14f * u)
+        lineTo(12.8f * u, 14f * u); lineTo(12.8f * u, 7.5f * u); lineTo(11f * u, 7.5f * u)
+    }
+    drawPath(tray, tint, style = glyphStroke())
+    drawLine(tint, Offset(8f * u, 10.5f * u), Offset(8f * u, 2.2f * u), strokeWidth = size.width * 0.0875f, cap = StrokeCap.Round)
+    val head = Path().apply { moveTo(5.4f * u, 4.8f * u); lineTo(8f * u, 2.2f * u); lineTo(10.6f * u, 4.8f * u) }
+    drawPath(head, tint, style = glyphStroke())
+}
+
+/**
+ * A misbaha: a loop of beads with the larger head bead at the foot and a tassel under it — the
+ * entry point to the tasbeeh (spec Tasbeeh §5), picked in the design round as the most
+ * recognisable silhouette of the object itself.
+ *
+ * Eight bead positions sit 45° apart on a 5.2-unit radius around (8, 7.2); seven of them are
+ * drawn as filled 1.05-unit circles, and the eighth — the one at the foot — is the head bead,
+ * drawn larger at 1.45 and pushed a little further out to (8, 12.9) so it reads as the knot the
+ * loop is tied at rather than as one more bead. Filled rather than stroked for the reason the
+ * bookmark badge is: at 22 dp a stroked bead is a smudge.
+ *
+ * The tassel is two strokes at the mockup's thinner 1.1-unit weight — a stem and a flare — and
+ * stops short of the grid's foot so its round caps stay inside the canvas.
+ */
+internal fun DrawScope.drawMisbaha(tint: Color) {
+    val u = size.width / 16f
+    // -90° is the top of the loop; +90° is the foot, which the head bead takes instead.
+    listOf(-90f, -45f, 0f, 45f, 135f, 180f, 225f).forEach { degrees ->
+        val radians = degrees * PI.toFloat() / 180f
+        drawCircle(
+            tint,
+            radius = 1.05f * u,
+            center = Offset((8f + 5.2f * cos(radians)) * u, (7.2f + 5.2f * sin(radians)) * u),
+        )
+    }
+    drawCircle(tint, radius = 1.45f * u, center = Offset(8f * u, 12.9f * u))
+    val tassel = size.width * 0.069f
+    drawLine(tint, Offset(8f * u, 14.2f * u), Offset(8f * u, 15.35f * u), strokeWidth = tassel, cap = StrokeCap.Round)
+    val flare = Path().apply {
+        moveTo(6.95f * u, 15.35f * u)
+        lineTo(8f * u, 14.25f * u)
+        lineTo(9.05f * u, 15.35f * u)
+    }
+    drawPath(flare, tint, style = Stroke(width = tassel, cap = StrokeCap.Round, join = StrokeJoin.Round))
+}
+
+/**
+ * A sun on the horizon: the way to the morning and evening adhkar (adhkar spec §2.1), the one glyph
+ * that means both halves of the day. A horizon line, the upper half of a disc resting on it,
+ * and three rays — all at the glyph stroke, on the 16-unit grid.
+ */
+internal fun DrawScope.drawHorizon(tint: Color) {
+    val u = size.width / 16f
+    val stroke = glyphStroke()
+    drawLine(tint, Offset(2f * u, 12f * u), Offset(14f * u, 12f * u), strokeWidth = stroke.width, cap = StrokeCap.Round)
+    drawArc(
+        tint, startAngle = 180f, sweepAngle = 180f, useCenter = false,
+        topLeft = Offset(4.6f * u, 8.6f * u), size = Size(6.8f * u, 6.8f * u), style = stroke,
+    )
+    drawLine(tint, Offset(8f * u, 5.6f * u), Offset(8f * u, 3.4f * u), strokeWidth = stroke.width, cap = StrokeCap.Round)
+    drawLine(tint, Offset(3.9f * u, 8.2f * u), Offset(2.5f * u, 6.8f * u), strokeWidth = stroke.width, cap = StrokeCap.Round)
+    drawLine(tint, Offset(12.1f * u, 8.2f * u), Offset(13.5f * u, 6.8f * u), strokeWidth = stroke.width, cap = StrokeCap.Round)
+}
+
+/** A plus in a ring, as the tasbeeh mockup's top-corner button draws it: add a dhikr of your own. */
+internal fun DrawScope.drawPlus(tint: Color) {
+    val u = size.width / 16f
+    val stroke = size.width * 0.0875f
+    drawCircle(tint, radius = 6f * u, center = Offset(8f * u, 8f * u), style = Stroke(width = stroke))
+    drawLine(tint, Offset(5.5f * u, 8f * u), Offset(10.5f * u, 8f * u), strokeWidth = stroke, cap = StrokeCap.Round)
+    drawLine(tint, Offset(8f * u, 5.5f * u), Offset(8f * u, 10.5f * u), strokeWidth = stroke, cap = StrokeCap.Round)
+}
+
+/**
+ * A speaker: the cone, and two waves leaving it. Recitation's idle mark (spec §12.7) — headphones
+ * were the original pick and read wrong when nobody is wearing any, so the glyph is the sound
+ * itself rather than the thing you hear it through.
+ *
+ * The waves are drawn as quadratic curves rather than arc sweeps so they keep the same rounded
+ * stroke as every other glyph here, and the outer one is longer than the inner one, which is what
+ * makes the pair read as sound rather than as brackets.
+ *
+ * **[pointsForward] mirrors it**, for the reason [drawSkip] and [drawChevron] take the same
+ * parameter: the shape is drawn from literal coordinates, a `DrawScope` has no direction to
+ * consult, and a speaker is one of the glyphs both platforms' guidance mirrors under a
+ * right-to-left interface — the cone should open the way the reading does. The equaliser beside
+ * it is not mirrored: three bars have no direction to be wrong about.
+ */
+internal fun DrawScope.drawSpeaker(tint: Color, pointsForward: Boolean = true) {
+    val u = size.width / 16f
+    fun x(value: Float) = (if (pointsForward) value else 16f - value) * u
+    val cone = Path().apply {
+        moveTo(x(2.4f), 6.2f * u)
+        lineTo(x(5f), 6.2f * u)
+        lineTo(x(8.3f), 3.1f * u)
+        lineTo(x(8.3f), 12.9f * u)
+        lineTo(x(5f), 9.8f * u)
+        lineTo(x(2.4f), 9.8f * u)
+        close()
+    }
+    drawPath(cone, tint, style = glyphStroke())
+    val inner = Path().apply {
+        moveTo(x(10.7f), 6.1f * u)
+        quadraticTo(x(12.1f), 8f * u, x(10.7f), 9.9f * u)
+    }
+    drawPath(inner, tint, style = glyphStroke())
+    val outer = Path().apply {
+        moveTo(x(12.7f), 4.2f * u)
+        quadraticTo(x(15.2f), 8f * u, x(12.7f), 11.8f * u)
+    }
+    drawPath(outer, tint, style = glyphStroke())
+}
+
+/**
+ * Three bars rising and falling: the one cue on a Quran screen that recitation is live (spec
+ * §12.7). [levels] are fractions of the full 11-unit height, one per bar; [Equaliser] animates
+ * them, and a still frame at rest draws the same shape.
+ *
+ * Rounded caps and a bar width matched to [glyphStroke]'s weight would leave three hairlines, so
+ * the bars are deliberately heavier — 1.9 u — which is what lets them read at 18 dp beside a
+ * speaker glyph of the same box.
+ */
+internal fun DrawScope.drawEqualiser(tint: Color, levels: List<Float>) {
+    val u = size.width / 16f
+    val width = 1.9f * u
+    val centres = listOf(3.6f, 8f, 12.4f)
+    centres.forEachIndexed { i, x ->
+        val fraction = levels.getOrElse(i) { 0.5f }.coerceIn(0f, 1f)
+        val half = (1.3f + fraction * 4.6f) * u
+        drawLine(
+            color = tint,
+            start = Offset(x * u, 8f * u - half),
+            end = Offset(x * u, 8f * u + half),
+            strokeWidth = width,
+            cap = StrokeCap.Round,
+        )
+    }
+}
+
+/**
+ * Previous- or next-ayah: a solid triangle against a bar, the transport control every media
+ * player draws. [forward] is resolved by the caller from `LocalLayoutDirection` rather than read
+ * here, because a `DrawScope` has no direction of its own — under an Arabic UI the row of
+ * controls mirrors itself and the glyphs have to follow it, or "next" would point back at the
+ * button before it.
+ */
+internal fun DrawScope.drawSkip(tint: Color, forward: Boolean) {
+    val u = size.width / 16f
+    fun x(value: Float) = (if (forward) value else 16f - value) * u
+    val triangle = Path().apply {
+        moveTo(x(3.2f), 3.4f * u)
+        lineTo(x(10.6f), 8f * u)
+        lineTo(x(3.2f), 12.6f * u)
+        close()
+    }
+    drawPath(triangle, tint, style = Fill)
+    drawLine(
+        tint,
+        Offset(x(12.3f), 3.4f * u),
+        Offset(x(12.3f), 12.6f * u),
+        strokeWidth = size.width * 0.115f,
+        cap = StrokeCap.Round,
+    )
+}
+
+/** A solid play triangle, optically centred: a triangle drawn on the true centre reads as sitting
+ * left of it, so the ink is nudged a third of a unit along. */
+internal fun DrawScope.drawPlayTriangle(tint: Color) {
+    val u = size.width / 16f
+    val path = Path().apply {
+        moveTo(4.6f * u, 3f * u)
+        lineTo(12.6f * u, 8f * u)
+        lineTo(4.6f * u, 13f * u)
+        close()
+    }
+    drawPath(path, tint, style = Fill)
+}
+
+/** Two bars. Rounded ends, like every other filled mark in the set. */
+internal fun DrawScope.drawPause(tint: Color) {
+    val u = size.width / 16f
+    val stroke = size.width * 0.155f
+    listOf(5.6f, 10.4f).forEach { x ->
+        drawLine(tint, Offset(x * u, 3.6f * u), Offset(x * u, 12.4f * u), strokeWidth = stroke, cap = StrokeCap.Round)
+    }
+}
+
+/** A plain cross: the player bar's dismiss. */
+internal fun DrawScope.drawClose(tint: Color) {
+    val u = size.width / 16f
+    val stroke = size.width * 0.0875f
+    drawLine(tint, Offset(4.5f * u, 4.5f * u), Offset(11.5f * u, 11.5f * u), strokeWidth = stroke, cap = StrokeCap.Round)
+    drawLine(tint, Offset(11.5f * u, 4.5f * u), Offset(4.5f * u, 11.5f * u), strokeWidth = stroke, cap = StrokeCap.Round)
+}
+
+/**
+ * A disclosure chevron. [pointsForward] is the caller's own reading of `LocalLayoutDirection`,
+ * for the same reason [drawSkip] takes one: the shape is drawn from literal coordinates and a
+ * `DrawScope` has no direction to consult.
+ */
+internal fun DrawScope.drawChevron(tint: Color, pointsForward: Boolean) {
+    val u = size.width / 16f
+    fun x(value: Float) = (if (pointsForward) value else 16f - value) * u
+    val path = Path().apply {
+        moveTo(x(6.2f), 2.6f * u)
+        lineTo(x(11.2f), 8f * u)
+        lineTo(x(6.2f), 13.4f * u)
+    }
+    drawPath(path, tint, style = glyphStroke())
+}
+
+/**
+ * An external link: a box with its top-trailing corner open and an arrow leaving through it.
+ * [pointsForward] is the caller's reading of `LocalLayoutDirection`, as for [drawChevron]: the
+ * arrow leaves toward the trailing edge in both directions.
+ */
+internal fun DrawScope.drawExternalLink(tint: Color, pointsForward: Boolean) {
+    val u = size.width / 16f
+    fun x(value: Float) = (if (pointsForward) value else 16f - value) * u
+    val box = Path().apply {
+        moveTo(x(8.5f), 3.2f * u); lineTo(x(3.2f), 3.2f * u); lineTo(x(3.2f), 12.8f * u)
+        lineTo(x(12.8f), 12.8f * u); lineTo(x(12.8f), 7.5f * u)
+    }
+    drawPath(box, tint, style = glyphStroke())
+    drawLine(tint, Offset(x(7.2f), 8.8f * u), Offset(x(13.2f), 2.8f * u), strokeWidth = size.width * 0.0875f, cap = StrokeCap.Round)
+    val head = Path().apply { moveTo(x(9.6f), 2.8f * u); lineTo(x(13.2f), 2.8f * u); lineTo(x(13.2f), 6.4f * u) }
+    drawPath(head, tint, style = glyphStroke())
+}
+
+/**
+ * A small loudspeaker with one wave: read-aloud's "being read" mark (read-aloud spec §6), on the
+ * ayah card beside the translation the voice is reading.
+ *
+ * Named apart from [drawSpeaker] rather than overloading it: that glyph already has a single-`Color`
+ * call shape once its own defaulted `pointsForward` is counted, and Kotlin would not reject a second
+ * `drawSpeaker(tint: Color)` here — it compiles, and resolves a bare one-argument call to whichever
+ * overload needs no default filled in. That silently hands every future one-argument call to this
+ * new, narrower glyph instead of the cone-and-waves one, which is the actual danger a shared name
+ * would create, and why this one is distinct.
+ *
+ * [pointsForward] mirrors it, as [drawSkip] and [drawSpeaker] are mirrored: the caller reads it off
+ * the translation's own `LocalLayoutDirection`, so the wave faces the text it sits before — to the
+ * right in English, to the left in Arabic and Urdu.
+ */
+internal fun DrawScope.drawReadAloudMark(tint: Color, pointsForward: Boolean) {
+    val u = size.width / 16f
+    fun x(value: Float) = (if (pointsForward) value else 16f - value) * u
+    val body = Path().apply {
+        moveTo(x(2.5f), 6.2f * u)
+        lineTo(x(5.2f), 6.2f * u)
+        lineTo(x(8.6f), 3.4f * u)
+        lineTo(x(8.6f), 12.6f * u)
+        lineTo(x(5.2f), 9.8f * u)
+        lineTo(x(2.5f), 9.8f * u)
+        close()
+    }
+    drawPath(body, tint, style = Fill)
+    // The wave is the right-hand stretch of a circle centred at 10.6 u; mirrored, the left-hand
+    // stretch of one centred at 5.4 u, so its box starts at the mirror of its far edge.
+    drawArc(
+        color = tint,
+        startAngle = if (pointsForward) -50f else 130f,
+        sweepAngle = 100f,
+        useCenter = false,
+        topLeft = Offset(x(if (pointsForward) 7.2f else 14f), 4.6f * u),
+        size = Size(6.8f * u, 6.8f * u),
+        style = Stroke(width = size.width * 0.1f, cap = StrokeCap.Round),
+    )
+}
+
+/**
+ * A five-pointed star, outlined: About Taqvo's Rate button. Not mirrored — a star has no
+ * direction to be wrong about under a right-to-left interface.
+ */
+internal fun DrawScope.drawStar(tint: Color) {
+    val u = size.width / 16f
+    val star = Path().apply {
+        moveTo(8f * u, 2.2f * u)
+        lineTo(9.8f * u, 5.9f * u)
+        lineTo(13.8f * u, 6.5f * u)
+        lineTo(10.9f * u, 9.3f * u)
+        lineTo(11.6f * u, 13.3f * u)
+        lineTo(8f * u, 11.4f * u)
+        lineTo(4.4f * u, 13.3f * u)
+        lineTo(5.1f * u, 9.3f * u)
+        lineTo(2.2f * u, 6.5f * u)
+        lineTo(6.2f * u, 5.9f * u)
+        close()
+    }
+    drawPath(star, tint, style = glyphStroke())
+}
+
+/**
+ * A phone, upright, with its home bar: the mark of About Taqvo's first promise, that what the app
+ * keeps stays on the phone. The three promise marks are one set, each the plainest picture of its
+ * promise, and none of them mirrors.
+ */
+internal fun DrawScope.drawPhone(tint: Color) {
+    val u = size.width / 16f
+    val stroke = glyphStroke()
+    drawRoundRect(
+        tint,
+        topLeft = Offset(4.4f * u, 2f * u),
+        size = Size(7.2f * u, 12f * u),
+        cornerRadius = CornerRadius(1.6f * u),
+        style = stroke,
+    )
+    drawLine(tint, Offset(7.2f * u, 11.6f * u), Offset(8.8f * u, 11.6f * u), strokeWidth = stroke.width, cap = StrokeCap.Round)
+}
+
+/**
+ * A cloud with an arrow coming down out of it: the second promise, that the app goes online only
+ * to download what the reader asked for. The cloud is three arcs — a small bump on the start
+ * side, the dome, a larger bump on the end side — and its floor is left open where the arrow
+ * passes through, so the arrow reads as leaving the cloud rather than as drawn over it.
+ */
+internal fun DrawScope.drawCloudDown(tint: Color) {
+    val u = size.width / 16f
+    val stroke = glyphStroke()
+    fun circle(cx: Float, cy: Float, r: Float) = Rect(Offset(cx * u, cy * u), r * u)
+    val cloud = Path().apply {
+        moveTo(4.8f * u, 11.6f * u)
+        lineTo(4f * u, 11.6f * u)
+        // Angles run clockwise from three o'clock; each arc starts where the last one ended.
+        arcTo(circle(3.84f, 9.2f, 2.405f), startAngleDegrees = 86.2f, sweepAngleDegrees = 180f, forceMoveTo = false)
+        arcTo(circle(7.277f, 6.651f, 3.6f), startAngleDegrees = 177.6f, sweepAngleDegrees = 165.4f, forceMoveTo = false)
+        arcTo(circle(11.36f, 8.6f, 3.067f), startAngleDegrees = 257.96f, sweepAngleDegrees = 180f, forceMoveTo = false)
+        lineTo(11.2f * u, 11.6f * u)
+    }
+    drawPath(cloud, tint, style = stroke)
+    drawLine(tint, Offset(8f * u, 7.6f * u), Offset(8f * u, 13.2f * u), strokeWidth = stroke.width, cap = StrokeCap.Round)
+    val head = Path().apply { moveTo(6.24f * u, 11.44f * u); lineTo(8f * u, 13.2f * u); lineTo(9.76f * u, 11.44f * u) }
+    drawPath(head, tint, style = stroke)
+}
+
+/** A circle with a slash across it: the third promise, no account, no ads, no analytics. */
+internal fun DrawScope.drawNoEntry(tint: Color) {
+    val u = size.width / 16f
+    val stroke = glyphStroke()
+    drawCircle(tint, radius = 5.6f * u, center = Offset(8f * u, 8f * u), style = stroke)
+    drawLine(tint, Offset(4.16f * u, 4.16f * u), Offset(11.84f * u, 11.84f * u), strokeWidth = stroke.width, cap = StrokeCap.Round)
+}

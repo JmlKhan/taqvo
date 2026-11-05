@@ -1,0 +1,183 @@
+package com.taqvo.app.settings
+
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import com.taqvo.app.tasbeeh.TasbeehPreset
+import com.taqvo.app.tasbeeh.TasbeehPresets
+import com.taqvo.app.tasbeeh.TasbeehState
+import kotlin.time.Clock
+
+/**
+ * Where the counter keeps its place (spec Tasbeeh §6), in the app's DataStore beside
+ * [BookmarkStore]: the selected preset, a count and round per preset, and the reader's own
+ * phrases. Nothing is aggregated — there is no daily or lifetime total anywhere, by design.
+ *
+ * Deliberately plain: it writes what it is told, when it is told. Coalescing a run of taps into
+ * one write is the view model's job, because only the screen knows when the taps stopped.
+ * [now] is injectable so tests can pin the ids custom presets are given.
+ */
+/**
+ * The first [max] characters as a reader counts them, not as UTF-16 stores them: an emoji or a
+ * plane-1 script is one character here, and a cut between a surrogate pair would leave half a
+ * character behind. `codePointCount`/`offsetByCodePoints` are the JVM's, so the walk is done by
+ * hand — which common code can do and every target then shares. The sheet cuts what is typed by
+ * the same rule the store cuts what is saved.
+ */
+internal fun String.takeCodePoints(max: Int): String {
+    var index = 0
+    var taken = 0
+    while (index < length && taken < max) {
+        val pair = this[index].isHighSurrogate() &&
+            index + 1 < length &&
+            this[index + 1].isLowSurrogate()
+        index += if (pair) 2 else 1
+        taken++
+    }
+    return substring(0, index)
+}
+
+class TasbeehStore(
+    private val store: DataStore<Preferences>,
+    private val now: () -> Long = { Clock.System.now().toEpochMilliseconds() },
+) {
+    val selectedId: Flow<String> =
+        store.data.map { prefs -> prefs[SettingsKeys.TASBEEH_SELECTED] ?: TasbeehPresets.DEFAULT_ID }
+
+    /** This preset's own place, count 0 and round 1 until it has been counted. */
+    fun stateOf(presetId: String): Flow<TasbeehState> =
+        store.data.map { prefs -> parseState(presetId, prefs[SettingsKeys.tasbeehStateKey(presetId)]) }
+
+    /** Creation order, oldest first; an entry that does not parse is dropped, never thrown on. */
+    val customPresets: Flow<List<TasbeehPreset>> =
+        store.data.map { prefs -> parseCustom(prefs[SettingsKeys.TASBEEH_CUSTOM].orEmpty()) }
+
+    suspend fun select(presetId: String) {
+        store.edit { it[SettingsKeys.TASBEEH_SELECTED] = presetId }
+    }
+
+    suspend fun save(state: TasbeehState) {
+        store.edit {
+            it[SettingsKeys.tasbeehStateKey(state.presetId)] = "${state.count}:${state.round}"
+        }
+    }
+
+    /**
+     * Adds a phrase of the reader's own and returns it. The phrase is trimmed and cut to the 60
+     * characters the sheet allows, the target held to 1..1000, and the id is the moment of
+     * creation — which also orders the chips, and is nudged forward if a second phrase somehow
+     * lands in the same millisecond, since the id is a storage key and must be unique.
+     *
+     * A phrase that is blank once cleaned is rejected here rather than written: [parseCustom]
+     * drops such an entry on the way back out, so accepting it would store a chip that silently
+     * never appears. The sheet keeps Add dead until there is a phrase, so this throw is a
+     * contract for callers, not a path the reader can walk into.
+     *
+     * @throws IllegalArgumentException if [phrase] has nothing left in it once cleaned.
+     */
+    suspend fun addCustom(phrase: String, target: Int): TasbeehPreset {
+        // A pasted phrase could in principle carry the separator itself, which would split
+        // one entry into four fields and be dropped on the next read as malformed.
+        val cleaned = phrase.filterNot { it == FIELD_SEP }.trim().takeCodePoints(MAX_PHRASE)
+        require(cleaned.isNotBlank()) { "A custom dhikr must have a phrase" }
+        val bounded = target.coerceIn(1, MAX_TARGET)
+        var made: TasbeehPreset? = null
+        store.edit { prefs ->
+            val existing = prefs[SettingsKeys.TASBEEH_CUSTOM].orEmpty()
+            val taken = existing.map { it.substringBefore(FIELD_SEP) }.toSet()
+            var stamp = now()
+            while (taken.contains("custom_$stamp")) stamp++
+            val preset = TasbeehPresets.custom("custom_$stamp", cleaned, bounded)
+            made = preset
+            prefs[SettingsKeys.TASBEEH_CUSTOM] = existing + encode(preset)
+        }
+        return made!!
+    }
+
+    /**
+     * Rewrites a phrase of the reader's own in place. The cleaning is [addCustom]'s exactly — the
+     * separator stripped, trimmed, cut to 60 characters as a reader counts them, the target held
+     * to 1..1000 — because an edited entry has to survive the same round trip a new one does.
+     *
+     * The id does not change, which is what keeps both the chip's place in the column (the order
+     * is the millisecond in the id) and the count already stored under it.
+     *
+     * **The count is clamped to the new target.** Dropping a target below the count already
+     * reached would otherwise leave a ring drawn past its own circumference and a "8 of 5" that
+     * can never complete; at the target it reads 5 of 5, complete, which is what lowering a
+     * target to where you already are means. The round is left alone — a round already finished
+     * was finished against the target it was counted under, and is not re-litigated here.
+     *
+     * A preset id that is not there is left alone rather than created: the sheet only opens on a
+     * chip that exists, and inventing an entry from an edit would be a worse surprise than none.
+     *
+     * @throws IllegalArgumentException if [phrase] has nothing left in it once cleaned.
+     */
+    suspend fun updateCustom(id: String, phrase: String, target: Int) {
+        val cleaned = phrase.filterNot { it == FIELD_SEP }.trim().takeCodePoints(MAX_PHRASE)
+        require(cleaned.isNotBlank()) { "A custom dhikr must have a phrase" }
+        val bounded = target.coerceIn(1, MAX_TARGET)
+        store.edit { prefs ->
+            val existing = prefs[SettingsKeys.TASBEEH_CUSTOM].orEmpty()
+            val old = existing.firstOrNull { it.substringBefore(FIELD_SEP) == id } ?: return@edit
+            prefs[SettingsKeys.TASBEEH_CUSTOM] =
+                existing - old + encode(TasbeehPresets.custom(id, cleaned, bounded))
+            // Read back through the same parse the screen reads through, so a malformed stored
+            // count is a fresh one here too rather than something to clamp.
+            val stored = parseState(id, prefs[SettingsKeys.tasbeehStateKey(id)])
+            if (stored.count > bounded) {
+                prefs[SettingsKeys.tasbeehStateKey(id)] = "$bounded:${stored.round}"
+            }
+        }
+    }
+
+    /**
+     * Forgets a custom phrase along with its count — leaving the state key behind would hand a
+     * stale count to the next `custom_<millis>` that happened to collide with it — and falls the
+     * selection back to the default when the phrase deleted is the one on screen.
+     */
+    suspend fun removeCustom(id: String) {
+        store.edit { prefs ->
+            prefs[SettingsKeys.TASBEEH_CUSTOM] = prefs[SettingsKeys.TASBEEH_CUSTOM].orEmpty()
+                .filterNot { it.substringBefore(FIELD_SEP) == id }
+                .toSet()
+            prefs.remove(SettingsKeys.tasbeehStateKey(id))
+            if (prefs[SettingsKeys.TASBEEH_SELECTED] == id) {
+                prefs[SettingsKeys.TASBEEH_SELECTED] = TasbeehPresets.DEFAULT_ID
+            }
+        }
+    }
+
+    private fun encode(preset: TasbeehPreset): String =
+        "${preset.id}$FIELD_SEP${preset.parts.first().dhikr.arabic}$FIELD_SEP${preset.total}"
+
+    private fun parseState(presetId: String, raw: String?): TasbeehState {
+        val blank = TasbeehState(presetId, 0, 1)
+        val fields = raw?.split(':') ?: return blank
+        if (fields.size != 2) return blank
+        val count = fields[0].toIntOrNull() ?: return blank
+        val round = fields[1].toIntOrNull() ?: return blank
+        return TasbeehState(presetId, count.coerceAtLeast(0), round.coerceAtLeast(1))
+    }
+
+    /** Sorted by the millisecond in the id, which is creation order; a set has none of its own. */
+    private fun parseCustom(raw: Set<String>): List<TasbeehPreset> = raw.mapNotNull { entry ->
+        val fields = entry.split(FIELD_SEP)
+        if (fields.size != 3) return@mapNotNull null
+        val id = fields[0]
+        val phrase = fields[1]
+        if (id.isBlank() || phrase.isBlank()) return@mapNotNull null
+        val target = fields[2].toIntOrNull() ?: return@mapNotNull null
+        TasbeehPresets.custom(id, phrase, target.coerceIn(1, MAX_TARGET))
+    }.sortedBy { it.id.removePrefix("custom_").toLongOrNull() ?: Long.MAX_VALUE }
+
+    private companion object {
+        // Written as an escape, never pasted raw: U+001F is invisible and would not survive an
+        // edit. The same separator the widget mirrors use.
+        const val FIELD_SEP = '\u001F'
+        const val MAX_PHRASE = 60
+        const val MAX_TARGET = 1000
+    }
+}

@@ -1,0 +1,308 @@
+# The cities with a prayer-times page on taqwa.world. One city per line, tab-separated:
+#
+#   slug  id  languages  featured  names
+#
+# id         the city's GeoNames id in the app's shared/src/commonMain/composeResources/files/cities.csv;
+#            the country, coordinates and time zone always come from there, never from here.
+# languages  the page languages, space-separated; English is always one of them.
+# featured   the languages whose home page lists the city.
+# names      lang=Name pairs separated by ';', only where the app's own name is wrong or reads
+#            badly as a page title. Every one here is a finding to fix in the app's city files.
+#
+# Nothing about the calculation is set here. A page shows exactly what the app shows a user in
+# that city who has changed no setting: the timetable or method the engine resolves for the city,
+# its Asr school, the automatic high-latitude rule, no adjustments.
+#
+# A row is un-held when the stamps prove every day its page shows (rulings R101, R115 and R116,
+# spec §2 in docs/superpowers/specs/2026-09-29-city-pages-design.md): the engine resolves the city
+# to a class A, B or C entry, measured at the city, with a green stamp for the entry and its unit,
+# and every day of this month checked for every timetable the page depends on (ruling R117: a cautious
+# member's day its table does not publish or gets wrong, recorded in the gate file, does not block while
+# another member's table is checked that day); next month is shown
+# too once every day of it is checked. tools/timetables applies the rule on every build and holds a
+# row it rejects, with a notice, so a city whose timetable is not yet checked for this month holds
+# by itself (London Unified's ends 31 December 2026: gate the 2027 table before January) and comes
+# back at the first build after its month is checked (Diyanet's captures reach 1 November 2026:
+# İstanbul and Ankara show October alone until a capture completes November). A held row comes back
+# by deleting its "# " once its stamp qualifies; a row the rule rejects is never published. The
+# proof is in tools/timetables/official/stamps and summarised at /prayer-times/how-taqvo-checks/.
+#
+# tools/timetables validates every row on every build: an unknown id, a duplicate slug, a page
+# language with no name, or a featured language without a page fails the build.
+
+# ---------------------------------------------------------------- Middle East
+# Saudi Arabia: Umm al-Qura (sa.ummalqura, class A).
+makkah-saudi-arabia	104515	en ar fr tr id ur bn	en ar fr tr id ur bn	ur=مکہ مکرمہ
+madinah-saudi-arabia	109223	en ar fr tr id ur bn	en ar fr tr id ur bn	ar=المدينة المنورة
+riyadh-saudi-arabia	108410	en ar ur bn id	en ar id ur bn
+jeddah-saudi-arabia	105343	en ar ur bn id	ar id ur bn
+dammam-saudi-arabia	110336	en ar ur
+taif-saudi-arabia	107968	en ar		en=Taif
+tabuk-saudi-arabia	101628	en ar
+abha-saudi-arabia	110690	en ar
+buraydah-saudi-arabia	107304	en ar		ar=بريدة
+# UAE: Dubai's IACAD table (ae.iacad.dubai, class B) at Dubai.
+dubai-uae	292223	en ar ur bn	en ar ur bn
+# held: Abu Dhabi, Sharjah, Al Ain — Awqaf's method not yet fully checked (ae.awqaf, class D).
+# abu-dhabi-uae	292968	en ar ur bn
+# sharjah-uae	292672	en ar ur bn		ar=الشارقة
+# al-ain-uae	292913	en ar		en=Al Ain
+# held: Kuwait — the ministry's method not yet fully checked (class D).
+# kuwait-city-kuwait	285787	en ar ur bn	ar ur bn	ur=کویت سٹی;bn=কুয়েত সিটি
+# Qatar: Calendar House (qa.calendarhouse, class B) at Doha.
+doha-qatar	290030	en ar ur bn
+# held: Bahrain — the council's method not yet fully checked (class D).
+# manama-bahrain	290340	en ar ur
+# Oman: the Ministry of Endowments (om.mara, class B) at Muscat.
+muscat-oman	287286	en ar ur
+# held: Salalah — outside om.mara's checked unit (class D).
+# salalah-oman	286621	en ar		en=Salalah
+# Jordan: the Ministry of Awqaf (jo.awqaf, class A) at Amman and Zarqa, its one table for Amman, Balqa, Zarqa and Madaba.
+# Its 2026 days are checked from 2 October (the monitor's first capture), so October, which lacks its 1st, is never shown:
+# the generator holds both until 1 November, when they show November and December.
+amman-jordan	250441	en ar	ar
+zarqa-jordan	250090	en ar		ar=الزرقاء
+# held: Jordan — Irbid is outside jo.awqaf's checked units (class D).
+# irbid-jordan	248946	en ar
+# held: Palestine — Gaza's cautious times are not measured at the city; Hebron and Nablus follow the PA's al-Aqsa table
+# with its printed town offsets (ruling R118, every printed town checked through 2027), class D: never early, up to 3 min late.
+# gaza-palestine	281133	en ar
+# hebron-palestine	285066	en ar
+# nablus-palestine	282615	en ar
+# held: Lebanon — Dar al-Fatwa's method not yet fully checked (class D).
+# beirut-lebanon	276781	en ar fr
+# tripoli-lebanon	266826	en ar fr
+# sidon-lebanon	268064	en ar fr		fr=Saïda
+# held: Syria — the Awqaf method not yet fully checked (class D).
+# damascus-syria	170654	en ar
+# aleppo-syria	170063	en ar
+# homs-syria	169577	en ar
+# held: Iraq — the Sunni Endowment's method not yet fully checked (class D).
+# baghdad-iraq	98182	en ar
+# mosul-iraq	99072	en ar
+# erbil-iraq	95446	en ar
+# held: Yemen — no authority; calculated by Taqvo (class D).
+# sanaa-yemen	71137	en ar
+# aden-yemen	415189	en ar
+
+# ---------------------------------------------------------------- North Africa
+# Egypt: ESA (eg.esa, class B) at Cairo, Alexandria, Giza (Cairo's unit), Port Said, Suez, Luxor and Aswan, each its town's unit. Its stamp now covers October 2026 (the monitor's captures of 28 Sep and 2 Oct), so the pages show October alone until November is checked.
+cairo-egypt	360630	en ar	en ar
+alexandria-egypt	361058	en ar	ar
+giza-egypt	360995	en ar
+port-said-egypt	358619	en ar
+suez-egypt	359796	en ar		ar=السويس
+luxor-egypt	360502	en ar
+aswan-egypt	359792	en ar		en=Aswan
+# held: Mansoura, Tanta and Assiut — outside ESA's checked units (class D).
+# mansoura-egypt	360761	en ar		en=Mansoura;ar=المنصورة
+# tanta-egypt	347497	en ar
+# assiut-egypt	359783	en ar
+# held: Libya — the Awqaf table's method not yet fully checked (ly.awqaf, class D everywhere; ruling R73).
+# tripoli-libya	2210247	en ar	ar
+# benghazi-libya	88319	en ar
+# misrata-libya	2214846	en ar		en=Misrata
+# zawiya-libya	2218970	en ar		en=Zawiya
+# al-bayda-libya	89055	en ar		en=Al Bayda;ar=البيضاء
+# sabha-libya	2212775	en ar
+# tobruk-libya	81302	en ar
+# al-khums-libya	2219905	en ar		ar=الخمس
+# zliten-libya	2208485	en ar
+# sirte-libya	2210554	en ar		ar=سرت
+# Tunisia: the National Institute of Meteorology (tn.inm, class B) at Tunis and Sfax.
+tunis-tunisia	2464470	en ar fr	fr
+sfax-tunisia	2467454	en ar fr
+# held: Sousse — outside tn.inm's checked units (class D).
+# sousse-tunisia	2464915	en ar fr
+# Algeria: the ministry's calendar (dz.marw, class B) at Algiers.
+algiers-algeria	2507480	en ar fr	fr	fr=Alger
+# held: Oran, Constantine — class D at the city (Oran's unit is not fully checked; Constantine is outside dz.marw's checked units).
+# oran-algeria	2485926	en ar fr
+# constantine-algeria	2501152	en ar fr
+# held: Morocco — ma.habous's stamp ends 12 October 2026 (Casablanca, Rabat, Tangier); Marrakesh, Fes and Agadir are outside its checked units (class D).
+# casablanca-morocco	2553604	en ar fr	fr
+# rabat-morocco	2538475	en ar fr		ar=الرباط
+# marrakesh-morocco	2542997	en ar fr
+# fes-morocco	2548885	en ar fr
+# tangier-morocco	2530335	en ar fr
+# agadir-morocco	2561668	en ar fr
+# held: Mauritania — the ministry's method not yet fully checked (class D).
+# nouakchott-mauritania	2377450	en ar fr
+# held: Sudan — the ministry's method not yet fully checked (class D).
+# khartoum-sudan	379252	en ar		ar=الخرطوم
+# omdurman-sudan	365137	en ar
+# port-sudan-sudan	377039	en ar
+
+# ---------------------------------------------------------------- Türkiye and Central Asia
+# Türkiye: Diyanet (tr.diyanet, class A) at İstanbul and Ankara. Its stamp covers 25 September – 1 November 2026 and 2027, so the pages show October alone until November is checked.
+istanbul-turkiye	745044	en tr	en tr
+ankara-turkiye	323786	en tr	tr
+# held: İzmir, Bursa, Konya, Antalya, Gaziantep, Diyarbakır — outside Diyanet's checked districts (class D).
+# izmir-turkiye	311046	en tr	tr	en=Izmir
+# bursa-turkiye	750269	en tr	tr
+# konya-turkiye	306571	en tr	tr
+# antalya-turkiye	323777	en tr
+# gaziantep-turkiye	314830	en tr
+# diyarbakir-turkiye	316541	en tr
+# held: Uzbekistan — the Muslim Board's method not yet fully checked (class D).
+# tashkent-uzbekistan	1512569	en
+# samarkand-uzbekistan	1216265	en
+# bukhara-uzbekistan	1217662	en
+
+# ---------------------------------------------------------------- South Asia
+# held: Pakistan and India — the Karachi seminaries' method not yet fully checked (pk.karachi, in.karachi, class D).
+# karachi-pakistan	1174872	en ur	en ur
+# lahore-pakistan	1172451	en ur	ur	ur=لاہور
+# islamabad-pakistan	1176615	en ur	ur
+# rawalpindi-pakistan	1166993	en ur
+# faisalabad-pakistan	1179400	en ur
+# multan-pakistan	1169825	en ur		ur=ملتان
+# peshawar-pakistan	1168197	en ur
+# quetta-pakistan	1167528	en ur
+# delhi-india	1273294	en ur		ur=دہلی
+# mumbai-india	1275339	en ur
+# hyderabad-india	1269843	en ur		ur=حیدرآباد
+# lucknow-india	1264733	en ur
+# bengaluru-india	1277333	en ur
+# srinagar-india	1255634	en ur
+# kolkata-india	1275004	en bn ur	bn	bn=কলকাতা
+# held: Bangladesh — the Islamic Foundation's method not yet fully checked (class D).
+# dhaka-bangladesh	1185241	en bn	en bn
+# chittagong-bangladesh	1205733	en bn	bn	en=Chittagong
+# sylhet-bangladesh	1185099	en bn	bn
+# khulna-bangladesh	1336135	en bn		bn=খুলনা
+# rajshahi-bangladesh	1185128	en bn
+# held: Maldives — no authority; calculated by Taqvo (class D).
+# male-maldives	1282027	en		en=Malé
+
+# ---------------------------------------------------------------- Southeast Asia
+# Singapore: MUIS (sg.muis, class B).
+singapore	1880252	en
+# Indonesia: Kemenag (id.kemenag, class B) at its fitted kota — each city below is its own unit.
+jakarta-indonesia	1642911	en id	en id
+surabaya-indonesia	1625822	en id	id	id=Surabaya
+bandung-indonesia	1650357	en id	id	id=Bandung
+medan-indonesia	1214520	en id	id	id=Medan
+semarang-indonesia	1627896	en id		id=Semarang
+makassar-indonesia	1622786	en id		id=Makassar
+palembang-indonesia	1633070	en id		id=Palembang
+yogyakarta-indonesia	1621177	en id		id=Yogyakarta
+banda-aceh-indonesia	1215502	en id		id=Banda Aceh
+# Malaysia: JAKIM (my.jakim, class B) at its zones WLY01, PNG01, JHR02 and KTN01.
+kuala-lumpur-malaysia	1735161	en
+george-town-malaysia	1735106	en
+johor-bahru-malaysia	1732752	en
+kota-bharu-malaysia	1736376	en
+# Brunei: the Ministry of Religious Affairs (bn.mora, class B) at Brunei-Muara.
+bandar-seri-begawan-brunei	1820906	en
+
+# ---------------------------------------------------------------- Africa
+# South Africa: cautious times (za.cape, class C) at Cape Town: the MJC's, the community calendar's and Jamiat's tables, all three checked for September and October 2026, so the page shows October alone until November is checked.
+cape-town-south-africa	3369157	en
+# South Africa: Jamiatul Ulama (za.jamiat, class B) at Johannesburg, Pretoria and Durban, each its own unit.
+johannesburg-south-africa	993800	en
+pretoria-south-africa	964137	en
+durban-south-africa	1007311	en
+# held: the rest of Africa — no authority; calculated by Taqvo (class D).
+# lagos-nigeria	2332459	en
+# kano-nigeria	2335204	en
+# abuja-nigeria	2352778	en
+# nairobi-kenya	184745	en
+# mombasa-kenya	186301	en
+# dar-es-salaam-tanzania	160263	en
+# zanzibar-tanzania	148730	en
+# addis-ababa-ethiopia	344979	en
+# mogadishu-somalia	53654	en ar
+# djibouti	223817	en fr ar
+# dakar-senegal	2253354	en fr	fr
+# touba-senegal	2244322	en fr		fr=Touba
+# bamako-mali	2460596	en fr
+# niamey-niger	2440485	en fr
+# ouagadougou-burkina-faso	2357048	en fr
+# conakry-guinea	2422465	en fr
+# abidjan-cote-divoire	2293538	en fr
+# ndjamena-chad	2427123	en fr ar		fr=N’Djaména;ar=نجامينا
+# accra-ghana	2306104	en
+
+# ---------------------------------------------------------------- Europe
+# United Kingdom: the London Unified Prayer Timetable (gb.london.lupt, class B) at London (M25).
+london-uk	2643743	en ur bn ar	en ur bn
+# held: Birmingham, Manchester, Bradford, Leicester, Glasgow — cautious times (gb.cautious, survey-proven) not measured at the city.
+# birmingham-uk	2655603	en ur bn		ur=برمنگھم;bn=বার্মিংহাম
+# manchester-uk	2643123	en ur		ur=مانچسٹر
+# bradford-uk	2654993	en ur
+# leicester-uk	2644668	en ur		ur=لیسٹر
+# glasgow-uk	2648579	en ur
+# France: cautious times (fr.cautious, class C) at Paris.
+paris-france	2988507	en fr ar	fr
+# held: Marseille, Lyon, Toulouse, Lille, Strasbourg — cautious times (fr.cautious) not measured at the city.
+# marseille-france	2995469	en fr ar
+# lyon-france	2996944	en fr ar
+# toulouse-france	2972315	en fr ar
+# lille-france	2998324	en fr ar
+# strasbourg-france	2973783	en fr tr
+# Belgium: cautious times (be.cautious, class C) at Brussels and Antwerp. Both members are checked through 1 November 2026 (Diyanet's captures end there, and EMB's table is checked on the same days), so the pages show October alone until November is checked.
+brussels-belgium	2800866	en fr ar	fr
+antwerp-belgium	2803138	en fr ar
+# held: the Netherlands — cautious times (nl.cautious) not measured at the city.
+# amsterdam-netherlands	2759794	en tr ar
+# rotterdam-netherlands	2747891	en tr ar
+# the-hague-netherlands	2747373	en tr ar
+# held: Germany — cautious times (de.cautious) not measured at the city.
+# berlin-germany	2950159	en tr ar	tr
+# hamburg-germany	2911298	en tr ar
+# cologne-germany	2886242	en tr ar		en=Cologne;ar=كولونيا
+# frankfurt-germany	2925533	en tr ar		en=Frankfurt
+# munich-germany	2867714	en tr ar
+# Bosnia: the Islamic Community's takvim (ba.iz, class B) at Sarajevo.
+sarajevo-bosnia	3191281	en
+# held: Kosovo — the community's method not yet fully checked (class D).
+# pristina-kosovo	786714	en
+# Albania: the Muslim Community (al.kmsh, class A) at Tirana.
+tirana-albania	3183875	en
+# held: Moscow — the Spiritual Administration's method not yet fully checked (class D).
+# moscow-russia	524901	en
+# Russia: the Spiritual Administration of Tatarstan (ru.dumrt, class B) at Kazan.
+kazan-russia	551487	en
+# Ireland: cautious times (ie.cautious, class C) at Dublin.
+dublin-ireland	2964574	en ar
+# held: Austria, Switzerland — the authority's method not yet fully checked (class D).
+# vienna-austria	2761369	en tr
+# zurich-switzerland	2657896	en tr
+# geneva-switzerland	2660646	en fr
+# held: Sweden, Denmark — cautious times (se.cautious) not measured at the city.
+# stockholm-sweden	2673730	en ar
+# malmo-sweden	2692969	en ar
+# copenhagen-denmark	2618425	en ar
+# Norway: cautious times (no.cautious, class C) at Oslo.
+oslo-norway	3143244	en ur
+
+# ---------------------------------------------------------------- Americas
+# Chicago: cautious times (us.chicago, class C). Both members are checked at Chicago through 31 December 2026 (the 18° block's tables and the Mosque Foundation's for us.isna), so its page shows two months until December.
+chicago-usa	4887398	en ar ur
+# held: United States — ISNA's method not yet fully checked (us.isna, class D).
+# new-york-usa	5128581	en ar ur bn	en bn	en=New York;ar=نيويورك;ur=نیویارک;bn=নিউ ইয়র্ক
+# los-angeles-usa	5368361	en ar
+# houston-usa	4699066	en ar ur
+# dearborn-usa	4990510	en ar
+# washington-dc-usa	4140963	en ar		en=Washington, DC;ar=واشنطن
+# philadelphia-usa	4560349	en
+# dallas-usa	4684888	en ar ur
+# atlanta-usa	4180439	en
+# minneapolis-usa	5037649	en
+# Canada: cautious times (ca.toronto, class C) at Toronto and Mississauga.
+toronto-canada	6167865	en ur ar	en
+mississauga-canada	6075357	en ur
+# held: Montreal, Ottawa — ISNA's method not yet fully checked (ca.isna, class D).
+# montreal-canada	6077243	en fr ar	fr	en=Montreal
+# ottawa-canada	6094817	en ar
+# held: Calgary, Edmonton, Vancouver — cautious times (ca.cautious) not measured at the city.
+# calgary-canada	5913490	en
+# edmonton-canada	5946768	en
+# vancouver-canada	6173331	en
+
+# ---------------------------------------------------------------- Oceania
+# held: Sydney, Melbourne — cautious times (au.cautious) not measured at the city; Auckland — FIANZ's method not yet fully checked (class D).
+# sydney-australia	2147714	en ar tr
+# melbourne-australia	2158177	en ar tr
+# auckland-new-zealand	2193733	en

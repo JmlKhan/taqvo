@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Defaults to a true 2x2 (70n-30dp: 2 cells = 110dp) and can be dragged anywhere from a single
+     cell to 4x4. The layout is chosen from the measured cell (see TaqvoGlanceWidget), so every
+     size in that range is a designed one, and the owner of a launcher with awkward cells can
+     shrink the card until it sits right. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:maxResizeWidth="0dp"
+    android:maxResizeHeight="0dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_loading"
+    android:previewImage="@drawable/widget_preview_small"
+    android:description="@string/widget_small_description"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen" />

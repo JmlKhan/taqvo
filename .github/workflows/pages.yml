@@ -1,0 +1,125 @@
+name: Website
+
+# Builds taqwa.world and publishes it with GitHub Pages: the pages in site/, the privacy policy
+# from PRIVACY.md, and the prayer-time pages, whose times come from the app's own engine
+# (tools/timetables compiles the app's prayer, Qibla and Hijri code and runs its tests first).
+#
+# It runs on every push that touches any of that, and every six hours, so each city's page
+# turns over to its new day within a few hours of the city's midnight and to a new month on its
+# first. Nothing it generates is committed. The app's own tests live in scripts/test.sh.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "PRIVACY.md"
+      - "PRIVACY.*.md"
+      - ".github/workflows/pages.yml"
+      - "tools/timetables/**"
+      - "gradle/libs.versions.toml"
+      - "gradle/wrapper/**"
+      # The app files tools/timetables compiles, tests and reads (see its build.gradle.kts).
+      - "shared/src/commonMain/kotlin/com/taqvo/app/prayer/**"
+      - "shared/src/commonMain/kotlin/com/taqvo/app/domain/**"
+      - "shared/src/commonMain/kotlin/com/taqvo/app/qibla/**"
+      - "shared/src/commonMain/kotlin/com/taqvo/app/hijri/**"
+      - "shared/src/commonMain/kotlin/com/taqvo/app/i18n/CountdownDigits.kt"
+      - "shared/src/commonMain/kotlin/com/taqvo/app/i18n/DigitGrouping.kt"
+      - "shared/src/commonTest/kotlin/com/taqvo/app/i18n/DigitGroupingTest.kt"
+      - "widgetcore/src/commonMain/kotlin/com/taqvo/app/i18n/UiLanguage.kt"
+      - "shared/src/commonTest/kotlin/com/taqvo/app/prayer/**"
+      - "shared/src/commonTest/kotlin/com/taqvo/app/qibla/**"
+      - "shared/src/commonTest/kotlin/com/taqvo/app/hijri/**"
+      - "widgetcore/src/commonMain/kotlin/com/taqvo/app/domain/**"
+      - "shared/src/commonMain/composeResources/values*/strings.xml"
+      - "shared/src/commonMain/composeResources/files/cities.csv"
+      - "shared/src/commonMain/composeResources/files/city-names-*.csv"
+      # The app's Manrope files and their licence, which site/build.py serves as the site's type.
+      - "shared/src/commonMain/composeResources/font/Manrope-*.ttf"
+      - "docs/licences/OFL-1.1-Manrope.txt"
+  schedule:
+    - cron: "7 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One run at a time, and a run in progress is never cancelled: a newer one waits for it (GitHub's own
+# advice for Pages, a deploy cut off midway helps no one). Cancelling marked main's commit failed
+# whenever a push met a scheduled run (13 October 2026), with nothing wrong.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+          # The newest 21 each run, so a JDK with newer time-zone data is picked up the day it
+          # ships (site/timetables.py corrects the clocks from tzdata until then).
+          check-latest: true
+          cache: gradle
+      - name: Prayer times from the app's own engine
+        # The app's engine, Qibla and Hijri tests run on the JVM first; a change that breaks
+        # them, or a city the engine cannot place, stops the build before anything is published.
+        run: ./gradlew --no-daemon -p tools/timetables jvmTest generate
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      # tzdata is deliberately unpinned: the build reads every city's clock from the newest
+      # time-zone database, which is ahead of the JDK's copy whenever a country changes its rules.
+      - run: pip install markdown==3.10.3 tzdata
+      # The page code's own tests (the clock correction, the minute ruler, a page of one month or
+      # two, and its script on the last evening in the runner's Chrome); standard library only.
+      - run: python3 site/test_timetables.py
+      # The store links' campaign tags (Google Play's referrer, Apple's campaign link, the
+      # validation of campaigns.json and stores.json) and the /get/ pages' script, in the
+      # runner's Node; standard library only.
+      - run: python3 site/test_campaigns.py
+      - run: python3 site/build.py --check
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_again.outputs.page_url }}
+    steps:
+      # Once more after a minute when GitHub's Pages service errors (15 October 2026: "Failed to create
+      # deployment (status: 500)" on a build that was fine). The action cancels a deployment it gives up
+      # on, so the second is a fresh one; a failure that persists still fails the job.
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+        continue-on-error: true
+      - name: Wait a minute before deploying again
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 60
+      - id: deployment_again
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  keepalive:
+    # GitHub switches off a public repository's scheduled workflows after sixty days without
+    # activity. Enabling the workflow from its own scheduled run resets that clock, so the
+    # timetables keep turning over on a quiet repository with nobody touching it. It does not
+    # wait for the build: a broken build must not also let the schedule lapse.
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - run: gh api --method PUT "repos/${{ github.repository }}/actions/workflows/pages.yml/enable"
+        env:
+          GH_TOKEN: ${{ github.token }}

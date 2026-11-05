@@ -1,0 +1,258 @@
+package com.taqvo.app.feature.quran
+
+import androidx.compose.ui.graphics.Color
+import com.taqvo.app.quran.LineType
+import com.taqvo.app.quran.LineWord
+import com.taqvo.app.quran.MushafLine
+import com.taqvo.app.quran.MushafPage
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+/**
+ * The pure rules a printed page is laid out by (spec §2.4): one size per page, words spread
+ * across the line, taps resolved by span, highlight fields per run. All in pixels, none of it
+ * needing a font.
+ */
+class MushafPageViewTest {
+
+    private val accent = Color(0xFFB5820B)
+
+    // --- fitToHeight ---
+
+    // 15 rows at 20 sp and 1.9x need 570 sp of height; at 2.5 px per sp that is 1425 px (+15).
+    private fun fit(availablePx: Float, sizeSp: Float = 20f, rows: Int = 15, fixedPx: Float = 0f) =
+        fitToHeight(sizeSp, rows, fixedPx, availablePx, pxPerSp = 2.5f)
+
+    @Test
+    fun `a frame tall enough leaves the page exactly as the width set it`() {
+        assertEquals(VerticalFit(20f, PREFERRED_LINE_MULTIPLE, scrolls = false), fit(availablePx = 1600f))
+        assertEquals(VerticalFit(20f, PREFERRED_LINE_MULTIPLE, scrolls = false), fit(availablePx = 1440f))
+    }
+
+    @Test
+    fun `a frame a little short closes the lines up and keeps the size`() {
+        val fitted = fit(availablePx = 1300f)
+        assertEquals(20f, fitted.sizeSp)
+        assertFalse(fitted.scrolls)
+        assertTrue(fitted.lineMultiple < PREFERRED_LINE_MULTIPLE && fitted.lineMultiple >= TIGHTEST_LINE_MULTIPLE)
+    }
+
+    @Test
+    fun `a frame shorter still shrinks the size in half steps at the tightest line box`() {
+        // The tester's phone with the player bar up: about 442 dp of inner height at 2.5 px per dp.
+        val fitted = fit(availablePx = 1105f)
+        assertFalse(fitted.scrolls)
+        assertTrue(fitted.sizeSp < 20f, "size ${fitted.sizeSp}")
+        assertEquals(0f, fitted.sizeSp % 0.5f)
+        assertTrue(fitted.lineMultiple >= TIGHTEST_LINE_MULTIPLE && fitted.lineMultiple <= PREFERRED_LINE_MULTIPLE)
+    }
+
+    @Test
+    fun `whatever it decides the rows never add up to more than the frame`() {
+        for (available in 400..2000 step 7) {
+            for (size in listOf(16f, 18.5f, 20f, 23f)) {
+                for (fixed in listOf(0f, 100f, 200f)) {
+                    val fitted = fitToHeight(size, 15, fixed, available.toFloat(), pxPerSp = 2.5f)
+                    if (fitted.scrolls) continue
+                    // Each row rounds up to a whole pixel when placed, as the layout does.
+                    val rows = 15 * kotlin.math.ceil(fitted.sizeSp * fitted.lineMultiple * 2.5f)
+                    assertTrue(rows + fixed <= available, "available=$available size=$size fixed=$fixed -> $fitted needs ${rows + fixed}")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `surah bands and page gaps are taken out of the room before the lines share it`() {
+        val plain = fit(availablePx = 1300f)
+        val withBands = fit(availablePx = 1300f, fixedPx = 200f)
+        assertTrue(withBands.lineMultiple < plain.lineMultiple || withBands.sizeSp < plain.sizeSp)
+    }
+
+    @Test
+    fun `a frame too short for a readable page scrolls at the size the width gave`() {
+        assertEquals(VerticalFit(20f, PREFERRED_LINE_MULTIPLE, scrolls = true), fit(availablePx = 500f))
+    }
+
+    @Test
+    fun `nonsense in is the page as set and never a division by zero`() {
+        val asSet = VerticalFit(20f, PREFERRED_LINE_MULTIPLE, scrolls = false)
+        assertEquals(asSet, fit(availablePx = 0f))
+        assertEquals(asSet, fit(availablePx = 1000f, rows = 0))
+        assertEquals(asSet, fitToHeight(20f, 15, 0f, 1000f, pxPerSp = 0f))
+    }
+
+    // --- fittedSize ---
+
+    @Test
+    fun aPageWhoseWidestLineFitsKeepsTheBaseSize() {
+        assertEquals(28f, fittedSize(base = 28f, widestAtBase = 900f, frameWidth = 1000f))
+        assertEquals(28f, fittedSize(base = 28f, widestAtBase = 1000f, frameWidth = 1000f))
+    }
+
+    @Test
+    fun aPageWhoseWidestLineOverflowsShrinksToTheHalfStepThatFits() {
+        // Exact fit would be 28 * 1000 / 1150 = 24.35; the half-step at or below it is 24.0.
+        assertEquals(24f, fittedSize(base = 28f, widestAtBase = 1150f, frameWidth = 1000f))
+        // 28 * 1000 / 1100 = 25.45 -> 25.0; and the fitted size never exceeds the base.
+        assertEquals(25f, fittedSize(base = 28f, widestAtBase = 1100f, frameWidth = 1000f))
+        assertTrue(fittedSize(28f, 1001f, 1000f) < 28f)
+    }
+
+    @Test
+    fun aPageWithNoTextLinesKeepsTheBaseSize() {
+        assertEquals(28f, fittedSize(base = 28f, widestAtBase = 0f, frameWidth = 1000f))
+    }
+
+    // --- placeWords ---
+
+    @Test
+    fun wordsRunRightToLeftFromTheLineEdge() {
+        val placed = placeWords(widths = listOf(100f, 50f, 80f), lineWidth = 500f, naturalGap = 10f, justify = false)
+        assertEquals(PlacedWord(400f, 500f), placed[0])
+        assertEquals(PlacedWord(340f, 390f), placed[1])
+        assertEquals(PlacedWord(250f, 330f), placed[2])
+    }
+
+    @Test
+    fun aJustifiedLineSpreadsItsSlackEvenlyAndEndsOnTheLeftEdge() {
+        val placed = placeWords(widths = listOf(100f, 50f, 80f), lineWidth = 500f, naturalGap = 10f, justify = true)
+        // 500 - 230 = 270 of slack over two gaps: 135 each.
+        assertEquals(PlacedWord(400f, 500f), placed[0])
+        assertEquals(PlacedWord(215f, 265f), placed[1])
+        assertEquals(PlacedWord(0f, 80f), placed[2])
+    }
+
+    @Test
+    fun aSingleWordLineSitsAtTheRightEdgeWhetherJustifiedOrNot() {
+        assertEquals(listOf(PlacedWord(400f, 500f)), placeWords(listOf(100f), 500f, 10f, justify = true))
+        assertEquals(listOf(PlacedWord(400f, 500f)), placeWords(listOf(100f), 500f, 10f, justify = false))
+    }
+
+    @Test
+    fun aJustifiedLineThatIsAlreadyTooWideNeverOverlapsItsWords() {
+        // Only sub-pixel rounding can produce this; the words then touch rather than overlap.
+        val placed = placeWords(widths = listOf(300f, 300f), lineWidth = 500f, naturalGap = 10f, justify = true)
+        assertEquals(PlacedWord(200f, 500f), placed[0])
+        assertEquals(PlacedWord(-100f, 200f), placed[1])
+    }
+
+    @Test
+    fun noWordsPlaceNothing() {
+        assertEquals(emptyList(), placeWords(emptyList(), 500f, 10f, justify = true))
+    }
+
+    // --- wordAtX ---
+
+    @Test
+    fun aTapResolvesToTheWordUnderItAndTheGapBelongsToTheWordBeforeIt() {
+        val placed = placeWords(widths = listOf(100f, 50f, 80f), lineWidth = 500f, naturalGap = 10f, justify = false)
+        assertEquals(0, wordAtX(placed, 450f, 500f))
+        assertEquals(1, wordAtX(placed, 360f, 500f))
+        assertEquals(2, wordAtX(placed, 300f, 500f))
+        // In the gap after the first word (to its left, on a right-to-left line).
+        assertEquals(0, wordAtX(placed, 395f, 500f))
+        // In the slack an unjustified line leaves at its left end: nobody's.
+        assertNull(wordAtX(placed, 100f, 500f))
+    }
+
+    @Test
+    fun onAJustifiedLineEveryPointBelongsToSomeWord() {
+        val placed = placeWords(widths = listOf(100f, 50f, 80f), lineWidth = 500f, naturalGap = 10f, justify = true)
+        listOf(0f, 40f, 100f, 240f, 300f, 499f).forEach { x ->
+            assertTrue(wordAtX(placed, x, 500f) != null, "x=$x should hit a word")
+        }
+    }
+
+    // --- markedRuns ---
+
+    @Test
+    fun consecutiveMarkedWordsFormOneRunNotOnePerWord() {
+        val marks = listOf(false, true, true, true, false, true)
+        assertEquals(listOf(1..3, 5..5), markedRuns(marks.size) { marks[it] })
+        assertEquals(emptyList(), markedRuns(3) { false })
+        assertEquals(listOf(0..2), markedRuns(3) { true })
+    }
+
+    // --- annotateWord / digitsStart ---
+
+    @Test
+    fun onlyAWordsTrailingDigitsTakeTheAccent() {
+        val word = MUSHAF_PAGE_2.lines[2].words.first().text // "الٓمٓ" + separator + "١"
+        val digits = digitsStart(word)
+        assertEquals(word.length - 1, digits)
+        val annotated = annotateWord(word, accent)
+        assertEquals(word, annotated.text)
+        val spans = annotated.spanStyles.filter { it.item.color == accent }
+        assertEquals(1, spans.size)
+        assertEquals(digits, spans.first().start)
+        assertEquals(word.length, spans.first().end)
+    }
+
+    @Test
+    fun aWordWithoutDigitsIsLeftAlone() {
+        val word = MUSHAF_PAGE_2.lines[2].words[1].text
+        assertEquals(-1, digitsStart(word))
+        assertTrue(annotateWord(word, accent).spanStyles.isEmpty())
+    }
+
+    // --- isJustified ---
+
+    @Test
+    fun onlyOrdinaryLinesBeyondAlFaatihasPagesAreJustified() {
+        // Pages 1 and 2 keep the printed Mushaf's own centred, unjustified setting.
+        MUSHAF_PAGE_1.lines.forEach { assertFalse(isJustified(MUSHAF_PAGE_1, it)) }
+        MUSHAF_PAGE_2.lines.forEach { assertFalse(isJustified(MUSHAF_PAGE_2, it)) }
+
+        val ordinary = MUSHAF_PAGE_3.lines.first { it.type == LineType.TEXT && !it.endsSurah }
+        assertTrue(isJustified(MUSHAF_PAGE_3, ordinary))
+    }
+
+    // --- ayahStops ---
+
+    private fun word(surah: Int, ayah: Int, index: Int) = LineWord(index, surah, ayah, index, "w")
+    private fun textLine(line: Int, words: List<LineWord>) = MushafLine(
+        line, LineType.TEXT, words.first().surah, words.joinToString(" ") { it.text },
+        words.first().surah, words.first().ayah, words.last().surah, words.last().ayah, endsSurah = false, words = words,
+    )
+
+    @Test
+    fun `every ayah gets one stop over its first run and none over the lines it runs on to`() {
+        val page = MushafPage(
+            3, 2, 5, 1,
+            listOf(
+                textLine(1, listOf(word(2, 5, 0), word(2, 5, 1), word(2, 6, 2))),
+                textLine(2, listOf(word(2, 6, 0), word(2, 7, 1), word(2, 7, 2), word(2, 8, 3))),
+                textLine(3, listOf(word(2, 8, 0), word(2, 8, 1))),
+            ),
+        )
+        assertEquals(
+            listOf(
+                AyahStop(0, 0..1, 2, 5),
+                AyahStop(0, 2..2, 2, 6),
+                AyahStop(1, 1..2, 2, 7),
+                AyahStop(1, 3..3, 2, 8),
+            ),
+            ayahStops(page),
+        )
+    }
+
+    @Test
+    fun `surah bands and the basmala get no stop but a new surah's first ayah does`() {
+        val band = MushafLine(1, LineType.SURAH, 112, null, null, null, null, null, endsSurah = false, words = emptyList())
+        val basmala = MushafLine(2, LineType.BASMALA, 112, null, null, null, null, null, endsSurah = false, words = emptyList())
+        val page = MushafPage(604, 112, 1, 30, listOf(band, basmala, textLine(3, listOf(word(112, 1, 0), word(112, 2, 1)))))
+        assertEquals(listOf(AyahStop(2, 0..0, 112, 1), AyahStop(2, 1..1, 112, 2)), ayahStops(page))
+    }
+
+    @Test
+    fun `the fixture pages give one stop per distinct ayah in reading order`() {
+        for (page in listOf(MUSHAF_PAGE_1, MUSHAF_PAGE_2, MUSHAF_PAGE_3)) {
+            val ayahs = page.lines.filter { it.type == LineType.TEXT }.flatMap { it.words }.map { it.surah to it.ayah }.distinct()
+            assertEquals(ayahs, ayahStops(page).map { it.surah to it.ayah }, "page ${page.number}")
+        }
+    }
+}

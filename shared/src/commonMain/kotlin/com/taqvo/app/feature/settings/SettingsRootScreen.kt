@@ -1,0 +1,331 @@
+package com.taqvo.app.feature.settings
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.UriHandler
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import com.taqvo.app.design.LocalTaqvoColors
+import com.taqvo.app.design.TaqvoText
+import com.taqvo.app.design.contentWidth
+import com.taqvo.app.design.components.CardDivider
+import com.taqvo.app.design.components.TaqvoCard
+import com.taqvo.app.design.components.TaqvoRow
+import com.taqvo.app.design.components.drawExternalLink
+import com.taqvo.app.domain.NotificationSettings
+import com.taqvo.app.domain.ObligatoryPrayers
+import com.taqvo.app.domain.PrayerSound
+import com.taqvo.app.i18n.LocalPlatformFormat
+import com.taqvo.app.resources.Res
+import com.taqvo.app.resources.settings_about
+import com.taqvo.app.resources.settings_appearance
+import com.taqvo.app.resources.settings_appearance_value
+import com.taqvo.app.resources.settings_group_about
+import com.taqvo.app.resources.settings_group_app
+import com.taqvo.app.resources.settings_group_prayer
+import com.taqvo.app.resources.settings_group_quran
+import com.taqvo.app.resources.settings_recitation
+import com.taqvo.app.resources.settings_location
+import com.taqvo.app.resources.settings_not_set
+import com.taqvo.app.resources.settings_notifications
+import com.taqvo.app.resources.settings_notifications_off
+import com.taqvo.app.resources.settings_notifications_on_count
+import com.taqvo.app.resources.settings_prayer_times
+import com.taqvo.app.resources.settings_title
+import com.taqvo.app.resources.settings_version_value
+import com.taqvo.app.resources.settings_widgets
+import com.taqvo.app.resources.settings_wallpapers
+import com.taqvo.app.resources.language_name
+import com.taqvo.app.resources.nav_a11y_back
+
+/** The horizontal inset every settings screen shares with the Prayer screen's cards. */
+internal val SettingsGutter = 24.dp
+
+/**
+ * Back chevron, large title, scrolling body. Every settings screen is this shape, so it lives in
+ * one place rather than being re-typed seven times with drifting paddings.
+ *
+ * [onBack] is null on the settings root, which is a tab root: there is nowhere above it, so it
+ * shows a short spacer instead of the chevron rather than reserving the chevron's full height. A
+ * tab root is reached by switching tabs, not by pushing, so the title it must line up with is the
+ * Prayer tab's — the sub-screens it pushes are allowed to sit their titles lower.
+ */
+@Composable
+internal fun SettingsScaffold(
+    title: String,
+    onBack: (() -> Unit)?,
+    /** Given, the screen scrolls with it, so a row it anchors stays put; see [ScrollAnchor]. */
+    anchor: ScrollAnchor? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val colors = LocalTaqvoColors.current
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(colors.background)
+            // safeDrawing, not systemBars: held sideways the navigation bar and the camera cutout
+            // move to the edges, and only safeDrawing reports those horizontal insets.
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .then(anchor?.scroller ?: Modifier)
+            .verticalScroll(anchor?.scroll ?: rememberScrollState()),
+    ) {
+        // The scroller stays full-bleed so the background reaches both edges; only the column of
+        // chrome and cards inside it is capped, chevron and title included — a title pinned to
+        // the far left of a 900 dp landscape screen would sit half a hand away from its cards.
+        Column(Modifier.contentWidth()) {
+            if (onBack == null) {
+                // With the title's own 4 dp on top, this puts the title `TabRootTitleTop` below the
+                // status bar, level with the Prayer and Quran titles — the tabs the user switches
+                // between.
+                Spacer(Modifier.height(20.dp))
+            } else {
+                BackChevron(onBack)
+            }
+            Text(
+                title,
+                style = TaqvoText.screenTitle,
+                color = colors.textPrimary,
+                // Headings, so TalkBack's heading navigation and the VoiceOver rotor can jump from
+                // section to section instead of walking every row (audit sr-headings).
+                modifier = Modifier
+                    .padding(start = SettingsGutter, end = SettingsGutter, top = 4.dp)
+                    .semantics { heading() },
+            )
+            Spacer(Modifier.height(20.dp))
+            content()
+            Spacer(Modifier.height(40.dp))
+        }
+    }
+}
+
+/**
+ * Pushed screens only; a tab root has nothing above it. Shared with the Qibla screen, which is
+ * pushed from the Prayer screen's card and needs the same way back.
+ */
+@Composable
+internal fun BackChevron(onBack: () -> Unit) {
+    val colors = LocalTaqvoColors.current
+    val back = stringResource(Res.string.nav_a11y_back)
+    Box(
+        Modifier
+            .padding(start = 8.dp, top = 8.dp)
+            .size(44.dp)
+            .clip(CircleShape)
+            .clickable(role = Role.Button, onClick = onBack)
+            // A drawn chevron has no words of its own, and it is the first thing a screen reader
+            // meets on every pushed screen: "Back", not "Unlabelled".
+            .semantics { contentDescription = back },
+        contentAlignment = Alignment.Center,
+    ) {
+        // Drawn from literal coordinates, so unlike every `Row` and `padding(start=)` on these
+        // screens it does not mirror itself: under Arabic "back" is to the right, and a chevron
+        // still pointing left would send the eye the wrong way.
+        val pointsLeft = LocalLayoutDirection.current == LayoutDirection.Ltr
+        Canvas(Modifier.size(20.dp)) {
+            val w = size.width
+            fun x(fraction: Float) = if (pointsLeft) w * fraction else w * (1f - fraction)
+            val path = Path().apply {
+                moveTo(x(0.62f), w * 0.14f)
+                lineTo(x(0.30f), w * 0.50f)
+                lineTo(x(0.62f), w * 0.86f)
+            }
+            drawPath(
+                path = path,
+                color = colors.textPrimary,
+                style = Stroke(width = w * 0.11f, cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
+        }
+    }
+}
+
+@Composable
+internal fun SectionLabel(text: String, gutter: Dp = SettingsGutter) {
+    Text(
+        text,
+        style = TaqvoText.sectionLabel,
+        color = LocalTaqvoColors.current.textTertiary,
+        modifier = Modifier.padding(start = gutter + 4.dp, bottom = 8.dp).semantics { heading() },
+    )
+}
+
+/** Body copy beneath a card — privacy notes, rule explanations, live previews. */
+@Composable
+internal fun SettingsNote(text: String, gutter: Dp = SettingsGutter) {
+    Text(
+        text,
+        style = TaqvoText.caption,
+        color = LocalTaqvoColors.current.textSecondary,
+        modifier = Modifier.padding(horizontal = gutter + 4.dp),
+    )
+}
+
+@Composable
+internal fun SettingsCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    TaqvoCard(modifier.padding(horizontal = SettingsGutter), content = content)
+}
+
+/**
+ * A row that leaves the app: the external-link glyph in the trailing slot says so before the tap,
+ * so a row that opens a browser or a store looks the same wherever it sits.
+ */
+@Composable
+internal fun LinkRow(label: String, value: String?, forward: Boolean, onClick: () -> Unit) {
+    val tint = LocalTaqvoColors.current.textTertiary
+    TaqvoRow(
+        label,
+        value = value,
+        onClick = onClick,
+        trailing = { Canvas(Modifier.size(16.dp)) { drawExternalLink(tint, forward) } },
+    )
+}
+
+/**
+ * Opens the first of [links] that something on the phone answers. Compose's Android handler
+ * throws when no app takes a link, which is how a phone without the Play Store falls through to
+ * the web listing; a phone with nothing for any of them stays where it is, as About's links do
+ * (privacy spec §6.3).
+ */
+internal fun UriHandler.openFirst(links: List<String>) {
+    for (link in links) if (runCatching { openUri(link) }.isSuccess) return
+}
+
+@Composable
+private fun GroupGap() = Spacer(Modifier.fillMaxWidth().height(28.dp))
+
+@Composable
+fun SettingsRootScreen(
+    cityName: String?,
+    methodName: String,
+    themeName: String,
+    notificationSettings: NotificationSettings,
+    onOpenLocation: () -> Unit,
+    onOpenPrayerTimes: () -> Unit,
+    onOpenNotifications: () -> Unit,
+    onOpenAppearance: () -> Unit,
+    /** How many of the widgets are on a home screen; null until placement has been read, so the
+     * row shows nothing rather than a guess that changes a moment later. */
+    widgetsValue: String?,
+    onOpenWidgets: () -> Unit,
+    onOpenWallpapers: () -> Unit,
+    onOpenAbout: () -> Unit,
+    /** The voice the reader listens in, for the Recitation row's value; blank until the
+     * catalogue has loaded, which is a frame. */
+    reciterName: String,
+    onOpenRecitation: () -> Unit,
+) {
+    // "Off" once the master toggle is off; otherwise how many of the five obligatory prayers
+    // still carry a sound, so the row means something before the screen behind it is even open.
+    val format = LocalPlatformFormat.current
+    val notificationValue = if (!notificationSettings.enabled) {
+        stringResource(Res.string.settings_notifications_off)
+    } else {
+        val on = ObligatoryPrayers.count { notificationSettings.soundFor(it) != PrayerSound.SILENT }
+        stringResource(Res.string.settings_notifications_on_count, format.localizedDigits(on))
+    }
+
+    SettingsScaffold(stringResource(Res.string.settings_title), onBack = null) {
+        SectionLabel(stringResource(Res.string.settings_group_prayer))
+        SettingsCard {
+            TaqvoRow(
+                stringResource(Res.string.settings_location),
+                value = cityName ?: stringResource(Res.string.settings_not_set),
+                onClick = onOpenLocation,
+            )
+            CardDivider()
+            TaqvoRow(
+                stringResource(Res.string.settings_prayer_times),
+                value = methodName,
+                onClick = onOpenPrayerTimes,
+            )
+            CardDivider()
+            TaqvoRow(
+                stringResource(Res.string.settings_notifications),
+                value = notificationValue,
+                onClick = onOpenNotifications,
+            )
+        }
+
+        GroupGap()
+        // Quran sits between Prayer and App: it is a section about content, like Prayer above it,
+        // and not about the app itself. One row today; the reading settings that would join it
+        // live in the reader's own sheet, where they are next to the text they change.
+        SectionLabel(stringResource(Res.string.settings_group_quran))
+        SettingsCard {
+            TaqvoRow(
+                stringResource(Res.string.settings_recitation),
+                value = reciterName,
+                onClick = onOpenRecitation,
+            )
+        }
+
+        GroupGap()
+        SectionLabel(stringResource(Res.string.settings_group_app))
+        SettingsCard {
+            // The language lives inside Appearance (it is set once, if ever: Taqvo follows the
+            // phone's), and this row names it beside the theme, so a reader who picked a language
+            // they cannot read still finds their own language's name on the first screen.
+            TaqvoRow(
+                stringResource(Res.string.settings_appearance),
+                value = stringResource(Res.string.settings_appearance_value, themeName, stringResource(Res.string.language_name)),
+                onClick = onOpenAppearance,
+            )
+            CardDivider()
+            // Its own row, so a reader who skipped onboarding's widget step finds the widgets
+            // again. The value is plain information, never a badge or a dot: the quiet-app rule.
+            TaqvoRow(
+                stringResource(Res.string.settings_widgets),
+                value = widgetsValue,
+                onClick = onOpenWidgets,
+            )
+            CardDivider()
+            TaqvoRow(
+                stringResource(Res.string.settings_wallpapers),
+                onClick = onOpenWallpapers,
+            )
+        }
+
+        GroupGap()
+        SectionLabel(stringResource(Res.string.settings_group_about))
+        // One row: Rate, Share and Attribution & licences live on About Taqvo, the app's profile
+        // page, so the root stays a list of settings with one way in to everything about the app.
+        SettingsCard {
+            TaqvoRow(
+                stringResource(Res.string.settings_about),
+                value = stringResource(Res.string.settings_version_value),
+                onClick = onOpenAbout,
+            )
+        }
+    }
+}

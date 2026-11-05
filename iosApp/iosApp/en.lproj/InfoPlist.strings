@@ -1,0 +1,9 @@
+/* The permission sheet's own copy. Info.plist carries the same English sentence as the fallback
+   for every other language; this file exists so ar.lproj can carry the Arabic one. */
+"NSLocationWhenInUseUsageDescription" = "Taqvo uses your location to calculate prayer times on your device. Your location is never sent anywhere.";
+
+/* The name under the home screen icon. */
+"CFBundleDisplayName" = "Taqvo";
+
+/* Settings › Wallpapers, on saving the first wallpaper: add-only access to Photos. */
+"NSPhotoLibraryAddUsageDescription" = "Taqvo saves the wallpaper you made to your photos. It only adds the picture and never sees your library.";

@@ -1,0 +1,2576 @@
+package com.taqvo.app.feature.recitation
+
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runTest
+import com.taqvo.app.feature.quran.FakeQuranSource
+import com.taqvo.app.quran.TextKind
+import com.taqvo.app.quran.TranslationInfo
+import com.taqvo.app.recitation.DownloadFailure
+import com.taqvo.app.recitation.DownloadKey
+import com.taqvo.app.recitation.DownloadState
+import com.taqvo.app.recitation.NowPlayingText
+import com.taqvo.app.recitation.PlaybackState
+import com.taqvo.app.recitation.RecitationManifest
+import com.taqvo.app.recitation.RecitationSettings
+import com.taqvo.app.recitation.Reciter
+import com.taqvo.app.recitation.SpeechVoice
+import com.taqvo.app.recitation.SpokenTranslation
+import com.taqvo.app.recitation.SurahAsset
+import com.taqvo.app.recitation.SurahSkip
+import com.taqvo.app.recitation.VoiceStatus
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+/**
+ * The controller's decisions, with every collaborator replaced. Nothing here touches a file, a
+ * DataStore or a platform player — which is the point of the ports in `RecitationPorts.kt`: this
+ * class is only judgement, and judgement is what a unit test can hold to account.
+ *
+ * The scope is `runTest`'s own `backgroundScope` on an unconfined dispatcher, so every flow the
+ * controller assembles settles before the next assertion rather than a frame later.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class RecitationControllerTest {
+
+    private val alafasy = Reciter(
+        id = "ar.alafasy",
+        nameEn = "Mishary Rashid Alafasy",
+        nameAr = "مشاري راشد العفاسي",
+        style = "murattal",
+        kbps = 64,
+        gapMs = 300,
+        hue = "amber",
+        release = "audio-ar.alafasy-v1",
+        totalBytes = 860_636_852L,
+        surahs = listOf(SurahAsset(1, 381_780L, "a"), SurahAsset(2, 58_538_153L, "b"), SurahAsset(112, 112_778L, "c")),
+    )
+
+    private val husary = alafasy.copy(
+        id = "ar.husary",
+        nameEn = "Mahmoud Khalil Al-Husary",
+        nameAr = "محمود خليل الحصري",
+        hue = "clay",
+        release = "audio-ar.husary-v1",
+    )
+
+    private val catalogue = RecitationManifest(
+        schema = 1,
+        generated = "2026-09-12T00:00:00Z",
+        base = "https://example.invalid/",
+        reciters = listOf(alafasy, husary),
+    )
+
+    private class FakePlayer : PlayerPort {
+        val loads = mutableListOf<Triple<String, Int, Int>>()
+        var plays = 0
+        var toggles = 0
+        var stops = 0
+        private val _state = MutableStateFlow(PlaybackState.EMPTY)
+        override val state: StateFlow<PlaybackState> = _state.asStateFlow()
+        private val _skips = MutableSharedFlow<SurahSkip>(extraBufferCapacity = 4)
+        override val skips: Flow<SurahSkip> = _skips
+
+        /** A lock screen, headset or car pressing previous or next. */
+        fun press(skip: SurahSkip) { _skips.tryEmit(skip) }
+
+        private val _surahEnds = MutableSharedFlow<Int>(extraBufferCapacity = 4)
+        override val surahEnds: Flow<Int> = _surahEnds
+
+        /** The surah reading itself out: the platform holds it, paused at its end, and says so. */
+        fun playOut() {
+            val surah = _state.value.surah ?: return
+            _state.value = _state.value.copy(playing = false)
+            _surahEnds.tryEmit(surah)
+        }
+
+        fun emit(value: PlaybackState) {
+            _state.value = value
+        }
+
+        /** Closed by a test that wants `load` in flight — the state already updated, as a real
+         * player's would be by the time it is worth asking about, but the suspend fun not yet
+         * returned — while it drives the controller from the outside. */
+        var loadGate: CompletableDeferred<Unit>? = null
+
+        /** Surahs whose container cannot be read: their `load` returns having loaded nothing,
+         * and whatever was loaded before is still there, as on the platforms. */
+        var unreadable: Set<Int> = emptySet()
+
+        override suspend fun load(
+            reciter: Reciter,
+            surah: Int,
+            startAyah: Int,
+            text: NowPlayingText,
+            speech: SpokenTranslation?,
+            ayahs: List<Int>?,
+        ) {
+            if (surah in unreadable) return
+            loads += Triple(reciter.id, surah, startAyah)
+            speeches += speech
+            passages += ayahs
+            lastText = text
+            _state.value = PlaybackState(
+                reciterId = reciter.id,
+                surah = surah,
+                ayah = startAyah,
+                ayahCount = ayahs?.size ?: 7,
+                playing = true,
+            )
+            loadGate?.await()
+        }
+
+        /** The ayahs each load was limited to, in order: null for a whole surah. */
+        val passages = mutableListOf<List<Int>?>()
+
+        val speeches = mutableListOf<SpokenTranslation?>()
+        val speechUpdates = mutableListOf<SpokenTranslation?>()
+        override fun setSpeech(speech: SpokenTranslation?) { speechUpdates += speech }
+
+        var lastText: NowPlayingText? = null
+        var pauses = 0
+        override fun play() {
+            plays++
+            _state.value = _state.value.copy(playing = true)
+        }
+        override fun pause() {
+            pauses++
+            _state.value = _state.value.copy(playing = false)
+        }
+        override fun toggle() { toggles++ }
+        override fun seekToAyah(n: Int) = Unit
+        val surahSeeks = mutableListOf<Long>()
+        override fun seekToSurahTime(positionMs: Long) { surahSeeks += positionMs }
+        override fun next() = Unit
+        override fun previous() = Unit
+        override fun stop() {
+            stops++
+            _state.value = PlaybackState.EMPTY
+        }
+    }
+
+    private class FakeDownloader : DownloaderPort {
+        val enqueued = mutableListOf<Pair<DownloadKey, Boolean>>()
+        val cancelled = mutableListOf<DownloadKey>()
+        private val _states = MutableStateFlow<Map<DownloadKey, DownloadState>>(emptyMap())
+        override val states: StateFlow<Map<DownloadKey, DownloadState>> = _states.asStateFlow()
+
+        fun emit(value: Map<DownloadKey, DownloadState>) {
+            _states.value = value
+        }
+
+        override fun enqueue(key: DownloadKey, allowMobileOnce: Boolean) {
+            enqueued += key to allowMobileOnce
+        }
+
+        override fun cancel(key: DownloadKey) {
+            cancelled += key
+        }
+
+        override suspend fun retry(key: DownloadKey) {
+            enqueued += key to false
+        }
+
+        val batches = mutableListOf<Pair<String, Boolean>>()
+        val batchesCancelled = mutableListOf<String>()
+
+        override fun enqueueReciter(reciterId: String, allowMobileOnce: Boolean) {
+            batches += reciterId to allowMobileOnce
+        }
+
+        override fun cancelReciter(reciterId: String) {
+            batchesCancelled += reciterId
+        }
+    }
+
+    private class FakeLibrary : LibraryPort {
+        val owned = MutableStateFlow<Map<String, Set<Int>>>(emptyMap())
+        override fun downloaded(reciterId: String): Flow<Set<Int>> = owned.map { it[reciterId].orEmpty() }
+        override suspend fun isDownloaded(reciterId: String, surah: Int): Boolean =
+            surah in owned.value[reciterId].orEmpty()
+
+        fun put(reciterId: String, surahs: Set<Int>) {
+            owned.value = owned.value + (reciterId to surahs)
+        }
+
+        val bytes = mutableMapOf<String, Long>()
+        val deleted = mutableListOf<Pair<String, Int>>()
+        val wiped = mutableListOf<String>()
+
+        override suspend fun bytesUsed(reciterId: String): Long = bytes[reciterId] ?: 0L
+        override suspend fun bytesUsedTotal(): Long = bytes.values.sum()
+
+        override suspend fun delete(reciterId: String, surah: Int) {
+            deleted += reciterId to surah
+            owned.value = owned.value + (reciterId to (owned.value[reciterId].orEmpty() - surah))
+        }
+
+        override suspend fun deleteReciter(reciterId: String) {
+            wiped += reciterId
+            owned.value = owned.value - reciterId
+        }
+    }
+
+    private class FakeSettings : RecitationSettingsPort {
+        val stored = MutableStateFlow(RecitationSettings())
+        override val settings: Flow<RecitationSettings> = stored
+        override suspend fun setReciter(id: String) {
+            stored.value = stored.value.copy(reciterId = id)
+        }
+
+        override suspend fun setDownloadOnMobileData(value: Boolean) {
+            stored.value = stored.value.copy(downloadOnMobileData = value)
+        }
+
+        override suspend fun setAutoDownload(value: Boolean) {
+            stored.value = stored.value.copy(autoDownload = value, autoDownloadAsked = true)
+        }
+
+        override suspend fun setReadAloud(value: Boolean) {
+            stored.value = stored.value.copy(readAloud = value)
+        }
+    }
+
+    private class FakeClips : ClipPort {
+        var played = 0
+        var stopped = 0
+
+        /** The bytes each play was asked for, in order. */
+        val heard = mutableListOf<ByteArray>()
+
+        /**
+         * Every end callback ever handed in, in order, and **kept after the clip is stopped or
+         * replaced**: a real player's completion can already be posted to the main thread when
+         * the stop arrives, so the end of a dead clip may reach the controller late. [finish]
+         * honours a stop; [deliver] does not, to put exactly that end in front of the controller.
+         */
+        val ends = mutableListOf<() -> Unit>()
+        private var live: Int? = null
+
+        /** A clip that cannot be played: the platform players call the end before `play` returns. */
+        var endsAtOnce = false
+        override fun play(bytes: ByteArray, onEnd: () -> Unit) {
+            played++
+            heard += bytes
+            ends += onEnd
+            if (endsAtOnce) {
+                onEnd()
+            } else {
+                live = ends.lastIndex
+            }
+        }
+        override fun stop() {
+            stopped++
+            live = null
+        }
+
+        /** The clip playing out by itself; a stopped clip has nobody left to tell. */
+        fun finish() {
+            val index = live ?: return
+            live = null
+            ends[index]()
+        }
+
+        /** The end of the [index]th clip played, whether or not it was stopped or replaced since. */
+        fun deliver(index: Int) = ends[index]()
+    }
+
+    /**
+     * The bundled adhkar clips (adhkar spec §3.5): [bundled] is what the build carries, keyed as
+     * the loader is asked - reciter, surah, ayah or null for a whole surah - and [asked] is every
+     * question the controller put to it. A closed [gate] holds a read in flight.
+     */
+    private class FakeAdhkarClips {
+        val bundled = mutableMapOf<Triple<String, Int, Int?>, ByteArray>()
+        val asked = mutableListOf<Triple<String, Int, Int?>>()
+        var gate: CompletableDeferred<Unit>? = null
+
+        suspend fun load(reciterId: String, surah: Int, ayah: Int?): ByteArray? {
+            asked += Triple(reciterId, surah, ayah)
+            gate?.await()
+            return bundled[Triple(reciterId, surah, ayah)]
+        }
+    }
+
+    private class Harness(
+        val player: FakePlayer = FakePlayer(),
+        val downloader: FakeDownloader = FakeDownloader(),
+        val library: FakeLibrary = FakeLibrary(),
+        val settings: FakeSettings = FakeSettings(),
+        val clips: FakeClips = FakeClips(),
+        val adhkarClips: FakeAdhkarClips = FakeAdhkarClips(),
+    )
+
+    /** What the controller told the outside world about engagement, in order (privacy spec
+     * §2.2, §2.4): "mark" and "refresh". */
+    private class Engagement {
+        val events = mutableListOf<String>()
+    }
+
+    private fun controller(
+        harness: Harness,
+        scope: kotlinx.coroutines.CoroutineScope,
+        previews: Set<String> = setOf("ar.alafasy"),
+        engagement: Engagement = Engagement(),
+        readAloud: ReadAloudPort = NoReadAloud,
+        quran: com.taqvo.app.quran.QuranSource = FakeQuranSource(),
+    ) = RecitationController(
+        manifests = { catalogue },
+        library = harness.library,
+        downloader = harness.downloader,
+        player = harness.player,
+        settings = harness.settings,
+        quran = quran,
+        clips = harness.clips,
+        previewBytes = { id -> if (id in previews) ByteArray(8) else null },
+        adhkarClipBytes = harness.adhkarClips::load,
+        scope = scope,
+        markEngaged = { engagement.events += "mark" },
+        refreshCatalogue = { engagement.events += "refresh" },
+        readAloud = readAloud,
+    )
+
+    @Test
+    fun `a downloaded surah plays from the ayah that was asked for`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1, 112))
+        val controller = controller(harness, backgroundScope)
+
+        controller.requestPlay(112, 3)
+
+        assertEquals(listOf(Triple("ar.alafasy", 112, 3)), harness.player.loads)
+        assertEquals(1, harness.player.plays)
+        assertNull(controller.state.value.sheet)
+    }
+
+    @Test
+    fun `a tap on the line seeks to that share of the surah's clock`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        val controller = controller(harness, backgroundScope)
+        harness.player.emit(PlaybackState(reciterId = "ar.alafasy", surah = 2, ayah = 1, surahDurationMs = 7_200_000L))
+
+        controller.seekToFraction(0.25f)
+        controller.seekToFraction(1.4f)
+        controller.seekToFraction(-0.2f)
+
+        assertEquals(listOf(1_800_000L, 7_200_000L, 0L), harness.player.surahSeeks)
+    }
+
+    @Test
+    fun `a tap before the surah has a clock seeks nowhere`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        val controller = controller(harness, backgroundScope)
+        harness.player.emit(PlaybackState(reciterId = "ar.alafasy", surah = 2, ayah = 1))
+
+        controller.seekToFraction(0.5f)
+        controller.seekToFraction(Float.NaN)
+
+        assertTrue(harness.player.surahSeeks.isEmpty())
+    }
+
+    @Test
+    fun `a surah that is not on the phone opens the download sheet instead`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        val controller = controller(harness, backgroundScope)
+
+        controller.requestPlay(2, 255)
+
+        assertTrue(harness.player.loads.isEmpty())
+        val sheet = assertNotNull(controller.state.value.sheet)
+        assertEquals(2, sheet.surah)
+        assertEquals("ar.alafasy", sheet.reciter.id)
+        assertEquals(58_538_153L, sheet.bytes)
+        assertEquals(SheetPhase.Ready(needsWifiNote = true), sheet.phase)
+    }
+
+    @Test
+    fun `confirming the sheet enqueues the surah with the override flag`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        val controller = controller(harness, backgroundScope)
+
+        controller.requestPlay(2, 255)
+        controller.confirmDownload(allowMobileOnce = true)
+
+        assertEquals(listOf(DownloadKey("ar.alafasy", 2) to true), harness.downloader.enqueued)
+    }
+
+    @Test
+    fun `the download committing plays the ayah the reader originally asked for`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+
+            controller.requestPlay(2, 255)
+            controller.confirmDownload(allowMobileOnce = false)
+            assertTrue(harness.player.loads.isEmpty())
+
+            // What the downloader does when a surah commits: it enters the library.
+            harness.library.put("ar.alafasy", setOf(2))
+
+            assertEquals(listOf(Triple("ar.alafasy", 2, 255)), harness.player.loads)
+            assertNull(controller.state.value.sheet)
+        }
+
+    @Test
+    fun `a surah committing for a reciter nobody is waiting on plays nothing`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(2, 255)
+            controller.confirmDownload(allowMobileOnce = false)
+
+            harness.library.put("ar.husary", setOf(2))
+
+            assertTrue(harness.player.loads.isEmpty())
+        }
+
+    @Test
+    fun `a failed download shows its reason on the sheet`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        val controller = controller(harness, backgroundScope)
+        controller.requestPlay(2, 255)
+
+        harness.downloader.emit(
+            mapOf(DownloadKey("ar.alafasy", 2) to DownloadState.Failed(DownloadFailure.NEEDS_WIFI)),
+        )
+
+        assertEquals(SheetPhase.Failed(DownloadFailure.NEEDS_WIFI), controller.state.value.sheet?.phase)
+    }
+
+    @Test
+    fun `a running download becomes the sheet's progress bar and the header's ring`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(2, 255)
+
+            harness.downloader.emit(
+                mapOf(DownloadKey("ar.alafasy", 2) to DownloadState.Downloading(29_269_076L, 58_538_153L)),
+            )
+
+            assertEquals(
+                SheetPhase.Downloading(29_269_076L, 58_538_153L),
+                controller.state.value.sheet?.phase,
+            )
+            val header = controller.state.value.header(2)
+            assertTrue(header is HeaderState.Downloading)
+            assertEquals(0.5f, header.fraction, 0.01f)
+        }
+
+    @Test
+    fun `a new surah starts the progress line at nothing rather than where the last one ended`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 2))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(1, 1)
+            harness.player.emit(
+                PlaybackState(
+                    reciterId = "ar.alafasy",
+                    surah = 1,
+                    ayah = 7,
+                    ayahCount = 7,
+                    positionMs = 4_000L,
+                    durationMs = 4_000L,
+                    playing = true,
+                ),
+            )
+            assertEquals(1f, controller.state.value.bar?.fraction ?: -1f, 0.01f)
+
+            // The first item of a surah reports no duration yet, which is when `barFraction`
+            // answers with the fraction it was last given.
+            harness.player.emit(
+                PlaybackState(
+                    reciterId = "ar.alafasy",
+                    surah = 2,
+                    ayah = 1,
+                    ayahCount = 286,
+                    playing = true,
+                ),
+            )
+
+            assertEquals(0f, controller.state.value.bar?.fraction ?: -1f, 0.001f)
+        }
+
+    @Test
+    fun `cancelling the download cancels the key and forgets the waiting play`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(2, 255)
+            controller.confirmDownload(allowMobileOnce = false)
+
+            controller.cancelDownload()
+            harness.library.put("ar.alafasy", setOf(2))
+
+            assertEquals(listOf(DownloadKey("ar.alafasy", 2)), harness.downloader.cancelled)
+            assertTrue(harness.player.loads.isEmpty())
+        }
+
+    @Test
+    fun `picking a reciter that has this surah swaps the voice at the current ayah`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            harness.library.put("ar.husary", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            harness.player.emit(
+                PlaybackState(reciterId = "ar.alafasy", surah = 112, ayah = 3, ayahCount = 4, playing = true),
+            )
+
+            controller.pickReciter("ar.husary")
+
+            assertEquals(Triple("ar.husary", 112, 3), harness.player.loads.last())
+            assertEquals("ar.husary", controller.state.value.reciter?.id)
+        }
+
+    @Test
+    fun `picking a reciter without this surah offers the download and leaves the old voice playing`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.openPicker()
+            controller.requestPlay(112, 1)
+            val loadsBefore = harness.player.loads.size
+
+            controller.pickReciter("ar.husary")
+
+            assertEquals(loadsBefore, harness.player.loads.size)
+            val sheet = assertNotNull(controller.state.value.sheet)
+            assertEquals(112, sheet.surah)
+            assertEquals("ar.husary", sheet.reciter.id)
+            assertEquals("ar.alafasy", sheet.playingMeanwhile?.id)
+            assertFalse(controller.state.value.pickerOpen)
+            assertEquals("ar.husary", controller.state.value.reciter?.id)
+            assertEquals("ar.alafasy", controller.state.value.bar?.reciter?.id)
+            assertTrue(controller.state.value.bar?.playing == true)
+        }
+
+    @Test
+    fun `confirming the switch changes the voice at the ayah being heard when it lands`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            controller.pickReciter("ar.husary")
+
+            controller.confirmDownload(allowMobileOnce = false)
+            assertEquals(listOf(DownloadKey("ar.husary", 112) to false), harness.downloader.enqueued)
+            // The old voice has moved on by the time the new one's copy lands.
+            harness.player.emit(
+                PlaybackState(reciterId = "ar.alafasy", surah = 112, ayah = 3, ayahCount = 4, playing = true),
+            )
+            harness.library.put("ar.husary", setOf(112))
+
+            assertEquals(Triple("ar.husary", 112, 3), harness.player.loads.last())
+            assertNull(controller.state.value.sheet)
+            assertEquals("ar.husary", controller.state.value.bar?.reciter?.id)
+            assertEquals(0, harness.player.pauses)
+        }
+
+    @Test
+    fun `a switch that lands on a paused recitation stays paused`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            controller.pickReciter("ar.husary")
+            controller.confirmDownload(allowMobileOnce = false)
+            harness.player.emit(
+                PlaybackState(reciterId = "ar.alafasy", surah = 112, ayah = 3, ayahCount = 4, playing = false),
+            )
+
+            harness.library.put("ar.husary", setOf(112))
+
+            assertEquals(Triple("ar.husary", 112, 3), harness.player.loads.last())
+            assertEquals(1, harness.player.pauses)
+            assertFalse(harness.player.state.value.playing)
+        }
+
+    @Test
+    fun `the bar shows how far the incoming voice's copy has got`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            assertNull(controller.state.value.bar?.incoming)
+            controller.pickReciter("ar.husary")
+            controller.confirmDownload(allowMobileOnce = false)
+
+            harness.downloader.emit(mapOf(DownloadKey("ar.husary", 112) to DownloadState.Downloading(50L, 100L)))
+
+            val incoming = assertNotNull(controller.state.value.bar?.incoming)
+            assertEquals(0.5f, incoming.fraction, 0.001f)
+            assertEquals(112, incoming.surah)
+            assertEquals("ar.husary", incoming.reciter.id)
+            // Playing still beats the download on the header: a tap there is still pause.
+            assertEquals(HeaderState.Playing, controller.state.value.header(112))
+        }
+
+    @Test
+    fun `re-picking the voice a switch is waiting on keeps the switch`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            controller.pickReciter("ar.husary")
+            controller.confirmDownload(allowMobileOnce = false)
+            controller.dismissSheet()
+            harness.downloader.emit(mapOf(DownloadKey("ar.husary", 112) to DownloadState.Downloading(1L, 10L)))
+
+            // The row is already selected; tapping it again is an easy thing to do.
+            controller.openPicker()
+            controller.pickReciter("ar.husary")
+            assertNotNull(controller.state.value.sheet)
+            harness.player.emit(
+                PlaybackState(reciterId = "ar.alafasy", surah = 112, ayah = 4, ayahCount = 4, playing = true),
+            )
+            harness.library.put("ar.husary", setOf(112))
+
+            assertEquals(Triple("ar.husary", 112, 4), harness.player.loads.last())
+        }
+
+    @Test
+    fun `picking a voice whose copy is already arriving arms the switch without a confirm`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            // A whole-Quran batch for Al-Husary is already fetching this surah.
+            harness.downloader.emit(mapOf(DownloadKey("ar.husary", 112) to DownloadState.Downloading(1L, 10L)))
+
+            controller.pickReciter("ar.husary")
+            harness.library.put("ar.husary", setOf(112))
+
+            assertEquals("ar.husary", harness.player.loads.last().first)
+        }
+
+    @Test
+    fun `a switch whose recitation has since ended starts nothing`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            controller.pickReciter("ar.husary")
+            controller.confirmDownload(allowMobileOnce = false)
+            // The surah read itself out: the player tore itself down, not through the controller.
+            harness.player.emit(PlaybackState.EMPTY)
+
+            harness.library.put("ar.husary", setOf(112))
+
+            assertEquals(1, harness.player.loads.size)
+            assertNull(controller.state.value.bar)
+            assertNull(controller.state.value.sheet)
+        }
+
+    @Test
+    fun `a plain download play still starts with nothing playing`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 2)
+            controller.confirmDownload(allowMobileOnce = false)
+
+            harness.library.put("ar.alafasy", setOf(112))
+
+            assertEquals(Triple("ar.alafasy", 112, 2), harness.player.loads.last())
+        }
+
+    @Test
+    fun `switching previews keeps the recitation paused until the second clip ends`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope, previews = setOf("ar.alafasy", "ar.husary"))
+            controller.requestPlay(112, 1)
+            controller.previewReciter("ar.alafasy")
+            assertEquals(1, harness.player.pauses)
+
+            controller.previewReciter("ar.husary")
+            assertEquals("ar.husary", controller.state.value.previewing)
+            assertEquals(1, harness.player.plays)
+            assertFalse(harness.player.state.value.playing)
+
+            harness.clips.finish()
+            assertEquals(2, harness.player.plays)
+            assertNull(controller.state.value.previewing)
+        }
+
+    @Test
+    fun `picking another voice supersedes a switch still waiting`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            controller.pickReciter("ar.husary")
+            controller.confirmDownload(allowMobileOnce = false)
+
+            controller.pickReciter("ar.alafasy")
+            harness.library.put("ar.husary", setOf(112))
+
+            assertEquals(1, harness.player.loads.size)
+            assertEquals("ar.alafasy", controller.state.value.bar?.reciter?.id)
+        }
+
+    @Test
+    fun `picking the voice already loaded while paused leaves it paused`() =
+        runTest(UnconfinedTestDispatcher()) {
+            // Spec §16.4: a pick never starts or resumes a recitation by itself.
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            harness.player.pause()
+
+            controller.pickReciter("ar.alafasy")
+
+            assertEquals(1, harness.player.plays)
+            assertEquals(1, harness.player.loads.size)
+            assertFalse(harness.player.state.value.playing)
+        }
+
+    @Test
+    fun `picking another voice while paused changes the voice and stays paused`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            harness.library.put("ar.husary", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 3)
+            harness.player.pause()
+
+            controller.pickReciter("ar.husary")
+
+            assertEquals(Triple("ar.husary", 112, 3), harness.player.loads.last())
+            assertEquals("ar.husary", controller.state.value.bar?.reciter?.id)
+            assertFalse(harness.player.state.value.playing)
+        }
+
+    @Test
+    fun `picking another voice while playing goes on playing in it`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            harness.library.put("ar.husary", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 3)
+
+            controller.pickReciter("ar.husary")
+
+            assertEquals(Triple("ar.husary", 112, 3), harness.player.loads.last())
+            assertTrue(harness.player.state.value.playing)
+            assertEquals(0, harness.player.pauses)
+        }
+
+    @Test
+    fun `picking the voice already playing while playing leaves it alone`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+
+            controller.pickReciter("ar.alafasy")
+
+            assertEquals(1, harness.player.plays)
+            assertEquals(1, harness.player.loads.size)
+            assertNull(controller.state.value.sheet)
+        }
+
+    // ── Surah skips (spec §15.1) ────────────────────────────────────────────────────────
+
+    @Test
+    fun `next and previous move to the neighbouring surah from its first ayah`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 2, 112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(1, 3)
+
+            controller.nextSurah()
+            assertEquals(Triple("ar.alafasy", 2, 1), harness.player.loads.last())
+
+            controller.previousSurah()
+            assertEquals(Triple("ar.alafasy", 1, 1), harness.player.loads.last())
+        }
+
+    @Test
+    fun `the ends of the Quran have no neighbour`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1))
+        val controller = controller(harness, backgroundScope)
+        controller.requestPlay(1, 1)
+
+        controller.previousSurah()
+
+        assertEquals(1, harness.player.loads.size)
+        assertNull(controller.state.value.sheet)
+    }
+
+    @Test
+    fun `a next surah not on the phone is offered like any other`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(1, 1)
+
+            controller.nextSurah()
+
+            assertEquals(1, harness.player.loads.size)
+            assertEquals(2, controller.state.value.sheet?.surah)
+        }
+
+    @Test
+    fun `the lock screen's previous and next are surah moves too`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 2))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(1, 5)
+
+            harness.player.press(SurahSkip.NEXT)
+            assertEquals(Triple("ar.alafasy", 2, 1), harness.player.loads.last())
+
+            harness.player.press(SurahSkip.PREVIOUS)
+            assertEquals(Triple("ar.alafasy", 1, 1), harness.player.loads.last())
+        }
+
+    @Test
+    fun `a skip with nothing playing does nothing`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1, 2))
+        val controller = controller(harness, backgroundScope)
+
+        harness.player.press(SurahSkip.NEXT)
+
+        assertTrue(harness.player.loads.isEmpty())
+    }
+
+    // ── Downloading without asking (spec §15.3) ─────────────────────────────────────────
+
+    @Test
+    fun `the sheet offers auto-download ticked until the reader has answered once`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(2, 1)
+            assertTrue(controller.state.value.sheet?.autoDownloadDefault == true)
+
+            controller.confirmDownload(allowMobileOnce = false, autoDownload = false)
+            controller.dismissSheet()
+            controller.requestPlay(112, 1)
+
+            assertTrue(controller.state.value.sheet?.autoDownloadDefault == false)
+            assertFalse(controller.state.value.autoDownload)
+        }
+
+    @Test
+    fun `confirming with the switch on fetches the next surah without a sheet`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(2, 1)
+            controller.confirmDownload(allowMobileOnce = false, autoDownload = true)
+            assertTrue(controller.state.value.autoDownload)
+            controller.dismissSheet()
+
+            controller.requestPlay(112, 3)
+
+            assertNull(controller.state.value.sheet)
+            assertEquals(DownloadKey("ar.alafasy", 112) to false, harness.downloader.enqueued.last())
+            harness.library.put("ar.alafasy", setOf(112))
+            assertEquals(Triple("ar.alafasy", 112, 3), harness.player.loads.last())
+        }
+
+    @Test
+    fun `a refused automatic download opens the sheet on its reason once`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.settings.stored.value = RecitationSettings(autoDownload = true, autoDownloadAsked = true)
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            assertNull(controller.state.value.sheet)
+
+            harness.downloader.emit(mapOf(DownloadKey("ar.alafasy", 112) to DownloadState.Failed(DownloadFailure.NEEDS_WIFI)))
+            assertEquals(SheetPhase.Failed(DownloadFailure.NEEDS_WIFI), controller.state.value.sheet?.phase)
+
+            controller.dismissSheet()
+            harness.downloader.emit(mapOf(DownloadKey("ar.alafasy", 112) to DownloadState.Failed(DownloadFailure.NEEDS_WIFI)))
+            assertNull(controller.state.value.sheet)
+        }
+
+    private fun noRoom(attempt: Long) = DownloadState.Failed(DownloadFailure.NOT_ENOUGH_SPACE, attempt)
+
+    /**
+     * A surah refused for room, asked for again with nothing freed, is refused again the same
+     * way. Each refusal the downloader reports is numbered afresh (DownloadState.Failed.attempt),
+     * so the second one is a change, and the sheet opens on it again rather than the play ending
+     * silently.
+     */
+    @Test
+    fun `a surah refused for room and asked for again opens the sheet again`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.settings.stored.value = RecitationSettings(autoDownload = true, autoDownloadAsked = true)
+            val controller = controller(harness, backgroundScope)
+            val key = DownloadKey("ar.alafasy", 112)
+            controller.requestPlay(112, 1)
+            harness.downloader.emit(mapOf(key to noRoom(1)))
+            assertEquals(SheetPhase.Failed(DownloadFailure.NOT_ENOUGH_SPACE), controller.state.value.sheet?.phase)
+            controller.dismissSheet()
+
+            controller.requestPlay(112, 1)
+            harness.downloader.emit(mapOf(key to noRoom(2)))
+
+            assertEquals(SheetPhase.Failed(DownloadFailure.NOT_ENOUGH_SPACE), controller.state.value.sheet?.phase)
+        }
+
+    /**
+     * The reader saw the refusal and closed the sheet: a later request that refuses the same
+     * surah again (a whole Quran asked for from Settings) does not bring the sheet back over
+     * whatever they are doing, whether or not the downloader passes through no state on the way.
+     */
+    @Test
+    fun `a refusal sheet the reader closed does not come back when the surah is refused again`() =
+        runTest(UnconfinedTestDispatcher()) {
+            for (momentWithNoState in listOf(false, true)) {
+                val harness = Harness()
+                harness.settings.stored.value = RecitationSettings(autoDownload = true, autoDownloadAsked = true)
+                val controller = controller(harness, backgroundScope)
+                val key = DownloadKey("ar.alafasy", 112)
+                controller.requestPlay(112, 1)
+                harness.downloader.emit(mapOf(key to noRoom(1)))
+                controller.dismissSheet()
+
+                controller.downloadWholeQuran()
+                if (momentWithNoState) harness.downloader.emit(emptyMap())
+                harness.downloader.emit(mapOf(key to noRoom(2)))
+
+                assertNull(controller.state.value.sheet, "moment with no state: $momentWithNoState")
+            }
+        }
+
+    /**
+     * A whole Quran that fitted only in part ends on the room sentence, and asking for it again
+     * keeps the sentence: a moment with no state on the way (a Retry clears its surah first) is not
+     * the batch being over.
+     */
+    @Test
+    fun `a whole Quran asked for again after it fitted only in part keeps its room sentence`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+            val one = DownloadKey("ar.alafasy", 1)
+            val two = DownloadKey("ar.alafasy", 2)
+            val last = DownloadKey("ar.alafasy", 112)
+            controller.downloadWholeQuran()
+            harness.downloader.emit(mapOf(one to DownloadState.Queued, two to DownloadState.Queued, last to noRoom(1)))
+            harness.library.put("ar.alafasy", setOf(1, 2))
+            harness.downloader.emit(mapOf(last to noRoom(1)))
+            val sentence = WholeQuran.Failed(DownloadFailure.NOT_ENOUGH_SPACE, bytes = 112_778L)
+            assertEquals(sentence, controller.state.value.wholeQuran)
+
+            controller.downloadWholeQuran()
+            harness.downloader.emit(emptyMap())
+            harness.downloader.emit(mapOf(last to noRoom(2)))
+
+            assertEquals(sentence, controller.state.value.wholeQuran)
+        }
+
+    /** A voice whose copy of the surah was refused for room is asked for again when it is picked. */
+    @Test
+    fun `picking a voice whose copy was refused asks for it again`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.settings.stored.value = RecitationSettings(autoDownload = true, autoDownloadAsked = true)
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            val husary = DownloadKey("ar.husary", 112)
+            harness.downloader.emit(mapOf(husary to noRoom(1)))
+
+            controller.pickReciter("ar.husary")
+
+            assertEquals(husary to false, harness.downloader.enqueued.last())
+            harness.downloader.emit(mapOf(husary to noRoom(2)))
+            assertEquals(SheetPhase.Failed(DownloadFailure.NOT_ENOUGH_SPACE), controller.state.value.sheet?.phase)
+        }
+
+    @Test
+    fun `picking a voice without the surah fetches it quietly when asking is off`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.settings.stored.value = RecitationSettings(autoDownload = true, autoDownloadAsked = true)
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+
+            controller.pickReciter("ar.husary")
+
+            assertNull(controller.state.value.sheet)
+            assertEquals(DownloadKey("ar.husary", 112) to false, harness.downloader.enqueued.last())
+            harness.player.emit(PlaybackState(reciterId = "ar.alafasy", surah = 112, ayah = 2, ayahCount = 4, playing = true))
+            harness.library.put("ar.husary", setOf(112))
+            assertEquals(Triple("ar.husary", 112, 2), harness.player.loads.last())
+        }
+
+    @Test
+    fun `the bar's ring shows the next surah arriving`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.settings.stored.value = RecitationSettings(autoDownload = true, autoDownloadAsked = true)
+        harness.library.put("ar.alafasy", setOf(1))
+        val controller = controller(harness, backgroundScope)
+        controller.requestPlay(1, 1)
+
+        controller.nextSurah()
+        harness.downloader.emit(mapOf(DownloadKey("ar.alafasy", 2) to DownloadState.Downloading(25L, 100L)))
+
+        val incoming = assertNotNull(controller.state.value.bar?.incoming)
+        assertEquals(0.25f, incoming.fraction, 0.001f)
+        assertEquals(2, incoming.surah)
+        assertEquals("ar.alafasy", incoming.reciter.id)
+        assertEquals(1, controller.state.value.bar?.surah)
+    }
+
+    @Test
+    fun `the settings switch is written straight through`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        val controller = controller(harness, backgroundScope)
+
+        controller.setAutoDownload(true)
+
+        assertTrue(harness.settings.stored.value.autoDownload)
+        assertTrue(controller.state.value.autoDownload)
+    }
+
+    // ── Previews over a recitation (spec §14.5) ─────────────────────────────────────────
+
+    @Test
+    fun `a preview pauses the recitation and the end of the clip gives it back`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+
+            controller.previewReciter("ar.alafasy")
+            assertEquals(1, harness.player.pauses)
+            assertEquals("ar.alafasy", controller.state.value.previewing)
+
+            harness.clips.finish()
+            assertEquals(2, harness.player.plays)
+            assertNull(controller.state.value.previewing)
+        }
+
+    @Test
+    fun `closing the picker mid-preview gives the recitation back`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            controller.openPicker()
+            controller.previewReciter("ar.alafasy")
+
+            controller.closePicker()
+
+            assertTrue(harness.clips.stopped > 0)
+            assertEquals(2, harness.player.plays)
+            assertTrue(harness.player.state.value.playing)
+        }
+
+    @Test
+    fun `a preview over a paused recitation resumes nothing`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            harness.player.pause()
+
+            controller.previewReciter("ar.alafasy")
+            harness.clips.finish()
+
+            assertEquals(1, harness.player.pauses)
+            assertEquals(1, harness.player.plays)
+        }
+
+    @Test
+    fun `pressing play on the bar during a preview ends it and is the only resume`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+            controller.previewReciter("ar.alafasy")
+
+            controller.toggle()
+            harness.clips.finish()
+
+            assertEquals(1, harness.player.toggles)
+            assertNull(controller.state.value.previewing)
+            assertTrue(harness.clips.stopped > 0)
+            assertEquals(1, harness.player.plays)
+        }
+
+    @Test
+    fun `picking a voice that has the surah mid-preview starts it with no second resume`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            harness.library.put("ar.husary", setOf(112))
+            val controller = controller(harness, backgroundScope, previews = setOf("ar.alafasy", "ar.husary"))
+            controller.requestPlay(112, 1)
+            controller.previewReciter("ar.husary")
+            assertEquals(1, harness.player.pauses)
+
+            controller.pickReciter("ar.husary")
+
+            assertEquals(Triple("ar.husary", 112, 1), harness.player.loads.last())
+            assertEquals(2, harness.player.plays)
+            assertNull(controller.state.value.previewing)
+        }
+
+    @Test
+    fun `picking a voice without the surah mid-preview gives the old voice back`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope, previews = setOf("ar.alafasy", "ar.husary"))
+            controller.requestPlay(112, 1)
+            controller.previewReciter("ar.husary")
+
+            controller.pickReciter("ar.husary")
+
+            assertNotNull(controller.state.value.sheet)
+            assertEquals(1, harness.player.loads.size)
+            assertEquals(2, harness.player.plays)
+            assertTrue(harness.player.state.value.playing)
+        }
+
+    @Test
+    fun `an unknown stored reciter falls back to the catalogue's first voice`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.settings.stored.value = RecitationSettings(reciterId = "ar.withdrawn")
+            val controller = controller(harness, backgroundScope)
+
+            assertEquals("ar.alafasy", controller.state.value.reciter?.id)
+        }
+
+    @Test
+    fun `the header button pauses what is already playing on that surah`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+
+            controller.onHeaderTap(112, 1)
+
+            assertEquals(1, harness.player.toggles)
+            assertEquals(1, harness.player.loads.size)
+        }
+
+    @Test
+    fun `the header button on another surah starts that one instead`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 112))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(112, 1)
+
+            controller.onHeaderTap(1, 4)
+
+            assertEquals(0, harness.player.toggles)
+            assertEquals(Triple("ar.alafasy", 1, 4), harness.player.loads.last())
+        }
+
+    @Test
+    fun `dismissing the bar stops the player`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(112))
+        val controller = controller(harness, backgroundScope)
+        controller.requestPlay(112, 1)
+
+        controller.dismissBar()
+
+        assertEquals(1, harness.player.stops)
+        assertNull(controller.state.value.bar)
+    }
+
+    @Test
+    fun `the picker only offers a preview for a reciter this build carries a clip for`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+
+            controller.openPicker()
+
+            assertEquals(setOf("ar.alafasy"), controller.state.value.previewable)
+            assertTrue(controller.state.value.pickerOpen)
+        }
+
+    @Test
+    fun `a second tap on the same preview stops it`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        val controller = controller(harness, backgroundScope)
+
+        controller.previewReciter("ar.alafasy")
+        assertEquals(1, harness.clips.played)
+        assertEquals("ar.alafasy", controller.state.value.previewing)
+
+        controller.previewReciter("ar.alafasy")
+        assertEquals(1, harness.clips.played)
+        assertTrue(harness.clips.stopped > 0)
+        assertNull(controller.state.value.previewing)
+    }
+
+    @Test
+    fun `a reciter with no bundled clip plays nothing`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        val controller = controller(harness, backgroundScope)
+
+        controller.previewReciter("ar.husary")
+
+        assertEquals(0, harness.clips.played)
+        assertNull(controller.state.value.previewing)
+    }
+
+    @Test
+    fun `the lock screen is given the surah and the reciter and not the ayah`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1))
+            val controller = controller(harness, backgroundScope)
+
+            controller.requestPlay(1, 3)
+
+            assertEquals(
+                NowPlayingText("Al-Fatihah", "Mishary Rashid Alafasy"),
+                harness.player.lastText,
+            )
+        }
+
+    @Test
+    fun `an Arabic interface names the surah and the reciter in Arabic`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1))
+            val controller = controller(harness, backgroundScope)
+            controller.setArabicUi(true)
+
+            controller.requestPlay(1, 3)
+
+            assertEquals(
+                NowPlayingText("الفاتحة", "مشاري راشد العفاسي"),
+                harness.player.lastText,
+            )
+        }
+
+    // ── The whole Quran and the Downloads screen (spec §5.6, §12.8) ─────────────────────
+
+    @Test
+    fun `the whole Quran is asked for by reciter and priced at what is missing`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1))
+            val controller = controller(harness, backgroundScope)
+
+            assertEquals(
+                WholeQuran.Offer(bytes = 58_538_153L + 112_778L, missing = 2),
+                controller.state.value.wholeQuran,
+            )
+
+            controller.downloadWholeQuran(allowMobileOnce = true)
+
+            assertEquals(listOf("ar.alafasy" to true), harness.downloader.batches)
+        }
+
+    @Test
+    fun `a batch this app started reports itself even when one surah is left in it`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 2))
+            val controller = controller(harness, backgroundScope)
+            controller.downloadWholeQuran()
+            harness.downloader.emit(mapOf(DownloadKey("ar.alafasy", 112) to DownloadState.Queued))
+
+            assertEquals(WholeQuran.Running(done = 2, total = 3), controller.state.value.wholeQuran)
+        }
+
+    @Test
+    fun `a batch that has finished stops claiming to be running`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+            controller.downloadWholeQuran()
+            harness.downloader.emit(mapOf(DownloadKey("ar.alafasy", 1) to DownloadState.Queued))
+            assertTrue(controller.state.value.wholeQuran is WholeQuran.Running)
+
+            harness.library.put("ar.alafasy", setOf(1, 2, 112))
+            harness.downloader.emit(emptyMap())
+
+            assertNull(controller.state.value.wholeQuran)
+        }
+
+    @Test
+    fun `cancelling the batch cancels the reciter and leaves what landed alone`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1))
+            val controller = controller(harness, backgroundScope)
+            controller.downloadWholeQuran()
+
+            controller.cancelWholeQuran()
+
+            assertEquals(listOf("ar.alafasy"), harness.downloader.batchesCancelled)
+            assertEquals(setOf(1), controller.state.value.downloaded)
+        }
+
+    @Test
+    fun `deleting the surah that is playing stops the player first`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 2))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(1, 1)
+
+            controller.deleteSurah("ar.alafasy", 1)
+
+            assertEquals(1, harness.player.stops)
+            assertEquals(listOf("ar.alafasy" to 1), harness.library.deleted)
+        }
+
+    @Test
+    fun `deleting a surah nobody is listening to leaves the playback alone`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 2))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(1, 1)
+
+            controller.deleteSurah("ar.alafasy", 2)
+
+            assertEquals(0, harness.player.stops)
+            assertEquals(listOf("ar.alafasy" to 2), harness.library.deleted)
+        }
+
+    @Test
+    fun `deleting a whole reciter cancels its batch and stops its voice`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 2))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(2, 1)
+
+            controller.deleteReciter("ar.alafasy")
+
+            assertEquals(listOf("ar.alafasy"), harness.downloader.batchesCancelled)
+            assertEquals(1, harness.player.stops)
+            assertEquals(listOf("ar.alafasy"), harness.library.wiped)
+        }
+
+    @Test
+    fun `storage reports each reciter off the disk and skips the empty ones`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1))
+            harness.library.bytes["ar.alafasy"] = 381_780L
+            val controller = controller(harness, backgroundScope)
+
+            val storage = controller.storage()
+
+            assertEquals(381_780L, storage.total)
+            assertEquals(mapOf("ar.alafasy" to 381_780L), storage.byReciter)
+            assertEquals(0L, storage.of("ar.husary"))
+        }
+
+    @Test
+    fun `the mobile data switch is written straight through`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+
+            controller.setDownloadOnMobileData(true)
+
+            assertTrue(harness.settings.stored.value.downloadOnMobileData)
+            assertTrue(controller.state.value.downloadOnMobileData)
+        }
+
+    // ── Engagement (privacy spec §2.2, §2.4) ─────────────────────────────────────────────
+
+    @Test
+    fun `opening the picker marks engagement and asks for a catalogue refresh`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val engagement = Engagement()
+            val controller = controller(Harness(), backgroundScope, engagement = engagement)
+
+            controller.openPicker()
+
+            // Marked first, so the refresher's own gate sees the flag when it asks.
+            assertEquals(listOf("mark", "refresh"), engagement.events)
+        }
+
+    @Test
+    fun `the header button marks engagement without a refresh`() = runTest(UnconfinedTestDispatcher()) {
+        val engagement = Engagement()
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1))
+        val controller = controller(harness, backgroundScope, engagement = engagement)
+
+        controller.onHeaderTap(1, 1)
+
+        assertEquals(listOf("mark"), engagement.events, "a tap to play is not a reason to fetch the catalogue")
+    }
+
+    @Test
+    fun `play on an ayah row marks engagement`() = runTest(UnconfinedTestDispatcher()) {
+        val engagement = Engagement()
+        val controller = controller(Harness(), backgroundScope, engagement = engagement)
+
+        controller.requestPlay(112, 1)
+
+        assertEquals(listOf("mark"), engagement.events)
+    }
+
+    @Test
+    fun `the recitation settings screen marks engagement and refreshes`() = runTest(UnconfinedTestDispatcher()) {
+        val engagement = Engagement()
+        val controller = controller(Harness(), backgroundScope, engagement = engagement)
+
+        controller.onSettingsOpened()
+
+        assertEquals(listOf("mark", "refresh"), engagement.events)
+    }
+
+    @Test
+    fun `download the whole Quran marks engagement`() = runTest(UnconfinedTestDispatcher()) {
+        val engagement = Engagement()
+        val controller = controller(Harness(), backgroundScope, engagement = engagement)
+
+        controller.downloadWholeQuran()
+
+        assertEquals(listOf("mark"), engagement.events)
+    }
+
+    // ── Playing on into the next surah (spec §16.1) ─────────────────────────────────────
+
+    @Test
+    fun `a surah that plays out is followed by the next one after a breath`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 2))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(1, 3)
+
+            harness.player.playOut()
+            // The breath first: nothing loaded yet, and the player left holding the ended surah.
+            assertEquals(1, harness.player.loads.size)
+            assertEquals(0, harness.player.stops)
+
+            advanceTimeBy(SURAH_BREATH_MS + 1)
+
+            assertEquals(Triple("ar.alafasy", 2, 1), harness.player.loads.last())
+            assertEquals(2, harness.player.plays)
+            assertEquals(0, harness.player.stops)
+        }
+
+    @Test
+    fun `the last surah of the Quran ends the recitation`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(114))
+        val controller = controller(harness, backgroundScope)
+        controller.requestPlay(114, 1)
+
+        harness.player.playOut()
+        advanceTimeBy(SURAH_BREATH_MS + 1)
+
+        assertEquals(1, harness.player.loads.size)
+        assertEquals(1, harness.player.stops)
+        assertNull(controller.state.value.bar)
+    }
+
+    @Test
+    fun `a next surah not on the phone is fetched without asking and played when it lands`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.settings.stored.value = RecitationSettings(autoDownload = true, autoDownloadAsked = true)
+            harness.library.put("ar.alafasy", setOf(1))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(1, 1)
+
+            harness.player.playOut()
+            advanceTimeBy(SURAH_BREATH_MS + 1)
+
+            assertEquals(listOf(DownloadKey("ar.alafasy", 2) to false), harness.downloader.enqueued)
+            assertEquals(1, harness.player.stops)
+            assertNull(controller.state.value.sheet)
+
+            harness.library.put("ar.alafasy", setOf(1, 2))
+
+            assertEquals(Triple("ar.alafasy", 2, 1), harness.player.loads.last())
+        }
+
+    @Test
+    fun `with downloads on request the recitation simply ends and nothing is offered`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1))
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(1, 1)
+
+            harness.player.playOut()
+            advanceTimeBy(SURAH_BREATH_MS + 1)
+
+            assertTrue(harness.downloader.enqueued.isEmpty())
+            assertEquals(1, harness.player.stops)
+            assertNull(controller.state.value.sheet)
+        }
+
+    @Test
+    fun `a recitation that moves during the breath is left alone`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1, 2))
+        val controller = controller(harness, backgroundScope)
+        controller.requestPlay(1, 7)
+
+        harness.player.playOut()
+        // The lock screen's "previous ayah" during the breath: the surah is playing again.
+        harness.player.emit(harness.player.state.value.copy(ayah = 6, playing = true))
+        advanceTimeBy(SURAH_BREATH_MS + 1)
+
+        assertEquals(1, harness.player.loads.size)
+        assertEquals(0, harness.player.stops)
+    }
+
+    @Test
+    fun `a tap during the breath wins over the advance`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1, 2, 112))
+        val controller = controller(harness, backgroundScope)
+        controller.requestPlay(1, 1)
+
+        harness.player.playOut()
+        controller.requestPlay(112, 1)
+        advanceTimeBy(SURAH_BREATH_MS + 1)
+
+        assertEquals(Triple("ar.alafasy", 112, 1), harness.player.loads.last())
+        assertEquals(2, harness.player.loads.size)
+    }
+
+    @Test
+    fun `dismissing the bar during the breath stops for good`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1, 2))
+        val controller = controller(harness, backgroundScope)
+        controller.requestPlay(1, 1)
+
+        harness.player.playOut()
+        controller.dismissBar()
+        advanceTimeBy(SURAH_BREATH_MS + 1)
+
+        assertEquals(1, harness.player.loads.size)
+        assertEquals(1, harness.player.stops)
+    }
+
+    // ── Read-aloud (read-aloud spec §4, §5.4, §6) ───────────────────────────────────────
+
+    private class FakeReadAloud(
+        val translation: MutableStateFlow<String> = MutableStateFlow("en.sahih"),
+        val statuses: MutableMap<String, VoiceStatus> = mutableMapOf(
+            "en" to VoiceStatus.Ready(SpeechVoice("com.google.android.tts", "en-us-x-sfg-local")),
+        ),
+        /** Closed by a test that wants a question in flight: the phone still binding its engines. */
+        val gate: CompletableDeferred<Unit>? = null,
+    ) : ReadAloudPort {
+        val asked = mutableListOf<String>()
+        val installs = mutableListOf<String>()
+        override fun translationId(languageTag: String): Flow<String> = translation
+        override suspend fun status(language: String): VoiceStatus {
+            asked += language
+            gate?.await()
+            return statuses[language] ?: VoiceStatus.Unsupported
+        }
+        override fun installVoice(engine: String) {
+            installs += engine
+        }
+    }
+
+    private val readingQuran = FakeQuranSource(
+        translationsList = listOf(
+            TranslationInfo("en.sahih", "en", "Saheeh International", "Saheeh International", "licence", "url", TextKind.TRANSLATION),
+            TranslationInfo("ar.muyassar", "ar", "التفسير الميسر", "مجمع الملك فهد", "licence", "url", TextKind.TAFSIR),
+            TranslationInfo("ur.junagarhi", "ur", "ترجمہ محمد جوناگڑھی", "محمد جوناگڑھی", "licence", "url", TextKind.TRANSLATION),
+        ),
+        translationTextsById = mapOf(
+            "en.sahih" to mapOf(
+                1 to mapOf(
+                    1 to "In the name of Allah, the Entirely Merciful, the Especially Merciful.",
+                    2 to "[All] praise is [due] to Allah, Lord of the worlds -",
+                ),
+            ),
+        ),
+    )
+
+    @Test
+    fun `read aloud off loads no speech`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1))
+        val c = controller(harness, backgroundScope, readAloud = FakeReadAloud(), quran = readingQuran)
+        c.setLanguageTag("en")
+        c.requestPlay(1, 1)
+        assertEquals(listOf<SpokenTranslation?>(null), harness.player.speeches)
+    }
+
+    @Test
+    fun `read aloud on with a ready voice loads the surah's prepared translation`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1))
+        harness.settings.stored.value = harness.settings.stored.value.copy(readAloud = true)
+        val c = controller(harness, backgroundScope, readAloud = FakeReadAloud(), quran = readingQuran)
+        c.setLanguageTag("en")
+        c.requestPlay(1, 1)
+        val speech = assertNotNull(harness.player.speeches.single())
+        assertEquals("en.sahih", speech.translationId)
+        assertEquals(TextKind.TRANSLATION, speech.kind)
+        assertEquals("All praise is due to Allah, Lord of the worlds", speech.texts[2])
+        assertEquals(SpeechVoice("com.google.android.tts", "en-us-x-sfg-local"), speech.voice)
+        // start() re-checks after the load finishes (so a change during it is not lost, see the
+        // "still loading" test below); the key guard must make that a no-op right after a load.
+        assertTrue(harness.player.speechUpdates.isEmpty())
+    }
+
+    @Test
+    fun `the switch shows only where the phone can read the language`() = runTest(UnconfinedTestDispatcher()) {
+        val readAloud = FakeReadAloud()
+        val c = controller(Harness(), backgroundScope, readAloud = readAloud, quran = readingQuran)
+        assertNull(c.state.value.readAloud)
+        c.setLanguageTag("en")
+        c.refreshVoices()
+        val shown = assertNotNull(c.state.value.readAloud)
+        assertFalse(shown.enabled)
+        assertEquals("Saheeh International", shown.translationName)
+        assertEquals("en", shown.language)
+        readAloud.translation.value = "ur.junagarhi"
+        c.refreshVoices()
+        assertNull(c.state.value.readAloud)
+    }
+
+    @Test
+    fun `translation off hides the switch`() = runTest(UnconfinedTestDispatcher()) {
+        val readAloud = FakeReadAloud()
+        val c = controller(Harness(), backgroundScope, readAloud = readAloud, quran = readingQuran)
+        c.setLanguageTag("en")
+        c.refreshVoices()
+        assertNotNull(c.state.value.readAloud)
+        readAloud.translation.value = com.taqvo.app.quran.ReadingSettings.NO_TRANSLATION
+        assertNull(c.state.value.readAloud)
+    }
+
+    @Test
+    fun `a missing voice shows the switch with its installer and loads nothing`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1))
+        harness.settings.stored.value = harness.settings.stored.value.copy(readAloud = true)
+        val readAloud = FakeReadAloud(statuses = mutableMapOf("en" to VoiceStatus.Missing("com.google.android.tts")))
+        val c = controller(harness, backgroundScope, readAloud = readAloud, quran = readingQuran)
+        c.setLanguageTag("en")
+        c.refreshVoices()
+        assertEquals("com.google.android.tts", c.state.value.readAloud?.missingEngine)
+        c.getVoice()
+        assertEquals(listOf("com.google.android.tts"), readAloud.installs)
+        c.requestPlay(1, 1)
+        assertEquals(listOf<SpokenTranslation?>(null), harness.player.speeches)
+    }
+
+    @Test
+    fun `turning read aloud on while a surah plays rebuilds it with speech and off again without`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1))
+        val c = controller(harness, backgroundScope, readAloud = FakeReadAloud(), quran = readingQuran)
+        c.setLanguageTag("en")
+        c.requestPlay(1, 1)
+        c.setReadAloud(true)
+        assertEquals("en.sahih", harness.player.speechUpdates.single()?.translationId)
+        c.setReadAloud(false)
+        assertEquals(2, harness.player.speechUpdates.size)
+        assertNull(harness.player.speechUpdates.last())
+    }
+
+    @Test
+    fun `the bar says the translation is being read while the voice speaks`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1))
+        harness.settings.stored.value = harness.settings.stored.value.copy(readAloud = true)
+        val c = controller(harness, backgroundScope, readAloud = FakeReadAloud(), quran = readingQuran)
+        c.setLanguageTag("en")
+        c.requestPlay(1, 1)
+        assertNull(c.state.value.bar?.readingAloud)
+        harness.player.emit(harness.player.state.value.copy(speaking = true))
+        assertEquals(TextKind.TRANSLATION, c.state.value.bar?.readingAloud)
+    }
+
+    @Test
+    fun `a switch turned on while the surah is still loading is not lost`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1))
+        val gate = CompletableDeferred<Unit>()
+        harness.player.loadGate = gate
+        val c = controller(harness, backgroundScope, readAloud = FakeReadAloud(), quran = readingQuran)
+        c.setLanguageTag("en")
+        c.requestPlay(1, 1)
+        // The switch changes while `load` is still in flight (the gate is closed): the read-aloud
+        // collector finds `loading` true and does nothing, rather than building a speech for a
+        // load that has not landed yet.
+        c.setReadAloud(true)
+        assertTrue(harness.player.speechUpdates.isEmpty())
+        // `start()` catches this up itself once the load has actually finished.
+        gate.complete(Unit)
+        val speech = assertNotNull(harness.player.speechUpdates.single())
+        assertEquals("en.sahih", speech.translationId)
+    }
+
+    @Test
+    fun `onForeground re-asks only a voice that was missing`() = runTest(UnconfinedTestDispatcher()) {
+        val readAloud = FakeReadAloud(statuses = mutableMapOf("en" to VoiceStatus.Missing("com.google.android.tts")))
+        val c = controller(Harness(), backgroundScope, readAloud = readAloud, quran = readingQuran)
+        c.setLanguageTag("en")
+        // Nothing asked yet: a return to the app binds no engine.
+        c.onForeground()
+        assertTrue(readAloud.asked.isEmpty())
+        c.refreshVoices()
+        // Missing: back from the installer, perhaps, so asked again — and again while it stays so.
+        c.onForeground()
+        assertEquals(2, readAloud.asked.size)
+        readAloud.statuses["en"] = VoiceStatus.Ready(SpeechVoice("com.google.android.tts", "en-us-x-sfg-local"))
+        c.onForeground()
+        assertEquals(3, readAloud.asked.size)
+        assertNull(assertNotNull(c.state.value.readAloud).missingEngine)
+        // Ready now: a return to the app asks nothing more.
+        c.onForeground()
+        assertEquals(3, readAloud.asked.size)
+    }
+
+    @Test
+    fun `onForeground does not re-ask a ready voice`() = runTest(UnconfinedTestDispatcher()) {
+        val readAloud = FakeReadAloud()
+        val c = controller(Harness(), backgroundScope, readAloud = readAloud, quran = readingQuran)
+        c.setLanguageTag("en")
+        c.refreshVoices()
+        c.onForeground()
+        assertEquals(listOf("en"), readAloud.asked)
+    }
+
+    @Test
+    fun `opening Settings asks the phone so its card shows after a cold start`() = runTest(UnconfinedTestDispatcher()) {
+        val readAloud = FakeReadAloud()
+        val c = controller(Harness(), backgroundScope, readAloud = readAloud, quran = readingQuran)
+        c.setLanguageTag("en")
+        assertNull(c.state.value.readAloud)
+        c.onSettingsOpened()
+        assertNotNull(c.state.value.readAloud)
+        assertEquals(listOf("en"), readAloud.asked)
+    }
+
+    @Test
+    fun `the reader asks only about a language the phone has not answered for`() = runTest(UnconfinedTestDispatcher()) {
+        val readAloud = FakeReadAloud()
+        val c = controller(Harness(), backgroundScope, readAloud = readAloud, quran = readingQuran)
+        c.setLanguageTag("en")
+        c.onReaderOpened()
+        assertEquals(listOf("en"), readAloud.asked)
+        assertNotNull(c.state.value.readAloud)
+        c.onReaderOpened()
+        assertEquals(listOf("en"), readAloud.asked)
+        // The sheet opening always asks again.
+        c.refreshVoices()
+        assertEquals(listOf("en", "en"), readAloud.asked)
+    }
+
+    @Test
+    fun `asks for one language at once reach the phone once`() = runTest(UnconfinedTestDispatcher()) {
+        val gate = CompletableDeferred<Unit>()
+        val readAloud = FakeReadAloud(gate = gate)
+        val c = controller(Harness(), backgroundScope, readAloud = readAloud, quran = readingQuran)
+        c.setLanguageTag("en")
+        c.refreshVoices()
+        c.refreshVoices()
+        // No answer cached yet, so the reader would ask too: it joins the question in flight.
+        c.onReaderOpened()
+        assertEquals(listOf("en"), readAloud.asked)
+        assertNull(c.state.value.readAloud)
+        gate.complete(Unit)
+        assertNotNull(c.state.value.readAloud)
+        assertEquals(listOf("en"), readAloud.asked)
+        // Answered: the next ask is a new question.
+        c.refreshVoices()
+        assertEquals(listOf("en", "en"), readAloud.asked)
+    }
+
+    @Test
+    fun `a load waits for the question already in flight instead of asking again`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1))
+        harness.settings.stored.value = harness.settings.stored.value.copy(readAloud = true)
+        val gate = CompletableDeferred<Unit>()
+        val readAloud = FakeReadAloud(gate = gate)
+        val c = controller(harness, backgroundScope, readAloud = readAloud, quran = readingQuran)
+        c.setLanguageTag("en")
+        c.refreshVoices()
+        c.requestPlay(1, 1)
+        assertTrue(harness.player.loads.isEmpty())
+        gate.complete(Unit)
+        assertEquals("en.sahih", assertNotNull(harness.player.speeches.single()).translationId)
+        assertEquals(listOf("en"), readAloud.asked)
+    }
+
+    // ── An adhkar page's passage (adhkar spec §3.5) ─────────────────────────────────────
+
+    private val kursiText = NowPlayingText("Morning adhkar", "Ayat al-Kursi · Al-Baqarah 255")
+
+    private fun RecitationController.playKursi() =
+        requestPlayAyahs(2, listOf(255), kursiText.title, kursiText.subtitle)
+
+    @Test
+    fun `an adhkar passage plays only its ayahs under the page's own lock screen text`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(2))
+            val controller = controller(harness, backgroundScope)
+            assertFalse(controller.adhkarPlaying.value)
+
+            controller.playKursi()
+
+            assertEquals(listOf(Triple("ar.alafasy", 2, 255)), harness.player.loads)
+            assertEquals(listOf<List<Int>?>(listOf(255)), harness.player.passages)
+            assertEquals(kursiText, harness.player.lastText)
+            assertEquals(listOf<SpokenTranslation?>(null), harness.player.speeches)
+            assertEquals(1, harness.player.plays)
+            assertTrue(controller.adhkarPlaying.value)
+        }
+
+    @Test
+    fun `an adhkar passage that plays out stops instead of going on to the next surah`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(2, 3))
+            val controller = controller(harness, backgroundScope)
+            controller.playKursi()
+
+            harness.player.playOut()
+            advanceTimeBy(SURAH_BREATH_MS + 1)
+
+            assertEquals(1, harness.player.loads.size)
+            assertEquals(1, harness.player.stops)
+            assertFalse(controller.adhkarPlaying.value)
+            assertNull(controller.state.value.bar)
+        }
+
+    @Test
+    fun `a plain play after an adhkar passage goes on to the next surah again`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 2, 3))
+            val controller = controller(harness, backgroundScope)
+            controller.playKursi()
+            harness.player.playOut()
+
+            controller.requestPlay(1, 1)
+            assertEquals(null, harness.player.passages.last())
+            harness.player.playOut()
+            advanceTimeBy(SURAH_BREATH_MS + 1)
+
+            assertEquals(Triple("ar.alafasy", 2, 1), harness.player.loads.last())
+            assertEquals(null, harness.player.passages.last())
+            assertEquals(1, harness.player.stops)
+        }
+
+    @Test
+    fun `a plain play over an adhkar passage still playing goes on to the next surah`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 2))
+            val controller = controller(harness, backgroundScope)
+            controller.playKursi()
+
+            controller.requestPlay(1, 7)
+            assertFalse(controller.adhkarPlaying.value)
+            harness.player.playOut()
+            advanceTimeBy(SURAH_BREATH_MS + 1)
+
+            assertEquals(Triple("ar.alafasy", 2, 1), harness.player.loads.last())
+            assertEquals(0, harness.player.stops)
+        }
+
+    @Test
+    fun `stopAdhkar stops an adhkar passage`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(2))
+        val controller = controller(harness, backgroundScope)
+        controller.playKursi()
+
+        controller.stopAdhkar()
+
+        assertEquals(1, harness.player.stops)
+        assertFalse(controller.adhkarPlaying.value)
+    }
+
+    @Test
+    fun `stopAdhkar leaves an ordinary recitation playing`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(36))
+        val controller = controller(harness, backgroundScope)
+        controller.requestPlay(36, 1)
+
+        controller.stopAdhkar()
+
+        assertEquals(0, harness.player.stops)
+        assertTrue(harness.player.state.value.playing)
+        assertFalse(controller.adhkarPlaying.value)
+    }
+
+    @Test
+    fun `a passage stopped while it is still loading is stopped again once it lands`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(2, 3))
+            val gate = CompletableDeferred<Unit>()
+            harness.player.loadGate = gate
+            val controller = controller(harness, backgroundScope)
+            controller.playKursi()
+
+            // The page turns before the service has bound: the stop finds nothing loaded yet.
+            controller.stopAdhkar()
+            gate.complete(Unit)
+
+            assertEquals(0, harness.player.plays)
+            assertEquals(2, harness.player.stops)
+            assertFalse(controller.adhkarPlaying.value)
+        }
+
+    @Test
+    fun `an adhkar passage not on the phone is offered and the confirm plays only the passage`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(3))
+            val controller = controller(harness, backgroundScope)
+
+            controller.playKursi()
+            assertTrue(harness.player.loads.isEmpty())
+            assertEquals(2, controller.state.value.sheet?.surah)
+
+            controller.confirmDownload(allowMobileOnce = false)
+            harness.library.put("ar.alafasy", setOf(2, 3))
+
+            assertEquals(listOf(Triple("ar.alafasy", 2, 255)), harness.player.loads)
+            assertEquals(listOf<List<Int>?>(listOf(255)), harness.player.passages)
+            assertEquals(kursiText, harness.player.lastText)
+            assertNull(controller.state.value.sheet)
+
+            harness.player.playOut()
+            advanceTimeBy(SURAH_BREATH_MS + 1)
+            assertEquals(1, harness.player.loads.size)
+            assertEquals(1, harness.player.stops)
+        }
+
+    @Test
+    fun `an adhkar passage asks before downloading even when downloads go without asking`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.settings.stored.value = RecitationSettings(autoDownload = true, autoDownloadAsked = true)
+            val controller = controller(harness, backgroundScope)
+
+            controller.playKursi()
+
+            assertTrue(harness.downloader.enqueued.isEmpty())
+            assertEquals(2, controller.state.value.sheet?.surah)
+        }
+
+    @Test
+    fun `leaving the page forgets an adhkar passage still waiting on its download`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+            controller.playKursi()
+            controller.confirmDownload(allowMobileOnce = false)
+
+            controller.stopAdhkar()
+            harness.library.put("ar.alafasy", setOf(2))
+
+            assertTrue(harness.player.loads.isEmpty())
+            assertNull(controller.state.value.sheet)
+            // The download the reader asked for goes on; only the play waiting on it is dropped.
+            assertTrue(harness.downloader.cancelled.isEmpty())
+            assertEquals(0, harness.player.stops)
+        }
+
+    @Test
+    fun `read aloud never reads over an adhkar passage`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(1))
+        harness.settings.stored.value = harness.settings.stored.value.copy(readAloud = true)
+        val c = controller(harness, backgroundScope, readAloud = FakeReadAloud(), quran = readingQuran)
+        c.setLanguageTag("en")
+
+        c.requestPlayAyahs(1, listOf(2), "Morning adhkar", "Al-Fatiha 2")
+        c.setReadAloud(false)
+        c.setReadAloud(true)
+
+        assertEquals(listOf<SpokenTranslation?>(null), harness.player.speeches)
+        assertTrue(harness.player.speechUpdates.isEmpty())
+    }
+
+    @Test
+    fun `a lock screen skip during a passage stops the passage and starts nothing`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 2, 3))
+            val controller = controller(harness, backgroundScope)
+
+            controller.playKursi()
+            harness.player.press(SurahSkip.NEXT)
+
+            assertEquals(1, harness.player.loads.size)
+            assertEquals(1, harness.player.stops)
+            assertFalse(controller.adhkarPlaying.value)
+            assertNull(controller.state.value.bar)
+
+            controller.playKursi()
+            harness.player.press(SurahSkip.PREVIOUS)
+
+            assertEquals(2, harness.player.loads.size)
+            assertEquals(2, harness.player.stops)
+            assertNull(controller.state.value.sheet)
+        }
+
+    @Test
+    fun `a passage that cannot be loaded leaves the recitation before it as it was`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(1, 2))
+            harness.settings.stored.value = harness.settings.stored.value.copy(readAloud = true)
+            harness.player.unreadable = setOf(2)
+            val c = controller(harness, backgroundScope, readAloud = FakeReadAloud(), quran = readingQuran)
+            c.setLanguageTag("en")
+            c.requestPlay(1, 1)
+            harness.player.emit(harness.player.state.value.copy(speaking = true))
+            assertEquals(TextKind.TRANSLATION, c.state.value.bar?.readingAloud)
+
+            c.playKursi()
+            // The surah being heard goes on to its next ayah, and the bar is drawn again.
+            harness.player.emit(harness.player.state.value.copy(ayah = 2))
+
+            assertEquals(listOf(Triple("ar.alafasy", 1, 1)), harness.player.loads)
+            assertFalse(c.adhkarPlaying.value)
+            // It is still being read aloud, and the bar still says so.
+            assertEquals(1, c.state.value.bar?.surah)
+            assertEquals(TextKind.TRANSLATION, c.state.value.bar?.readingAloud)
+            assertEquals(0, harness.player.stops)
+        }
+
+    @Test
+    fun `a passage whose download fails plays only the passage once the retry lands`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(3))
+            val controller = controller(harness, backgroundScope)
+            controller.playKursi()
+            controller.confirmDownload(allowMobileOnce = false)
+            // The reader puts the sheet away while it downloads; the failure brings it back.
+            controller.dismissSheet()
+            harness.downloader.emit(
+                mapOf(DownloadKey("ar.alafasy", 2) to DownloadState.Failed(DownloadFailure.NO_NETWORK)),
+            )
+            assertEquals(SheetPhase.Failed(DownloadFailure.NO_NETWORK), controller.state.value.sheet?.phase)
+
+            controller.retryDownload()
+            assertEquals(DownloadKey("ar.alafasy", 2) to false, harness.downloader.enqueued.last())
+            harness.downloader.emit(mapOf(DownloadKey("ar.alafasy", 2) to DownloadState.Queued))
+            harness.library.put("ar.alafasy", setOf(2, 3))
+
+            assertEquals(listOf(Triple("ar.alafasy", 2, 255)), harness.player.loads)
+            assertEquals(listOf<List<Int>?>(listOf(255)), harness.player.passages)
+            assertEquals(kursiText, harness.player.lastText)
+            assertNull(controller.state.value.sheet)
+            assertTrue(controller.adhkarPlaying.value)
+
+            harness.player.playOut()
+            advanceTimeBy(SURAH_BREATH_MS + 1)
+            assertEquals(1, harness.player.loads.size)
+            assertEquals(1, harness.player.stops)
+        }
+
+    // ── The first run: Alafasy's bundled clips (adhkar spec §3.5) ──────────────────────
+
+    private val kursiClip = byteArrayOf(2, 5, 5)
+    private val ikhlasClip = byteArrayOf(1, 1, 2)
+
+    private fun Harness.bundleKursi() {
+        adhkarClips.bundled[Triple("ar.alafasy", 2, 255)] = kursiClip
+    }
+
+    @Test
+    fun `an adhkar passage not on the phone plays Alafasy's bundled clip and never loads the player`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(3))
+            harness.bundleKursi()
+            val controller = controller(harness, backgroundScope)
+            assertFalse(controller.adhkarPlaying.value)
+
+            controller.playKursi()
+
+            assertEquals(listOf(Triple("ar.alafasy", 2, 255 as Int?)), harness.adhkarClips.asked)
+            assertEquals(1, harness.clips.played)
+            assertTrue(harness.clips.heard.single().contentEquals(kursiClip))
+            assertTrue(harness.player.loads.isEmpty())
+            assertEquals(0, harness.player.plays)
+            assertNull(controller.state.value.sheet)
+            assertTrue(harness.downloader.enqueued.isEmpty())
+            assertTrue(controller.adhkarPlaying.value)
+
+            harness.clips.finish()
+
+            assertFalse(controller.adhkarPlaying.value)
+        }
+
+    @Test
+    fun `a whole short surah asks for the clip of the whole surah`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.adhkarClips.bundled[Triple("ar.alafasy", 112, null)] = ikhlasClip
+        val controller = controller(harness, backgroundScope)
+
+        controller.requestPlayAyahs(112, listOf(1, 2, 3, 4), "Morning adhkar", "Al-Ikhlas · 112")
+
+        assertEquals(listOf(Triple("ar.alafasy", 112, null as Int?)), harness.adhkarClips.asked)
+        assertTrue(harness.clips.heard.single().contentEquals(ikhlasClip))
+        assertTrue(controller.adhkarPlaying.value)
+    }
+
+    @Test
+    fun `a passage that is not a whole surah from its first ayah never asks for a whole surah's clip`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.adhkarClips.bundled[Triple("ar.alafasy", 2, null)] = ikhlasClip
+            val controller = controller(harness, backgroundScope)
+
+            controller.requestPlayAyahs(2, listOf(285, 286), "Evening adhkar", "Al-Baqarah 2:285-286")
+
+            assertTrue(harness.adhkarClips.asked.isEmpty())
+            assertEquals(0, harness.clips.played)
+            assertEquals(2, controller.state.value.sheet?.surah)
+        }
+
+    @Test
+    fun `a surah on the phone plays through the player and the clip is not asked for`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(2))
+            harness.bundleKursi()
+            val controller = controller(harness, backgroundScope)
+
+            controller.playKursi()
+
+            assertTrue(harness.adhkarClips.asked.isEmpty())
+            assertEquals(0, harness.clips.played)
+            assertEquals(listOf(Triple("ar.alafasy", 2, 255)), harness.player.loads)
+            assertTrue(controller.adhkarPlaying.value)
+        }
+
+    @Test
+    fun `another reciter's reader is offered the download and never hears Alafasy`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.settings.stored.value = harness.settings.stored.value.copy(reciterId = "ar.husary")
+            harness.bundleKursi()
+            harness.adhkarClips.bundled[Triple("ar.husary", 2, 255)] = byteArrayOf(9)
+            val controller = controller(harness, backgroundScope)
+
+            controller.playKursi()
+
+            assertTrue(harness.adhkarClips.asked.isEmpty())
+            assertEquals(0, harness.clips.played)
+            assertTrue(harness.player.loads.isEmpty())
+            assertEquals(2, controller.state.value.sheet?.surah)
+            assertEquals("ar.husary", controller.state.value.sheet?.reciter?.id)
+            assertFalse(controller.adhkarPlaying.value)
+        }
+
+    @Test
+    fun `an Alafasy passage whose clip is not in the build is offered the download`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            val controller = controller(harness, backgroundScope)
+
+            controller.playKursi()
+
+            assertEquals(listOf(Triple("ar.alafasy", 2, 255 as Int?)), harness.adhkarClips.asked)
+            assertEquals(0, harness.clips.played)
+            assertEquals(2, controller.state.value.sheet?.surah)
+            assertFalse(controller.adhkarPlaying.value)
+        }
+
+    @Test
+    fun `stopAdhkar during a clip stops the clip and clears adhkarPlaying`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.bundleKursi()
+            val controller = controller(harness, backgroundScope)
+            controller.playKursi()
+            assertTrue(controller.adhkarPlaying.value)
+            val stoppedBefore = harness.clips.stopped
+
+            controller.stopAdhkar()
+
+            assertEquals(stoppedBefore + 1, harness.clips.stopped)
+            assertFalse(controller.adhkarPlaying.value)
+            // The end of the clip it cut, arriving late, changes nothing.
+            harness.clips.deliver(0)
+            assertFalse(controller.adhkarPlaying.value)
+            assertEquals(0, harness.player.stops)
+        }
+
+    @Test
+    fun `a page turned while its clip is still being read plays no clip at all`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.bundleKursi()
+            val gate = CompletableDeferred<Unit>()
+            harness.adhkarClips.gate = gate
+            val controller = controller(harness, backgroundScope)
+            controller.playKursi()
+
+            controller.stopAdhkar()
+            gate.complete(Unit)
+
+            assertEquals(0, harness.clips.played)
+            assertFalse(controller.adhkarPlaying.value)
+            // Nor does it fall through to the download sheet the reader never asked for.
+            assertNull(controller.state.value.sheet)
+            assertTrue(harness.player.loads.isEmpty())
+        }
+
+    @Test
+    fun `a clip plays out and stops instead of going on to anything`() = runTest(UnconfinedTestDispatcher()) {
+        val harness = Harness()
+        harness.library.put("ar.alafasy", setOf(3))
+        harness.bundleKursi()
+        val controller = controller(harness, backgroundScope)
+        controller.playKursi()
+
+        harness.clips.finish()
+        advanceTimeBy(SURAH_BREATH_MS + 1)
+
+        assertEquals(1, harness.clips.played)
+        assertTrue(harness.player.loads.isEmpty())
+        assertEquals(0, harness.player.plays)
+        assertEquals(0, harness.player.stops)
+        assertTrue(harness.downloader.enqueued.isEmpty())
+        assertNull(controller.state.value.sheet)
+        assertNull(controller.state.value.bar)
+        assertFalse(controller.adhkarPlaying.value)
+    }
+
+    @Test
+    fun `a recitation playing is paused for the clip and given back when the clip plays out`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(36))
+            harness.bundleKursi()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(36, 1)
+            assertTrue(harness.player.state.value.playing)
+
+            controller.playKursi()
+
+            assertEquals(1, harness.player.pauses)
+            assertFalse(harness.player.state.value.playing)
+            assertTrue(controller.adhkarPlaying.value)
+
+            harness.clips.finish()
+
+            assertEquals(2, harness.player.plays)
+            assertTrue(harness.player.state.value.playing)
+            assertEquals(36, harness.player.state.value.surah)
+            assertFalse(controller.adhkarPlaying.value)
+        }
+
+    @Test
+    fun `a recitation the clip paused is given back when the page turns too`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(36))
+            harness.bundleKursi()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(36, 1)
+            controller.playKursi()
+
+            controller.stopAdhkar()
+
+            assertTrue(harness.player.state.value.playing)
+            assertEquals(2, harness.player.plays)
+            // Once: a second stop, as the screen's own dispose makes, gives nothing back twice.
+            controller.stopAdhkar()
+            assertEquals(2, harness.player.plays)
+            // And the end of the clip it cut, arriving late, does not resume what the reader has
+            // paused since.
+            harness.player.pause()
+            harness.clips.deliver(0)
+            assertEquals(2, harness.player.plays)
+            assertFalse(harness.player.state.value.playing)
+        }
+
+    @Test
+    fun `a recitation that was already paused is left paused by the clip`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(36))
+            harness.bundleKursi()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(36, 1)
+            harness.player.pause()
+            val pausesBefore = harness.player.pauses
+            val playsBefore = harness.player.plays
+
+            controller.playKursi()
+            harness.clips.finish()
+
+            assertEquals(pausesBefore, harness.player.pauses)
+            assertEquals(playsBefore, harness.player.plays)
+            assertFalse(harness.player.state.value.playing)
+        }
+
+    @Test
+    fun `a recitation dismissed during the clip is not started again by the clip's end`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(36))
+            harness.bundleKursi()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(36, 1)
+            controller.playKursi()
+            controller.dismissBar()
+            val playsBefore = harness.player.plays
+
+            harness.clips.finish()
+
+            assertEquals(playsBefore, harness.player.plays)
+            assertNull(controller.state.value.bar)
+        }
+
+    @Test
+    fun `a second tap on the speaker while the clip plays restarts the clip and pauses the recitation once`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(36))
+            harness.bundleKursi()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(36, 1)
+
+            controller.playKursi()
+            controller.playKursi()
+            // The end of the first clip, which the second replaced, reaches the controller late: it
+            // is not the end of the clip now playing.
+            harness.clips.deliver(0)
+
+            assertTrue(controller.adhkarPlaying.value)
+            assertEquals(1, harness.player.plays)
+
+            harness.clips.finish()
+
+            // The recitation was paused by the first tap and is given back by the last end.
+            assertEquals(1, harness.player.pauses)
+            assertEquals(2, harness.player.plays)
+            assertFalse(controller.adhkarPlaying.value)
+        }
+
+    @Test
+    fun `an ordinary play over a live clip ends the clip and owns the player`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(36, 37))
+            harness.bundleKursi()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(36, 1)
+            controller.playKursi()
+            assertTrue(controller.adhkarPlaying.value)
+            assertFalse(harness.player.state.value.playing)
+            val stoppedBefore = harness.clips.stopped
+
+            // The lock screen's Next, arriving through the player's skips while the clip sounds.
+            controller.requestPlay(37, 1)
+
+            assertEquals(stoppedBefore + 1, harness.clips.stopped)
+            assertFalse(controller.adhkarPlaying.value)
+            assertEquals(Triple("ar.alafasy", 37, 1), harness.player.loads.last())
+            assertTrue(harness.player.state.value.playing)
+
+            // The reader pauses 37; the clip's end, reaching the controller late, resumes nothing.
+            harness.player.pause()
+            val playsBefore = harness.player.plays
+            harness.clips.deliver(0)
+
+            assertEquals(playsBefore, harness.player.plays)
+            assertFalse(harness.player.state.value.playing)
+            assertEquals(37, harness.player.state.value.surah)
+            assertFalse(controller.adhkarPlaying.value)
+        }
+
+    @Test
+    fun `a passage played through the player over a live clip ends the clip too`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(36, 112))
+            harness.bundleKursi()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(36, 1)
+            controller.playKursi()
+            val stoppedBefore = harness.clips.stopped
+
+            controller.requestPlayAyahs(112, listOf(1, 2, 3, 4), "Morning adhkar", "Al-Ikhlas 112")
+
+            assertEquals(stoppedBefore + 1, harness.clips.stopped)
+            assertEquals(Triple("ar.alafasy", 112, 1), harness.player.loads.last())
+            // The passage in the player is what adhkarPlaying reports now, and the clip's end
+            // reaching the controller late neither ends it nor resumes the surah before it.
+            val playsBefore = harness.player.plays
+            harness.clips.deliver(0)
+
+            assertTrue(controller.adhkarPlaying.value)
+            assertEquals(playsBefore, harness.player.plays)
+            assertEquals(112, harness.player.state.value.surah)
+        }
+
+    @Test
+    fun `a clip that cannot start ends at once and gives the recitation back`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(36))
+            harness.bundleKursi()
+            harness.clips.endsAtOnce = true
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(36, 1)
+
+            controller.playKursi()
+
+            assertEquals(1, harness.clips.played)
+            assertFalse(controller.adhkarPlaying.value)
+            assertTrue(harness.player.state.value.playing)
+            assertEquals(1, harness.player.pauses)
+            assertEquals(2, harness.player.plays)
+        }
+
+    @Test
+    fun `an ordinary play while the clip is still being read abandons the clip before it sounds`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(37))
+            harness.bundleKursi()
+            val gate = CompletableDeferred<Unit>()
+            harness.adhkarClips.gate = gate
+            val controller = controller(harness, backgroundScope)
+            controller.playKursi()
+
+            // An ordinary play arrives while the clip's bytes are still being read: there is no
+            // clip playing yet for it to end, but the clip is over all the same.
+            controller.requestPlay(37, 1)
+            gate.complete(Unit)
+
+            assertEquals(0, harness.clips.played)
+            assertEquals(0, harness.player.pauses)
+            assertTrue(harness.player.state.value.playing)
+            assertEquals(37, harness.player.state.value.surah)
+            assertFalse(controller.adhkarPlaying.value)
+            assertNull(controller.state.value.sheet)
+        }
+
+    @Test
+    fun `a clip after an abandoned one does not resume the surah the reader paused`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(36, 37))
+            harness.bundleKursi()
+            val controller = controller(harness, backgroundScope)
+            controller.requestPlay(36, 1)
+            // The clip pauses 36, then an ordinary play abandons the clip, and what it paused is
+            // not to be given back.
+            controller.playKursi()
+            controller.requestPlay(37, 1)
+            // The reader pauses 37 and plays the clip again.
+            harness.player.pause()
+            val playsBefore = harness.player.plays
+            controller.playKursi()
+
+            harness.clips.finish()
+
+            // The second clip paused nothing, so its end gives nothing back.
+            assertEquals(playsBefore, harness.player.plays)
+            assertFalse(harness.player.state.value.playing)
+            assertEquals(37, harness.player.state.value.surah)
+        }
+
+    // ── The speaker tapped while its passage loads ─────────────────────────────────────
+
+    @Test
+    fun `a second tap on the speaker while its passage is still loading stops it`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(2))
+            val gate = CompletableDeferred<Unit>()
+            harness.player.loadGate = gate
+            val controller = controller(harness, backgroundScope)
+            controller.playKursi()
+
+            // On a device the speaker still shows Play while the passage loads, so the second tap
+            // asks for the same passage again: it means stop, not a second load.
+            controller.playKursi()
+            gate.complete(Unit)
+
+            assertEquals(1, harness.player.loads.size)
+            assertEquals(0, harness.player.plays)
+            assertFalse(controller.adhkarPlaying.value)
+            assertNull(controller.state.value.bar)
+        }
+
+    @Test
+    fun `a tap on a passage paused by a call plays it again rather than stopping it`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = Harness()
+            harness.library.put("ar.alafasy", setOf(2))
+            val controller = controller(harness, backgroundScope)
+            controller.playKursi()
+            // A phone call pauses the passage; the speaker shows Play again.
+            harness.player.pause()
+            assertFalse(controller.adhkarPlaying.value)
+
+            controller.playKursi()
+
+            assertEquals(2, harness.player.loads.size)
+            assertEquals(2, harness.player.plays)
+            assertEquals(0, harness.player.stops)
+            assertTrue(controller.adhkarPlaying.value)
+        }
+}

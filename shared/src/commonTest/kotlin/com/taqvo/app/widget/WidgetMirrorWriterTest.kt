@@ -1,0 +1,360 @@
+package com.taqvo.app.widget
+
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.plus
+import com.taqvo.app.domain.GeoLocation
+import com.taqvo.app.domain.ObligatoryPrayers
+import com.taqvo.app.domain.Prayer
+import com.taqvo.app.domain.PrayerSettings
+import com.taqvo.app.domain.PrayerStatus
+import com.taqvo.app.domain.PrayerTime
+import com.taqvo.app.domain.TimelineRow
+import com.taqvo.app.domain.TodayState
+import com.taqvo.app.domain.WidgetBackground
+import com.taqvo.app.i18n.PlatformFormat
+import com.taqvo.app.prayer.PrayerTimesEngine
+import com.taqvo.app.prayer.TimelineBuilder
+import kotlin.math.abs
+import kotlin.math.round
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
+
+private class FakeKeyValueStore : KeyValueStore {
+    private val map = mutableMapOf<String, String>()
+    override fun putString(key: String, value: String) { map[key] = value }
+    override fun getString(key: String): String? = map[key]
+}
+
+private class FakePlatformFormat(
+    private val tag: String = "en-US",
+    private val arabicIndicDigits: Boolean = false,
+) : PlatformFormat {
+    override fun languageTag() = tag
+    override fun localizedDigits(number: Int) =
+        if (arabicIndicDigits) number.toString().map { "٠١٢٣٤٥٦٧٨٩"[it - '0'] }.joinToString("")
+        else number.toString()
+    override fun clockTime(hour: Int, minute: Int) =
+        "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"
+}
+
+class WidgetMirrorWriterTest {
+
+    private val today = TodayState(
+        rows = listOf(
+            TimelineRow(Prayer.FAJR, Instant.fromEpochSeconds(0), PrayerStatus.PASSED),
+            TimelineRow(Prayer.DHUHR, Instant.fromEpochSeconds(3600 * 7), PrayerStatus.CURRENT),
+            TimelineRow(Prayer.ASR, Instant.fromEpochSeconds(3600 * 10), PrayerStatus.UPCOMING),
+            TimelineRow(Prayer.MAGHRIB, Instant.fromEpochSeconds(3600 * 18), PrayerStatus.UPCOMING),
+            TimelineRow(Prayer.ISHA, Instant.fromEpochSeconds(3600 * 20), PrayerStatus.UPCOMING),
+        ),
+        next = PrayerTime(Prayer.ASR, Instant.fromEpochSeconds(3600 * 10)),
+        countdown = 90.minutes,
+        ringProgress = 0.3f,
+    )
+
+    @Test
+    fun theSnapshotRecordsTheDigitSetTheFormatItselfDraws() {
+        // Not the CLDR default for the tag: the countdown a widget composes itself has to match
+        // the clock times this same format produced beside it (D2, S23 round).
+        val store = FakeKeyValueStore()
+        WidgetMirrorWriter.write(store, today, "UTC", FakePlatformFormat("ar-LY", arabicIndicDigits = true))
+        assertEquals(true, WidgetMirrorWriter.read(store)?.arabicIndicDigits)
+        assertEquals(false, WidgetDigits.defaultsToArabicIndic("ar-LY"))
+
+        val western = FakeKeyValueStore()
+        WidgetMirrorWriter.write(western, today, "UTC", FakePlatformFormat("ar-EG"))
+        assertEquals(false, WidgetMirrorWriter.read(western)?.arabicIndicDigits)
+    }
+
+    @Test
+    fun writingThenReadingReproducesTheCurrentAndNextPrayer() {
+        val store = FakeKeyValueStore()
+        WidgetMirrorWriter.write(store, today, "UTC", FakePlatformFormat())
+        val snapshot = WidgetMirrorWriter.read(store)!!
+        assertEquals(Prayer.ASR, snapshot.nextPrayer)
+        assertEquals(Prayer.DHUHR, snapshot.currentPrayer)
+        assertEquals(90L, snapshot.countdownMinutes)
+        assertEquals(0.3f, snapshot.ringProgress)
+    }
+
+    // The exact phrase `Res.string.prayer_next_in` renders for the Prayer screen's ring — "Asr in"
+    // in English, "متبقٍّ على العصر" in Arabic — for the next prayer. This is what proves the mirror
+    // writes the localised sentence itself, never a hardcoded English suffix it composes on its
+    // own (that bug is this fix's whole reason to exist), and that it responds to the device's
+    // language rather than being pinned to one.
+    @Test
+    fun countdownLabelIsTheLocalisedNextPrayerInPhraseForTheNextPrayer() {
+        val store = FakeKeyValueStore()
+        WidgetMirrorWriter.write(store, today, "UTC", FakePlatformFormat("en-US"))
+        assertEquals("Asr in", WidgetMirrorWriter.read(store)!!.countdownLabel)
+    }
+
+    @Test
+    fun countdownLabelSwitchesToArabicWithTheDeviceLanguage() {
+        val store = FakeKeyValueStore()
+        WidgetMirrorWriter.write(store, today, "UTC", FakePlatformFormat("ar"))
+        assertEquals("متبقٍّ على العصر", WidgetMirrorWriter.read(store)!!.countdownLabel)
+    }
+
+    // -- C5: the ring is the one field that used to change every second -----------------------
+    //
+    // Every other field here is minute-granular, so `ringProgress` alone made the serialised
+    // snapshot differ on all 60 of a minute's ticks — which is what defeated iOS's `lastSnapshot`
+    // dedupe and exhausted WidgetKit's daily reload budget in under a minute.
+
+    @Test
+    fun theRingIsQuantisedToOneHundredAndTwentiethsBeforeItReachesTheMirror() {
+        val store = FakeKeyValueStore()
+        // 0.5041666 sits between two 1/120 steps; the mirror must carry the nearer step exactly.
+        WidgetMirrorWriter.write(store, today.copy(ringProgress = 0.5041666f), "UTC", FakePlatformFormat())
+        val written = WidgetMirrorWriter.read(store)!!.ringProgress
+        assertEquals(0.5f, written)
+        assertTrue(abs(round(written * 120f) - written * 120f) < 1e-4f, "not a multiple of 1/120: $written")
+    }
+
+    // One second of a three-hour gap moves raw `elapsed / total` by about 1/10800 — far below one
+    // 1/120 step — so the two snapshots must serialise to the identical string. That equality is
+    // exactly what `PrayerViewModel` compares to decide whether to write and nudge at all.
+    @Test
+    fun oneSecondOfProgressAcrossATypicalPrayerGapSerialisesIdentically() {
+        val total = 3 * 60 * 60f
+        val atT = today.copy(ringProgress = 4000f / total)
+        val aSecondLater = today.copy(ringProgress = 4001f / total)
+        assertEquals(
+            WidgetMirrorWriter.serializedSnapshot(atT, "UTC", FakePlatformFormat()),
+            WidgetMirrorWriter.serializedSnapshot(aSecondLater, "UTC", FakePlatformFormat()),
+        )
+    }
+
+    // ...but a real move must still get through: quantising may never freeze the ring outright.
+    @Test
+    fun aFullStepOfProgressStillChangesTheSerialisedSnapshot() {
+        assertTrue(
+            WidgetMirrorWriter.serializedSnapshot(today.copy(ringProgress = 0.30f), "UTC", FakePlatformFormat()) !=
+                WidgetMirrorWriter.serializedSnapshot(today.copy(ringProgress = 0.32f), "UTC", FakePlatformFormat()),
+        )
+    }
+
+    // -- I8: the mirror carries absolute instants, not just a frozen countdown ------------------
+
+    @Test
+    fun theWriterRecordsWhenTheNextPrayerActuallyFallsNotJustHowFarAwayItWas() {
+        val store = FakeKeyValueStore()
+        WidgetMirrorWriter.write(store, today, "UTC", FakePlatformFormat())
+        val snapshot = WidgetMirrorWriter.read(store)!!
+        assertEquals(3600L * 10, snapshot.nextPrayerEpochSeconds)
+        // The DHUHR row, the one the timeline marked CURRENT — the ring's other end.
+        assertEquals(3600L * 7, snapshot.previousPrayerEpochSeconds)
+    }
+
+    // Rendered three hours after it was written, the mirror must not still be claiming the
+    // ninety minutes that were true at write time.
+    @Test
+    fun aMirrorWrittenThreeHoursAgoYieldsNoCountdownRatherThanTheStaleOne() {
+        val store = FakeKeyValueStore()
+        WidgetMirrorWriter.write(store, today, "UTC", FakePlatformFormat())
+        val snapshot = WidgetMirrorWriter.read(store)!!
+        assertEquals(90L, snapshot.countdownMinutes)
+        assertEquals(null, WidgetCountdown.remainingMinutesAt(snapshot, 3600L * 13))
+    }
+
+    // Before the day's Fajr no obligatory prayer has passed, so there is no start point to record.
+    // The sentinel says so plainly instead of synthesising one.
+    @Test
+    fun beforeTheFirstPrayerOfTheDayThePreviousInstantIsTheNotRecordedSentinel() {
+        val beforeFajr = today.copy(
+            rows = today.rows.map { it.copy(status = PrayerStatus.UPCOMING) },
+        )
+        val store = FakeKeyValueStore()
+        WidgetMirrorWriter.write(store, beforeFajr, "UTC", FakePlatformFormat())
+        assertEquals(0L, WidgetMirrorWriter.read(store)!!.previousPrayerEpochSeconds)
+    }
+
+    @Test
+    fun readingBeforeAnyWriteReturnsNullRatherThanCrashing() {
+        assertEquals(null, WidgetMirrorWriter.read(FakeKeyValueStore()))
+    }
+
+    // Nothing wrote `widget_background` into the KeyValueStore until this task — both widgets
+    // were stuck on FOLLOW_THEME forever. This is the one write that closes that gap: the
+    // Widgets screen's route calls `writeBackground` beside `SettingsRepository.setWidgetBackground`,
+    // under the exact key `TaqvoGlanceWidget.kt` (Android) and `TaqvoMirror.background()` (iOS)
+    // read literally.
+    @Test
+    fun writeBackgroundStoresTheEnumNameUnderTheKeyBothWidgetsRead() {
+        val store = FakeKeyValueStore()
+        WidgetMirrorWriter.writeBackground(store, WidgetBackground.TRANSLUCENT_OR_FROSTED)
+        assertEquals("TRANSLUCENT_OR_FROSTED", store.getString("widget_background"))
+    }
+
+    @Test
+    fun writeBackgroundRoundTripsEveryValue() {
+        val store = FakeKeyValueStore()
+        WidgetBackground.entries.forEach { value ->
+            WidgetMirrorWriter.writeBackground(store, value)
+            assertEquals(value.name, store.getString("widget_background"))
+        }
+    }
+}
+
+class WidgetMirrorWriterScheduleTest {
+
+    private fun dayAt(offsetHours: Long) = com.taqvo.app.domain.DayPrayerTimes(
+        date = kotlinx.datetime.LocalDate(2026, 9, 6),
+        times = listOf(
+            PrayerTime(Prayer.FAJR, Instant.fromEpochSeconds((offsetHours + 5) * 3600)),
+            PrayerTime(Prayer.SUNRISE, Instant.fromEpochSeconds((offsetHours + 6) * 3600)),
+            PrayerTime(Prayer.DHUHR, Instant.fromEpochSeconds((offsetHours + 12) * 3600)),
+            PrayerTime(Prayer.ASR, Instant.fromEpochSeconds((offsetHours + 15) * 3600)),
+            PrayerTime(Prayer.MAGHRIB, Instant.fromEpochSeconds((offsetHours + 18) * 3600)),
+            PrayerTime(Prayer.ISHA, Instant.fromEpochSeconds((offsetHours + 20) * 3600)),
+        ),
+        highLatitudeRuleApplied = null,
+        asrOther = Instant.fromEpochSeconds((offsetHours + 16) * 3600),
+        sunset = Instant.fromEpochSeconds((offsetHours + 18) * 3600 - 60),
+        endOfEating = Instant.fromEpochSeconds((offsetHours + 5) * 3600),
+        sourceEntryId = "test",
+        entryClass = com.taqvo.app.prayer.engine.registry.EntryClass.D_NONE,
+    )
+
+    /** A day whose [com.taqvo.app.domain.DayPrayerTimes.date] and instants agree (UTC), which
+     * the writer's midnight needs; [dayAt]'s fixed date sits beside 1970 instants. */
+    private fun dayOn(date: LocalDate): com.taqvo.app.domain.DayPrayerTimes {
+        val midnight = date.atStartOfDayIn(TimeZone.UTC)
+        fun at(hours: Int) = midnight + hours.hours
+        return com.taqvo.app.domain.DayPrayerTimes(
+            date = date,
+            times = listOf(
+                PrayerTime(Prayer.FAJR, at(5)),
+                PrayerTime(Prayer.SUNRISE, at(6)),
+                PrayerTime(Prayer.DHUHR, at(12)),
+                PrayerTime(Prayer.ASR, at(15)),
+                PrayerTime(Prayer.MAGHRIB, at(18)),
+                PrayerTime(Prayer.ISHA, at(20)),
+            ),
+            highLatitudeRuleApplied = null,
+            asrOther = at(16),
+            sunset = at(18) - 1.minutes,
+            endOfEating = at(5),
+            sourceEntryId = "test",
+            entryClass = com.taqvo.app.prayer.engine.registry.EntryClass.D_NONE,
+        )
+    }
+
+    private val today = TodayState(
+        rows = listOf(TimelineRow(Prayer.DHUHR, Instant.fromEpochSeconds(12 * 3600), PrayerStatus.CURRENT)),
+        next = PrayerTime(Prayer.ASR, Instant.fromEpochSeconds(15 * 3600)),
+        countdown = 60.minutes,
+        ringProgress = 0.5f,
+    )
+
+    @Test
+    fun theTwoDaysBecomeTenScheduledObligatoryPrayersWithClockStrings() {
+        val snapshot = WidgetMirrorWriter.snapshotOf(today, "UTC", FakePlatformFormat(), listOf(dayAt(0), dayAt(24)))
+        assertEquals(10, snapshot.schedule.size)
+        // Sunrise is never a widget row.
+        assertTrue(snapshot.schedule.none { it.prayer == Prayer.SUNRISE })
+        val tomorrowsFajr = snapshot.schedule.single { it.prayer == Prayer.FAJR && it.dayIndex == 1 }
+        assertEquals(29 * 3600L, tomorrowsFajr.epochSeconds)
+        assertEquals("05:00", tomorrowsFajr.clockTime)
+        assertEquals(listOf(0, 0, 0, 0, 0, 1, 1, 1, 1, 1), snapshot.schedule.map { it.dayIndex })
+    }
+
+    @Test
+    fun theScheduleSurvivesTheStore() {
+        val store = FakeKeyValueStore()
+        WidgetMirrorWriter.write(store, today, "UTC", FakePlatformFormat(), listOf(dayAt(0), dayAt(24)))
+        assertEquals(10, WidgetMirrorWriter.read(store)!!.schedule.size)
+    }
+
+    @Test
+    fun aMirrorWrittenBetweenMidnightAndFajrFillsTheRingFromYesterdaysIsha() {
+        // B35: every night of Ramadan the app is opened for suhoor between midnight and Fajr. The
+        // interval the user is inside then began at yesterday's Isha, before the day of writing's
+        // midnight, so the mirror has to carry that start or the lock-screen ring sits empty until
+        // Fajr while the app's own ring is two-thirds full.
+        val yesterday = dayOn(LocalDate(2026, 9, 5))
+        val today = dayOn(LocalDate(2026, 9, 6))
+        val tomorrow = dayOn(LocalDate(2026, 9, 7))
+        val now = today.date.atStartOfDayIn(TimeZone.UTC) + 2.hours
+        val timeline = TimelineBuilder.buildForWidgets(yesterday, today, tomorrow, now, false, TimeZone.UTC)
+        val snapshot = WidgetMirrorWriter.snapshotOf(timeline, "UTC", FakePlatformFormat(), listOf(today, tomorrow), yesterday)
+
+        val isha = yesterday.time(Prayer.ISHA)
+        assertEquals(listOf(ScheduledPrayer(Prayer.ISHA, isha.epochSeconds, "20:00", -1)), snapshot.schedule.filter { it.dayIndex < 0 })
+
+        val content = WidgetContentBuilder.build(snapshot, now.epochSeconds)
+        assertEquals("Fajr in", content.countdownLabel)
+        assertEquals(ObligatoryPrayers, content.rows.map { it.prayer })
+        assertTrue(content.rows.none { it.isCurrent })
+        assertTrue(content.ringProgress > 0f)
+        // Six of the nine hours from Isha to Fajr, as the app's ring has it.
+        assertEquals(timeline.ringProgress, content.ringProgress, 0.01f)
+        assertEquals(6f / 9f, content.ringProgress, 0.01f)
+
+        val aMinuteBeforeFajr = today.time(Prayer.FAJR) - 1.minutes
+        assertTrue(WidgetContentBuilder.build(snapshot, aMinuteBeforeFajr.epochSeconds).ringProgress > 0.99f)
+    }
+
+    @Test
+    fun yesterdaysIshaAfterMidnightIsTheWidgetsNextPrayer() {
+        // Spec §3.3, ruling R8 amended: Helsinki on 21 June 2026 and Edmonton on 27 June give an
+        // Isha after local midnight. Written just after midnight, the mirror carries it (day −1),
+        // and the widget, at the moment of writing and a few minutes on, counts down to it; the
+        // rows are the new day's, none highlighted. Yesterday's Maghrib, the last start before
+        // midnight, is carried too: between midnight and the carried Isha the ring counts from
+        // it, as the app's does.
+        val engine = PrayerTimesEngine()
+        val helsinki = GeoLocation(60.1699, 24.9384, "Europe/Helsinki", "Helsinki", "FI")
+        val edmonton = GeoLocation(53.5461, -113.4938, "America/Edmonton", "Edmonton", "CA")
+        for ((location, date) in listOf(helsinki to LocalDate(2026, 6, 21), edmonton to LocalDate(2026, 6, 27))) {
+            val zone = TimeZone.of(location.timeZoneId)
+            val yesterday = engine.timesFor(location, date, PrayerSettings())
+            val day = date.plus(1, DateTimeUnit.DAY)
+            val todays = engine.timesFor(location, day, PrayerSettings())
+            val tomorrow = engine.timesFor(location, day.plus(1, DateTimeUnit.DAY), PrayerSettings())
+            val isha = yesterday.time(Prayer.ISHA)
+            val now = day.atStartOfDayIn(zone) + 30.seconds
+            assertTrue(isha > now + 1.minutes, "$date: Isha $isha is not after midnight")
+
+            val timeline = TimelineBuilder.buildForWidgets(yesterday, todays, tomorrow, now, false, zone)
+            assertEquals(PrayerTime(Prayer.ISHA, isha), timeline.next, "$date")
+            assertEquals(isha - now, timeline.countdown)
+
+            val snapshot = WidgetMirrorWriter.snapshotOf(
+                timeline, location.timeZoneId, FakePlatformFormat(), listOf(todays, tomorrow), yesterday,
+            )
+            val carried = snapshot.schedule.filter { it.dayIndex < 0 }
+            assertEquals(listOf(Prayer.MAGHRIB, Prayer.ISHA), carried.map { it.prayer }, "$date")
+            assertEquals(ScheduledPrayer(Prayer.ISHA, isha.epochSeconds, carried[1].clockTime, -1), carried[1])
+            assertEquals(yesterday.time(Prayer.MAGHRIB).epochSeconds, carried[0].epochSeconds)
+            assertTrue(carried[0].epochSeconds < day.atStartOfDayIn(zone).epochSeconds, "$date: Maghrib is not before midnight")
+            assertEquals(12, snapshot.schedule.size)
+            val atWriting = WidgetContentBuilder.build(snapshot, now.epochSeconds)
+            assertTrue(atWriting.ringProgress > 0f, "$date")
+            assertEquals(timeline.ringProgress, atWriting.ringProgress, 0.01f, "$date")
+            for (later in listOf(now, now + 1.minutes)) {
+                val epoch = later.epochSeconds
+                val content = WidgetContentBuilder.build(snapshot, epoch)
+                assertEquals(isha.epochSeconds, snapshot.schedule.filter { it.epochSeconds > epoch }.minOf { it.epochSeconds })
+                assertEquals((isha.epochSeconds - epoch) / 60, WidgetCountdown.remainingMinutesAt(snapshot, epoch), "$date")
+                assertEquals("Isha in", content.countdownLabel)
+                assertEquals(ObligatoryPrayers, content.rows.map { it.prayer })
+                assertTrue(content.rows.none { it.isCurrent })
+            }
+            // Once it has begun, the widget counts to the new day's Fajr from it.
+            val afterIsha = WidgetContentBuilder.build(snapshot, isha.epochSeconds + 60)
+            assertEquals("Fajr in", afterIsha.countdownLabel)
+            assertTrue(afterIsha.rows.none { it.isCurrent })
+            assertTrue(afterIsha.ringProgress > 0f)
+        }
+    }
+}

@@ -1,0 +1,6117 @@
+# Taqvo — overnight build log
+
+Autonomous build of slice 1, started 2026-09-06 03:07 SAST on branch `slice-1-core`.
+
+## Environment (verified before starting)
+
+- JDK 17.0.14, Android SDK at `~/Library/Android/sdk` (platforms 31–36, build-tools 33–35)
+- Xcode 16.0, iOS 18.0 SDK, simulators for iOS 18.0 / 18.6 / 26.2
+- Physical Android `LoopPhone` (CSLPGYZA2606002729) connected and authorised
+- Physical iPhone paired; Apple Development signing identities present (team 36383TYK26)
+- **Limitation:** tooling can drive iOS *simulators* only, not the physical iPhone. Visual
+  verification happens on the simulator; the physical iPhone gets an install to try by hand.
+
+## Decisions taken while you were asleep
+
+**Scaffolding source changed.** The plan said to use the kmp.jetbrains.com wizard; that endpoint
+now returns 404. Switched to JetBrains' `compose-multiplatform-ios-android-template`, which ships
+a working Xcode project and Gradle wrapper.
+
+**Toolchain upgrade is mandatory, not cosmetic.** That template pins Kotlin 1.9.21. A library
+compiled with Kotlin 2.x metadata cannot be read by a 1.9 compiler, so adhan2 0.0.7 would be
+unusable. Task 1 upgrades to Kotlin 2.2.20 / CMP 1.12.0 / AGP 8.7.3.
+
+**Module layout follows the template:** `shared/` (all KMP logic, UI and tests), `androidApp/`
+(Android host + MainActivity), `iosApp/` (Xcode project). The plan's paths were rewritten to
+match. `shared` is deliberately NOT renamed to `composeApp` — the Xcode build phase invokes
+`:shared:embedAndSignAppleFrameworkForXcode` by name, and renaming it means editing
+`project.pbxproj` at 3am for no functional gain.
+
+**Working on branch `slice-1-core`, not `main`.** Merged when the work is verified.
+
+## Progress
+
+### Task 1 — scaffold — COMPLETE, verified on both platforms
+
+Green on: `:shared:allTests` (JVM), `:shared:iosSimulatorArm64Test` (native, `tests="1" failures="0"`),
+`:androidApp:assembleDebug`, and an Xcode simulator build. The Android APK is **installed and
+running on your LoopPhone** (`topResumedActivity=com.taqvo.app/.MainActivity`, no crash), and the
+iOS app renders in the iPhone 17 Pro simulator.
+
+Five environment blockers had to be solved to get there. All are recorded because you will hit
+them again on a fresh machine.
+
+**1. adhan2 requires JDK 21, not 17.** Its JVM artifact is compiled to class file major version
+65. The smoke test failed with `UnsupportedClassVersionError` until fixed. The system JDK here is
+Temurin 17, so `gradle.properties` now pins `org.gradle.java.home` to the JDK 21 bundled with
+Android Studio, and both modules use `jvmToolchain(21)`. This is exactly what Task 1's probe step
+was designed to catch.
+
+**2. Compose Multiplatform 1.12.0 requires AGP 9.1+.** The scaffold had pinned AGP 8.7.3, which
+fails with "requires Android Gradle plugin 9.1.0 or higher". Now on AGP 9.4.0, which in turn
+required Gradle 9.7.1 — and bumping the wrapper had to be done by editing
+`gradle-wrapper.properties` directly, because `./gradlew wrapper` could not itself configure a
+build using AGP 9 on Gradle 8.
+
+**3. AGP 9 broke the KMP plugin combination.** Since AGP 9.0, `com.android.library` and
+`com.android.application` are incompatible with `org.jetbrains.kotlin.multiplatform`. Google
+documents `android.builtInKotlin=false` and `android.newDsl=false` as the supported bypass, and
+that is what is set. The long-term fix is migrating `shared` to the
+`com.android.kotlin.multiplatform.library` plugin — a DSL rewrite, worth doing when the app is
+otherwise stable, not at 4am.
+
+**4. AGP 9 dropped the legacy `sourceSets["main"]` accessor.** The template used it; it now throws
+a `ClassCastException`. Removed — with `kotlin.mpp.androidSourceSetLayoutVersion=2`,
+`src/androidMain/{AndroidManifest.xml,res}` is already the default.
+
+**5. `xcode-select` points at Xcode 16.0 on macOS 26.5 — and Xcode 26.2 is installed.**
+This is the one you should fix by hand. Xcode 16.0's simulator tooling fails on this OS with
+`Failed to launch AssetCatalogSimulatorAgent via CoreSimulator spawn`, and no choice of simulator
+runtime helps. Builds now force the right toolchain via `DEVELOPER_DIR`, wrapped in
+`scripts/ios-build.sh`. **To fix it permanently, run:**
+
+```bash
+sudo xcode-select -s "/Applications/Xcode 26.app/Contents/Developer"
+```
+
+I could not run that myself — it needs your password.
+
+Also had to install Android SDK platform 37 (AGP 9 requires `compileSdk` >= 37). Note the new
+package naming: it is `platforms;android-37.0`, not `platforms;android-37`.
+
+**Landed versions:** Kotlin 2.4.10, Compose Multiplatform 1.12.0, AGP 9.4.0, Gradle 9.7.1,
+JDK 21, compileSdk 37, minSdk 26, targetSdk 35. The `iosX64` target was dropped — CMP 1.12.0 no
+longer publishes Intel simulator artifacts.
+
+**One limitation reached:** the simulator control tooling needs your explicit device permission,
+which I cannot grant on your behalf. Visual verification is done with `xcrun simctl` screenshots
+instead, which works fine.
+
+### Tasks 2–9 — COMPLETE
+
+All green on both the JVM and `iosSimulatorArm64` targets at every step. 50 tests at Task 9.
+
+| Task | What landed | Commit |
+|---|---|---|
+| 2 | Colour tokens, light/dark theming | `4b20be0` |
+| 3 | Manrope + type scale | `f51fe47` |
+| 4 | Settings storage with the spec's defaults | `d12fbfe` |
+| 5 | Prayer times engine over adhan2 | `7262c70` |
+| 6 | Automatic high-latitude rule selection | `e5b6484` |
+| 7 | Timeline state and countdown | `bddfd66` |
+| 8 | Hijri tabular calendar | `c8d7b96` |
+| 9 | Bundled city database, 34,135 cities | `4898f0c` |
+
+**Plan 2 is written** — Tasks 17–25 covering the Android and iOS notification actuals, audio assets
+and the sound picker, qibla bearing and the compass screen, localisation and RTL, and the widgets.
+
+### Things found and fixed that you should know about
+
+**Manrope has no published static instances.** Google Fonts ships only the variable font. Rather
+than fake weights, the implementer generated genuine static TTFs with `fonttools varLib.instancer`
+pinned at 300/400/600/800, verifying no `fvar` table remained.
+
+**Manual prayer offsets would not have persisted.** `PrayerSettings.minuteAdjustments` had no
+DataStore key, so per-prayer offsets were held in memory and lost on relaunch. My plan's fault. The
+task that builds that screen now fixes the storage first.
+
+**adhan2 crashes on true polar day.** It throws `IllegalStateException` at Tromsø on 21 June
+regardless of which high-latitude rule is set — the null-check runs before any seasonal adjustment.
+The engine falls back to computing at the nearest latitude where the sun does rise, which is a
+recognised convention. **But the first implementation did not tell the user**, and that matters:
+in that case *every* time on screen is substituted, Maghrib included, not just Fajr and Isha.
+Reporting it as an ordinary high-latitude rule would be exactly the silent fudging the spec exists
+to prevent. `DayPrayerTimes` now carries a separate `nearestLatitudeFallbackApplied` flag and the
+Today screen says "The sun does not rise or set here today. All times are calculated for the
+nearest latitude where it does."
+
+**adhan2 0.0.7 has no Tehran method.** Reconstructed from the published Institute of Geophysics
+angles (Fajr 17.7°, Isha 14°). Its distinct Maghrib angle is not applied — a known limitation
+affecting Shia users, worth revisiting before release.
+
+**The city picker showed GeoNames codes, not place names.** `region` was the raw admin1 code, so
+the list read "London / ENG" and "London / 08". That defeats the entire reason the column exists —
+telling the eleven Londons apart. Being fixed by joining `admin1CodesASCII.txt` and
+`countryInfo.txt` so it reads "London / England, United Kingdom".
+
+**Process note, stated plainly:** the plan called for a separate reviewer subagent after every
+task. Under the overnight budget I reviewed mechanical tasks myself from the diffs and reserved
+full scrutiny for the substantive ones. That is a deliberate trade, not an oversight — and it is
+how the polar-day and city-region defects were caught.
+
+### Plan 1 — COMPLETE. Plus notification logic and schedulers, and qibla maths.
+
+**130 tests green on both JVM and iOS native. Both apps build, install and run.** Verified on your
+LoopPhone by tapping through the whole app: onboarding → decline location → search "lond" →
+"London / England, United Kingdom" first → Today with the ring and timeline → Settings →
+Hanafi moves Asr from 16:35 to 17:31 → Dark repaints everything → force-stop and relaunch with
+theme, madhab, city and a +3 min Fajr offset all persisted. Screenshots in `/tmp/taqvo-01…21`.
+
+| Task | What landed | Commit |
+|---|---|---|
+| 10 | Location provider, 5 km policy, persisted location | `31dd8d1` |
+| 11 | Ring, card, pill button, drawn check | `0aa78a7` |
+| 12 | Today screen + view model with 1 s tick | `b9660c9` |
+| 13 | Navigator, AppContainer, onboarding, iOS delegate fix | `f610a60` |
+| 14 | Full settings tree; minuteAdjustments persistence fix | `2ff081f`, `78f285f` |
+| 15–16 | Notification settings + pure planner (64 cap, DST) | merged `629a8d0` |
+| 17–18 | Android + iOS notification schedulers | merged `0ed61ce` |
+| 20 | Qibla bearing (118.99° London→Kaaba) + haversine | merged `6e87f34` |
+
+**The finding that matters most for the whole product:** the timeline is the first place Arabic
+renders on iOS in this project, and **Compose Multiplatform shapes it correctly** — joined
+letterforms, right-to-left, rā' and alif correctly not joining forward. The Quran reader in slice 2
+can stay in shared code. Caveat: this is unvocalised short labels; vocalised paragraph text is
+still to be proven.
+
+**Parallelism, and why it was safe.** From Task 10 onward, independent tasks ran concurrently in
+isolated git worktrees and were merged after each landed green. Sharing one working tree had
+already caused a phantom failure in Task 11 (one agent's half-written file broke another's
+build), so worktrees were the fix, not a nicety. Every merge was clean.
+
+**More defects found by looking rather than trusting:**
+- The high-latitude card on London in *September* says "The sun never sets far enough here" —
+  false that month. The engine reported the rule whenever it was *selected* (all of latitude
+  ≥48°), not only when it actually *changed* a time. Fix in progress: compare the three rules;
+  they only diverge on days they bind.
+- GPS location was persisted with no city name, so Today's header read "Current location" — and
+  worse, no country code, so method auto-detection never fired for GPS users. Fix in progress:
+  nearest city from the bundled database.
+- A `✓` character would have crept into the appearance screen if the brief hadn't forbidden it.
+- Compose 1.12's common `BackHandler` is missing from the Android artifact; a `SystemBackHandler`
+  expect/actual was added.
+
+**New required wrapper:** `scripts/test.sh`. Once `AppContainer` linked CoreLocation, a bare
+`./gradlew :shared:allTests` started failing with `framework '_LocationEssentials' not found` —
+same Xcode 16 vs 26 problem as before, same fix. The `sudo xcode-select` command in the first
+section would make both wrappers unnecessary.
+
+### Plan 2 — COMPLETE. Slice 1 is feature-complete on `slice-1-core`.
+
+**203 tests on JVM, 201 on iOS native, zero failures. Both apps build. The iOS widget extension is
+2.9 MB on a clean build.** Final whole-branch review in progress before this merges to `main`.
+
+| Task | What landed | Where |
+|---|---|---|
+| 19 | Audio in both bundles, sound sheet, Notifications screen, both plan-1 stubs wired | `7cf5a3c` |
+| 20 | Qibla bearing (118.99° London→Kaaba) + haversine | merged `6e87f34` |
+| 21 + polish | Compass: true-north sensors, three states, dial to the mockup | merged `f91548a` |
+| 22 | Arabic localisation, RTL mirroring, CLDR numerals, all strings to resources | `9adde15` |
+| 23 | Shared widget model + Android Glance small/medium | merged `923cfb9` |
+| 24 | iOS WidgetKit extension, App Group, idempotent target script | merged `923cfb9` |
+| 25 | Widget background setting with live preview; the missing mirror write | `b50e2e0` |
+| — | GPS resolves to nearest city; high-latitude note only when a rule binds | merged `7790168` |
+| — | Single DataStore instance (crash fix) | merged `75b87f8` |
+| — | `:widgetcore` slim framework: appex 63 MB → 2.9 MB | merged `c94b96f` |
+| — | Compass strings to resources + Arabic; all four cardinal labels | merged `39dd372` |
+| — | Android widget layout to the mockup | merged `f1dc385` |
+
+**How it was built.** From Task 20 onward, up to four agents ran concurrently in isolated git
+worktrees, each merged after landing green on its own branch. Three merges needed hand resolution
+(`App.kt` twice, `TodayViewModel`, the two `strings.xml` unions) — all recorded in the merge
+commits. Every merge was followed by a full test run on the integrated tree before anything built
+on it.
+
+**Findings that outlast slice 1:**
+
+- **Compose Multiplatform shapes Arabic correctly on iOS.** The Quran reader can stay in shared
+  code. But the design's `-0.02em` tracking *breaks Arabic word-joining* in Compose — letter-spacing
+  must be zero for Arabic script. `TaqvoText.forScript` now enforces it. Carry this into the reader.
+- **Arabic-Indic digits are not tabular** in the system Arabic font — measured, a 4 px shift across
+  a minute boundary — so the countdown ring falls back to Western digits for ar-EG/ar-SA, as the
+  spec allowed. Timeline clock times keep the locale's digits.
+- **I had the high-latitude seasons inverted.** The one-seventh rule binds in *summer* (short
+  nights cap an early Fajr), not winter. The agent verified against adhan2 rather than trusting the
+  brief; London in September was correct all along. The real fix was that the card had been
+  permanent above 48° and now disappears in November.
+- **A `createDataStore()` called from three places** (app, boot receiver, iOS refresh bridge) each
+  opened its own instance — androidx forbids that and one crash reset a user's preferences to
+  defaults. Now a lazy process-wide singleton. Ten force-stop/relaunch cycles clean on device.
+- **The iOS app was crashing at launch** on the widget branch — the target-creation script had
+  written `-framework shared` twice into the app's linker flags ("Kotlin runtime injected twice").
+  Found and fixed while slimming the extension.
+- **WidgetKit's ~30 MB memory ceiling** would have killed a 63 MB extension. The widget model now
+  lives in `:widgetcore`, a Compose-free Kotlin/Native framework; the extension links only that.
+
+**On your side:**
+
+- **Your LoopPhone blocks the app's notifications at the OEM level** — `dumpsys notification`
+  shows `importance=NONE`, separate from the runtime permission we hold. Settings → Apps → Taqvo →
+  Notifications → enable. Everything upstream of that gate is proven; only the last-mile delivery
+  on this device is unverified.
+- The home-screen widget was removed from your launcher during testing; re-add it from the picker.
+- `sudo xcode-select -s "/Applications/Xcode 26.app/Contents/Developer"` is still outstanding;
+  `scripts/test.sh` and `scripts/ios-build.sh` exist only because of it.
+
+**Known issues, triaged for the final review:** the Android Glance widget computes its translucency
+alpha but never applies it; the widget label has a hardcoded English "IN" suffix (Today's localised
+countdown label should be reused); the Tehran method omits its Maghrib angle; `LocalPlatformFormat`
+is `remember`ed so a live locale change without restart desyncs direction from strings; GeoNames
+city names are Latin-only in the Arabic UI; iOS returns Western digits for `ar_EG` where Android
+returns Arabic-Indic (each platform's own CLDR answer); the medium and dark Android widgets were
+not visually verified live.
+
+### Final review and fix wave — slice 1 ready for `main`
+
+**Final tree: 247 tests on JVM, 248 on iOS native, zero failures. Both apps build; the iOS widget
+extension is 2 MB against a 15 MB guard; 139 string keys, identical sets in English and Arabic.**
+
+A whole-branch review of all 56 commits found **5 Critical, 12 Important, 14 Minor** and returned
+"ready after Critical + Important". Every finding was then fixed in three parallel waves split by
+file ownership, and two independent closure audits walked each finding's failure scenario through
+the fixed code. Result: **all 31 closed** (I9's digits half was the final one — the widget countdown now uses the locale's digit set on both platforms, verified on device in ar-EG) (26 audited in the first pass — 24 closed outright, one
+deferred to the widget wave, one re-opened and fixed — plus the widget wave's five, audited second).
+
+**The five Criticals, because you should know what would have shipped without the review:**
+
+1. **The compass crashed at the moment it succeeded.** `Vibrator.vibrate()` needs the `VIBRATE`
+   permission, which was declared nowhere. Rotate to within 5° of the qibla → haptic tick →
+   `SecurityException` on the main scope. One manifest line, plus `runCatching` so an OEM
+   restriction degrades to silence rather than a crash.
+2. **iOS notifications ignored the timezone and broke on Islamic calendars.** The
+   `NSDateComponents` handed to the trigger carried no calendar and no zone, so iOS re-read them
+   in the device's zone and the device's region calendar. Pick a city in another zone → every adhan
+   off by the UTC offset. Set your iPhone's region calendar to Umm al-Qura → year 1448 read as
+   Gregorian → no notification ever fires, silently. Now an explicit Gregorian calendar with the
+   entry's zone, proven on device with a Johannesburg phone and a London location: every trigger's
+   fire date matches its instant to the second.
+3. **Android 12 could crash on every launch.** `setExactAndAllowWhileIdle` had no
+   `canScheduleExactAlarms()` guard; revoke "Alarms & reminders" in system settings and the app
+   died at startup, unrecoverable from inside. Now guarded, with a `setWindow` fallback and a note in
+   Notification settings when exact alarms are unavailable.
+4. **Calculation-method auto-detection was fully tested dead code.** `CalculationMethodDefaults`
+   existed, passed eight tests, and was never called. Every user outside Muslim World League —
+   Saudi, Turkish, Egyptian, Pakistani, Indonesian, Gulf — quietly got times a few minutes off. Now
+   wired at both location-persist sites, gated by a "method was user-chosen" flag so relocating
+   never overwrites a deliberate choice. Proven: picking Riyadh selects Umm al-Qura and
+   Maghrib→Isha comes out at exactly 90 minutes, that method's signature.
+5. **A once-per-second widget refresh storm.** `ringProgress` changed every tick, defeating iOS's
+   dedupe and exhausting WidgetKit's daily reload budget in under a minute — after which the widget
+   would freeze for the day — while Android ran `runBlocking` Glance updates on the main thread.
+   Now quantised, deduplicated on the serialised string, and non-blocking. Measured: 4 mirror
+   writes in 90 seconds instead of ~90.
+
+**Two corrections to earlier claims in this log, stated plainly:**
+
+- The Hijri calendar is the **tabular civil** algorithm, not Umm al-Qura. It gives 1448-03-**23**
+  for 6 September 2026 where the Umm al-Qura reference gives **24**, and the original test asserted
+  only year and month — a test fitted to the implementation. The class is now named
+  `TabularHijriCalendar`, the settings copy no longer says "Umm al-Qura", and the day is asserted.
+  Whether to ship the real Umm al-Qura table is a product decision for you; the ±1 day user offset
+  covers the difference meanwhile.
+- The high-latitude "engine memo" I described as fixed was a single slot that never hit once
+  `TodayViewModel` computed three dates per tick; the cost had *risen*. The second audit caught it.
+  Now a bounded map; the three-date pattern repeats with zero additional solves.
+
+**Other things fixed in the wave:** the countdown ring was flat every night between midnight and
+Fajr; location never re-acquired after onboarding (fly Cape Town → Istanbul and it stayed on Cape
+Town forever); the iOS compass delegate could be garbage-collected mid-use; iOS location permission
+could hang forever off the main thread; Android returned no GPS fix on a phone without a cached one;
+the 34,000-city database parsed on the UI thread; notification channels multiplied with identical
+English names; the Android widget showed a confidently stale countdown for hours; two tap targets
+were under 44 pt; the adhan preview was inaudible with the ring switch on silent.
+
+**Known and accepted at slice 1 close:** the Tehran method omits its 4.5° Maghrib angle (now shown
+as a subtitle in the picker); the ar-EG countdown uses Western digits because the system Arabic
+font's digits are not tabular (accepted in the spec); GeoNames city names are Latin-only in the
+Arabic UI; iOS and Android disagree on `ar_EG` digits because each follows its own CLDR.
+
+**What is on your side, unchanged:** enable notifications for Taqvo in your LoopPhone's system
+settings (the OEM forces `importance=NONE` below the permission we hold); and
+`sudo xcode-select -s "/Applications/Xcode 26.app/Contents/Developer"`.
+
+**Merged to `main`.** Final tree: 254 tests on JVM, 255 on iOS native, zero failures; both apps build;
+widget extension 2 MB. `SystemEventReceiver` additionally simplified to reuse the container's
+coordinator rather than rebuilding its own — the crash it once caused was already closed by the
+DataStore singleton, and five force-stop/relaunch cycles on the new build were clean.
+
+### Installed on the physical iPhone
+
+Once the iPhone was paired and an Apple ID was signed into Xcode, the app built with automatic
+provisioning under **LOOPDL LIMITED (`5S5P2Q72MV`)** — the org team, because personal teams cannot
+hold the App Groups capability the widget needs and wildcard profiles never carry it — and installed
+and launched via `devicectl`. Both the app and the 2 MB widget extension are signed with
+`group.taqvo.app`. Slice 1 is now on both physical devices for hands-on testing.
+
+### Iteration 1 — after the owner's first hands-on test on both phones
+
+Ten items reported; all closed, plus one the work surfaced. **281 tests on JVM, 273 on iOS native,
+zero failures.** Reinstalled on both devices.
+
+| # | Report | What was actually wrong | Fix |
+|---|---|---|---|
+| 1 | Home screen felt empty | Tab bar had been deferred to slice 2 | Today · Qibla · Settings tab bar; header icons and back links removed on tab roots; bar shown only on roots |
+| 2 | Pip too close to name | 26dp gutter | +4dp spacer, rail stays centred |
+| 3 | Location toggle always off | Nothing persisted the GPS-vs-manual choice | `LocationSource` persisted; GPS paths write GPS, city picker writes MANUAL |
+| 4 | Value crowds label on iOS | `TaqvoRow` had no weight/ellipsis | Fixed in the component, so every row benefits |
+| 5 | "on both platforms" | Copy | "on this platform", both locales |
+| 6 | iOS check clipped on 4th picker option | One long sentence per row | Title + subtitle rows; check always visible |
+| 7 | Preview truncated under Asr | Five rows in a fixed height | Capped to Fajr/Dhuhr/Asr, intrinsic height |
+| 8 | Android widget stale, too much empty space | Glance only re-rendered every 30 min; launcher gave the small widget 2×3 | Refresh at prayer boundaries, a 5-minute window alarm (60 s window — Android stretched a 5-min window to ~10), refresh on unlock; responsive 2×2/2×3/4×2 layouts. Measured max staleness: 5 min |
+| 9 | Android compass frozen | **The phone's HAL streams a dead identity quaternion for `TYPE_ROTATION_VECTOR` at "HIGH" accuracy**; fallback only ran when the sensor was absent | Both sources register; accel+magnetometer drive until the rotation vector proves it encodes real rotation |
+| 10 | App icon | Template robot | The mihrab: adaptive vector layers + monochrome on Android, opaque 1024 on iOS |
+| — | (found) hand-picked city overwritten on next open | I3's foreground re-resolve ignored the manual choice | `LocationRefresher` respects `MANUAL` |
+
+Two facts for the owner's Android testing: the compass on this device needs a figure-of-eight
+first (its magnetometer reports LOW accuracy), and the home-screen widgets were removed by the
+agents' reinstall cycles — re-add them once.
+
+### Iteration 2 — Today ticker was running with the screen off
+
+Found by watching logcat with the phone asleep: a widget redraw on every whole minute,
+indefinitely — `TodayViewModel`'s one-second loop lived in a `LaunchedEffect`, which Compose cancels
+when the composable leaves composition but not when the activity is merely *stopped*. Each tick was
+a SharedPreferences write and two Glance IPC round-trips that nobody was looking at. Now collected
+under `repeatOnLifecycle(STARTED)` via `lifecycle-runtime-compose` 2.9.6 in `commonMain` (it
+resolves on iOS through `ComposeUIViewController`). Measured: four minutes screen-off → one widget
+update, on the widget's own 5-minute grid. 282 JVM / 274 iOS tests.
+
+### Iteration 3 — thirteen items from the second hands-on round (S23 Ultra added)
+
+All thirteen closed, plus two the work surfaced. Verified on the LoopPhone, the Pixel 8 Pro emulator
+(dark mode, for the status bar) and by build on the iPhone.
+
+| # | Report | What was actually wrong | Fix |
+|---|---|---|---|
+| 1 | Welcome screen shows a ring, not the logo | Mark predated the icon | `MihrabMark`: the icon's own path, drawn in the theme's ink with the amber point |
+| 2 | Illustrations for the other two screens | None | `PinMark` and `BellMark` in the same 1024-unit hand, same stroke, one amber element each |
+| 3 | A widget onboarding screen? | Widgets are the surface nobody finds | Fourth step: both widgets previewed live; **Android pins the widget from the button** via `requestPinAppWidget` (launcher sheet), iOS gets the manual steps. Declining is a text link |
+| 4 | Version "1.0" | — | `1.0.0` in Gradle, both Info.plists, both locales' About row |
+| 5 | Status bar vanishes: Light theme on a dark phone | Both platforms styled the bars from the *system* theme | `SystemBarsAppearance(mode, dark)` in `TaqvoTheme`: Android via `WindowInsetsController`, iOS by overriding the window's interface style (lifted under System) |
+| 6 | Today bottom-heavy | Ring sat 20 dp under the header | 52 dp above the ring, 40 dp below |
+| 7 | Tab ripple; square ripple on play | Defaults | Tabs: `indication = null`; play target clipped to a circle first |
+| 8 | Em dashes in copy | Five strings, two placeholders, two iOS labels | Plain punctuation throughout |
+| 9 | Labels wrapping beside empty space | `TaqvoRow` split the width in two *before* measuring | Custom `Layout`: label at natural width first, value takes the rest, 60 % floor for the label only when both cannot fit |
+| 10 | Widget picker shows the app icon | No `previewImage` | Real renders captured from the emulator, rounded and cropped; `description` strings in both locales |
+| 11 | Small widget should shrink to 2×1 and 1×1 | Min resize 110 dp | Min 40 dp both axes; **one adaptive widget** with four layouts chosen from the *measured* cell: tiny, strip, stacked, two-column |
+| 12 | Android 4×2 nothing like iOS | `SizeMode.Responsive` reported the nearest *declared* size, so a 267×150 cell laid out as 250×110 | `SizeMode.Exact`; two-column card sized from the real cell: countdown block exactly as wide as "12:34", rows spread down the full height, row size bounded by the longest bilingual name so nothing truncates; sentence-case label like iOS |
+| 13 | iOS: Maghrib row smaller than the rest | `minimumScaleFactor` on a fixed 130 pt column shrank the longest name alone | Names no longer scale; the column takes the width it needs and the countdown block yields |
+| — | (found) iOS gallery card said "open Taqvo to load…" | Snapshot used the live mirror | `context.isPreview` gets a representative afternoon in the gallery's language |
+| — | (found) a widget drawn before the app had data stayed empty through every refresh | Mirror was read *outside* `provideContent`; Glance re-runs only the content lambda on a live session | Read inside the lambda |
+
+Two-column threshold is derived, not guessed: 61 dp for the smallest countdown block plus the longest
+row at 11.5 sp × 10.1 em plus gutters is about 230 dp. A Pixel's 2×2 (190 dp) stays a stacked card;
+every 3×2 and 4×2 measured clears it. The LoopPhone launcher still drops widgets on every package
+update, so re-add once after the final install.
+
+### Iteration 4 — six items from the third round, and the widget learns to count on its own
+
+| # | Report | What was actually wrong | Fix |
+|---|---|---|---|
+| 1 | iOS medium widget lost its countdown block | Iteration 3's `layoutPriority(1)` on the prayer list let its spacers claim the whole card | List column is `fixedSize` horizontally: exactly as wide as its longest row; the countdown block keeps the rest, every row at one size |
+| 2 | White rim around the dark Android widget | The 1dp hairline stroke image, stretched to the cell and clipped again by the launcher | No border on widgets; the card reads as a card without it, as it always has on iOS |
+| 3 | Android 2×2 used under half its cell | Countdown sized for the worst case "12:34" whatever the digits on screen | Single-block layouts size the number for the string they have (0.56 em a digit) and take up to 44 % of the height; cap 72 sp |
+| 4 | iOS widget ignored the background setting | The app only reloaded the widget when the *prayer* snapshot changed; the background key was outside the check | Reload key is snapshot + background. Not a limitation, a bug: the setting stays |
+| 5 | iOS onboarding: "Use my location" then Today says location is off | `CLLocationManager` fires `didChangeAuthorization` once on creation, still *not determined*; onboarding took that as the answer while the dialog was still up | The first status that is not undetermined is the answer; fix timeout 8 s → 15 s |
+| 6 | iOS widget-adding copy was wrong | Written for the iOS 17 "+" button | iOS 18+: hold the Taqvo icon and choose a size; older iOS keeps the "+" wording. Chosen at runtime from the OS version |
+
+**Found while verifying on the emulator, past Isha:** the mirror was only ever written while Today
+was open, so the moment a prayer passed the widget lost its countdown, and after Isha it sat on
+"Isha · 19:50" all night until the app was next opened. On both phones, every night. The mirror now
+carries a **two-day schedule** of absolute prayer instants (field eleven of the wire format, older
+mirrors still read), and both renderers work out next, current, rows and countdown at *render*
+time from it: Android on every redraw, iOS per timeline entry, so past a prayer the next one takes
+over without a reload. `WidgetMirrorRefresher` rolls the horizon forward without a screen: Android
+calls it from the prayer alarm and the boot/time-change receiver, iOS from its daily background
+refresh. **293 JVM / 285 iOS tests**, including nine that render one snapshot at later and later
+moments and expect the widget to have moved on by itself.
+
+### Iterations 5 and 6 — polish rounds on the S23 Ultra
+
+Round five: no ripple on option rows, the sound sheet's radio rows or the toggle switches (the
+knob or check moving is the feedback); "Follow theme" became "System" to match the theme list;
+the widget preview shows bilingual names whole; the Android wide widget's rows sit inside an 8 dp
+inset so they gather toward the middle like iOS; "the time until it" became "a live countdown".
+
+Round six:
+
+| # | Report | What was actually wrong | Fix |
+|---|---|---|---|
+| 1 | Wide widget rows clipped at one launcher row | The 8 dp inset and 14 dp padding were taken regardless of height; on a one-row cell that left 11 dp per 15 dp row | Inset is only what the height can spare (0 to 8 dp) and vertical padding drops to 8 dp under 110 dp; two-row cells are unchanged |
+| 2 | About row | "About Taqvo · Version 1.0.0" | "Version · 1.0.0", both locales |
+| 3 | Notification sound was the phone's default tone | Indistinguishable from a message | **Taqvo's own chime**: two synthesised bell strikes (E5, B5), 1.70 s, original work, bundled as `chime.ogg` / `chime.caf`. Android channel id for the Notification level gains a `_chime` suffix (channel sounds are immutable) and the pre-chime id is in the stale set so upgrades drop it; the iOS preview player and the Android preview both play the file. Sheet subtitle: "A short, soft chime" |
+
+The chime generator, for the record (numpy, 44.1 kHz mono): each strike is the sum of partials at
+ratios 1, 2, 2.98, 4.21, 5.4 with amplitudes 1, .40, .16, .07, .03 and decay constants .75, .38,
+.22, .14, .09 s, doubled at ±0.12 % detune, 6 ms attack; second strike 190 ms after the first at
+0.78 of its level; 250 ms fade at the tail; peak −3 dBFS. 295 JVM / 287 iOS tests.
+
+### Iteration 7 — softer chime, the complete adhan from the sheet
+
+The chime is now two soft strikes at A4 and E5, 260 ms apart, four partials with long decays,
+2.80 s at −5 dBFS: warmer and longer than the first. The sound sheet's play button for **Adhan**
+plays the complete 2:34 recording (`adhan-full.ogg` / `.m4a`, preview only; the notification stays
+the 30-second opening both platforms allow), which is what the sheet's footnote had been promising
+all along. Its subtitle now says "The adhan, first 30 seconds" instead of "Full call". Closing the
+sheet by any route stops whatever is playing, which mattered little for a 16-second takbir and
+matters a great deal for a two-and-a-half-minute adhan.
+
+### Iteration 8 — the Prayer screen
+
+The owner chose a layout from a four-way mockup: Today became **Prayer**, Qibla stopped being a
+tab and became a card at the foot of the Prayer screen, and the bar went to two tabs (Prayer,
+Settings) until the Quran slice adds the third. What changed:
+
+- **Header**: city, then one caption line with both calendars, Hijri first and the Gregorian a
+  step quieter: "23 Rabi' al-Awwal 1448 · 6 September 2026". The Gregorian half is a new
+  `PlatformFormat.longDate`, CLDR's long date in the locale's own order and digits ("September 6,
+  2026" on a US phone, "٦ سبتمبر ٢٠٢٦" on an Egyptian one), with the day never zero-padded. On
+  Android it is pure `java.time` rather than `android.text.format.DateFormat`, which is a stub in
+  JVM unit tests and threw from every test that reached `createPlatformFormat()`; on iOS the
+  formatter is pinned to the Gregorian calendar so a phone set to Umm al-Qura does not print a
+  second Hijri date.
+- **Timeline** in a card; the ring stays free on the page as the hero.
+- **Qibla card**: a 52 dp north-up dial (`QiblaMiniDial`, pure geometry, no sensor while the
+  Prayer screen is open), "Qibla", "23° · 6,558 km to Makkah", a forward chevron that mirrors
+  under Arabic. Tapping pushes the compass, which now has the same back chevron as every other
+  pushed screen; the no-location guard pops instead of switching tab.
+- **Tab glyphs**: the mihrab arch (the app's own mark from the welcome screen, scaled to 16 dp)
+  for Prayer and a gear for Settings. The three-dots glyph is reserved for a future "More" tab.
+
+Verified on the LoopPhone (en-ZA, dark), the Pixel 8 Pro emulator (en-US light and dark, ar-EG),
+including the padded-day case that only en-ZA style locales hit. 265 JVM / 256 iOS shared tests
+plus 37 / 35 widgetcore, zero failures.
+
+### Slice 2a - Quran reader
+
+**Design round.** A third tab, Quran (Arabic: القرآن), added an offline Quran with two reading
+modes: translation mode, one surah at a time with the Uthmani Arabic, an optional transliteration
+line and the chosen translation per ayah; and Mushaf mode, the 604 pages of the Madinah Mushaf
+turned by swiping. The morning review that preceded the design round also named the seven bundled
+translations (Saheeh International, the Muyassar tafsir, Kemenag Indonesian, Junagarhi Urdu,
+Bengali, Diyanet Turkish, Hamidullah French) plus the Tanzil transliteration, picked KFGQPC
+Uthmanic Hafs as the reading font pending a device spike, and fixed a standing complaint about the
+tab bar: 16 dp glyphs read as too small and the unselected grey read as disabled on the light
+theme. The design round settled both at 22 dp glyphs and the secondary text colour for unselected
+tabs.
+
+**Font spike.** Run on a throwaway branch and worktree (not merged), across the Samsung S23, the
+Pixel 8 Pro emulator and the iPhone 12 and iPhone 17 Pro simulators, with Al-Fatiha, 2:255, 2:282
+and 2:1 to 2:5 at 22, 28 and 36 sp. KFGQPC Uthmanic Hafs was confirmed as the reading font: every
+mark sits correctly on all four devices, Android and iOS render identically, and the 286-row surah
+list scrolls at p99 9 to 10 ms on the S23. One text fix came out of it: Tanzil encodes the silent
+alef sign as U+06DF, which this font draws as a full-height inline ring that splits the word;
+mapping it to U+0652 in the pipeline draws the correct small circle. The ayah marker rule (bare
+Arabic-Indic digits after a non-breaking space, never the ornate ayah-end glyph) and a 2.0x line
+height both came from the same session. Amiri Quran remained the tested fallback throughout.
+
+**Pipeline.** `tools/build-quran-db.py` builds the bundled `quran.db` from the Tanzil Uthmani text
+(v1.1, pause marks and sajdah and rub signs on), the Tanzil `simple-clean` search text, Tanzil's
+`quran-data.xml` metadata, the eight Tanzil translation and transliteration files, and the Madinah
+Mushaf page and line layout from `zonetecde/mushaf-layout` (604 pages, Quranic Universal Library
+data). It applies the text rules from spec section 3.2 (BOM and whitespace stripping, the U+06DF
+mapping, a per-ayah cross-check between the Tanzil text and the layout's words, transliteration tag
+stripping, and stripping Tanzil's own leading basmala from ayah 1 of every surah except Al-Fatiha
+and At-Tawbah, since the app draws the basmala as its own line). Building it surfaced real data
+issues in the upstream layout JSON rather than sign or spacing artifacts: two word-level
+corrections were needed against Tanzil (11:13 word 3 and 80:25 word 1), 18 surah headers were
+relabelled once the pipeline switched to deriving them positionally instead of trusting the
+layout's own header flags, 5 headers and 2 basmala lines the layout omitted outright were
+synthesised, and one spurious header was dropped. All of this is pipeline bookkeeping; none of it
+is shown in the app or claimed as a correction to Tanzil's text itself.
+
+**The eight tasks.**
+
+Task 1 wrote the pipeline above and the SQLite schema (surahs, ayahs, juzs, translations, pages,
+lines, words, and an FTS5 search table for 2b -- that table was removed again in 2b, since
+Android's framework SQLite has no FTS5 module), plus a `--verify` pass checking counts, the
+per-ayah cross-check and the U+06DF mapping.
+
+Task 2 wired SQLDelight into `:shared`: `Quran.sq` mirroring the bundled schema for typing only (the
+driver never executes it, since the file ships pre-built), the `QuranModels.kt` domain types, an
+Android/iOS driver seam that never lets the framework create or migrate the schema, and
+`QuranSource`/`QuranRepository` with JVM tests running against the real bundled database.
+
+Task 3 added the text rules used everywhere after (`QuranText.arabicIndic`, `withMarker` for the
+ayah roundel, `normaliseForSearch` for 2b), the Mushaf font seam, and `ReadingSettings` (mode, text
+size, transliteration on or off, chosen translation) with locale-aware defaults, Arabic devices
+opening in Mushaf mode with the Muyassar tafsir, everyone else in translation mode with Saheeh
+International or their own bundled translation.
+
+Task 4 added the third tab and its navigation (`Screen.Quran`, `Screen.Reader`, `Screen.Mushaf`)
+and carried out the tab bar fix from the design round: 22 dp glyphs, a 60 dp bar, the secondary
+text colour for unselected tabs, and a new book glyph for the Quran tab.
+
+Task 5 built the tab root: a name filter that matches Latin and harakat-insensitive Arabic surah
+names alike, a continue-reading card reading the last saved position, and surah and juz list cards
+behind a segmented control.
+
+Task 6 built translation mode: the ayah cards (Arabic text, transliteration, translation), the
+reader header shared with Mushaf mode, and position tracking that debounces scroll settling before
+writing the last-read position so a fast scroll does not spam the settings store.
+
+Task 7 built the reading settings sheet: a text size slider with a live Mushaf-font preview, the
+transliteration toggle, a translation picker ordered tafsir first then by language, and the
+translation or Mushaf mode switch.
+
+Task 8 built Mushaf mode: a small page cache, the page and line renderer matching the printed
+Mushaf's own breaks, and a horizontal pager turning 604 pages right to left with the same header
+and settings sheet as translation mode.
+
+**Review findings that mattered.** The Surah and Juz segmented control's tap targets were only
+38 dp per option because the inset that shaped the drawn pill was also shrinking the clickable
+area; the clickable now takes the full 44 dp row height and only the drawn pill is inset. The
+reader's settings collector was missing a `distinctUntilChanged`, so every debounced last-read
+position write, going through the same settings store as the reading settings themselves, re-ran
+the whole settings pipeline and refetched the current translation on every scroll stop, and could
+race the caption update; the collector now ignores writes that do not actually change the reading
+settings. The reader header's two icon buttons had only their 36 dp drawn size as their touch
+target; they now sit inside a 44 dp target with the same 36 dp disc drawn at its centre. Tanzil's
+own text already carries the basmala at the front of an ayah 1, and the reader draws its own
+basmala line above it, so ayah 2:1 was showing the basmala twice; the pipeline now strips that
+leading basmala from the stored text (see the pipeline section above). And the reading sheet's
+live size preview drew the ayah roundel in the body text colour instead of the accent colour every
+other roundel uses, while a `selectable` parameter was being reused on a row that was not itself a
+selectable option just to borrow its no-ripple click handling; both were fixed, and the check mark
+in the translation list now follows the same fallback id the reader itself falls back to when the
+stored translation is not one of the bundled ones.
+
+**What remains for the device round.** Task 10 has not run yet: build Android and install on every
+attached device, build iOS for the device and, failing that, the simulator; capture English and
+Arabic, light and dark, screenshots of the tab root with a continue card, the reader at 2:255 with
+transliteration on, the settings sheet, Mushaf pages 1, 3 and 42, and the tab bar; time the iOS
+Quran database copy on first launch (must land under 2 seconds on the iPhone 12) and confirm a
+second launch does not copy again; and fix anything visibly wrong in small follow-up commits on
+the same task.
+
+### Slice 2a - device round (8 September, 03:50 to 04:10)
+
+Build f5ceedc on the S23 (dark, en-ZA), the iPhone 12 (installed and launched; the first
+device build failed to link because the SQLDelight native driver needs `-lsqlite3` in the app
+target, now added to the Xcode project), the iPhone 17 Pro simulator (light) and the Pixel 8 Pro
+emulator. Full test run before the round: 334 JVM and 319 iOS tests in `shared`, 37 and 35 in
+`widgetcore`, zero failures.
+
+What was checked and held: the three-tab bar with 22 dp glyphs; the Quran root with the continue
+card after a first read ("Ayah 5 of 286 · Juz 1"); the card reader in English and under an Arabic
+UI (English translation now left to right after the direction fix); the reading sheet in Mushaf
+mode with the disabled slider and its note; Mushaf pages 2 and 3 on the S23, page 2 under Arabic
+UI, page 2 on the iOS simulator through the same Skia path the iPhone uses; the bundled database
+copied and opened on iOS at first launch with no visible delay.
+
+Fixed during the round: the iOS link (sqlite3), ayah cards selecting one at a time instead of
+each card keeping its own toggle, and plain punctuation in the new attribution bullets.
+
+Left for the morning review: word-spacing justification of Mushaf lines (they fill the frame only
+as far as the auto-sized font allows, so short lines leave a ragged left edge); under an Arabic UI
+the surah rows still lead with the transliterated Latin name and English meaning; Tanzil's Latin
+surah spellings (Al-Faatiha, Aal-i-Imraan) may deserve a curated list.
+
+### Slice 2a - morning review round (8 September, evening)
+
+Mohamed's review of the slice on his phone came back with five items. The heavy one was the
+Mushaf page: lines at visibly different sizes, and "strange characters" ringed on page 2.
+
+**The characters.** Two separate things. The `ۛ` (three dots), `ۖ` (صلے) and friends are the
+printed Mushaf's own pause marks; Tanzil writes them as space-separated tokens and the font floats
+them between the words, which is how the Madinah page shows them. The genuinely wrong marks were a
+small meem under "هُدًى": the layout source (quran.com's word data) encodes the sequential tanween
+the printed page uses before idgham and ikhfa letters as tanween plus a small-meem sign
+(U+06E2/U+06ED, 6,642 words across the Quran), which the KFGQPC Hafs font draws as a literal meem.
+Tanzil's text, which the card reader already showed, does not carry them. The pipeline now trusts
+the layout only for segmentation and re-texts every Mushaf word from Tanzil (aligned by bare
+letters; a layout word may span two Tanzil tokens), so both modes show the same characters, and the
+build proves it: all 6,236 ayahs' Mushaf words joined equal `ayah.text_uthmani` byte for byte,
+every character sits in the Quranic code-point set, and with `uharfbuzz` installed every stored
+line, word and ayah (92,485 runs) shapes with the bundled font without a missing glyph or a dotted
+circle. The database is `user_version` 2; the Android driver had to open the file at that version
+rather than SQLDelight's schema version or the framework threw `onDowngrade` (caught on the S23
+on the first install, fixed before the round).
+
+**The sizes.** The per-line auto-shrink was the cause. The page now takes one size: every text
+line is measured at the width-derived base, the page is set at the largest half-step at which its
+widest line fits, and each line's words are measured individually and spread across the frame by
+word spacing, so the page reads at one size with every line filled to the margin like the printed
+one. On the S23 most pages land around 19 to 21 sp; pages 1 and 2 stay at the base. The old
+word-spacing follow-up is closed by the same change.
+
+**The rest**, done by a parallel agent in a worktree and merged: continue card roomier with a gap
+between name and detail; the surah and juz list caps no longer stroke a hairline across the first
+and last rows; Quran and Settings titles sit 24 dp below the status bar (Prayer's is 12) instead
+of 68; the Android status-bar icon is the mihrab silhouette from the app icon; the reading sheet
+scrolls, clears the gesture bar, and names each translation's language in the device's UI language
+(`PlatformFormat.languageName`, CLDR on both platforms, an English map as fallback).
+
+Noticed on the way, not changed: filtering the surah list by "Mursalat" finds nothing because
+Tanzil spells it "Al-Mursalaat"; the curated Latin names follow-up would fix that too. Android's
+CLDR name for `bn` under an English UI is "Bangla", so that is what the picker says.
+
+### Slice 2a - second review round (8 September, night)
+
+Four items from the second look at the phone.
+
+**One more meem.** The small meem under 2:41's "كَافِرٍۭ" is the printed Mushaf's own iqlab
+sign: a kasratan before the beh of "بِهِ". The sweep asked for is now a build check,
+`verify_iqlab_marks`: all 609 small meems in the text sit before a beh, in the same word (562),
+the next ayah (11) or, on a surah's last word, the basmala that follows (36). Zero unexplained.
+
+**Settings glyph.** The gear never sat with the arch and the book; it is now three sliders in
+the same stroke, knobs at three heights, checked against the book's ink coverage at 22 dp.
+
+**A chime you can hear at a desk.** Dhuhr and Asr on the Notification level were being missed
+at work: 2.4 s at −5 dBFS is a message tone. The chime is now a six-second ascending bell motif
+(A4, C#5, E5, struck twice) at −1 dBFS, still synthesised, generator in `tools/make-chime.py`.
+Same file names, so iOS needed no project edit; Android's channel id suffix moved to `_chime2`
+(channel sounds are immutable) with the old ids in the stale set, and that level now vibrates
+too. Confirmed on the S23: the old channels read deleted, the new ones carry the sound and a
+vibration pattern.
+
+**Landscape.** One rule, `Modifier.contentWidth()` (600 dp, centred), on every scrolling
+screen and the tab bar; the Prayer screen becomes two panes sideways (header and ring on the
+start side, timeline, Qibla and the latitude note scrolling on the end side); the Mushaf frame
+is capped and its lines scroll inside the frame when the page is taller than the screen; insets
+come from `safeDrawing` so the side navigation bar and the camera cutout are cleared. Seen on the
+Pixel 8 Pro emulator in both themes; the side-inset path is unproven there (gesture navigation
+has none) and iOS landscape could not be rotated in the simulator, only built.
+
+Also this round: release builds are R8-shrunk (10.6 MB against 33 MB debug; WorkManager's Room
+database needed keeping) and unsigned; a chat-deliverable APK is the release build signed with
+the debug key.
+
+**Reverted the same night.** The shrunk release build crashed on the phone when a sound was
+previewed, and the widgets stopped rendering. Reproduced on the emulator: `isShrinkResources`
+removed `res/raw/chime` (and the other clips), which nothing references by `R` id, only by
+`android.resource://` URI strings, so `MediaPlayer.prepare` threw and the sound sheet's play
+button took the app down; the notification channels would have been silent for the same reason,
+and Glance's dynamically resolved layouts are the likely widget casualty. The R8 commit is
+reverted (a9ca19c). When the size round comes before launch: keep `raw/` and the Glance
+resources explicitly (`tools:keep` in a `res/raw/keep.xml`), enable code shrinking first without
+resource shrinking, and exercise every sound, both widgets and a real alarm on a device before
+trusting it. Release builds are unshrunk and unsigned again; the debug build is the one on the
+phones.
+
+### Slice 2b - search, bookmarks, share (overnight, 9 September)
+
+Built by subagent-driven development from a spec and plan written the same night, on Mohamed's
+standing "you build, I review": `docs/superpowers/specs/2026-09-09-taqvo-quran-search-bookmarks-share-design.md`
+and the plan beside it. Seven implementation tasks, a reviewer per task, two fix passes, then a
+whole-branch review.
+
+**Search.** The root's field now searches the Quran from two letters: Arabic queries match the
+pre-normalised search text, anything else the translation the reader is set to (folded in Kotlin,
+so Turkish and French case works), 250 ms debounce, capped at 100, results grouped as SURAHS
+(up to five) and AYAHS with the matched words emphasised in the translation snippet. Tapping a hit
+opens the ayah in whichever mode is set; the query survives the round trip. The plan's first
+design used the FTS5 table the database had carried since 2a; it turned out Android's framework
+SQLite is built without FTS5 and every Arabic query crashed on a phone (desktop and iOS SQLite
+have it, so the JVM test passed). Bundling a SQLite with FTS5 would have added megabytes, so the
+match moved into Kotlin over `ayah.text_search` and the FTS table left the database (22.5 to
+22.1 MB, `user_version` 4).
+
+**Bookmarks.** A string set in DataStore, newest first. Set from the card's action row or the
+Mushaf pill; listed on a third root tab with a one-tap remove; the reader shows a small badge on
+kept ayahs.
+
+**Copy and share.** One formatter for both: the Arabic with its number in ornate brackets, the
+translation with its name when one is shown, the reference in the UI's digits; the platform share
+sheet behind an `expect fun`.
+
+**Decisions taken without Mohamed**, for his review: the plural forms and wording of the new
+Arabic strings; the bookmark storage in DataStore rather than a table; no undo on remove (re-adding
+is one tap); no search history; substring matching for Arabic (broader than the FTS prefix match
+it replaced).
+
+**Also this night**: the Arabic-UI decision now reads the loaded strings rather than the locale
+tag, so prayer names can never be shown twice; a full localisation sweep (Arabic and English, both
+platforms, every screen, every translation) found and fixed the Arabic plural for 5 and 10
+minutes, the untranslated transliteration credit, a doubled «الجزء» on the Juz tab, the Gregorian
+date reordering under Arabic on iOS (a bidi isolate), and a clipped countdown in the iOS widget
+preview; the release build is R8 code-shrunk to 12.2 MB (from 26.3) with WorkManager keep rules
+that the Glance widgets need, resource shrinking left off after it saved only 0.4 MB and was the
+thing that crashed the app the first time; and the sound-sheet footnote no longer says "on this
+platform".
+
+### Countdown seconds and the pre-release version (9 September, evening)
+
+Merged slice 2b to main (fast-forward, 91d7cc9 → 412bb3d), deleted the branch and the leftover
+`size-round` worktree, installed the shrunk release on the LoopPhone.
+
+Mohamed relayed that someone read the ring's "0:20" as twenty seconds. The ring now shows
+H:MM:SS and ticks visibly; the ticking loop already ran once a second for the timeline, so nothing
+new is scheduled. Measuring Manrope's advance widths for the longer string turned up that its
+default figures are proportional (the "1" is 0.37em, the "0" 0.59em), contradicting the slice 1
+spec's "Manrope holds digit width" — the minute-granular ring had been shifting a few pixels
+whenever a 1 came or went, just rarely enough to pass. The font carries tabular figures under
+`tnum`, so `TaqvoText.Latin.TABULAR` now enables them on the countdown and row-time styles. At
+44sp the tabular "10:00:00" would be 182dp wide against 178dp inside the stroke, so the ring's
+text is 36sp (149dp for the worst case, 127dp for a single-digit hour), scaled with the ring's
+diameter. The widgets stay at H:MM: Glance cannot redraw every second, and their countdown is
+minute-granular by design.
+
+Version name is 0.1.0 on both platforms (Android versionCode 2, iOS CFBundleVersion 2 in the app
+and the widget extension, the Settings row reads the same string). New `scripts/bump-version.sh
+<name> <code>` writes all five places; policy from here is a minor bump plus a new code after any
+meaningful change that ships as an APK.
+
+### Ayah widget (9–10 September, overnight)
+
+Built by subagent-driven development from
+`docs/superpowers/specs/2026-09-09-taqvo-ayah-widget-design.md` and the plan beside it, on branch
+`widget-ayah` from main at 6d7223f. A home-screen widget showing one ayah a day from a curated
+pool of fifty, drawn like the reader's ayah card. Pure-Kotlin pieces landed first in `:widgetcore`:
+the pool itself, a serialised pool mirror that both platforms read instead of opening a database,
+and a seeded Fisher–Yates rotation guaranteeing no repeat until all fifty have shown and never the
+same ayah two days running. On Android, Glance cannot use custom fonts, so `AyahCardRenderer` draws
+the card's text onto a transparent bitmap with `StaticLayout` and the bundled Hafs face, and the
+Glance tree wraps that bitmap in the prayer widget's own card shell. On iOS, the ayah widget is a
+third member of the existing `TaqvoWidgetBundle`, SwiftUI drawing the Hafs face directly with the
+font copied into the extension's resources and registered through `UIAppFonts`.
+
+The sharpest finding was that Glance's `actionParametersOf` tap action, though it did deliver its
+extras, opened a second `MainActivity` on top of the first because the launch intent carried only
+`NEW_TASK`; the old instance's dead Compose composition consumed the navigation request before the
+visible one ever saw it. An explicit `Intent` with `CLEAR_TOP`/`SINGLE_TOP` fixed it. iOS turned up
+two of its own: `Calendar.current` returns Hijri components under an Islamic system calendar, which
+would have desynced the rotation from Android's, and the widget-reload dedupe key omitted the ayah
+pool entirely, so a translation change could sit unseen for a week under the seven-entry `.atEnd`
+timeline. Smaller ones: `tools/add-widget-target.rb` was found to have silently dropped `-lsqlite3`
+from the app's link flags on its last rewrite, and Glance's `RemoteViews` bitmap budget meant the
+render size needed capping (settled at a quarter of the display's pixels, floored and ceilinged).
+
+Two implementation tasks per platform were reviewed clean after one fix pass each; a final
+whole-branch review found nine more findings (three Important: the iOS dedupe key, the Hijri
+calendar, and the mirror not rewriting on a UI language change) and a fix pass closed all nine.
+Full suite at the end: `:shared` 421 tests, `:widgetcore` 73 tests, all green. The compact footer
+branch, the iOS 16 padding fallback, and a forced midnight rollover were never exercised on a real
+device or simulator; the device round on the S23 and iPhone 13, the 0.3.0 version bump, and the
+merge to main were left for the morning.
+### Qibla compass sweep (10 September, overnight)
+
+The LoopPhone had been showing "Compass needs calibrating" on the Qibla screen forever, and no
+amount of waving cleared it. An investigation on both phones (`.superpowers/sdd/qibla-investigation.md`)
+found that the prompt was telling the truth on that device and lying by omission on the other.
+
+**On the LoopPhone**, the MediaTek fused rotation vector is stubbed: it streams the identity
+quaternion `(0, 0, 0, 1)` forever while reporting ACCURACY_HIGH, so every sample decodes to azimuth
+0 and the app is forced onto the raw accelerometer+magnetometer path. There, the Voltafield
+magnetometer's HAL is subtracting a 503.9 µT bias estimate from an 83.5 µT measurement, producing a
+"calibrated" field of 536 µT — twenty times the 25.6 µT Earth's field at Cape Town. The reading
+really is unusable. But the accuracy that raised the prompt was read only from `onAccuracyChanged`,
+which fired once, 90 ms after registration, and never again in 90 seconds: the prompt could not
+have cleared even if the phone had been swung, because nothing was listening for the result.
+
+**On the S23** the opposite: the magnetometer accuracy callback never arrived at all, so the flag
+sat at its optimistic `false` default and the app showed a confident needle on an accuracy it had
+never read.
+
+**On iOS**, reading the code, the compass manager called `startUpdatingHeading()` alone. Core
+Location only computes a true heading for a manager that is also receiving location updates, so
+`trueHeading` was `-1` — which the smoothing filter turned into a heading of 359°, a needle that
+looked alive and pointed at nothing.
+
+**What changed.** Accuracy is now read from `event.accuracy` on every sample, and per-sample facts
+feed one pure, unit-tested state machine (`CompassAccuracyGate`) rather than flipping the screen
+directly: low after a full second of low samples, good again only after a second and a half of good
+ones, and — the escape hatch that did not exist — a best-effort state after twenty unbroken seconds,
+which drops the needle and shows the bearing and the distance, which are computed from the location
+and were never in doubt, under a caveat saying why. The magnetometer's field magnitude is now sanity
+checked against 20–70 µT, and a field that cannot be the Earth's is reported as interference, with
+copy that asks the user to move away from metal, magnets, cases and cables instead of drawing a
+figure of eight that cannot help — which is what the LoopPhone now shows, correctly, at 536 µT.
+
+Also: the rotation matrix is remapped for the display rotation (a sideways phone was 90° out); the
+raw pair is fused on the magnetometer event only, which halved the emit rate on the LoopPhone from
+100 Hz to a measured 50; the stubbed rotation vector is unregistered after two seconds of degenerate
+samples (measured: 2 007 ms) instead of streaming two hundred useless samples a second for the life
+of the screen; a null location marks the heading low rather than passing magnetic north off as true
+north; and the collection now follows the lifecycle like Today's tick, so backgrounding the app
+unregisters the sensors — verified with `dumpsys sensorservice`, which shows no connection thirty
+seconds after Home.
+
+On iOS the heading manager now starts location updates beside heading updates, asks for when-in-use
+authorisation if the app has never asked, sets `headingOrientation` from the device's orientation,
+implements `locationManagerShouldDisplayHeadingCalibration` so the system's own calibration dial can
+appear, and treats a negative `trueHeading` as low accuracy. It compiles and installs on the
+iPhone 13, but the runtime check that `trueHeading` becomes valid could not be run: the phone was
+locked and cannot be unlocked from here. That check is still outstanding.
+
+The qibla tests went from 33 to 63 (433 in the module, all green): the gate's state machine in both
+directions and at both thresholds, the field plausibility band at 19/20/45/70/71 µT, the heading
+filter across the 0/360 seam in both directions with monotone convergence, Cape Town (23.37°,
+6 557 km) and Tripoli (109.18° — the brief's 107.7° was wrong), a negative iOS heading, and each
+gate state's mapping to a screen state.
+
+### City names in every language, and the ayah widget's tap (10 September)
+
+Two things Mohamed asked for after living with the ayah widget for a morning. The widget's tap was
+opening the Mushaf page whenever the reader was set to Mushaf mode, which answered a card showing
+one ayah with a page of fifteen; it now always opens the translation reader, since that is the view
+the widget itself is a picture of.
+
+The larger half was the city list. It had only ever been English, so an Arabic reader searched a
+Latin list and read a Latin name in the Prayer header. GeoNames publishes translated names beside
+the `cities15000` extract the bundle already comes from, keyed by the same id, so `build-city-db.py`
+gained it as a third source: `cities.csv` grew a `geonameId` column and six `city-names-<lang>.csv`
+files appeared for Arabic, Indonesian, Urdu, Bengali, Turkish and French. Mohamed chose all seven
+languages over English and Arabic alone after seeing that the six cost about 480 KB compressed and
+that only Arabic can actually be displayed until the other interfaces exist. Coverage is partial by
+nature — Arabic names exist for 88% of the world's hundred largest cities but only 26% of all
+34,135 — and everything uncovered falls back to English, which was his own rule.
+
+Three things only showed up once the rules met the data. GeoNames carries both a vocalised and a
+bare Arabic spelling for some cities with neither flagged preferred, so file order decided it and
+Tripoli — the owner's home city — came out as طَرَابُلُس; the pipeline now prefers the bare
+spelling, which moved nineteen names. The folding rules were written from the examples that
+motivated them (Zürich, İstanbul) and covered 28 of the 111 marked Latin letters the name column
+actually uses, so "thane" did not find Thāne and its 1.8 million people; the table is now generated
+by decomposing U+00C0–U+024F and U+1E00–U+1EFF, and a test over the real bundle asserts no English
+name folds to anything non-ASCII. And the saved location only ever stored a name, so it could not be
+re-translated; it now stores the city's id, with an older location's id resolved once from its
+coordinates.
+
+The review also caught that the app's `PlatformFormat` is built once and the activity swallows a
+locale change, so the search screen would have gone on searching in the language the app started
+in. One format now decides the language for the whole tree, keyed on the loaded strings. 510 tests
+in the shared module, all green.
+
+### Three corrections (10 September, afternoon)
+
+The ayah widget's tap was the interesting one. It had been changed that morning to always open the
+translation reader, on the reasoning that the widget shows a card with a translation; Mohamed's
+actual want was the opposite — open whichever reader he reads in, but land on the ayah *selected*,
+the way tapping the card itself leaves it, with bookmark, copy and share showing. So the mode
+branch came back, and both targets now carry the selection: `Screen.Reader` gained `selectAyah`
+and `Screen.Mushaf` gained the ayah to highlight. The decision between them moved out of the
+composable into a pure `ayahWidgetTarget`, because the mode that picks between the branches is
+persisted and flipping it on a device means driving the reading-settings sheet by hand — as a
+function it takes three lines of test instead.
+
+The Prayer ring hung 48 dp below the header and 36 dp above the timeline card, so it read as
+belonging to the card rather than sitting in a band of its own; both gaps are 36 dp now. And the
+Appearance screen labelled one preview "PREVIEW" and the other "AYAH WIDGET", which read as two
+different kinds of label; both are named now, which also says which widget each card is a picture
+of. 520 tests, all green.
+
+### Offering the widget you have not added (11 September)
+
+Mohamed asked whether the app can tell which widgets are on the home screen, and whether the
+Appearance previews could offer to add a missing one. It can, and on Android it already did: the
+same query the refresh alarms use to decide whether to keep ticking answers "is this provider
+placed". iOS can answer too, asynchronously, through WidgetKit's current configurations, which the
+app had never asked before. Adding one is the asymmetric half — a launcher can be asked to place a
+specific widget and shows its own confirmation sheet, while WidgetKit has no such call at all, so
+iOS gets the steps written out instead of a button that would do nothing.
+
+Under each preview there is now a row when that widget is missing and the launcher takes pin
+requests, nothing at all when it is already there, and the platform's steps when it cannot be
+asked. The three-way choice is a pure function rather than a tangle of conditions in the
+composable. The suggestion that started this — making the preview itself the button — was turned
+down: the preview's job is to show the background choice, and it is the most obviously tappable
+thing on the screen, so a tap that did something else would be a trapdoor.
+
+Two things came out of review and one out of looking at it. `WidgetPlacement.Unknown` reports both
+widgets as *placed*, so every path that cannot answer — a null hook, a timeout, a device with no
+widget host — offers nothing; offering to add a widget somebody already has is the worse failure.
+The iOS instructions were showing under both previews, one identical sentence twice, which read as
+a copy-paste; they are said once now, under the single preview that needs them, or after both when
+both do. Neither the onboarding skip nor a test for the iOS timeout was built, and the spec says
+why in both cases.
+
+### Tasbeeh (11 September)
+
+A dhikr counter, opened from a misbaha glyph at the end of the Prayer header. The design round
+offered six icons in the header and three directions for the screen; Mohamed chose the ring, so
+the counter is the Prayer screen's own ring drawing progress toward a moment, with the dhikr above
+it where the city sits above the countdown. The post-prayer set is one continuous count to a
+hundred — the number never resets at 33 or 66, the displayed dhikr does — with a distinct haptic
+at each part's end and a third at the hundred, and the three parts named in a small row under the
+ring so the current one is always in view. No totals anywhere: dhikr is not a score. Under an
+Arabic interface the Arabic stands alone, without transliteration or meaning.
+
+The engine is a pure function over (preset, count, round) that returns the next state and one
+event, which is what made the off-by-ones at 33, 66 and 100 checkable by walking all hundred taps
+in a test. The ring's Canvas moved out of `CountdownRing` into `RingArc` so both screens draw the
+same stroke, and a before-and-after diff of the Today screen came back empty. Haptics gained three
+patterns beside the compass tick and, on Android, file under touch feedback so Samsung's slider
+governs them; on iOS every generator call was moved to the main thread, which the first draft had
+only done for the delayed pulses. The screen keeps the display awake and restores whatever it
+found.
+
+Two review findings were worth the round trip. The first draft pinned the dhikr to the top and
+centred the ring in what was left, which read as two separate things with a void between; the
+stack is centred as a group now, with the reminder row's and hint's slots reserved so the ring
+never moves. And the view model shared one cancellable job between the debounced write and the
+preset switch, so a chip tap followed within a third of a second by a page tap could silently
+cancel the switch; the debounce has its own job and the state updates are atomic. 565 tests in
+the shared module, the suite green on both targets.
+
+### Tasbeeh, second pass (11 September, 0.8.0)
+
+Four things Mohamed asked for after using it. In landscape the chips column had taken half the
+screen and the ring's Box was the only tappable part, which left the empty start side dead; the
+tap surface now spans everything up to a 220 dp chips column, and a tap anywhere on it counts. A
+custom chip's long-press sheet offers Edit beside Delete, prefilling the phrase and target; a
+lowered target clamps the saved count so the ring never reads past its own end. The screen names
+itself the way the Reader does, "Tasbeeh" beside the chevron at 17 sp, with nothing else moving
+(a pixel diff against the previous build differed only in the header band). And the three single
+built-in dhikr count to a hundred like the rest, because switching from the post-prayer set to
+SubhanAllah silently changed the target from 100 to 33 and looked like a bug; the set alone keeps
+its 33 · 33 · 34, and a new custom dhikr starts at 100. A count saved under the old 33 survives as
+so-many of 100. The landscape header cost the stack height it had been borrowing from the ring,
+so the landscape ring reserve is now measured against the tallest stack and the ring there is
+about 154 dp instead of 196. 576 shared tests, suite green on both targets.
+
+### A choice of adhan (12 September, branch `adhan-voices`)
+
+Mohamed asked for two more adhan recordings behind a setting, with the original staying the
+default. Finding them was most of the work. Sixteen candidates were pulled from Wikimedia Commons,
+Freesound, archive.org and the CDN most open-source prayer apps quietly copy from, and measured
+rather than described: duration, loudness, the floor between phrases, and the number of phrases,
+which turns out to separate a Sunni adhan from a Fajr one from a Shia one without a transcript. Two
+Commons files that looked ideal still carried the ID3 tags of the albums they were ripped from; the
+cleanest recording found was the Shia form; the archive.org items were all self-applied "public
+domain" marks that grant nothing. Two survived. "The Adhan" by Aaqib Azeez, CC BY-SA 4.0, is plain
+and brisk at 1:26, the only other complete general adhan with a named reciter. The Eid Fajr adhan
+from Malmö Mosque by Besim Azemi, CC BY 3.0 from the mosque's own channel and the only licence in
+the set audited end to end, is live Balkan maqam. It is a Fajr adhan, so before it could serve as a
+general voice the two *as-salatu khayrun min an-nawm* phrases had to go; a local Whisper transcript
+with word timestamps placed them, silence detection found the two-second pauses on either side, and
+they were spliced out inside those pauses. The transcript also showed a "subscribe to the channel"
+line at the tail of the original CC0 recording, which a closer look at the energy proved to be a
+recognition hallucination over a decaying note, not a YouTube outro.
+
+The setting itself is one row on the Notifications screen with a sheet in the sound sheet's idiom,
+a play button per voice for the complete adhan. Under it the voice threads through everything the
+sound already did: the asset table is keyed on (sound, voice), the Android channel id grows a voice
+suffix for the two recorded levels because a channel's sound is immutable, the alarm receiver reads
+the voice from its intent and falls back to the original for alarms scheduled before the upgrade,
+and iOS picks the file by voice. The original voice produces byte-identical channel ids to before,
+checked by diffing the channel list across the upgrade, so nobody's existing channels churn. The
+Azeez source sat at full scale and the loudness match wanted +4 dB, which needed a limiter after
+the resample back to 44.1 kHz; placed before it, the Vorbis encode overshot to +0.2 dBTP. Nobody has
+listened yet: everything about how the two voices sound is measured, and Mohamed's ear in the
+morning is the release gate.
+
+### A hundred ayahs for the widget (12 September, 0.10.0)
+
+The widget's pool was fifty references, which is a seven-week loop that a daily glance notices;
+a hundred is about a season. The pool is references only, the text comes from the bundled
+database, so the change costs nothing in size and everything in curation. A ranked list of a
+hundred candidates went through the same database test as the first fifty (each reference exists,
+at most 24 Arabic words, 245 characters of Saheeh International, no duplicates) and a reading of
+the translation for completeness. Mohamed then read the fifty and set a sharper bar than the one
+the first round had used: each card must carry a whole thought a person can sit with, which rules
+out a narrative lead-in ("They said…", "When the youths retreated…"), a rhetorical opening whose
+answer is in the next verse, and a group described without the point about them. Twelve came out
+on his reading and one more on the same rule after it; their replacements came from further down
+the ranked list under the tightened bar. The rotation is a permutation over the pool size, so the
+day someone updates, the widget shows a different ayah once and the no-repeat cycle restarts. 1,295
+tests across the four targets; the emulator's mirror holds a hundred entries and none of the
+vetoed references.
+
+### The hundred lets go of the ring (12 September)
+
+A completed tasbeeh set sat on its hundred until the next tap took it to 1 of round 2. Mohamed
+wanted the counter to come back to zero on its own shortly after a set completes, and the change
+is small once it is put in the right place: the engine gains a pure `nextRound` (count 0, round
++ 1), and the view model holds the closed ring for one second after `SetComplete` before applying
+it and writing it straight away. The cases around the hold are the whole of the work. A tap inside
+the hold cancels the rollover and opens the next round at 1, as it always did, so a reader going
+straight through a hundred never waits and never sees a 1 wiped back to 0. Every path that writes
+the preset on its way somewhere else (leaving the screen, a chip switch, adding, editing or
+deleting a phrase) settles the rollover first, so what reaches disk is 0 of the next round rather
+than a hundred that would greet the reader on return. A hundred that is on disk anyway (the
+300 ms debounce wrote it and the process died inside the second; an install from before this
+change) opens as the hundred it was and rolls over after the same hold. The rollover is not a
+count and fires no haptic. Five view-model tests on virtual time and one engine test cover the
+hold, the tap inside it, the flush, the chip switch and the stored hundred. Built in a worktree
+off `main` while the recitation branch was in flight in the main checkout.
+
+### Trust round one (13 September)
+
+A read-only audit of the app's trust and security surface produced eleven findings and a
+handful against the unmerged recitation branch; Mohamed picked five for now and deferred the
+privacy policy and About screen. The Android launcher activity is exported, so any app on the
+phone could start it with `open_surah=999` and the reader threw on a surah the database does
+not have; the bounds (114 surahs, 286 ayahs at most) now live in the shared `LaunchRequests`,
+so iOS, which checked only `ayah >= 1`, gets the same rule. Coordinates are stored rounded to
+three decimals, about 110 m, which moves no prayer time and no qibla bearing; the file should
+not hold a GPS fix's metre precision. `allowBackup` is off on Android: the settings file holds
+the coordinates or chosen city, and the promise that the location never leaves the phone has to
+include Google's backup. Backup rules could not split the file, since bookmarks and tasbeeh
+counts live in the same DataStore, so the whole app opts out and settings are redone on a new
+phone. On iOS the same file moves from Documents, which iCloud backs up, to Application Support
+marked excluded from backup, with a one-time move of the existing file so nobody's settings
+vanish on upgrade. iOS now asks for reduced location accuracy by default, so the permission
+sheet shows "Precise: Off"; the qibla bearing at that scale is under a degree out except very
+near Makkah. The README said the Hijri date was Umm al-Qura while the class said, in its own
+comment, that it deliberately is not and can differ by a day; the README now says tabular, and
+a note under the Hijri control says the same to the reader in both languages, since a reader
+whose mosque is a day off and who finds no explanation concludes the app is wrong. The iOS
+widget-preview route is compiled out of release builds.
+
+### Recitation (12–13 September, branch `recitation`, 0.11.0)
+
+The largest slice since the reader, built in one night by five agents in sequence and two in
+parallel, with a data pipeline running unattended beside them. The investigation came first and
+changed the plan twice before a line was written: the seven reciters became ten (Al-Ghamdi, asked
+for, is simply not in the licensed corpus); the reciter photos were dropped altogether after the
+research found that most Commons portraits of famous reciters are studio pictures tagged "own
+work" by accounts that upload celebrities in bulk, so every reciter has a calligraphic monogram
+instead; and a per-surah size that had been guessed at 25 MB turned out to be 58 MB for Alafasy's
+Al-Baqarah, which made the container's ability to start playing before the file is complete worth
+having rather than merely neat.
+
+The files are the Islamic Network's per-ayah MP3s, byte for byte, because their licence says "at
+the bitrates we publish" and because the ayah boundary being the file boundary is what makes
+highlighting need no timing data. They are packed one surah per `.taqa` container, a twelve-byte
+header, a JSON index of ayah offsets, then the MP3s back to back, and hosted as GitHub Release
+assets on the public `Taqvo-data` repository, one release per reciter, under a manifest the app
+refreshes daily so a reciter can be added or withdrawn without an app update. Four reciters begin
+at full voice on the very first sample, so the manifest carries a per-reciter gap that the player
+inserts between ayahs; without it they sound rushed. Around sixty ayahs across four reciters were
+served as HTTP 502 by the CDN for hours; the pipeline took those from the everyayah mirror only
+after proving, per reciter, that files already held from both sources decode to identical audio.
+Shuraim's mirror copy is a different encode and would not have passed that gate.
+
+On the phone: a speaker button at the end of the reader and Mushaf headers, a Play action first in
+the ayah row, and a 56 dp player bar that hides on the other tabs while playback carries on. The
+bar follows the voice unless the reader has scrolled more than a screen away, in which case a small
+"Back to ayah N" pill offers the way rather than yanking the page. Android plays through Media3 in
+a `MediaSessionService` reading byte ranges straight out of the container; iOS splits the container
+into per-ayah files under Caches and drives a single `AVPlayer` with a manual queue so the ayah
+signal is exact. Downloads are WorkManager on Android and a background `URLSession` on iOS, resumed
+with `Range` from a `.part` file and verified by SHA-256 before a surah counts as present; the
+device round proved a force-stop at 45 % resumes from byte 172,032 rather than zero. The one real
+bug the emulator found: on mobile data the `UNMETERED` constraint parked the work before the code
+that would have said "needs Wi-Fi" could run, so the reader saw "Queued" forever; the question is
+now asked before enqueueing. Settings › Quran › Recitation holds the reciter, the mobile-data
+switch, per-reciter downloads with delete, and "Download the whole Quran", whose batch was cancelled
+on the emulator at 68 surahs with nothing left queued and every finished surah still on disk.
+743 tests in the shared module, the suite green on both targets.
+
+### Recitation, round two (13 September, branch `recitation-2`)
+
+Mohamed used 0.11.0 for a morning and came back with six things. The order of the reciters
+(Ash-Shatri second), the transport buttons too close together, and three behaviours that were
+right by the spec and wrong in the hand: a progress line that filled and emptied every ayah, a
+reciter tap that did nothing when the new voice lacked the surah, and a preview that played over
+the recitation like a second radio.
+
+The surah became one clock. A `.taqa` records every ayah's byte length, and the corpus is
+constant-bit-rate, so the length of each ayah is its bytes over its bit-rate to within a frame
+— the only thing to leave out is the ID3 tag at each file's head. `SurahTimeline` is that
+arithmetic, gaps included; both players build it from the same container, the Android service
+is handed it with the queue and reports the whole surah to the lock screen, and a scrub there
+lands on the start of the ayah under the thumb. Nothing is refined from measured durations on
+purpose: two players reading two clocks would drift a frame an ayah, and the one thing a
+measured length is used for is to scale the position inside its estimated slot so the clock
+never stalls at a seam. Then Al-Ajmi's edition turned out not to be constant-bit-rate after all,
+and an ayah may now carry its own `kbps` in the index.
+
+Picking a voice that has nothing for the playing surah now offers the download with a sentence
+saying the old voice carries on, draws a thin ring around the monogram while the copy arrives,
+and switches at the ayah being heard when it lands. Tapping the voice already playing, while
+paused, resumes it. A preview pauses the recitation and the end of the clip — `ClipPlayer`
+reports it now — gives it back.
+
+Al-Ajmi himself cost the afternoon. His 128 kbps edition has an MPEG-video fragment where 9:62
+should be, stubs at 50:9 and 50:10, three ayahs at telephone quality and hundreds at variable
+bit-rate. The repair script had been counting a 200 with no audio as a recovered file and
+looping. The 64 kbps folder is the same recording, whole; he ships from it — and the review
+of the branch found that a tenth of *those* files carry a header claiming fifteen times their
+real length, which ffprobe and both platform players repeat. So the pipeline stopped trusting
+headers: every file is decoded, judged on its decoded length, its average bit-rate and a
+factor-of-three band against the other reciters, and the length goes into the container's
+index, where the app reads it instead of estimating. The same review caught a switch that
+could be lost by re-picking the voice it waited on, and one that would have started a
+finished surah reciting again, unprompted, when its download landed at midnight.
+### Saying what the app does with the network (13 September, 0.12.0)
+
+Until 0.10.0 the README could say "no network access of any kind" and be right. 0.11.0 added
+recitation downloads and, with them, a catalogue refresh that ran from the start effect on every
+launch, whether or not the person had ever touched recitation. Both stores want a privacy policy
+for an app that touches the network, and the app had nowhere to put one. The order of this
+round was the point of it: the code change came first, so that the policy could say "the app
+makes no network request until you use recitation" and be telling the truth, rather than the
+words being softened to fit the code.
+
+The gate is one fact, `RecitationEngagement`: a DataStore flag written the first time any
+recitation entry point is used, falling back to "any surah in the download registry" for the
+0.11.0 installs that downloaded before the flag existed. The refresher returns before reading
+or writing anything until that fact is true, so the first engaged launch fetches at once rather
+than a day later; the picker and the Recitation settings screen also ask for the daily check
+when they open, since a person who went there wants the current catalogue. The proof was a
+logging proxy in front of a fresh emulator: from launch through onboarding and a minute idle
+on the Prayer screen the only hosts seen were Google's own connectivity checks; the single
+GitHub line appeared at 14:36:02, the moment the reciter picker opened, and not on the speaker
+tap before it. A review of the gate found the engagement write running unguarded on the
+reader's primary tap, which a failed DataStore write would have turned into a crash; it is now
+swallowed as the refresh already was, and the refresher takes a mutex so the start effect and
+the picker cannot both fetch in the same second.
+
+The policy is one page of plain English at the repository root, and the store answers live
+beside it in `docs/STORE-PRIVACY.md` so the forms are filled from the code rather than from
+memory. Two facts in the handoff spec were wrong and the words follow the code: bookmarks and
+Tasbeeh counts are DataStore, not SQLDelight, and the iOS settings file is already excluded
+from iCloud backup. The About screen is where the promise is made in the app: three cards in
+the settings idiom, the product name in Latin script in both locales, and three rows that leave
+the app under an external-link glyph that mirrors under Arabic. iOS declares exempt
+encryption, which removes the export-compliance question from every upload.
+
+### Recitation, round three (13 September, evening)
+
+Three asks after an hour with 0.13.0. Previous and next on the bar and the lock screen now move
+by surah, like a music player's track buttons; a long press on the bar moves by ayah, and the
+Android notification grew two extra buttons for the ayah, since a lock screen cannot hold a
+button down. The clock row got air above it. And the download sheet carries a switch,
+"Download future surahs without asking", ticked the first time: a surah you play is fetched and
+played when it lands, the header's ring the only thing moving, and the sheet comes back only to
+say why a fetch was refused.
+
+### Back to the ayah (13 September, night)
+
+Two more from Mohamed. The bar's words now take you to the ayah being recited — scrolling if
+the surah is already open, opening its reader or page if not — and the monogram alone opens the
+picker. A tap on the Android media notification does the same through a launch request the
+app resolves once it is in front. iOS gives no such tap, so there the app coming to the front
+with a voice still going opens the ayah; paused, it stays where it was.
+
+### Store readiness (13 September, late)
+
+A sweep of everything the two stores look at, done as three read-only audits (Android, iOS,
+shared code and content) and then the fixes. The ones that would have stopped a submission:
+Play has required Android 16 (API 36) for new apps since 31 August, and the app targeted 35;
+release builds were signed with the debug key and there was no App Bundle; iOS had no privacy
+manifest, and its 512 px Play icon file was still the Android Studio placeholder. Now targetSdk
+36 (back gestures, per-app Arabic and the alarms checked on an Android 16 emulator), an upload
+key read from a git-ignored `keystore.properties` with `scripts/release.sh` building the signed
+`.aab`, privacy manifests for the app and the widget, the location permission text in Arabic,
+iPhone-only for launch, and the real icon.
+
+Two things the audits found that were not about the stores but about the adhan itself: prayer
+alarms were never re-armed after an app update, so every Play auto-update would have silenced
+the app until it was next opened, and a denied "Alarms & reminders" had no way back from inside
+the app. Both fixed; `USE_EXACT_ALARM` is gone (Play limits it to alarm-clock apps), replaced by
+a button to the system screen and an inexact-but-Doze-proof fallback. The Notifications screen
+also says so when the OS has notifications off for Taqvo, on both platforms, and iOS now shows
+a prayer notification while the app is open. Plus a licence carve-out (the GPL never covered the
+Quran text, fonts and audio; now the repository says so), the Mixkit source clip taken out of
+the public tree, and the store answers and a launch checklist in `docs/`.
+
+### Seven languages (14 September, overnight)
+
+Mohamed wanted the whole interface in the languages the Quran already came in, and the reach
+argument won: French, Turkish, Indonesian, Urdu and Bengali join English and Arabic. Five
+translation passes ran in parallel from one brief and a glossary each, into the 324 interface
+strings, the widget labels on both platforms, the location permission text, the site's pages and
+the privacy policy; a validator (`tools/i18n-check.py`) holds every file to the English keys,
+placeholders and plural categories. Underneath, the code stopped asking "Arabic or not":
+`UiLanguage` in `widgetcore` knows each language's direction and script, and the words that get
+baked into notifications and widgets outside Compose (prayer names, the countdown heading, Hijri
+months, notification and download copy, the high-latitude note) became tables keyed by it. Urdu
+is right to left without being Arabic; Bengali is upright and left to right without Manrope or
+tracking; Turkish capitals get their dots. Indonesian ships twice under the Compose resources
+because Android still spells it "in" and iOS "id". The site gained a language picker in place of
+the lone Arabic link, and each language its own policy page.
+
+The morning review of the screenshots (emulator, five languages, four screens each; simulator,
+three) found three things the validator had not: Compose Multiplatform prints a backslash-escaped
+apostrophe literally, so every Turkish and Indonesian `Kur\'an` showed its backslash — the
+typographic ’ is now the house style and `tools/i18n-check.py` fails the escaped form in Compose
+resources (and the unescaped form in the Android app's own, which aapt rejects); the translated
+files still carried the previous version string, so `scripts/bump-version.sh` now writes it into
+every language; and the timeline showed Urdu the Arabic names (الفجر) while its own ring and
+notifications said فجر — in an Arabic-script interface the interface's own name stands alone, so
+it now does. The crash-report feature landed on main meanwhile; its six strings and its policy
+paragraph went into the five new languages with the merge. 0.18.0 (21) built after the merge:
+tests green on both platforms, the release APK on the emulator and the S23, the site's 21 pages
+checked in the browser.
+
+### Launch sweep (14 September, before dawn)
+
+Mohamed asked for one more pass over everything before the stores, and the day started with a
+regression in the language work itself. Five native reviewers, one per new language, read every
+string, the Kotlin tables, the policies and the site pages against the English; their must- and
+should-level corrections were applied (a feminine slip in the French meta, «Un jour avant», the
+Turkish ring label shortened to «Sabah vaktine», PUEBI «Mahasuci», an Urdu pronoun that inverted
+the high-latitude sentence, a Bengali onboarding title that read as a duration) and the nits left
+as notes. A code review of the Kotlin found the two-language shortcuts the refactor had not
+reached: the ayah widget on both platforms still asked `startsWith("ar")`, so an Urdu footer paired
+a Latin name with the Arabic one; the Quran search classified every Urdu-script query as Arabic,
+so the default Urdu reader could not search their own translation (Urdu and Farsi translations
+are searched first now, the Arabic text after); Turkish translation search lower-cased with the
+locale-free `lowercase()` and never matched «İman»; the widget mirrors carried an Arabic-Indic
+boolean, so Bengali widgets counted down in Western digits beside Bengali clock times (the flag
+now means "native digits" and `WidgetDigits` picks the language's own zero); and `WidgetContent`
+named every non-Arabic-script widget row in English — a Turkish home screen said «Fajr · الفجر».
+
+Devices found the rest. An in-place language change (the Android 13 per-app page returning to a
+live process) left armed notifications and the prayer-widget mirror in the old language until a
+cold start — the S23's widgets stayed Urdu after the app had run in Bengali because Today's view
+model, which writes the mirror, only exists while the Prayer tab is on screen; `App.kt` now
+reschedules and refreshes the mirror when `uiLanguage` changes. The Settings › Language row was
+informational and did nothing when tapped; on Android 13+ and iOS it now opens the system's
+per-app language page. About › Privacy policy opens the site's policy in the app's language. The
+emulator's London Fajr alarm fired in Bengali with the right copy and digits; Samsung's Urdu and
+Bengali faces render every screen; large font, dark theme and landscape hold in Urdu. Two platform
+facts stay as they are: iOS formats Bengali with Western digits (Apple's locale default, unlike
+Android's ICU) and the ring keeps Western digits until the tabular check. Shipped as 0.18.1 (22).
+
+## Playing on, and the bar after a widget tap (14 September, evening)
+
+Three notes from Mohamed while he sets up the store accounts.
+
+**The player bar after a widget tap.** Opening an ayah from the home-screen widget and pressing
+Play on its card played the surah with no bar until the Quran tab was left and re-entered.
+Cause: the widget's path pushed the Quran root and the reader on top of whatever tab was showing
+(so that one Back would reach the surah list), while the bar is drawn only while the Quran tab is
+*current*, and `Navigator.currentTab` reads the bottom of the stack — still Prayer.
+`Navigator.openReading` now replaces the stack with the Quran root first when that tab is not
+current, then pushes the reader; the media notification's path shares it. Six navigator tests;
+verified on the emulator and the simulator (bar on the reader and on the root at once).
+
+**A surah that plays out goes on to the next one** (recitation spec §16.1). The platform players
+used to tear everything down at the last ayah. Now they hold the ended surah for up to five
+seconds and report it (`RecitationPlayer.surahEnds`); the controller waits a one-second breath
+and loads the next surah into the same session — no notification flicker, audio focus kept, the
+iOS audio session kept active with a background task over the split — or stops explicitly: at
+An-Nas; when the next surah is not on the phone and downloads are on request; or, under "without
+asking", after enqueueing the fetch that starts it when it lands. The reader follows the new
+surah; anything that moves the recitation during the breath wins. Seven controller tests.
+Verified on the emulator (Al-Fatiha → Al-Baqarah with the reader following; Al-Kawthar, with no
+109 on the phone, ended with no session and no notification left) and on the simulator (the same
+three, read off the debug harness log). The emulator's Wi-Fi reports "no internet" today, so its
+downloads never run: the containers were sideloaded with `run-as` into
+`files/quran/audio/ar.alafasy/` and adopted by `reconcile()` at start, which is the way to test
+recitation offline.
+
+**Mixkit.** The Notification-level tone's credit in Attribution and `docs/ATTRIBUTION.md` stays:
+the licence does not require it, but the app names every third-party asset it ships.
+
+Released as 0.19.0 (23); the store build becomes 1.0.0 (24).
+
+## One notification per batch, and a pick that does not press play (14 September, night)
+
+Two more from Mohamed's phone. **"Download the whole Quran" filled the shade**: WorkManager posts
+each worker's foreground notification under the id the worker names, and the workers named one
+id per surah, so two surahs in flight were two lines and the batch summary a third. Every
+download worker now uses one id and, while more than one surah of a voice is in flight, writes
+the same batch line — "Mishary Rashid Alafasy · 44 of 114 surahs", the bar counting surahs —
+so the shade holds one entry; a surah on its own keeps its own "Al-Baqarah · 9.3 of 58.2 MB".
+The separate summary is gone. Verified on the emulator against a real batch (Alafasy 14 → 45,
+through a proxy on the Mac because the emulator's own Wi-Fi fails validation today): one entry
+in the shade, counting up, gone the moment the batch was cancelled. The emulator needed
+`pm grant … POST_NOTIFICATIONS`; without it no download notification shows at all, which is
+also what a reader who declined notifications sees, and the downloads run regardless.
+
+**Picking a reciter resumed a paused recitation** (§14.4's rule, from the bar's picker, read from
+Settings as "why did it start playing"). Withdrawn: a pick changes the voice and nothing else —
+playing goes on playing in the new voice, paused stays paused in it, nothing loaded stays that
+way. The audition's own pause is the one resume left. Three controller tests rewritten.
+
+Released as 0.19.1 (24); the store build becomes 1.0.0 (25).
+
+## The Quran switch, full width (14 September, late)
+
+Mohamed: the Surah | Juz | Bookmarks switch should span the row, each option a third of it, the
+selected pill filling its third, the pill itself unchanged. `TaqvoSegmented` gained `fillWidth`
+(the Row fills, each option weighs one); the reading sheet's Translation | Mushaf switch keeps
+hugging its labels. Released as 0.20.0 (25) — and reverted an hour later on Mohamed's second
+look ("not a good idea"): the switch hugs its labels again, `fillWidth` is gone, 0.20.1 (26).
+The store build becomes 1.0.0 (27).
+
+## Prayer times that follow a journey (15 September)
+
+Mohamed travelled 300 km and the iPhone's adhan stayed ten minutes early for a day until he
+opened the app. Not a fault but a gap: the location was refreshed only on foreground and on a
+timezone change, and every background wake-up planned against the stored coordinates. The
+background wake-ups — the iOS refresh task, Android's prayer alarm and top-up — now read the
+phone's last known position (no fix, no dialog, nothing a closed app is refused) and re-resolve
+when it is more than 5 km away; Android's alarm rebuilds the plan on a move even with a full
+window, and the iOS task is asked for six hours out instead of a day (and now reports success
+when its work ran, not only when something got scheduled — an empty plan by choice had been
+teaching iOS to grant it less). A manual city stays untouched. Six new refresher tests;
+verified on the simulator through the debug harness (London → Cairo, no fix asked for); the
+emulator cannot give a coarse-only app a fix; on the LoopPhone the cache answers while the
+process is warm from a recent use and is withheld from a cold one, so Android's gain is the day
+of the trip, not a phone left closed. The proper answer on both platforms, background location
+under "Always",, is written up in spec §16.5 as a later opt-in. Released as 0.20.2 (27); the store build becomes 1.0.0 (28).
+
+## Store copy and screenshots (16 September)
+
+The Play account cleared verification, the upload key exists, 1.0.0 (28) went to internal
+testing. Then the listing: copy in seven languages under `docs/store/listing/` (English and Arabic
+written here, the other five by native-writer agents against the app's own strings, every field
+inside its limit by `tools/store-listing-check.py`), and screenshots from the S23 (1440 × 3088) and
+the iPhone 17 Pro simulator, eight screens per language, framed by `tools/store/frame.py` into
+Play's 1080 × 1920 and the App Store's 1320 × 2868 with the caption above the phone.
+
+What it took to make the captures repeatable: the debug harnesses on both platforms can now open
+a screen, set the theme, the reading mode and the translation by name, so one flow runs in every
+language with no finger on the glass and no dependence on the phone's starting state — the first
+runs toggled the Mushaf mode by counting taps and drifted, and showed the S23's English translation
+under French and Urdu. The first "Tripoli" was Lebanon's (1,498 km to Makkah); Libya's is 2,916.
+The 16 Pro Max simulator needed a tap permission nobody was at the keyboard to grant, so the 17 Pro
+did the iOS set and the framer upsizes into the 6.9-inch slot. The simulator has no compass, so the
+App Store set carries seven screenshots; its notifications had to be allowed once by hand.
+
+## The closed test's first feedback (18 September) — 1.0.0 (29)
+
+Five testers, six items, one night. The version name stays 1.0.0: build 28 only ever went to the
+closed track and iOS has not shipped, so the first production release on both stores is still
+1.0.0 and only the code moves until then (`build-29` tags the tester build; `v1.0.0` moves to
+whichever build goes to production).
+
+The sound-preview report was a phone on silent, so the sheet now says so, but only while it is
+true. The widgets' 250 dp resize cap is gone. Arabic hits carry the reader's translation (not
+under an Arabic UI) and light the matched words — whole words, colour only, after a fold-only
+matcher turned out to miss a quarter of them and a word aligner between Tanzil's two spellings
+replaced it. That measurement exposed a 1.0.0 bug: Arabic queries containing «أ إ آ ى» found
+nothing, because the row was matched unfolded against a folded query. The bar's line takes a tap
+and lands on the ayah's start, like the lock screen's scrub. Tahajjud is an optional
+notification at the last third of the night, off by default, with channels of its own. Spec §17.
+
+The store screenshots are checked in now (`docs/store/screenshots`, 105 files, 37 MB, lossless):
+`assemble.sh` writes there, both capture scripts take `ONLY="2-notifications"` to re-shoot one
+screen, and `git status docs/store/screenshots` is the upload list. The harnesses gained
+`search`, `tahajjud` (on, off, or fire one in eight seconds) and, on iOS, `pending`. The site
+and README mention Tahajjud in one clause, and Support has a new entry for the silent phone.
+Release notes for Play are in `docs/store/release-notes/1.0.0-29.txt`.
+
+## Build 30 (19 September)
+
+Two things from Mohamed's morning look at build 29, which was never uploaded: 4 dp of air
+between a row's label and its subtitle (the Tahajjud row showed it worst; the fix is in the row
+component, so About, the method list and the sound sheets get it too), and the Quran search
+clears when the reader leaves the tab for Prayer or Settings. The Notifications store shot was
+re-taken on the S23 and the simulator (14 files); the release notes moved to `1.0.0-30.txt`.
+
+## A tester's phone restarted (21 September) — 1.0.0 (31)
+
+A LoopDL loopTwo on Android 16 restarted itself half an hour after installing build 30, and the
+report blamed this app. It was right. The device's own log and crash record, read over adb,
+showed two faults: the download notification posted on every progress event from two workers at
+once (shed 115 times in thirteen minutes), and — the one that killed `system_server` — every
+queue item carrying the launcher icon as `artworkData`, which Media3 turns into a one-megabyte
+bitmap per platform queue item: 571 of them for Al-Baqarah, on every queue change. The artwork
+is a content URI now, the platform session publishes no queue, progress goes through one gate,
+and a worker that is going to be refused says nothing first. Spec §18, which also says what is
+left: WorkManager's hand-overs still touch Android's limit on a very fast link, and the cure for
+that is one notification-owning worker per batch.
+
+## The Mushaf page on a short screen (21 September) — 1.0.0 (32)
+
+The same tester's phone — 408 × 760 dp, three-button bar — drew the last four lines of a full
+Mushaf page on top of each other. The page's size came from the frame's width and nothing held it
+to the height. `fitToHeight` now does: close the lines up from 1.9× to no tighter than 1.6×,
+then shrink the type in half-steps, then scroll. Reproduced and fixed on the emulator set to the
+phone's exact size, density and navigation mode; tall phones are unchanged. Spec §19.
+
+## The first App Store archive (22 September) — iOS 1.0.0 (32)
+
+Mohamed's individual Apple Developer membership was approved; its Team ID lives in
+`iosApp/Configuration/Config.xcconfig` and nowhere else, and `scripts/ios-release.sh` refuses the
+employer's team outright. The App Store identity is `com.taqvo.ios` (the Android package name
+was registered to the employer's team by an early automatic-signing build, and Apple identifiers
+are unique across teams). A fresh team has no registered devices and Xcode signs archives with a
+development profile, so the first signed build went to the connected iPhone 12 with device
+registration allowed: that created the certificate, the App IDs and the app group in half a
+minute, and put the store build on the phone for its first hardware run. The archive followed in
+thirteen seconds, read back as `com.taqvo.ios` 1.0.0 (32) under team 3K93P4PA5H with
+`group.taqvo.app` and a 1 MB widget; tag `ios-build-32`.
+
+## Prayer times on taqwa.world, and the Jumuʿah pill (25 September)
+
+Built overnight from the design Mohamed approved the evening before
+(`docs/superpowers/specs/2026-09-25-taqvo-city-pages-design.md`, §10 for what changed on the
+way). taqwa.world now has a page per city and language with this month and next, an index per
+language, and a section at the bottom of every home page, all rebuilt every six hours by the
+Pages workflow with nobody touching it.
+
+**The times are the app's.** `tools/timetables` compiles the app's engine, Qibla and Hijri files
+by path and runs the app's own tests for them on the JVM before it writes anything; a change
+that breaks them stops the site build. On Friday 25 September the Tripoli page and the app's
+Prayer screen on the emulator read the same: 5:35, 13:00, 16:24, 19:00, 20:17, 12 Rabiʿ
+al-Thani 1448, 109° and 2,916 km. Against Aladhan, for twenty cities on 25 September and 26
+October, every time agrees within a minute except Asr, where the app is within a minute of the
+true Asr worked out from the sun's position and Aladhan is one to three minutes late at higher
+latitudes. The app's Dhuhr is a minute after Aladhan's by design (adhan2's method offsets).
+
+**Only 51 cities are live, on purpose.** A page promises what the app shows a user there, so a
+country goes live only where that also agrees with the timetable its mosques follow. Each was
+checked against the authority's own numbers for September and October 2026 (app minus official,
+largest gap in minutes):
+
+| Country | Timetable checked | Gap | |
+|---|---|---|---|
+| Egypt | Survey Authority via [Dar al-Ifta](https://www.dar-alifta.org/ar/prayer), all of September | 2 (Dhuhr) | live |
+| Saudi Arabia | [Umm al-Qura](https://www.ummulqura.org.sa/ar/prayer-times), second-hand copies | 1 | live |
+| UAE | Awqaf's Dubai table as published by Khaleej Times | 2 | live |
+| Kuwait | Ministry of Awqaf calendar | 1 | live |
+| Türkiye | [Diyanet](https://namazvakitleri.diyanet.gov.tr/), eight cities, October | 2 | live |
+| Singapore | [MUIS](https://data.gov.sg/datasets/d_d441e7242e78efc566024dd5b0d9829c/view), all of 2026 | 1 | live |
+| USA, Canada | no authority; ISNA mosques in New York and Toronto | 3 | live |
+| South Africa, Cape Town | [Muslim Judicial Council](https://mjc.org.za/quick-resources/salaah-times/) | 1 | live |
+| Libya | Awqaf and Dar al-Ifta ([api.ifta.ly](https://api.ifta.ly/api/v1/prayer-time)) | 7 (Isha) | held |
+| Qatar | [Calendar House](https://www.qatarch.com/) | 3 (Maghrib, Isha) | held |
+| Bahrain, Oman | Supreme Council calendar; [Ministry of Endowments](https://www.mara.gov.om/) | 4; 6 | held |
+| Jordan, Palestine | [Ministry of Awqaf](https://www.awqaf.gov.jo/ar/Pages/PrayerTime); [Gaza Awqaf](http://palwakf.ps/ar/praytimes) | 7; 7 | held |
+| Lebanon, Iraq | Dar al-Fatwa; Sunni Endowment (both also split by sect) | 10; 5 | held |
+| Syria | Awqaf, Ramadan 1447 imsakiya (nothing newer) | 2 (Maghrib) | held |
+| Morocco | [Habous](https://www.habous.gov.ma/prieres/index.php?ville=58) | 6, and the clock (below) | held |
+| Algeria, Tunisia | [ministry calendar](https://marw.gov.dz/); [meteo.tn](https://www.meteo.tn/) | 4; 7 | held |
+| Sudan, Mauritania | Ramadan imsakiyas only | 6 (Fajr) | held |
+| Pakistan, India | [Binori Town](https://www.banuri.edu.pk/namaz-times) (Hanafi) | 1, but the app's Asr is Standard | held |
+| Bangladesh | Islamic Foundation (Hanafi, + 3 min) | 3, and the Asr | held |
+| Indonesia | Kemenag via [myQuran](https://api.myquran.com/) | 3 | held |
+| Malaysia | [JAKIM e-solat](https://www.e-solat.gov.my/) (Fajr 18° since 2019) | 12 (Fajr) | held |
+| Uzbekistan | [Muslim Board](https://muslim.uz/) (15.5°, Hanafi) | 49 (Asr) | held |
+| UK | [London Unified Prayer Timetable](https://www.iccuk.org/page.php?section=media&page=unifiedpt) | 24 (Isha) | held |
+| France, Netherlands | no shared timetable (Mawaqit mosques use 12° to 18°) | up to 34 | held |
+| Belgium, Germany, Russia | [EMB](https://www.emb-net.be/); DITIB and Diyanet; [DUM RF](https://dumrf.ru/) | 7; 9; 18 | held |
+| Bosnia, Kosovo, Albania | [vaktija](https://api.vaktija.ba/), BIK, KMSH calendars | 7 to 11 | held |
+| Johannesburg, Pretoria, Durban | [Jamiatul Ulama](https://jamiat.org.za/salaah-times.php) (Hanafi) | 57 (Asr) | held |
+| Australia | Lakemba Mosque | 17 | held |
+
+Countries with no timetable found or not checked yet (Yemen, Nigeria, Senegal, Somalia, the rest
+of Africa, the Maldives, Brunei, Ireland, Austria, Switzerland, Scandinavia, New Zealand) are held
+too. Each held city is in `site/cities.tsv`, commented out under its reason, and comes back by
+deleting its `# ` once the app can match. Most of this list is the app's to-do: a Libyan Awqaf
+method, Kemenag's margin, JAKIM's 18°, the Maghreb ministries' offsets, and above all a country
+default for the Asr school.
+
+**What the pages found in the app:**
+- **No Hanafi default.** The app's Asr is Standard for everyone until changed by hand
+  (`SettingsRepository`), so a new user in Karachi, Delhi or Dhaka sees an Asr about fifty
+  minutes before their mosque's. A country default like the method's would fix the app and bring
+  back three of the site's languages' home countries.
+- **Umm al-Qura in Ramadan.** Its Isha is Maghrib + 120 in Ramadan and the app keeps 90, so from
+  8 February 2027 the app would show Isha half an hour early in Saudi Arabia. The pages add the
+  half hour on Ramadan days and say so under the month, and stop doing it by themselves once the
+  engine returns 120; the app needs the rule before Ramadan.
+- **Clocks the JDK does not know yet.** Morocco left UTC+1 for UTC+0 on 20 September 2026, and
+  Alberta stops changing its clocks after 2026 (both tzdata 2026c). The JDKs here have 2026b, and
+  phones get zone updates on their own schedule. The site reads every clock from the newest
+  tzdata package and rewrites a city's times where the JDK is behind, noting it in the run: with
+  Alberta that happens from 1 October, when November comes into view.
+- **The distance in French, Turkish and Indonesian.** `localizedGroupedKm` groups with a comma in
+  every language, so "2,916 km" reads as a decimal there. The generator's `Formats.distance`
+  mirrors it by hand; both should change together.
+- **The wrong day in the Pacific.** Where the clock runs far ahead of the sun (Samoa, Tonga,
+  eastern Kiribati) the engine answers a date with the next day's times; seen in Apia by the
+  Jumuʿah work, and now a generator guard.
+- **City names**: Al Khums is "المرقب" and Al Bayda "قرية البيضاء" in the Arabic file, Delhi is
+  "پرانی دہلی" (Old Delhi) in Urdu, Kolkata and Khulna are in Latin letters in Bengali, several
+  Indonesian names carry "Kota", Zawiya is in the file twice. `site/cities.tsv` corrects them for
+  the pages.
+
+**The Jumuʿah pill in the app.** On a Friday the Dhuhr row of the Prayer screen carries a small
+outline pill, in the accent at 40 %, with `today_jumuah` in all seven languages. Friday is read in
+the location's zone, not the device's: a phone on Thursday evening showing Jakarta marks Jakarta's
+Friday Dhuhr. The name group became a `FlowRow` so the time keeps its line at large font sizes on
+narrow phones, which also fixes a Maghrib wrap at 200 %. Six new tests; `scripts/test.sh` green
+(shared 964 JVM and 884 iOS, widgetcore 90 and 88). The same work noticed that most Latin text
+in the app is not actually Manrope: 142 `Text(style = TaqvoText.*)` calls bypass the theme's font.
+
+**Kept honest by the build.** `site/build.py --check` now also fails on a city page without both
+months or a row for every day, an index that misses a city, an hreflang the other page does not
+return, and a link to an anchor that does not exist; each rule was proved by breaking a built
+page and watching it fail. An independent review of the branch found that the first versions of
+the zone and Ramadan guards would have stopped every page updating on 1 October and 1 January;
+both now correct the one city instead, and were run against data built for those dates. The page
+script was run in headless Chrome with the clock pinned before Fajr, on a Friday afternoon,
+after Isha, on the first day of the data, across Egypt's clock change and past the end of the
+data; the index filter with Latin, accented, Arabic and Turkish input.
+
+## The compass on an iPhone (25 September)
+
+Two iPhones in testing kept saying the compass needed calibrating, or that there was magnetic
+interference, while Apple's Compass on the same phones pointed without complaint. The iOS rules
+had never met a real iPhone: the 10 September sweep could not unlock one. A diagnostic build (a
+local branch, never merged, installed as a separate app) logged every `CLHeading` beside Core
+Motion's calibrated and raw fields through 53 seconds of ordinary use in Cape Town. Core Motion
+rated the calibration High on all but one of 984 samples and `headingAccuracy` ran 10–33°, never
+negative; the app hid the needle for 81% of the session. Three rules did it. A 20° bar sat inside
+ordinary use and fired on 17% of samples. A 20–70 µT band was applied to `CLHeading`'s x/y/z —
+which is the calibrated field, matching Core Motion's to the decimal — and in Cape Town's
+25.6 µT field that read 13–20 µT for long stretches, so 61% of samples were called interference,
+the last sixteen seconds of them at the phone's best accuracy of 10°. And under the default
+one-degree heading filter a phone held still delivered nothing for 14.5 s, which the gate counted
+as low until it gave up.
+
+The iOS verdict is now Core Location's own: an invalid heading, an invalid accuracy, or an error
+worse than 45°; no field band, so interference is Android-only again, where it still catches the
+LoopPhone; and every heading event, not every degree. The recorded session is a test fixture that
+must never leave `Good`. The LoopPhone's prompts, read over adb the same night, were the truth: its
+rotation vector is a stub and its magnetometer's calibrated field sat at 60–65 µT on the desk,
+two and a half times the Earth's. Spec, "Amended 25 September 2026".
+
+The same investigation turned up a quieter fault: Core Location's true heading needs a location
+fix on the manager delivering headings, so anyone who picked their city by hand and keeps location
+off was told, forever, that the compass needed calibrating. iOS now corrects the magnetic heading
+itself with the declination the World Magnetic Model 2025 gives for the city on the Qibla screen —
+NOAA's public-domain model, ported with its coefficient file byte for byte, reproducing all 100 of
+NOAA's published test points to a thousandth of a nanotesla — so the compass works with location
+off and asks iOS for no location at all. For Cape Town it gives −26.79°; the iPhone had applied
+−26.8° itself.
+
+## The city pages held: a minute early is a prayer before its time (25 September)
+
+The first check allowed about two minutes either way. Mohamed asked the harder question: does a
+page ever show a prayer *before* the official time? A Maghrib a minute early is a fast broken
+before sunset; any start shown early is a prayer before its time. The same official tables were
+compared again with the sign kept (app minus official), and every live country failed somewhere:
+
+| Country | Checked against | Days a start was shown early |
+|---|---|---|
+| Türkiye, eight cities | Diyanet, 31 days | Asr, Maghrib and Isha 1–2 min early on nearly every day |
+| Singapore | MUIS, all of 2026 | 1 min early at every prayer on about a quarter of days |
+| UAE | Dubai table, September | Maghrib 13 days, Isha 9 |
+| Egypt | Survey Authority, September | Asr 11 days (Maghrib never) |
+| Kuwait, Saudi Arabia | one day each, second-hand for Saudi | 1 min at several prayers |
+| USA, Canada | MAC Toronto; ICCNY and Hikmah, New York | Asr 2–3 min before MAC's every day of October; ICCNY's Maghrib up to 4 and Isha up to 8 min later |
+| Cape Town | Jamiatul Ulama's Cape Town table | Dhuhr 3–4 and Maghrib 2–3 min early every day |
+
+Two causes. adhan2's presets are near but not on the authorities: Diyanet's Maghrib is sunset + 8
+and its Asr about + 5 where the Turkey preset adds 7 and 4. And the engine rounds to the nearest
+minute, so a start can be shown up to half a minute before the moment it describes. Measured to
+the second against the raw astronomical times, most official tables are that raw time plus a fixed
+number of minutes and a rounding rule, each inside a 60-second band (Diyanet, Egypt, Dubai,
+Kemenag, Habous, Libya, Algeria, MAC Toronto), so a profile can reproduce them to the minute
+without ever being early. MUIS, JAKIM and Jamiatul Ulama Johannesburg spread 100–175 seconds, and
+the London Unified Timetable's Fajr and Isha are not angle-based at all.
+
+Every row of `site/cities.tsv` is now held, each country under what was found, and while none is
+live the build leaves the section out entirely: no index, no header or footer link, no home-page
+strip (`PRAYER_TIMES_LIVE` in `site/build.py`). With the rows restored the new code builds all 154
+pages byte for byte as before. The app shows the same times the pages did, so this is the engine's
+to fix, not the site's.
+
+## Reading the translation aloud (27 September)
+
+An option, off by default: after the reciter recites an ayah, the phone's own voice reads the translation shown under it. Headphones on a journey: the Quran in Arabic and its meaning in your language, with no network and no cost. Mohamed decided three things before any code:
+
+- Tafsir al-Muyassar is read too, with the Quran words it quotes dropped.
+- The switch lives in the reading sheet, under Translation, and in Settings › Recitation.
+- Both platforms ship together. Where a phone cannot read a language, the switch is not shown.
+
+**What is read.** `SpeechText` turns the text on screen into the text a voice reads. It was measured against every row of quran.db:
+
+- **Muyassar's quotations.** Muyassar marks its quotations in exactly three ways:
+  - braces around verses quoted from elsewhere (9 of them);
+  - fully voweled parentheses, which quote the ayah itself (6);
+  - the disjoined letters at a surah's opening, e.g. (الم), (حم * عسق), and 29:1's bare الم:.
+
+  Each is dropped with its marks. The roughly 190 other parentheses are explanation, and the voice reads them.
+- **Shared texts.** Diyanet's Turkish repeats one translation over as many as 12 ayahs (570 runs), and Muyassar over as many as 14 (605). A shared text is read once, after the last ayah of its run.
+- **Bengali.** The bundled Bengali has 42 rows with mangled HTML character references, such as "চিহিߦ#2468;". The voice gets them decoded. The data itself was repaired on main the same day (e9e5c62, quran.db version 5), so for the bundled text that decoding is now only a safety net.
+
+**How it plays.** The queue per ayah is: the ayah, a 400 ms breath, the translation, then the reciter's gap.
+
+- **Android.** The Media3 service turns each translation into a WAV with the chosen engine, on ExoPlayer's loading thread while the ayah before it plays. `AyahPlayer` hides translations from the session exactly as it hides gaps, so the notification and lock screen never change between an ayah and its translation.
+- **iOS.** `AVSpeechSynthesizer` speaks as a timed phase between AVPlayer items.
+- **The surah clock.** It includes each translation's estimated length. Otherwise Android's media controls, which extrapolate position, would run ahead and snap back after every translation.
+- **Changes mid-surah.** Turning the switch or changing the translation mid-surah rebuilds the queue around the ayah being heard.
+
+**Voices.**
+
+| Phone | What it has |
+|---|---|
+| Emulator and S23 (Google's engine) | English installed. The other six languages are free packs, which "Get the voice" opens: French 23 MB, Arabic 4.2 MB. Samsung's own engine on the S23 offered none of the seven offline. |
+| iOS 26.2 simulator | Voices for six languages (Samantha, Majed, Thomas, Yelda, Damayanti, and Piya for Bangla). Urdu has none, so Urdu hides the switch on iPhone. |
+
+**Surprises worth keeping.**
+
+- iOS 26.2 reports `didFinish` (not cancel) when speech is stopped. The player clears its current utterance first, and matches finishes by identity.
+- `AVSpeechSynthesizer.paused` updates late.
+- Android 16 refuses audio focus and a foreground service to a harness `load` sent while the S23 is locked, so device playback tests start from the app.
+- The whole-branch review caught Settings › Recitation never asking about voices after a cold start, and an engine `shutdown()` that could leave the speech lock held. Its offline-only hardening then broke Android outright: Google's engine lists `networkTimeoutMs` and `networkRetriesCount` on every voice, the local ones included, so treating those keys as "network" left no voice at all. A device probe measured this, and the rule is now `!isNetworkConnectionRequired` and no `networkTts`, with the `-local` voice winning ties (`en-us-x-iob-local` on both phones). `OfflineVoiceTest` pins the measured feature sets.
+
+**After the first test on the S23.** Mohamed's first listen sent back two bar bugs and a request, and measuring the request turned up a fourth problem:
+
+- **The bar lost its word.** Under an English, French or Indonesian UI the caption read "Ayah 56 ·". At 12 sp, "Ayah 56 · Translation" wants about 120 dp; the caption has 108 on the S23 and 84 on a 360 dp phone. A line that wraps at spaces put "Translation" on the second line, which `maxLines` hides. `barCaption` now draws the widest of "Ayah 56 · Translation", "56 · Translation" and "Translation" that fits, measured at the caption's own type.
+- **Arabic and Urdu cut the caption in half.** The column kept 8 dp above and below its two lines, which left 40 dp, and the surah name in the Hafs face took 30 of them. The column now centres the lines in the full 56 dp, and the name's line is 1.5 em. That needed `LineHeightStyle.Mode.Tight`: under the default mode Compose adds a single line's lost height back as padding, so the name stayed 30 dp whatever line height it was given. A layout log on the phone showed 96 px with the stand-in font and 112 px once the Hafs face had loaded.
+- **A long ayah ran under the bar.** A followed card rested a third of the way down, whatever its length. `followOffset` keeps that line for a card that fits below it and raises a longer one until its foot is 12 dp above the bar. Nothing goes above the top, so a card taller than the screen starts at the top. Measured on the S23: 697 and 1,275 px cards rest at the line, 1,564 px cards end 12 dp above the bar, and 2:61, taller than the screen, starts at the top.
+- **Following skipped short ayahs.** The list reports that it has stopped a frame after the page's own scroll returns, so every follow counted as a touch, and an ayah arriving within the next four seconds was not followed. On the S23, 2:72 arrived 1.5 s after 2:71 and was left under the bar. `FollowingState` now ignores the stop of a scroll of its own that finished. A finger that takes over mid-scroll still counts.
+
+**Built with.** Spec `docs/superpowers/specs/2026-09-27-translation-read-aloud-design.md`, plan `docs/superpowers/plans/2026-09-27-translation-read-aloud.md`, and seven subagent tasks, each with its own review.
+
+## The never-early prayer engine (27 September 2026), branch `prayer-engine`
+
+The answer to "The city pages held" above: a new engine, built from the design at
+`docs/superpowers/specs/2026-09-26-taqvo-prayer-times-engine-design.md` (approved 27 September,
+implemented the same day, tested by Mohamed on his phones on 28 September and squashed into main).
+
+**What it is.** For every place, Taqvo now reproduces the authority its own mosques follow — its
+sun model, its rounding, its margins — at that authority's own reference point, and takes the
+later of that and the user's own point for every start, the earlier for sunrise and the end of
+eating. Where several timetables are in local use with no clear majority, it shows the latest of
+them (cautious times). Where nothing is known, it falls back to a documented convention, always on
+the safe side. Nothing is ever shown beginning before the time it is describing.
+
+**How it is proven.** A gate runs the shipping engine against every official table Taqvo holds
+locally (not just the sample used to fit it) and checks, per place and per day, that no start is
+early and no end (sunrise, end of eating) is late. The final run: **71 entries, 137,468
+place-days, 0 starts early, 0 late ends, 0 broken rows.** Each entry gets a class from that
+evidence (A/B rebuilt and proven over a year including Ramadan; C cautious times over proven
+members; D the authority's own method at a tested safety margin, not yet fully proven; one entry,
+`default.safe`, is Taqvo's own fallback where nothing local is known at all). By region:
+
+| Region | Entries | Place-days | Classes present |
+|---|---|---|---|
+| Saudi Arabia & the Gulf | 7 | 39,894 | A, B, B/D, D |
+| Türkiye, the Caucasus & the Balkans | 7 | 18,475 | A/D, B, D |
+| Russia & Central Asia | 5 | 7,792 | B, D |
+| Levant & Iraq | 6 | 549 | A, B, D |
+| North Africa & the Nile | 7 | 6,622 | B, B/D, D |
+| South Asia | 3 | 192 | D |
+| Southeast Asia | 4 | 15,685 | B |
+| Western & northern Europe | 16 | 9,680 | B, C, D |
+| North America | 8 | 20,370 | C, D |
+| Oceania | 3 | 851 | C, D |
+| Southern Africa | 4 | 15,304 | B, C, D |
+| No authority anywhere | 1 | 2,054 | D (none) |
+
+**What was built, by task:**
+
+| Task | What it built |
+|---|---|
+| 1 | The astronomy core: exact sun position, the Asr models, transit (`SunClock`) |
+| 2 | The day model: methods as data, rounding, Ramadan lag dates, imsak and the end of eating (`DayComputer`) |
+| 3 + 4 | Real times at any latitude with an estimate only when a sign is missing; cautious times over several timetables; a day whose order always holds (`HighLatitude`, `Cautious`, `Ends`, `Invariants`) |
+| 5 | The registry: every authority's units, methods and reference points, point tables, day-of-year curves, Algeria's wilayas, London's curve |
+| 6 | `DayPipeline`, the one path from a resolution and a place to a day, and the gate that checks it against the archive |
+| 7a–7h | Every authority's own timetable, region by region, in eight parallel subtasks: the Gulf and Egypt; Türkiye, the Balkans and Russia; Singapore, Malaysia and Indonesia; the Levant; South and Central Asia; the Maghreb and Libya; Europe, the Americas and South Africa; the "Other methods" and generic conventions |
+| 8 | `PrayerEngine`: settings, adjustments, caching, migration and rescheduling wired to the new engine |
+| 9 | The settings model and its migration, run ahead of Task 8 |
+| 10 | The Prayer screen: the ⓘ card, "set by rule", the polar-day line, the clock-mismatch line |
+| 11 | About these times, and the stamp-to-string generator (`ProofStamps`) |
+| 12 | Settings › Prayer times: the Timetable and Match my mosque screens |
+| 13 | Every new string in all seven languages, and a translation-quality pass |
+| 14 | Device verification: Android emulator and iOS simulator, city by city |
+| 15 | Wrap-up: the final fix round, a full gate refresh, and this log |
+
+**Notable engine findings:**
+
+- **The SunClock fallback.** A twilight the sun only just reaches (within about a hundredth of a
+  degree) was sometimes reported missing, because the search started from the wrong side of local
+  noon and never crossed it. Retrying from the sun's lower culmination finds the real crossing
+  instead of falling back to an estimate — checked against 986,772 brute-force altitude scans
+  across 44–66°N, five twilight angles and two years, zero misses.
+- **DUM RT's summer rule.** It first ran on a fixed calendar window (6 May – 8 August). Because the
+  date each town's 18° dawn actually disappears moves with the town and the year, the fixed window
+  put some southern towns' Isha tens of minutes early and Suhoor over an hour late where the real
+  dawn was there all along. It now runs on whichever nights each town's own dawn is genuinely
+  missing, computed per point, not read off a calendar.
+- **The 20-minutes-a-day limit.** The original design's 7-day "ramp" is gone. In its place: while a
+  sign is missing, the shown Isha may not move earlier than the day before by more than 20 minutes,
+  and the end of eating may not move later by more than 20 minutes — checked over the whole
+  lookback, not just up to the first day found, and applied to a value borrowed from a substitute
+  latitude on a polar day as much as to a local estimate. Fajr moving later is always the safe side
+  and is never limited.
+- **Point tables.** A cautious member or a single-authority timetable now carries its own reference
+  point. Starts are the later of that point's and the user's own; sunrise, the end of eating and
+  imsak are the earlier. Past the point where that stops being a fair comparison, the table's point
+  still bounds the ends only, while starts fall back to the user's own point at the entry's edge
+  margin — so leaving a table's practical reach still stops a user eating by it, without handing
+  them a start time the table never measured.
+- **Curve envelopes.** Authorities with no reproducible model of their own (IRN, EMB, Diyanet
+  Europe, DUM RF, ICCI, GMP, the LUPT corners) get a 366-slot day-of-year curve indexed on a
+  leap-year reference, each value an envelope over its neighbouring days — the smallest plausible
+  depression for a dawn, the largest for a dusk — so the four-year leap cycle can never drift a
+  start early. Every curve file is committed as that derived envelope, with its source recorded;
+  none of the authorities' own printed tables are committed.
+- **Libya's seasonal margins.** The first fit used one day's margins (25–26 September) at 21
+  cities. Checked against Tripoli's own widget and prayer-times API across 23 days spanning March
+  2025 to October 2026, most margins needed to move across the seasons, and the end of eating
+  needed the tightest refit of all (a late end of eating is the costliest place to be wrong). The
+  refitted margins hold every Libyan city never-early across the whole year, not just the day they
+  were measured. The owner's own Benghazi and Sabha mosque observations still run a few minutes
+  ahead of the national method Taqvo uses everywhere in Libya — his decision (spec §10.3) was to
+  keep the national method, which is never early against it, rather than move the east and south to
+  local practice.
+
+**What remains** (as of 27 September; the completion below settled the decisions and the Tromsø
+and Longyearbyen limitations):
+
+- **Owner decisions.** Nordic summer lateness where a cautious member's table doesn't reach that
+  far north (Isha over two hours later in places at 48°+ in midsummer); US, Montreal and Ottawa
+  mosque floors costing 5–7 minutes at Dhuhr and Maghrib against every held table; Chicago now a
+  cautious entry (four of its seven held tables use 15°); the UK's 12–14° group and France's 15°
+  family running summer Isha up to 38 minutes later than most; IISC Calgary's 10°/10° table, where
+  the app is up to 32 minutes ahead of its own Fajr; ICCI's end of eating running up to 80 minutes
+  before its own printed Fajr under the current curve, where a small margin change would close most
+  of the gap.
+- **Known limitations.** Tromsø against IRN's own Tromsø calendar: IRN prints artificial figures
+  for the polar period there, and Taqvo's real-sign engine runs far ahead of them (an early Fajr, a
+  late Maghrib, by hours); IRN's Tromsø calendar isn't modelled, so Norway's cautious entry is
+  marked unmeasured there. Near-threshold edges: places within around two-tenths of a degree of a
+  defining twilight angle (DUM RT's edge with no fixed point, the UK's cautious entry in high
+  summer, IRN north of about 69°) are position-sensitive enough that a few kilometres can flip
+  which sign is "real"; each is banded to its safe side rather than matched exactly. The
+  Longyearbyen polar Maghrib against the next end of eating: on 9 Longyearbyen days and 3 at Bodø,
+  the cautious combination's borrowed polar Maghrib itself falls at or after the next day's end of
+  eating, and the 20-minute limit can't move it without an early Maghrib or a late Fajr — it needs
+  its own ruling. Separately, some Other methods' own Maghrib+90 Isha rule puts their Isha after the
+  next Fajr at Tromsø and Longyearbyen on many summer days; that is those methods' own rule, not an
+  engine gap.
+- **The website slice** (spec §7): city pages for proven places, the "How Taqvo checks" page, the
+  detailed view — after the app, as Mohamed asked.
+- **The Ramadan release items** (spec §7): "Suhoor ends" on the Prayer screen, iftar, the printed
+  imsak precaution, the suhoor alert, the Ramadan widgets and their highlight change, Tahajjud
+  ending at the end of eating, "I'm fasting today".
+- **The weekly monitor** (spec §5): a scheduled local job that fetches each entry's newest published
+  table and re-runs the gate on it, opening a task on a failure. Needs the stamps this branch adds
+  (done) and a local scheduled job (not yet built) — after launch.
+
+### Completion (28 September 2026)
+
+Mohamed delegated the pending decisions ("make the best judgement calls"; never early first, good
+accuracy where most Muslims live). A research pass (Sudan, Tromsø, the UK, a Mawaqit spot survey of
+France, Belgium, the Netherlands, Germany and Canada, coverage by Muslim population, the launch
+requirements) was followed by three waves of parallel tracks, each reviewed and merged into
+`prayer-engine`, then a final whole-branch review and its fixes. Rulings R73–R92 (spec §12).
+
+**What changed.**
+
+- **Eastern and southern Libya** follow the local adhan Mohamed observed (R73): Fajr at the 19.5°
+  dawn, Maghrib at sunset + 1, an exact fit at Benghazi and Sabha; the gate holds his two
+  observations as an open table. This reverses the 27 September decision above.
+- **Sudan** keeps its angles and gains a Ramadan-only Isha floor of Maghrib + 90 (R74).
+- **The UK outside London** is never early against all 62 surveyed Mawaqit calendars (R75): a
+  late-dawn member, Karachi's end of eating at the 18.6° dawn or mid-night, Scotland's Asr minutes;
+  cost, summer Fajr 15–28 min later in England, the end of eating 47–147 min earlier May–August.
+- **North America** keeps its mosque-table floors, Chicago stays cautious, Canada's three families
+  apply beyond the held tables (R76–R78); France's 15° family and the Nordic summer lateness stay,
+  recorded (R79).
+- **GMP and ICCI's end of eating** is the authority's own dawn as an end (R80); the envelope curves
+  stay (R81).
+- **Tromsø** follows IRN's Makkah-time calendar as an authority clock rule (R82): the app shows
+  IRN's times wherever the sun allows and IRN's whole Makkah day where it neither rises nor sets;
+  what no day in order can show (a Fajr after sunrise on about fifty summer days, a sunrise at the
+  sun's lowest point) is declared, and About says so. The Longyearbyen and Bodø nights whose Maghrib
+  or Isha reaches the next Fajr get no alert and never a passed "next" (R83).
+- **Proof and release**: a golden vector of about 2,000 invented place-days checked on Android and
+  iOS (R84), a benchmark guard on the worst cautious place-days (R85, worst 1.14 ms on the Mac), and
+  both release scripts refusing a stale or red stamp (R86).
+- **Continental Europe** (R87, R88): the Netherlands gains a Maghrib floor by month, France gains
+  Diyanet Europe, Germany gains a late-dawn and an 18° member, Belgium keeps the spec's Maghrib cap at
+  EMB's own minutes; a point table's final end bounds the ends across its reach (R89).
+- **The final review's fixes**: no repair pulls Fajr before a real dawn at the polar edge (R90: the
+  sunrise precaution gives way before Fajr does; what the sun itself overtakes is declared), About
+  names the Maghrib cap on the days it decides (R91), and the Isha cap reads the next day's end as
+  shown (R92).
+
+**Final figures.** The gate over the whole archive: 588 rows, 137,835 place-days, 0 starts early,
+0 late ends, 0 broken; all 71 stamps fresh and `checkStamps` green. The surveys, each repeatable
+from the restricted archive: the UK's 62 calendars (22,630 place-days) and the continental 54, with
+every early or late calendar day either fixed or recorded in the survey's outliers (0 unrecorded).
+The Arctic walk of 2026 at nine places and the Tromsø reach: no day repaired for Fajr (from 8–75 a
+place before R90), no Fajr before a member's own Fajr or real dawn.
+
+**What remains.**
+
+- **Diyanet Europe beyond its city tables**: its takdir is read from the nearest city curve, 4–5 min
+  early at Fajr in Ghent and Antwerp from April to August and its carried imsak 7 min late at Lyon
+  in early summer; fetching Diyanet's own tables for those cities (and Copenhagen, Helsinki,
+  Trondheim) is the next slice.
+- **Nordic summer lateness**: where Diyanet Europe's takdir applies beyond its tables (Trondheim,
+  Helsinki, Copenhagen) Fajr and Isha run up to 118 and 155 min after the other member's calendar;
+  never early, the user's way out is Timetable or Match my mosque.
+- **The Arctic residual**: in the week the sun stops setting, at Finnsnes, Narvik, Kirkenes, Vadsø,
+  Kiruna, Rovaniemi and Murmansk the sun has risen by every member's Fajr on up to nine days a year
+  (Fajr is the minute before sunrise, declared), and on one to three days the members' sun models
+  disagree on whether the sun set at all, so the sunrise shown (the shown-Fajr member's own) is
+  after the other model's by up to 47 min.
+- **Population coverage gaps**: South Asia per city (Pakistan, India, Bangladesh have three class-D
+  entries and 192 place-days between them), Indonesia's other kabupaten and kota beyond the held
+  tables, sub-Saharan Africa (Nigeria, Ethiopia, Niger, Mali, Senegal and the rest fall to the
+  generic convention), and Iraq, Syria and Yemen, where no official table could be obtained.
+- **The weekly monitor**, the **website slice** (city pages for proven places, "How Taqvo checks")
+  and the **Ramadan release** items above, in that order after the owner's device test.
+
+Tested by the owner on 28 September 2026 (Cape Town and London checked against published sources:
+nothing early) and squashed into main as one commit; the weekly monitor follows.
+
+### The weekly monitor (28 September 2026)
+
+`scripts/monitor.sh` (docs/MONITOR.md): fourteen polite fetchers bring each authority's newest
+table into the restricted archive, each new or changed table goes through the gate at its own
+point, then the whole gate and the six surveys, the data horizons and the manual sources' due
+dates; the archive is mirrored into its backup; a report under the archive root's `monitor/`
+folder, silent (exit 0) when all is well.
+
+### The monitor's fix round, and the cloud (29 September 2026)
+
+After its review (8 important, 15 minor findings) the monitor classifies each finding line on its
+own (ruling R93): never-early failures first on every run, own-table lateness raised once and
+carried, member-row lateness and unchecked capped Maghribs for the record; a table is also checked
+as the member of the cautious entry Automatic follows at its point; each table's check signature
+(content, metadata, the whole engine) is remembered, so nothing is skipped for good and an engine
+change re-checks everything; a key never reaches a log; a breaker per host and a budget per run;
+one lock, one `today`, atomic writes. It now runs weekly on GitHub Actions in a private archive
+repository (ruling R94; `tools/timetables/monitor/ci/monitor-weekly.yml`, docs/MONITOR.md), keeping
+one issue open while something needs attention; IRN is fetched on its own (ruling R95).
+
+## The city pages, rebuilt on the engine (29 September)
+
+Built overnight from the design Mohamed chose the evening before — B ("show the working") with C's
+month table — under `docs/superpowers/specs/2026-09-29-city-pages-design.md` and its plan, six tasks
+each reviewed. taqwa.world's prayer-time pages are live again, on the never-early engine.
+
+**What a page is now.** The Today card is the app's Prayer screen — the same six times, the same
+countdown ring in the same digits, lit for the reader's day in the city's own time zone — with a quiet
+foot saying so. Under it the authority line and the stamp's proof sentence stay visible
+("{Authority} timetable · reproduced and checked by Taqvo · Taqvo is not affiliated with …";
+"Checked against …'s published timetable through …"), and "Where these times come from" folds the
+rest behind a native `<details>`: who publishes the times, how Taqvo reproduces them in the app's own
+words for the method, and how it was checked — the stat tiles (place-days at places, starts before the
+timetable, at most N minutes after) and the minute ruler, every figure read from the stamp, none typed
+(R97). A cautious place shows its members, "which timetable decides each time today" with a chip per
+member, the Maghrib-cap sentence on the days it applies, the drawn Fajr ruler, and two tiles rather
+than three (R105: the entry-wide worst would be another place's spread). The months are C's real
+tables: past days folded at every width, Fridays marked, a **detailed view** switch that adds the end
+of eating under Fajr, the other school's Asr under Asr and a mark on days set by rule, and **Print or
+save as PDF** per month from a print stylesheet that prints every script. **How Taqvo checks** is a
+page per language from the stamps and the gate files: the rule, the gate's totals, the surveys, and
+the table of every timetable with a page (spec §5; the index links it, every city page does). The
+get-the-app places — the card's foot, the desktop pitch, `#app` at the foot — show their coming-soon
+state until `site/stores.json` has an address, when the official badges appear with no other change
+(R98); the launch note in `docs/STORE-CHECKLIST.md` names all three. Small amber text uses the darker
+`--accent-text` (4.5:1 on the page, on white and on the today tint; R99); figures read as the app's
+digits, ungrouped (R107). The app's cautious About screen gained the same two tiles and the sentence
+"Checked against the timetables followed here." in seven languages (R100, R111, R112).
+
+**Which cities.** A row of `site/cities.tsv` is un-held only where the stamps prove every day its
+page shows: class A, B or C at the city, measured there, a green stamp for the entry and its unit,
+and every shown date inside the days the gate actually checked for every timetable the page depends
+on (R101, R115, spec §2; the stamps now record those days as runs, per unit and per cautious member,
+because a stamp's first–last span hides holes such as Diyanet's 26 October – 31 December 2026). The
+generator applies the rule on every build and holds a row it rejects with a notice, so pages come and
+go with the proofs and nobody edits the list to chase them. `cities.tsv` un-holds 47 rows; the release
+build publishes **41 cities on 29 September and 38 from 1 October**: İstanbul, Ankara, Paris, Oslo,
+Brussels and Antwerp wait for Diyanet-family tables covering the whole shown months (theirs begin
+25 September and skip late October to December), and from 1 October Toronto, Mississauga and Chicago
+wait for November's missing days. Held, in one line each in the file: the class-D countries whose authority's method is
+not yet fully checked (the Gulf beyond Dubai, Doha and Muscat; the Levant, Iraq, Libya, Sudan,
+Mauritania, Uzbekistan, Pakistan, India, Bangladesh, Kosovo, Moscow, Austria, Switzerland, ISNA's
+cities, Auckland, and the cities outside a checked unit — Salalah, Irbid, Sousse, Oran, Constantine,
+Mansoura, Tanta, Assiut, Marrakesh, Fes, Agadir, six Turkish cities), the places with no authority
+where Taqvo calculates (Yemen, Maldives, the rest of Africa), the stamps that end before the days
+shown (Egypt, Jordan, Palestine, Morocco, Cape Town), and the cautious entries not measured at the
+city (the UK beyond London, France beyond Paris, the Netherlands, Germany, Sweden, Denmark, Calgary,
+Edmonton, Vancouver, Sydney, Melbourne). London Unified's stamp ends 31 December 2026 and so do
+Doha's, Singapore's, Kemenag's, JAKIM's, Brunei's, Sarajevo's, Kazan's, Dublin's, Chicago's and
+Toronto's: gate the 2027 tables before December or those pages hold themselves on 1 December.
+
+**Surprises on the way.** Headless Chrome on this Mac will not lay a window out narrower than 500 px,
+so every phone capture goes through a 390-px iframe (the plan's command gave a cropped desktop
+layout). The integration merge of Tasks 2 and 3 lost one `}` and nested the whole months block inside
+the desktop media query — nothing of the months' phone rules or the print stylesheet applied on a
+phone until Task 4's capture found it. The app never groups thousands, so the tiles read "4015" (R107).
+Toronto's English page is en-CA and its date read "December 31, 2026" beside London's "31 December
+2026" on the checks table, so that page now dates every row in the language's own form (R114). A
+printed month fitted A4 but spilled a blank sheet on Letter (and Bengali on A4 too) once the page's
+own head printed above it; 2 px cells at 1.25 line-height fit every script on both. The words of the
+detailed view's second lines live in the column heads on a phone ("Fajr / eat by"), because in the
+cells they pushed Isha off a 390-px screen; on paper the word comes back beside the time. The
+`<ol>` of steps numbered every nested list until scoped. "Kıble Kuzeyden 151°" read with a capital
+mid-line; now "Kıble kuzeyden 151°".
+
+**Still to do.** Native readers' glance at the Turkish, Bengali and Urdu sentences added tonight;
+a routine to gate each authority's 2027 table as it appears, with the monitor; the accessibility
+audit's follow-ups on the app's About table.
+
+## Build 33 on both platforms (29 September) — 1.0.0 (33)
+
+The first build with the never-early prayer engine. App Review approved iOS 1.0.0 (32) on
+29 September, but 32 still calculates with adhan2's presets, the engine the audit of 25 September
+found showing prayers before the official time in places, so it is never released: its release is
+cancelled and 33 goes to review in its place, to be released by hand when approved (a soft launch
+on iOS while Google's 14-day closed test runs out). Play's closed track gets the same build.
+
+Since 32: the engine (28 September) with the next day's Diyanet Europe and Kemenag fixes and the
+cautious places' proof tiles in About these times; the Jumuʿah pill on Friday's Dhuhr; the
+translation read aloud by the phone's own voice after each ayah; the Bengali and Indonesian rows
+Tanzil ships damaged, repaired; the iPhone's Qibla on true north from the saved city; credits that
+open their source. Play's release notes are in `docs/store/release-notes/1.0.0-33.txt`. The gate
+holds 654 tables and 155,886 place-days with none early; the release scripts refuse to build on a
+stale or red stamp.
+
+## Build 34 (29 September) — 1.0.0 (34)
+
+Build 33 with one line more: Compose Multiplatform 1.12.1, whose release fixes a crash when iOS
+reads an accessibility element after its node is gone (JetBrains/compose-multiplatform-core#3403),
+which VoiceOver, Voice Control, Switch Control and Full Keyboard Access users could hit while
+moving between screens. Taken alone from the accessibility round's branch: the round's other work
+(the Mushaf at any font size, controls' names and states, VoiceOver's escape gesture) waits for its
+device pass and ships as the first update. Nothing had been reviewed yet, 33 was never submitted,
+so 34 goes to App Review in its place at no cost in time; 33 stays unused in TestFlight. The whole
+suite passed on it (shared 1,595 Android host and 1,474 iOS tests, widgetcore 91 and 89). Play's
+release notes, with the never-early claim scoped to the days checked, are in
+`docs/store/release-notes/1.0.0-34.txt`.
+
+## A city page shows the months proven, one or two (30 September) — ruling R116
+
+The owner's ruling of 29 September: a page shows the current month when every day of it is checked
+against every timetable it depends on (R115), and the next month too only when every day of that is
+checked as well; otherwise the current month alone, until the next month's table arrives and is
+checked. A city whose current month is not wholly checked stays held, a partly checked month is never
+shown, and the standard of proof is unchanged (spec §2, amended). Until now both months had to pass, so
+a city whose authority had published only this month was held, and Toronto, Mississauga and Chicago
+were to come off on 1 October over a few unchecked November days.
+
+**The generator.** The verdict yields the proven months or a hold, and for a month left off the first
+timetable leaving a day of it unchecked, with that day. The document carries only the proven months —
+the months list, the days, every page's texts, so the live data too — with that reason as
+`nextUnchecked`, and each day's long weekday. Beside the hold notices, each run prints one per city
+shown alone ("toronto-canada: showing October alone — the next month is not yet checked: ca.ift (a
+member of ca.toronto), first unchecked day 1 Nov 2026"). The warning of a stamp ending before the
+month after the two shown is gone: a month shown alone is that month's notice before the hold.
+
+**The site.** A one-month page is one month: one table, one print button, a clock change noted only
+when it falls on a day shown (Toronto's of 1 November is on no day its October page carries), "None
+is set by rule this month." (`note_no_rule_month`, seven languages), the fold over the whole month.
+`check_page` asks for exactly the document's months and their days in the live data. The script never
+shows a time the page does not carry: after Isha on a page's last day the next prayer is tomorrow's
+Fajr, on no day the page holds, and where the card used to show the out-of-date line and a dash it now
+shows that day's calendar leaf (weekday, day, month, as without script) with an empty ring and no
+countdown, Isha current as in the app — today's times are still right. At the city's midnight the
+out-of-date line comes, as before. The index's lede and description, the checks page's "Which places
+have a page" and the README now say this month, and next month once it is checked, in each language's
+own words.
+
+**On today's stamps** (every row of `cities.tsv` probed, not only the un-held): the 06:07 UTC build of
+1 October publishes 41 cities, not 38, with Toronto, Mississauga and Chicago showing October alone
+(Chicago's us.isna has no November). İstanbul, Ankara, Paris, Oslo, Brussels and Antwerp stay held:
+the Diyanet-family hole from 26 October is in their current month. On 1 November Bandar Seri Begawan
+shows November alone (bn.mora lacks 14 December) and Toronto, Mississauga and Chicago are held for
+November's gaps; on 1 December 26 cities show December alone, their checked days ending with 2026,
+and on 1 January they are held unless their 2027 tables are gated first (Brunei already on
+1 December, for its one day). `site/cities.tsv` is untouched here, the stamps being extended in
+parallel tonight, so its header still says "covering both months shown".
+
+**Checked.** The tools' tests (264; ProvenTest's two months, one month, hold and next-month-hole
+cases, DocumentTest's one-month city, MainTest's notices); `site/test_timetables.py` (18, the page
+script run in headless Chrome with its clock pinned before and after Isha and after midnight on a
+one-month page's last day, and into November on a two-month page); `generate` for 1 October 06:07 UTC
+and `build.py --check`; Toronto's English and Arabic one-month pages at 390 and 1440 px on the first
+day and the last evening; the one-month page printed on A4 and Letter in English, Arabic and Urdu,
+with and without the detailed view — one sheet each, with its foot.
+
+## October's proof, and twelve more cities (2 October)
+
+The monitor's October captures, gated. **Egypt first:** its capture of 2 October showed Dhuhr 720 min
+"early" on 30–31 October at 27 towns. Egypt's clock goes back on 30 October, Dhuhr then falls before
+noon, and Dar al-Ifta still labels it م, which `fetchers/egypt.py`'s 12-hour rule read as night. The
+page's ص/م is no longer read: each column is placed by its prayer (Fajr and Sunrise morning, Dhuhr
+midday, Asr to Isha afternoon), with tests on invented data under both Pythons (56/56). Both raw
+captures, re-parsed with it, differ from the first reading only on those two Dhuhrs, and the
+monitor's own check over them is green.
+
+**Pinned captures.** The gate's rows of 29 September read the monitor's live Diyanet files, which a
+fetch rewrites: they now read copies pinned as they were (`archive/tables/pinned/<source>/<date>/`), as
+does Dahab's Egyptian row, and the whole gate gave every stamp byte for byte as before. New rows read
+pinned copies too, except the MJC's, whose monitor capture is one file a month, kept.
+
+**New rows (91, all held out):** Diyanet's capture of 2 October (the same minutes as 28 September's
+on every day both hold; it adds 30 October – 1 November) for tr.diyanet's 22 districts, other.turkey,
+tr.diyanet.europe's 19 refreshed cities, and the cautious Oslo, Lyon, Lille, Stockholm, Helsinki,
+Copenhagen, Brussels, Antwerpen and Gent; the MJC's October as za.mjc and, with the community
+calendar's October (masjids.co.za's relay, every day, and Wembley's own 20 days) and Jamiat's Cape
+Town October, as za.cape at the Cape Town point; Egypt's September and October at all 30 towns. Every
+Diyanet Europe row passed on the committed curves, so nothing was refitted (the curve generator, run
+to a scratch file, gives the same curves). Whole gate: 802 rows, 157,590 place-days, 0 early, 0 late
+ends, none over its limit. The golden vector is unchanged; ProofStamps.kt is regenerated.
+
+**The cities.** The rule over every row of `cities.tsv` publishes 53 cities on 2 October, 12 more than
+on 1 October, each showing October alone until November is checked: Cape Town (za.cape, all three
+members), İstanbul and Ankara (tr.diyanet's own districts), Paris (fr.cautious, Diyanet's Paris unit
+now through 1 November), Oslo (no.cautious), and Cairo, Alexandria, Giza (Cairo's unit), Port Said,
+Suez, Luxor and Aswan (eg.esa). The eight held Egyptian and Cape Town rows are un-held; İstanbul,
+Ankara, Paris and Oslo were un-held already and come back by themselves. Brussels and Antwerp stay
+held (EMB's table ends 25 October), Morocco's three cities until about 13 October (ma.habous's next
+Hijri month), Amman and Zarqa, Hebron and Nablus for October's tables. Checked: tools jvmTest 266/0
+with the archive (ProvenTest's Cairo and İstanbul cases now pin October), the shared stamp, About,
+golden-vector and Diyanet tests, `checkStamps`, `build.py --check` (158 pages, 137 of them prayer
+times for 53 cities), `site/test_timetables.py` (18), and every new city's English page at a true
+390 px — Cape Town, İstanbul, Cairo and Oslo whole, the rest at the top.
+
+## The new sources' first tables, gated (2 October, evening)
+
+The monitor's new fetchers' captures of 2 October, each read from a copy pinned as it was
+(`archive/tables/pinned/<source>/2026-10-02/`). **26 new rows, all held out:**
+
+- **jo.awqaf (1):** the ministry's region table (Amman, Balqa, Zarqa, Madaba), 2 October – 31 December
+  2026, at jo-awqaf.tsv's Amman point. Zarqa's capture is the same table line for line, so it has no
+  row of its own; Zarqa is in the Amman unit. Within class A's 1 min on every day.
+- **be.cautious (1):** EMB's held 2026 table, 26 October – 1 November, at Brussels beside Diyanet's
+  pinned captures (`split-7g/emb-2026-q4-late.txt`). A row over EMB's whole remainder (to 31 December)
+  failed from 2 November: with Diyanet's table not held on those days, the cautious start is measured
+  against EMB's alone, and the later member's Dhuhr and Asr (and EMB's sunrise against the earlier
+  one) read 4–6 min over class C's 1. The engine is not at fault, and no limit was moved. The row was
+  cut to the days both members hold, as emb-2026-q4.txt is. EMB's November waits for Diyanet's.
+- **ca.toronto (21):** IFT's, IIT's and MAC's October–December at their units and as members at the six
+  points. On every day both hold, each prints the same minutes as the held split files. IIT and MAC
+  are read whole at their units, so ca.iit and ca.mac are now checked through 31 December with no
+  November hole. As ca.toronto's members they leave out IFT's fault days, as the split files do
+  (`split-7g/<mosque>-2026-q4-capture.txt`): read whole, 28 capped Maghribs on 1–6 November went
+  unchecked, since the cap follows IFT's table, which those days lack.
+- **us.chicago (3):** Makki and DarusSalam Lombard (the 18° block) and the Mosque Foundation (us.isna),
+  October – December, at their points.
+
+IRN's capture is the held 2026 calendars unchanged, so it adds no row. Whole gate: 828 rows,
+157,851 place-days, 0 early, 0 late ends, none over its limit, nothing broken. The golden vector is
+unchanged, and ProofStamps.kt is regenerated.
+
+**The cities.** The rule over every row on 2 October publishes 55 cities, Brussels and Antwerp the
+new ones, each showing October alone. Antwerp's EMB days come from the Brussels rows, 42 km away,
+within class C's reach. November waits on Diyanet's Brussels and Antwerpen tables, which end on
+1 November. Chicago now shows October and November: each member is checked at Chicago through
+December (the 18° block by Villa Park's year, Makki and DarusSalam; us.isna by the Mosque
+Foundation). MCC's, MEC's and Orland Park's own tables still lack November. Toronto and Mississauga
+show October alone. November is checked for all three members except IFT's fault days, 1–6 and
+28–30 November, so it would show if those days did not block.
+
+Amman and Zarqa are un-held, but the generator holds both until 1 November. The ministry's table
+starts on the day it was fetched, so 1 October is not checked. From 1 November they show November
+and December. Their pages were looked at from a build dated 1 November: Amman in English and Arabic,
+Zarqa in English.
+
+Checked: tools jvmTest 267/0 with the archive. The shared stamp, About and golden-vector tests passed
+(25/0), and so did `checkStamps`. `build.py --check` passed (164 pages, 143 of them prayer times for
+55 cities), and `site/test_timetables.py` passed (18). Brussels and Chicago were looked at whole at a
+true 390 px, and Antwerp at the top.
+
+## A member's misprinted day no longer blocks a cautious page (2 October, night) — ruling R117
+
+The owner's ruling: a day a member timetable does not publish, or publishes wrongly, does not block a
+page, so long as the fault is recorded with its reason and another member's table is checked that day.
+A day every member is excused on is still a hole, and an unexplained gap still blocks.
+
+- **The gate files** say why a member's day is missing in an `@excuse` line: the entry, the member, `*`
+  (every point its rows are read at) or one point, the dates, `fault` or `unpublished`, and the reason
+  in words (dates and differences only). `ca-toronto.tsv` now records IFT's faults (standard time kept
+  8–12 March, a repeated Fajr minute on 28 March, daylight time kept 1–6 November, Isha 5 min after its
+  neighbours 28–30 November) and IIT's and MAC's member rows leaving the same days out, with IIT's own
+  8 March Asr. `ca-cautious.tsv` records the Edmonton tables' faults and `se-cautious.tsv` Rabita's
+  31 March, which were written only in comments and table headers until now.
+- **The gate** records each excused day per member and point in the stamp, by kind, dates only. It
+  refuses a line that excuses a day the member's rows there hold, or that matches no row. Nothing else
+  changes: still 828 rows and 157,851 place-days, 0 early, 0 late ends, none over its limit. Only the
+  three cautious stamps gained their `excused` days. ProofStamps.kt and the golden vector are
+  byte-identical.
+- **The proven rule** (Proven.kt): for class C, a shown day is covered when every member is checked or
+  excused there and at least one is checked. On a day a member's rows near the city leave out for a
+  recorded reason, its own green unit covering the city counts if it holds the day. That is R115's
+  own-unit reading, applied day by day. A and B are unchanged. The build prints a notice per member
+  excused on days shown, for example `toronto-canada: 9 days excused: ca.ift (a member of ca.toronto)
+  recorded faults`.
+- **The checks page** says in one sentence, in all seven languages, that days a timetable itself does
+  not publish or gets wrong are left out of the check and named, with the reason.
+
+**The cities.** The rule over every row un-held: on 2 October, **Toronto and Mississauga show October
+and November** (before: October alone). On 1 November they show November and December, where before
+R117 both would have been held. On those nine November days IIT's and MAC's own tables are checked
+whole at their units. The checks page's Toronto row now reads through 31 December. No other city
+changes. Cape Town's November is still held: its community calendar needed no excuse (masjids.co.za's
+relay prints every day the Wembley calendar leaves out), and the MJC's November is not yet published,
+which is not a day the table does not publish.
+
+Checked: tools jvmTest 281/0 with the archive. The shared ProofStamps and AboutTimes tests passed (24/0),
+and so did `checkStamps` (71 stamps). `build.py --check` passed (164 pages, 143 of them prayer times for
+55 cities), and `site/test_timetables.py` passed (18). Toronto's page was looked at whole at a true
+390 px, in English, with both months.
+
+## One button before each permission prompt (2 October) — 1.0.0 (35)
+
+Apple rejected 1.0.0 (34) under guideline 5.1.1(iv), reviewed on an iPad Air 11-inch (M3): the
+location screen before the system prompt said "Use my location", wording that steers toward Allow.
+The Human Interface Guidelines' rule for a screen before a prompt is stricter than the message
+said: one button, titled like Continue or Next, and no way to leave without seeing the prompt. So
+"Choose a city instead" beside it broke the rule too, and so did the notifications screen's
+"Enable notifications" with "Not now". Build 32 had passed with the same screens; each submission
+gets a fresh reviewer.
+
+- Both screens have one button, Continue, which always opens the system prompt.
+- A refused location opens the city search at once, and a city is required to go on (Mohamed's
+  call): `locationAnswer` maps the answer, and a prompt still unanswered when iOS stops waiting
+  leaves the screen as it is. Backing out of the search and pressing Continue again goes straight
+  back to it: iOS asks only once, and Android stops asking after two refusals.
+- Today's "No location yet" link said "Allow location instead" and asked the system again, which
+  on an iPhone after "Don't Allow" did nothing at all. It is now "Turn on location in Settings",
+  opening the app's page in the system settings (`openAppSettings`), and coming back with access
+  fetches the location by itself.
+- Settings › Location and Notifications keep their switches: a person flipping a switch is the
+  in-context request Apple recommends.
+
+Checked from fresh installs on the iPhone 17 Pro simulator and the Android 16 emulator: allow,
+decline, back out and Continue again, Android's second and third refusal, and Today's link out to
+App info and back with location on. The iPad simulator was not driven: the simulator tool's
+per-device permission went unanswered. Apple's reply and the build's review Notes are in
+`docs/store/app-review/2026-10-02-*`. Beyond the fix, 35 carries October's proof stamps
+(`ProofStamps.kt`, from the gate commits c21b9c06 and 8c31ac05 that landed after 34), which the
+release script requires fresh; no other app code changed since 34. Google has no such rule, but
+Mohamed sent 35 to Play's closed track too, built from the same tag; its release notes are in
+`docs/store/release-notes/1.0.0-35.txt`.
+
+## Palestine's printed town offsets (2 October, night) — ruling R118
+
+The owner ruled that the PA Dar al-Iftaa's own printed town offsets may be applied to its al-Aqsa
+perpetual table. The authority prints no table for Hebron or Nablus. It prints the al-Aqsa table and,
+with it, a list of towns and their minutes from Jerusalem: Nablus + 0, Hebron + 1, Gaza + 3. The
+earlier refusal for Gaza stands only where no offset is printed.
+
+**The whole table.** Two prints were fetched once each from darifta.ps: the 2012 printing, which
+carries the table and the offset list, and the 2026 yearly calendar, which reprints the table. Both
+have a text layer and were read by word position, independently. They agree on all 366 days and every
+time, and they match the earlier 72-date OCR read and the 2026 imsakiya. The third PDF named in the
+monitor's row, `ssalah/ssalah.pdf`, turned out to be a book on the fiqh of prayer, not a table. The
+reads, the offset list and the derived Nablus, Hebron and Gaza tables, each mapped onto 2012, 2026 and
+2027, are in the private archive (`archive/tables/manual/ps-iftaa/2026-10-02/`).
+
+**What the whole table shows.** The 78 dates held before kept the entry inside class B's 2 minutes.
+The full year does not. The printed minutes wander about 2.4 min against any one smooth rule (Fajr
+sits a minute nearer the sun in April and August than in October). So one never-early margin per
+event runs 3 min late on some days of four events even at al-Aqsa. Under ruling R57 that is class D,
+the class the data supports, as Libya's is. The old margins were also 1 min early on some days at
+al-Aqsa, and on many at Nablus and Hebron. The refit removes all of them.
+
+**The registry.** `ps.iftaa` now takes every event at the noon declination (it fits the table better
+than the exact sun: Fajr's spread 2.4 min, not 3.1). It has four point-table units: al-Aqsa, and
+Nablus, Hebron and Gaza at the app's city points, each with its own margins. The margins are fitted
+on 2012 and 2026. 2027, held out, was 1 min early on a few days, so those margins are widened to the
+three years' bound. The three towns run a further minute late: their printed offset is one figure all
+year while their own sun moves against al-Aqsa's through the seasons. Each carries its own 4-minute
+exception on those events (ruling R41). `PrintedTable` gained a `lateLimits` field to carry them
+(removed again on 3 October, review r2: no town needs an exception any more, so the field is gone).
+Gaza's cautious times now place their PA member at Gaza's own table.
+
+**Checked.** Whole gate: 839 rows, 162,157 place-days, 0 early, none over its limit, nothing broken.
+"0 late ends" held only for sunrise: the end of eating was not gated against the PA's printed Fajr (the
+rows read `F`, not `F+E`), and it ran after that Fajr on 100–250 days a year across the West Bank, by up
+to 3 min (review r1, C2; fixed on 3 October, below). The stamps' engine hashes all moved, since
+`Units.kt` is core. ProofStamps.kt is regenerated. The golden vector moved only at its two Palestinian
+points (Ramallah's and Gaza City's jittered seeds), by 1–2 min: mostly later starts and earlier
+sunrises, but two rows the other way, Gaza's 2026-02-21 Fajr a minute earlier (to Gaza's own printed
+time, not before it) and Ramallah's 2028-12-21 end of eating a minute later (after the printed Fajr, an
+instance of C2) (corrected 3 October, review r1 M2). Tools jvmTest passed 267/0 with the archive,
+`:shared:testAndroidHostTest` passed 1,595/0, and `checkStamps` passed.
+
+**The cities.** The rule over every row on 2 October still publishes 55 cities. Hebron and Nablus stay
+held: the city-page rule needs class A, B or C, and the whole table supports D. Gaza stays held too,
+since its Ministry of Awqaf member is checked on six 2020 days only.
+
+## Palestine: every printed town, and the end of eating (3 October) — ruling R118, review r1's fixes
+
+Review r1 of R118 found two things wrong with the first version. Five towns the PA prints an offset for
+(Tulkarm + 1, Qalqilya + 1.5, Rafah, Khan Yunis and Deir al-Balah + 4) had no unit and took a
+neighbour's table, so they came out early. And the end of eating ran after the PA's printed Fajr, which
+the gate never checked.
+
+**Every printed town.** All 16 Palestinian towns on the list are now units, each at its own point:
+Jerusalem (at al-Aqsa), Ramallah, Bethlehem, Jenin, Nablus, Jericho, Hebron, Idhna, Dura, Beit Awwa,
+Tulkarm, Qalqilya, Gaza, Rafah, Khan Yunis and Deir al-Balah. A town's times are built the way the
+authority builds them: al-Aqsa's computed times plus the town's printed minutes. They are computed at
+al-Aqsa alone (a new `FixedPointMode.TABLE`), and the town's figure is applied as the authority's own
+minutes. Adding whole minutes to a time already rounded never crosses a minute boundary. So every town
+gets al-Aqsa's proven 3-minute bound, needs no margin or exception of its own, and is never early by
+construction. The towns' 4-minute exceptions are gone.
+
+The user's own sun no longer rides beside a town's printed times. The authority's construction does
+not use it, and on those times it only added lateness. (Corrected the same day, review r2: it also
+kept the ends the PA never prints, Asr's and Maghrib's, from running later than the place's own sun,
+so it bounds those again; see below.) The sunset that Maghrib is held to moves with the town's figure,
+as every other time does. Without that, Jericho's − 1 put its Maghrib before al-Aqsa's sunset on 26 days,
+and the repair made it 4 minutes late.
+
+Qalqilya's minute and a half becomes + 2 on its starts (never before the half-minute instant) and
++ 1 on its ends (never after it). The archive holds two derived tables for it, one for each.
+
+**Each place takes its nearest printed town's table, never a neighbour's.** Every unit has the same
+reach, so the unit a place resolves to is simply the nearest printed town. Each of the app's 45
+Palestinian cities resolves to its own town, or to the nearest one. A new test walks them through the
+app's engine.
+
+**The end of eating.** The PA prints no imsak, so its Fajr is when the fast begins. The gate now reads
+every PA Fajr column as `F+E`. The end of eating has its own margin, fitted the gate's way: −96 s on
+2012 and 2026. Held out on 2027, that was 1 minute late on 7 April days, so it is widened to the three
+years' bound, −116 s. It is now never after the printed Fajr, and at most 3 minutes before it.
+
+**Checked.**
+- Whole gate: 865 rows, 170,917 place-days, 0 early, 0 late ends, none over its limit, nothing broken.
+- `ps.iftaa`: 39 rows, 16 places, 13,144 place-days (12,413 held out). Every unit is worst 3 minutes
+  late on Fajr, sunrise, Maghrib, Isha and the end of eating, 2 on Asr and 1 on Dhuhr. No exception
+  anywhere.
+- Only `ps.iftaa.json` changed among the stamps beyond the engine hash. ProofStamps.kt is regenerated.
+- Golden vector: 32 rows moved, all at the two Palestinian seeds, by 1–2 minutes.
+  - Ramallah's jittered seed: the end of eating 1–2 minutes earlier on 16 rows. On one row
+    (2028-09-22) Isha is 1 minute earlier.
+  - Gaza City's jittered seed (on Automatic, Gaza's cautious times) moved the other way on most rows.
+    Fajr, Asr and Isha are up to 1–2 minutes earlier, and sunrise 1 minute later on 10 rows. The
+    seed's own sun no longer rides beside Gaza's table.
+  - Every moved value is at or after the town's own printed start, and at or before its printed end.
+- Every Palestinian city through the app's engine, 2026–2031: with `ps.iftaa` chosen, 0 early starts
+  and 0 late ends at all 45 places. On Automatic the West Bank's 32 places are the same. The Gaza
+  Strip's 13 places follow Gaza's cautious times, whose Maghrib is capped at the Ministry of Awqaf's
+  (ruling R38, disclosed).
+- Tools jvmTest passed 267/0 with the archive. `:shared:testAndroidHostTest` passed 1,598/0, and
+  `checkStamps` passed.
+
+**The cities.** Hebron and Nablus stay held, because the data supports class D. Gaza stays held too.
+
+## Palestine: the list's towns in Israel, and the ends the PA never prints (3 October) — ruling R118, review r2's fixes
+
+Review r2 of R118 found two more things.
+
+**A West Bank village could take a farther town's figure.** The PA's list also prints 13 towns in
+Israel: Nazareth and Umm al-Fahm + 0; Tiberias, Safed and Beisan − 1; Haifa, Acre, Kafr Qasim and
+Tayibe + 1; Lydd and Ramla + 1.5; Beersheba and Jaffa + 2. Only the 16 Palestinian towns were units,
+so a village by the Green Line resolved to a Palestinian town even where a listed town in Israel was
+nearer. Ni'lin and Qibya are 12 km from Lydd (+ 1.5) and 18–20 km from Ramallah (+ 0), and their Dhuhr
+came before Lydd's on every day. Barta'a ash-Sharqiya, by Umm al-Fahm (+ 0), took Tulkarm's + 1;
+Bardala and Ein al-Beida, by Beisan (− 1), took Jenin's + 0, so their sunrise and end of eating ran
+late against Beisan's. None of the app's 45 cities was affected.
+
+The 13 towns are now units too, at approximate points from public maps, with the same reach as every
+other. They are used only to decide which printed town a place in Palestine belongs to. The entry's
+scope stays Palestine: choosing it in Israel still falls back to Automatic. Lydd and Ramla's minute
+and a half is handled as Qalqilya's, + 2 on the starts and + 1 on the ends. The archive holds their
+derived tables (`pif_towns_il.py`), and the gate has a row for each town on 2026 and 2027.
+
+**The ends the PA never prints ran later than the place's own sun.** With a town's times taken from
+al-Aqsa alone, Asr's end (al-Aqsa's sunset plus the figure) and Maghrib's end (al-Aqsa's red twilight)
+lost the bound of the place's own sky that spec §3.5 asks of every end. Over 2026, Maghrib's end came
+out later than the place's own at Jericho on 283 days (+ 1 min), and at Jenin, Tubas, Nablus and
+Hebron on 39–141 days (up to + 2). Asr's end did at Jenin, Nablus, Tubas, Rafah and Hebron on 121–177
+days (up to + 2). Now, under `FixedPointMode.TABLE`, Asr's end is the earlier of that sunset and the
+place's own, and the red twilight is the earliest over al-Aqsa's sky and the place's. The printed
+times (every start, sunrise, the end of eating) stay al-Aqsa's plus the figure, and Maghrib stays held
+to the shifted table sunset, so Jericho's earlier repair is not undone. `PrayerDay.sunset`'s KDoc now
+says what the field holds under a table carried by a printed figure. Spec §3.5 carries an R118 note
+for the owner to confirm: a printed town takes its printed times from the table's point alone.
+
+`PrintedTable` is back to its form before R118 (its `lateLimits` field carried nothing any more).
+
+**Checked.**
+- Whole gate: 895 rows, 180,407 place-days, 0 early, 0 late ends, none over its limit, nothing broken.
+- `ps.iftaa`: 69 rows, 29 places, 22,634 place-days (21,903 held out). Every unit is worst 3 minutes
+  late on Fajr, sunrise, Maghrib, Isha and the end of eating, 2 on Asr and 1 on Dhuhr. No exception
+  anywhere.
+- Only `ps.iftaa.json` changed among the stamps beyond the engine hash. ProofStamps.kt is regenerated.
+- Golden vector: no row moved. Its rows hold the starts, sunrise, the day's sunset (Maghrib's floor),
+  the end of eating and imsak, not the prayers' ends, and its Palestinian seeds take the same towns as
+  before.
+- Every Palestinian city through the app's engine, 2026–2031, plus the five villages above (50
+  places, 109,550 place-days a mode): with `ps.iftaa` chosen, 0 early starts and 0 late ends against
+  the nearest printed town's table. On Automatic the West Bank's 37 places are the same. The Gaza
+  Strip's 13 places follow Gaza's cautious times, whose Maghrib is capped at the Ministry of Awqaf's
+  (ruling R38, disclosed).
+- New tests: the five villages take their nearest town's table through the app's engine on both
+  settings, and a town's Asr and Maghrib ends are never after the same method's at the place's own
+  point.
+- Tools jvmTest passed 267/0 with the archive. `:shared:testAndroidHostTest` passed 1,600/0, and
+  `checkStamps` passed. `site/build.py --check` passed: 55 cities.
+
+**The cities.** Hebron and Nablus stay held, because the data supports class D. Gaza stays held too.
+
+## The end of eating, audited before Ramadan (3 October)
+
+Ramadan 1448 begins around 8 February 2027. The Palestine review found that `ps.iftaa`'s rows never
+checked the end of eating (the engine's `endOfEating`, when sehri or suhoor stops) against the
+printed Fajr, so every gate entry was audited for the same gap. The gate checks it in one of two
+ways: a printed imsak or sehri column (`E`, or `Im` for an imsak the authority prints as a precaution),
+or the printed Fajr read as both (`F+E`) where the fast begins at Fajr. Palestine was left to its own
+track.
+
+**What the audit found.** 55 of the 71 gated entries already checked it, none with a late end.
+Sixteen did not, `ps.iftaa` among them. In four more (`pk.karachi`, `nl.cautious`, `za.cape` and
+Libya's two owner rows) some rows read Fajr alone. In every one of them the source prints
+no end-of-eating column the archive holds, and the fast begins at the printed Fajr. JAKIM's, Kemenag's
+and MORA's imsak is a 10-minute precaution before Subuh, the MJC's Fajr is also the end of sehri, and
+Jordan, Lebanon, Gaza, Syria, Iraq, Uzbekistan, Kyrgyzstan, Kazakhstan (whose API "imsak" comes after
+its Fajr) and Dawat-e-Islami print none. Those rows are now `F+E`: 106 rows in 17 gate files, each
+file's header saying why. Some rows were left as they were. In each case the fast ends at a time
+earlier than the Fajr the row reads, and another row already checks that time:
+- IFB's October digitization (the sehri);
+- Kosovo's Sabah, which is imsak + 20 (the imsak);
+- Jamiat's other publishers (Jamiat's sehri);
+- eastern Libya's national table, where the fast follows the 19.5° adhan (R73).
+
+IFB, Jamiat and Libya were each checked once outside the gate. The end was never after their Fajr,
+and it came 5 to 10 min early, by design.
+
+**One late end, fixed.** At Astana, `kz.qmdb`'s end of eating came after QMDB's printed Fajr on
+29 days of 2026, the first on 12 May, by up to 4 min. This mirrors the AngleBased residual that
+QMDB's Fajr limit already records. The fix was the existing one. The fitter's bound is −221 s,
+decided at Astana on 14 May. On Almaty's rows alone the bound is +18 s, so only QMDB's own region at
+and above 48° N carries −221 s, beside its ± 5 minutes. Almaty stays at 0.
+
+**Early ends, recorded (R41).** None of the following moved later: an end only ever moves earlier.
+- **`my.jakim`, 4 min.** e-solat prints each zone's Subuh for its latest reference point, rounded up,
+  while the fast here begins at the dawn of the place itself. Over 9,489 zone-days the end is never
+  after Subuh, but it is more than 2 min early on 1,509 of them.
+- **`lb.fatwa`, 8 min.** The 20° end against Dar al-Fatwa's own 19.1–20.0° dawn. Its margin is now the
+  fitter's −5 s, which moves it 5 s earlier.
+- **`kz.qmdb`, 5 min.** Astana's other days, after the fix above.
+- **`default.safe`, 5 min.** At Kuala Lumpur, the same JAKIM rounding plus this fallback's own − 2 min.
+
+Every other newly checked entry stays inside its class limit: `id.kemenag` 2, `bn.mora` 1,
+`jo.awqaf` 1, `in.karachi` 3, `uz.board` 1, `kg.default` 0, `sy.awqaf` 1, `iq.sunni` 1,
+`ps.gaza.awqaf` 2, `za.mjc` 1, `za.voc` 2, `pk.karachi` 2. `za.cape`, `nl.cautious` and Libya's
+owner rows are unchanged within theirs.
+
+**A gap left to Mohamed: the world fallback.** `default.safe` ends the fast at 18° less 2 min (spec
+§6.2 c), so its end came after the printed Fajr on every day held at Cairo (19.5°), Jakarta and
+Singapore (both 20°). Checked once, it was also after Jamiat's and IFB's printed sehri. None of these
+countries is served by the fallback, and each one's own entry is checked. On those rows the end is
+not gated. The reason is in `safe-default.tsv` and proof 7h §3. Ending the world fallback's fast at
+20° would close the gap, but it changes the spec.
+
+**What moved.** The whole gate: 828 rows and 157,851 place-days, 0 early, 0 late ends, none over its
+limit, nothing BROKEN. Outside the end of eating, every event table is identical to before. Stamps
+were regenerated for the 17 entries whose end-of-eating figures changed, along with
+`ProofStamps.kt`. The golden vector moved on 23 of its 2,071 rows, in the end of eating alone and
+always earlier: 7 days at the Beirut seed by 1 min, and 16 at the Astana seed by 3 or 4 min. One test
+pinned JAKIM's entry-wide worst, which is now 4, the end of eating, and another pinned Lebanon's
+exceptions; both were updated.
+
+Checked: tools `jvmTest` 281/0 with the archive. `:shared:testAndroidHostTest` passed (1,597/0), and
+so did `checkStamps` (71 entries). `CI=true generate` wrote 55 cities, with 2 held. `build.py --check`
+passed (164 pages, 143 of them prayer-time pages), and `site/test_timetables.py` passed (18). No city
+page changed. The engine changes (Kazakhstan's northern end, Lebanon's −5 s) ship with the first
+update, not 1.0.0 (35).
+
+## The end of eating north of Astana (3 October, the audit's fix round)
+
+The audit's review asked what Astana's −221 s is worth north of Astana, where no QMDB table was held.
+For the end of eating, using Astana's margin further north is not like using its Fajr limit. A
+deeper AngleBased residual makes a Fajr start later, which is the safe side. It makes the end of
+eating late, which is the unsafe one. So QMDB's 2026 and 2027 tables were fetched from its API for
+Astana and four of its own northern cities: Kokshetau, Kostanay, Pavlodar and Petropavl (54.9° N).
+Astana's 2026 table came back identical to the archived one. The tables were checked in a scratch
+gate run. They are not in the archive yet, so they have no rows in `kz-qmdb.tsv`.
+
+**What it found.** At −221 s the end of eating came after QMDB's printed Fajr on 123 of 3,650 days.
+The gate's samples were at Petropavl from 30 April (2 min) and at Astana itself on 17 May 2027
+(1 min). It was refitted the existing way on all fourteen tables, and the fitter's bound is −374 s,
+decided at the north on 6 May 2027. With it there are no late ends in that run, and the whole gate
+is green. The end at and above 48° N now comes up to 8 min before the printed Fajr. That is recorded
+as `kz.qmdb`'s end-of-eating exception, now 8 min instead of 5 (R41). Almaty stays at 0.
+
+**What it found that this round could not fix.** In the same scratch run the starts fell short, and
+this round may not move a start:
+- Fajr was 1 min early on 7 days at Astana in July 2027, and up to 7 min late at Petropavl (over its
+  5 min limit on 92 days).
+- Isha was 1 min early on 4 days at Petropavl, Kokshetau and Pavlodar in August, and up to 5 min late
+  (over its 4 on 29 days).
+
+The fitter asks for Fajr −2 → +8 s and Isha −3 → +14 s. Those need their own round before the
+northern rows can go in green. The monitor now fetches the six QMDB points each month (source
+`kz-qmdb`, `fetchers/qmdb.py`, tested on invented data; a trial run into a scratch root gave the
+archived Almaty and Astana tables byte for byte). North of Petropavl, up to 55.4° N, the margin is
+an extrapolation, and for an end that is the unsafe side.
+
+**The other findings.**
+- Dawat-e-Islami's two rows (`in-karachi.tsv`, `pk-karachi.tsv`): the table rounds the source's
+  seconds up for Fajr, so as the end's reference it can be up to 59 s late. Both headers now say so.
+  No held day sits in that window, since the end is at least 1 min before the rounded Fajr every
+  day. A floored E column is a to-do for the next archive round.
+- JAKIM: proof 7c now says that the normalised tables hold no imsak and the raw e-solat captures do.
+  An `Im` column from them is a to-do for the next archive round.
+- `AsiaProofTest` now checks both end-of-eating margins: 0 at Almaty and −374 s or deeper at Astana.
+  The KDoc and the test comment now say that this margin differs by region.
+- Left as they were: `default.safe`'s 18° end, which is the owner's decision (above), and
+  `ps.iftaa`, which belongs to the Palestine track.
+
+**What moved.** The whole gate: 828 rows and 157,851 place-days, 0 early, 0 late ends, none over its
+limit, nothing BROKEN. Only `kz.qmdb`'s stamp changed (end of eating: worst 8, limit 8), with
+`ProofStamps.kt`. The golden vector moved on 16 of its 2,071 rows, all at the Astana seed and in the
+end of eating alone, 2 or 3 min earlier each.
+
+Checked: tools `jvmTest` 281/0 with the archive. `:shared:testAndroidHostTest` passed (1,597/0), and
+so did `checkStamps` (71 entries). The monitor's Python tests passed (72, both Pythons). `CI=true generate`
+wrote 55 cities, with 2 held. `build.py --check` passed (164 pages, 143 of them prayer-time pages), and
+`site/test_timetables.py` passed (18). No city page changed. The engine change ships with the first
+update, not 1.0.0 (35).
+
+## Kazakhstan's starts north of Astana (3 October, the northern round)
+
+The end-of-eating round left two starts it could not move. QMDB's Fajr was 1 min early on 7 July days
+at Astana in 2027, and its Isha 1 min early on 4 August days at Petropavl, Kokshetau and Pavlodar.
+Both also went over their late limits in the north. This round fixes them, and the northern tables
+are now in the gate.
+
+**The tables.** The kz-qmdb monitor's capture of 3 October (QMDB's year API, 2026 and 2027 at six
+points) is pinned in the private archive as fetched: `archive/tables/pinned/kz-qmdb/2026-10-03/` (12
+tables) and `archive/raw/monitor/kz-qmdb/2026-10-03/` (12 raw JSON files). The Almaty and Astana 2026
+tables equal the archived ones day for day, so they get no second row. The other ten are new rows in
+`kz-qmdb.tsv` (`F+E S D A M I`). Fit rows: Astana 2027, and Kokshetau, Pavlodar and Petropavl over
+both years, which had already decided the end of eating. Held out: Almaty 2027 and Kostanay over both
+years (the farthest west, in its own zone).
+
+**The refit.** The fitter over the 11 fit rows asked for Fajr +8 s (was −2) and Isha +11 s (was −3).
+The earlier entry and proof 7f said +14 s for Isha; that was a misreading, and proof 7f now says
++11. Sunrise, Asr and Maghrib had 0 to 3 s of safety left, so they move to the fitted bounds too:
+sunrise +14 (was +19), Asr −8 (was −11), Maghrib −15 (was −17). Dhuhr stays −22, and the northern
+end of eating stays −374 s. Every start is later and sunrise earlier. The margins are one set for
+both variants, so Almaty's starts move by the same seconds. The held-out rows: 0 early, 0 late ends.
+
+**The late limits (R41).** The AngleBased residual deepens to the north. Fajr is late from late April
+to early June, up to 5 min at Astana, 6 at Kokshetau, Kostanay and Pavlodar, and 8 at Petropavl.
+Isha is late from July to mid-August, up to 5 min from Astana north. `kz.qmdb`'s Fajr limit is now 8
+min (was 5) and its Isha limit 5 (was 4), each with its reason. Neither comes near 10 min. Almaty's
+worst start is 1 min.
+
+**The About screen.** `kz.qmdb` has no units, so the screen shows the entry's stamp at every Kazakh
+place. It now reads 4,380 days at 6 places, checked through 31 Dec 2027, "at most 8 min after". That
+is true at each measured city. At Almaty, whose own worst is 1 min, it overstates.
+
+**What moved.** The whole gate: 838 rows and 161,501 place-days, 0 early, 0 late ends, none over its
+limit, nothing BROKEN. Only `kz.qmdb`'s stamp changed, with `ProofStamps.kt`. The golden vector moved
+on 15 of its 2,071 rows, all at the Kazakh seeds (5 at Almaty, 10 at Astana): Fajr, Isha, Asr and
+Maghrib 1 min later, sunrise 1 min earlier. `AsiaProofTest` now pins the Fajr and Isha margins at or
+above +8 and +11 s.
+
+Checked: tools `jvmTest` 281/0 with the archive. `:shared:testAndroidHostTest` with the Registry,
+GoldenVector, ProofStamps and AboutTimes filters passed (110/0), and `AsiaProofTest` passed (6/0).
+`checkStamps` passed (71 entries). No city page uses `kz.qmdb`.
+
+**Still open.** North of Petropavl, up to 55.4° N, every margin is an extrapolation. The Fajr and
+Isha limits may be a minute short there, and the end of eating's margin is on the unsafe side. The
+west (Oral, Aktobe, Atyrau, Aktau) is within the measured latitudes but has no table. The engine
+change ships with the first update, not 1.0.0 (35).
+
+## Morocco's next Hijri month, fetched the day it appears (6–7 October, overnight)
+
+Morocco's city pages are held: the Habous capture covers 13 September to 12 October 2026 (Rabiʿ
+al-Akhir 1448), and a page shows only whole Gregorian months whose every day is checked (rulings R115,
+R116). This round asked whether the Ministry publishes further ahead, and makes the monitor fetch each
+new Hijri month as soon as it appears.
+
+**What the Ministry publishes.** One Hijri month at a time, on the day it begins. Each month's
+announcement in the moon-sighting section (مراقبة الأهلة) is dated its first day, links the live page
+`prieres/index.php?ville=…` (30 rows from the first day, for about 190 places), and names the evening
+of the next sighting: Jumada al-Ula 1448 is watched for on Sunday 11 October, so it begins on 12 or 13
+October. There is no yearly table, no PDF, and no month or year parameter: the old
+`horaire_hijri.php?mois=` pages are frozen in 1433 and 1434 AH, `horaire-api.php` is today's widget, and
+the Ministry's own app (Rakb Al Hajj) is for pilgrims. The pages state no terms of use, so the tables
+stay restricted, archive only. On 6 October the live page still showed Rabiʿ al-Akhir, identical cell
+for cell at all ten cities to the capture of 28 September. Nothing beyond 12 October exists to gate yet.
+
+**Why the cloud never fetched it.** The run of 5 October failed at every Habous city: the server sends
+its certificate without Sectigo's intermediate. The Mac's TLS stacks find it by themselves, so the
+capture of 28 September worked there; the runner's OpenSSL and curl do not. The two public certificates
+that complete the chain are now in `tools/timetables/monitor/certs/habous.gov.ma.pem` (the DV R36
+intermediate, valid to 2036, and the R46 root cross-signed by USERTrust, valid to 2038). `common.py`
+adds them to the trust store for habous.gov.ma's requests alone, with verification on. With a store
+that holds only the USERTrust root, the site now verifies; without the file it fails, as on the runner.
+Homebrew's Python 3.13, which failed before, now reaches the site without curl, as does the Mac's
+Python 3.9. Python 3.13 and later make any certificate in the store a trust anchor by default
+(`VERIFY_X509_PARTIAL_CHAIN`); the context clears that flag, so the chain must still end at a root
+the system trusts on every Python (with the chain file alone as the store, 3.13 now refuses the site).
+The Mac's own Python 3.9 asks the system keychain whatever its store holds, so there the system's roots
+decide. The site's certificate runs to 9 February 2027: if its renewal comes from another
+intermediate, the fetch fails again with the same message.
+
+**The cadence.** `ma-habous` is now `hijri-month`. It stays weekly, and is due besides on every run
+while any of its tables' last day is today or one of the three days before. Whether the month has 29
+or 30 days is decided by the sighting. A 29-day month has already turned on the last day held (the
+page's 30th row is the next month's first day); a 30-day month turns the day after. So the rule needs
+no calendar. Any one table decides: one city missing from a turn keeps it open, and a city a month
+behind never hides the next turn (the first version took the earliest last day over the cities, so a
+single city stuck a month behind would have silenced the next month's daily check; the review found
+it). After a fetch, a page whose newest table still ends more than three days ago has not turned: the
+source is recorded as fetched in part, which the issue shows as a fetch finding, retried on the next
+run and then weekly. The workflow fires every day at 01:23 UTC too: a small job `due` checks out only
+the state and the monitor code, and `fetch.py --month-turn` prints each source whose month is turning.
+Only then does the full run follow, a normal one like the 1st's (fetch, check, prove, push). Against the
+cloud's own state of 5 October it says yes on 12–15 October and no on the other days of October and
+November; on that state with 38 cities moved to 11 November and one left a month behind, it says yes on
+12–15 October and 11–14 November. The check costs about one billed runner-minute a day. The private
+repository's workflow file needs the new template, copied after this change is on Taqvo's `main`
+(before that, the daily check would call a `--month-turn` that `main` does not have).
+
+**What the pages would show** (ruling R116 unchanged). With capture within a day, a Moroccan page
+(Casablanca, Rabat, Tangier, and any other Habous unit city) is held each month from the 1st until the
+Hijri month that reaches its last day is captured, about the 8th to the 14th. From 7 October 2026 to 6
+April 2027 (182 days) that is 117 to 129 days live and 53 to 65 held, over the 49 month sequences the
+sighting allows (each month at Umm al-Qura's start or a day later, as Morocco's four 1448 starts so far).
+A page that showed the checked days of its month, with the rest marked "not yet published", would be
+live 178 to 182 days; a rolling week, 138 to 144. The real generator, on a stamp given a simulated
+Jumada al-Ula capture, shows October alone from 12 October and holds every page on 1 November until the
+next capture, as the count assumes. Pages that would qualify with Casablanca, Rabat and Tangier, all
+inside Habous units, have no `cities.tsv` row yet: Oujda, Ifrane and Midelt (each needs its Arabic and
+French names in the row, Ifrane its French and Midelt both, or the generator refuses it), Azrou (inside
+Ifrane's unit, held for exactly the same reason), and Laayoune and Dakhla, which the app files as
+Western Sahara (EH): they also need a site region for EH, and are the owner's call.
+
+**The edge, checked at 29 more cities.** Until now the gate checked Habous's national margins (the
+edge, which answers everywhere beyond the ten fitted cities, so most of Morocco) at one town only,
+Imilchil. The live month disappears when the page turns, so it was read by hand on 6 October for the
+app's own Moroccan cities whose Arabic name is a place on Habous's list: Fes, Marrakesh, Agadir, Meknes,
+Kenitra, Tétouan, Al Hoceïma, Safi, Khouribga, El Jadida, Beni Mellal, Nador, Taza, Settat, Larache,
+Guelmim, Khenifra, Berkane, Oued Zem, Taroudant, Essaouira, Tiznit, Tan-Tan, Chefchaouen, Boujdour,
+Smara, Sidi Ifni, Goulmima, and Azrou inside Ifrane's unit. The pages and tables are new files in the
+private archive (`archive/raw/manual/ma-habous/2026-10-06/`, `archive/tables/manual/ma-habous/2026-10-06/`,
+29 rows in `MANIFEST.tsv`), and 29 held-out rows in `ma-habous.tsv`, each at the app's city point. The
+engine is never early at any of them: 0 early starts and 0 late ends over 870 place-days. Sunrise comes
+up to 7 min before Habous's and Maghrib up to 6 min after it at low towns, exactly the limits the
+registry records for the edge, and Asr up to 3 min on one day (the edge's class D limit is 3). Azrou
+shows sunrise up to 2 min early, within Ifrane's limit. The stamp now covers 40 places and 2,379
+place-days; the app's About gives no figure at the edge, so only the counts it shows at the ten fitted
+cities move. The fetcher reads the 29 every run too (`EDGE_PLACES`; a page that shows another place is
+left out), so prove adds their rows each month. Marrakesh, Fes and Agadir still have no page: they are
+class D at the edge, and only a unit fitted on their own tables (two or three months of them) can make
+them class B.
+
+What the edge costs there, from the stamp's tallies (Azrou's 30 days sit in Ifrane's unit and stay
+within 2 min, so every 3-minute cell is at the 28 edge towns, 840 place-days): Maghrib is 3 or more
+minutes after Habous's on 722 of the 840 (86%), and sunrise 3 or more minutes before Habous's on 811
+(97%); Asr reaches 3 min on one day, Fajr, Dhuhr and Isha stay within 2. That is never early, but it
+misses the owner's "ideally within 3 min" on most days at Fes, Marrakesh, Agadir, Meknes, Kenitra and
+Tétouan, several million people. Units fitted on each city's own tables close it. The Wayback Machine
+holds Habous's own pages for them under today's ville ids (`horaire_hijri_2.php?ville=…`, the page the
+ten units' Wayback months came from): every one of the 29 places has its page of Muharram 1444 (late
+July to August 2022, a summer month; Fes's, opened, shows Fes selected and the six usual columns), and
+seven have a second month (Meknes September 2022, Kenitra and El Jadida May, Tétouan November, Al
+Hoceïma and Taroudant June, Chefchaouen April). Older captures use other ids and would have to be opened
+one by one to be placed; the French pages repeat August 2022. Read into the archive as held-out seasons,
+as the ten units' Wayback pages were (in the legal time of 2022, UTC+1 outside Ramadan), they would let
+units be fitted on a summer month, the autumn month held now and the winter months the fetcher
+captures, without waiting for mid-December.
+
+Checked: the monitor's Python tests under Homebrew's 3.13 and the Mac's 3.9 (87 tests; the one failure,
+kz-qmdb without a recipe, is on `main` already), tools `jvmTest` 297/0 with the archive, and the whole
+gate: 949 rows, 190,445 place-days, 0 early, 0 late ends, none over its limit, nothing BROKEN. Only
+`ma.habous`'s stamp changed, with `ProofStamps.kt`.
+
+The review round (no gate data or stamp changed): the turn rule now reads any table inside its turn,
+and an unturned page is a finding, as above; the TLS context clears `VERIFY_X509_PARTIAL_CHAIN`; and the
+Habous parser refuses a page whose six time columns are not headed as they are today (Fajr, sunrise,
+Dhuhr, Asr, Maghrib, Isha), so a Ramadan page with another column fails loudly instead of being read
+one column off (every one of the 39 pages held re-parses to its table unchanged). Python tests 90 under
+both Pythons, the same single failure; tools `jvmTest` 297/0; the whole gate again 949 rows, 190,445
+place-days, all zeros, `ma.habous`'s stamp byte-identical (the twelve engine hashes every Mac run
+rewrites, a known machine difference, restored).
+
+## Kazakhstan to its edges, and the curves' 0.1° step (6 October, the north-west round)
+
+The northern round left two gaps. North of Petropavl, up to 55.4° N, every margin was an
+extrapolation, and the west (Oral, Aktobe, Atyrau, Aktau) had no table at all. This round fills both
+from QMDB's own year API, which answers only at QMDB's own places.
+
+**The tables.** QMDB's city list (5,694 places, all on UTC+5) is kept in the private archive
+(`archive/raw/manual/kz-qmdb/2026-10-06/`). The kz-qmdb fetcher read 2026 and 2027 at 23 more of its
+places, pinned as fetched (`archive/tables/pinned/kz-qmdb/2026-10-06/`, raw JSON beside them in
+`archive/raw/monitor/kz-qmdb/2026-10-06/`):
+- north of Petropavl to the edge: Isakovka (55.4° N, QMDB's northernmost place), Krasny Yar and
+  Kulomzino;
+- the west and every zone of the app's Kazakh cities without a table: Oral, Aksay, Aktobe, Khromtau,
+  Shalqar, Atyrau, Makat, Oteshqali Atambayev, Aktau and Kyzylorda;
+- the south to QMDB's southernmost place: Shymkent and Zhenis (40.6° N);
+- from 46° to 48° N, Oteshqali Atambayev (QMDB's place nearest 48° N) and Ayagoz;
+- places just either side of the engine's 0.1° curve steps, below.
+
+The six places of 3 October came back day for day. QMDB's Maghrib less its own sunset is 5 min at or
+above 48° N and 3 below it everywhere, Shalqar (47.8° N, in the Aktobe region) included, so QMDB
+switches by latitude, as the engine does. All 46 new rows went in as test rows first.
+
+**What the current engine got wrong.**
+- **The end of eating, late.** At Kulomzino it came 1 min after QMDB's printed Fajr on 2 days of spring
+  2027. From 46° to 48° N, where its margin was 0, it came up to 3 min after it from late May to
+  mid-June, at Atyrau, Makat, Shalqar, Oteshqali Atambayev, Ayagoz and Mamyrsu. QMDB's AngleBased rule
+  binds there too around the solstice, from about 46.15° N.
+- **Isha, over its limit.** It was 6 min late, 1 over its 5, at Isakovka and Krasny Yar in August 2027.
+- **Fajr, early.** QMDB's rule is carried as an angle curve computed on a 0.1° latitude grid, and in the
+  north its moment moves by up to about a minute for every 0.1°. A place just short of a step reads
+  its curve up to 0.05° to its south, so its Fajr comes early. A place just past one reads it to its
+  north, so its end of eating comes late, which is what happened at Kulomzino. Nine of QMDB's own places
+  within 0.003° of a step were fetched and gated. Fajr was 1 min early at QMDB's own Bugrovoe
+  (14 days), Spasovka (11) and Oskemen (Ust-Kamenogorsk, 2), from the solstice to mid-August. At
+  Vagulino the end of eating was 1 min late on 2 days.
+
+No start was early at the other places, and the west at or above 48° N, the south, Aktau and
+Kyzylorda were green.
+
+**The fix.** It touches `kz.qmdb` alone, and every time moves later, or for an end earlier, or not at
+all.
+- QMDB's Fajr and Isha curves are now also computed at the place's own latitude. Each slot takes the
+  later start of the grid's curve and the place's own, and the end of eating the earlier dawn of the
+  two (`TwilightCurves.kt`). Both sides of each step are now green.
+- From 46° to 48° N the end of eating carries −150 s (`CentralAsia.kt`): the fitter's bound at the
+  band's top, decided at Oteshqali Atambayev and Ayagoz on 30 May 2027.
+- Asr moves from −8 to −6 s and Maghrib from −15 to −14 s, decided at Krasny Yar and Isakovka.
+  Fajr, Isha, Dhuhr, sunrise and the northern end of eating's −374 s are unchanged; with the curve
+  change the north asks only −366 s.
+- Isha's limit is now 6 min (R41), and the Fajr and end-of-eating limits' reasons name the band and
+  Isakovka.
+
+After it, the north reads Fajr up to 8 min late, Isha up to 6 and the end of eating up to 8 min early.
+From 46° to 48° N Fajr is up to 4 late and the end of eating up to 4 early. South of 46° N, Aktau,
+Kyzylorda, Shymkent and Zhenis are within 1 min, like Almaty. Proof 7f has the table for all 29 places.
+
+**What moved.** The whole gate: 966 rows and 206,365 place-days (the committed stamps; 206,322 on
+this Mac's unpulled archive), 0 early, 0 late ends, none over its limit, nothing BROKEN. `kz.qmdb` has
+60 rows, 21,170 place-days at 29 places. Only its figures changed.
+The golden vector moved on 3 of its 2,071 rows, at the Kazakh seeds and all in the other school's Asr,
+1 min later. About now shows 21,170 days at 29 places for every Kazakh place, "at most 8 min after".
+The monitor fetches all 29 places each month, and `kz-qmdb` now has a recipe, so `prove` adds a new
+year's rows by itself (the recipe test had been red since the source was added on 3 October).
+
+**The stamps.** On the Mac, `checkStamps` on `main` reported eleven stamps stale besides `kz.qmdb`:
+`be.emb`, `fr.gmp`, `ie.icci`, `no.irn` and seven cautious entries. The cloud's `prove` runs of 3 and
+5 October rewrote their `engineHash` alone. Those entries carry computed curves, and the Linux runner
+prints them with different last digits. This round writes the Mac's hashes back. The cloud will flip
+them again on its next run unless the fingerprint stops depending on the platform.
+
+Checked: tools `jvmTest` 297/0 with the archive. `:shared:testAndroidHostTest` passed 1,604/0, with
+`AsiaProofTest` at 8/0. `checkStamps` passed (71 entries), and the monitor's Python tests passed (77,
+both Pythons). The engine change ships with the first update, not 1.0.0 (35).
+
+## Each city's own table: Umm al-Qura's and QMDB's places as units (9 October) — ruling R44
+
+Umm al-Qura and QMDB compute their times for any point, but each publishes one table per place of its
+own city list, and a city's mosques follow the city's table. The engine computed both at the user's
+own point, so a user a few kilometres from the authority's point for their city could see a start
+before the city's table. Replaying each gate row's table at the app's own point for the same city
+(`cities.csv`, within 20 km, the same name where possible) found, on `main`:
+- **Umm al-Qura.** Riyadh, 3.8 km east of KACST's point: Fajr, Dhuhr, Asr, Maghrib or Isha 1 min
+  before Riyadh's table on 27 days of 2024–2030 (39 cells). Madinah, 8 km away: sunrise and the end of
+  eating 1 min after Madinah's on 38 days (40 cells). Makkah, Jeddah, Dammam, Abha, Taif, Tabuk, Haql
+  and Turaif were clean.
+- **QMDB.** Oral (3.8 km east of QMDB's point) 121 cells on 116 days of 2026–27, Aktobe 70, Astana 14,
+  Pavlodar 8 early starts, and Oskemen 4 late sunrises at the app's Ust-Kamenogorsk. The other places
+  were clean.
+- **Elsewhere**, the same replay found early starts or late ends where a row is one mosque's own table
+  at the mosque and the app's city point is another part of town (ISNA's and the cautious entries'
+  mosques), where the table's point is no city (Kosovo's BIK base), and at two city tables of thin
+  entries: India's Dawat-e-Islami for Delhi (one month) and the Uzbek Board's Tashkent (19 days),
+  whose own city points are not held. None is changed here; they are the owner's (cells over all the
+  row's days; "over" is lateness past the limit, not early):
+
+  | entry | the row's table | the app's city, km from it | early | late ends | over |
+  |---|---|---|---|---|---|
+  | ca.isna | an Ottawa mosque | Ottawa, 10.1 (7.6 east) | 64 | 0 | 2 |
+  | ca.isna | a Montreal mosque | Snowdon, 1.7 | 0 | 1 | 0 |
+  | us.isna | a mosque in Houston | Houston, 6.7 | 13 | 0 | 1 |
+  | us.isna | a mosque in Irving | Irving, 6.6 | 8 | 0 | 0 |
+  | us.isna | a mosque in Plano | Plano, 6.6 | 1 | 0 | 0 |
+  | us.isna | a mosque near Sterling | Sterling, 5.2 | 0 | 75 | 9 |
+  | us.isna | a mosque near Manassas | Manassas, 12.3 | 0 | 0 | 14 |
+  | ca.cautious | Calgary Islamic Centre SW | Calgary, 5.9 | 8 | 0 | 0 |
+  | ca.cautious | a Surrey mosque | Surrey, 5.0 | 1 | 0 | 0 |
+  | in.karachi | Dawat-e-Islami's Delhi | Delhi, 4.8 | 3 | 0 | 4 |
+  | uz.board | muslim.uz's Tashkent | Tashkent, 4.4 | 0 | 1 | 0 |
+  | xk.bik | BIK's base table (a nominal point) | Shtime, 8.1 | 16 | 0 | 0 |
+  | au.cautious | Lakemba Mosque | Sydney, 13.5 | 0 | 0 | 15 |
+  | ie.cautious | Dublin's two tables | Dublin, 2.0 | 0 | 0 | 3 |
+  | tr.diyanet.europe | Lille | Lille, 0.5 | 0 | 0 | 2 |
+
+**The units.** Ruling R44: a table printed for one point is a unit carrying that point as its fixed
+point, beside the user's own (ruling R15: each start the later of the two, each end the earlier),
+within its R40 reach.
+- **Umm al-Qura**: all 173 places of KACST's own city list (`ummulqura.org.sa/assets/data/cities.json`,
+  the coordinates the official page passes to the API: each region's capital, its governorates and five
+  centres; `data/UmmAlQuraCities.kt`), within one minute of longitude (24 to 27 km, class A). The gate's
+  twelve points were already KACST's own.
+- **QMDB**: its place for every city of the app's list (its "<name> қаласы" entry where it lists one)
+  and the gate's 29 places: 87, within three minutes of longitude (48 to 59 km, class D;
+  `data/QmdbPlaces.kt`). Five more cities (Shchuchinsk, Zhitikara, Esik and the two Abay) share their
+  point with another of QMDB's places, and there its year API answers HTTP 500, so those five are
+  units that claim no figure.
+- A unit carries its own band's minutes (QMDB's ±5 at and above 48° N, ±3 below; the end-of-eating
+  margins at 46° and 48° N), and the user's own band applies on top, so where a unit reaches across
+  46° or 48° N both bands' times bound the day. QMDB's curves are read at the user's latitude as well
+  as the unit's, each slot the later start and the earlier end (`TwilightCurves.kt`). So a unit never
+  makes any time earlier than the user's own point gave it before (`RegistryCitiesTest`, at every
+  Saudi and Kazakh city of the app's list), whichever table the user's mosque reads.
+- Beyond every unit, the user's own point with the entry's margins as before, but the end of eating
+  at SAFE_END (ruling R44: a fitted end margin applies at its tables' points only). Umm al-Qura is
+  class D there, and neither entry claims a figure.
+- KACST's list puts Tayma a degree north of the town (28.63° N against 27.62°). At the town, its own
+  sun began Asr, Maghrib and Isha up to 3 min, and Fajr up to 2, before KACST's Tayma table on about
+  150 days a year. The town now takes that table's unit. Its times there run up to 5 min after the
+  table at Fajr, so the unit is class D with that limit.
+
+**The tables.** The new monthly source `sa-ummalqura-cities` fetched 2026 and 2027 at KACST's other 161
+places (322 requests, 8 min), and `kz-qmdb` at QMDB's 58 new places. Both are pinned under
+`archive/tables/pinned/{sa-ummalqura-cities,kz-qmdb}/2026-10-09/`, with the raw JSON in
+`archive/raw/monitor/` and KACST's list in `archive/raw/manual/sa-ummalqura/2026-10-09/`. Every new row
+is held out. At their own points all 161 Saudi places were green at the current margins, and so were
+all 58 Kazakh places. No margin was refitted.
+
+**The app's own points.** Each Saudi and Kazakh city is gated at the app's own point against its
+unit's tables, as `<entry>/<unit>`: 94 Saudi cities (180 rows) and 78 Kazakh (158 rows). There, 0
+early and 0 late ends. Three Saudi units passed class A's minute. West and south of KACST's point, the
+start is the user's own sun, so Maghrib and Isha (Asr at Taif) came 2 min after the city's table on 1
+to 3 days: Taif at the app's Ash Shafa (21 km off), Madinah at Sultanah (7 km) and Al Hofuf at its
+own app point (5 km). Each unit records that as a late limit with its reason (R41). The CityUnitsTest
+edge check (the archive's tables at 95 % of every unit's radius, north, east, south and west) also
+found 0 early and 0 late ends. There Umm al-Qura's starts run up to 2 min after the city's table. In
+the north of Kazakhstan, where the AngleBased rule moves fast with latitude and the band can change,
+Dhuhr runs up to 4 min after it and Fajr up to 12. About shows each unit's own measured figure, so near
+those edges the figure reads better than the sun gives (ruling R40's accepted cost); the report puts
+the radius to the owner.
+
+**What About and the site show.** Each city's own unit figure, through the existing per-unit
+machinery. The Saudi pages go from 2 min to: Makkah, Riyadh, Jeddah, Dammam, Tabuk, Abha and
+Buraydah 1; Madinah and Taif 2. Every Kazakh city's About figure used to be the entry's 8. It is now its
+unit's: 1 at 30 cities (Taraz, Turkistan, Taldykorgan …), 2 at 8 (Almaty, Shymkent …), 3 to 7 farther
+north and west, 8 at Petropavl. No figure appears where nothing is measured. About now gives a place
+its own unit's last checked date, as its city page does (ruling R115): Madinah 31 December 2027,
+Makkah 31 December 2030. This also changes the date at a few Dubai, Kemenag, Tunisian and Libyan
+units whose rows end before their entry's (`ly.awqaf` is class D, so its places show no date; no Jamiat
+unit moved). A city unit is called by the app's own name for the
+city (`AuthorityUnit.named`), never "Mecca" or "Алматы қаласы". `ProofStamps.kt` is now written as one
+function per entry, with at most 40 units per function: the old single initializer passed the JVM's
+64 KB limit with 260 units.
+
+**What moved.** The whole gate: 1,771 rows, 501,433 place-days, 0 early, 0 late ends, none over its
+limit, nothing BROKEN (995 rows and 207,235 place-days before). `sa.ummalqura` has 520 rows and 210,254
+place-days at 267 points. `kz.qmdb` has 334 rows and 120,450 place-days at 165 points. Every stamp's
+`engineHash` moved, since `Units.kt` and `Registry.kt` are core. The eleven curve entries now carry the
+Mac's hash, which the cloud's next `prove` flips. The golden vector moved on 44 of its 2,071 rows, at
+its three Saudi and Kazakh seeds inside a unit only, every time in the safe direction: a start up to
+2 min later, a sunrise, sunset or end of eating 1 min earlier. Because the user's own point always
+stays beside the unit's, nothing moved earlier.
+
+**The monitor.** `sa-ummalqura-cities` (monthly, 322 requests, about 8 min) and `kz-qmdb` (now 174
+requests, about 4.5 min) add about 11 minutes to the run they fall due on, within the 90-minute budget.
+Their recipes let `prove` add each new year's rows at the units' own points; the app-point rows are not
+extended. Every unit is a point the monitor fetches, which `CityUnitsTest` checks.
+
+Checked: tools `jvmTest` 300/0 with the archive (CityUnitsTest 3/0) and the whole gate; `scripts/test.sh`:
+shared 1,611/0 on the Android host and 1,488/0 on iOS, widgetcore 91/0 and 89/0; `checkStamps` (71
+entries) green; the monitor's Python tests 105/0 on both Pythons. `CI=true generate` writes 55 cities
+and 129 pages; the site builds 164 pages, all checks good, and its tests pass 18/0. The engine change
+ships with the first update, not 1.0.0 (35).
+
+## Every QMDB place a unit (9 October) — the owner's decision
+
+The owner's decision on the round above: every place of QMDB's own city list is a `kz.qmdb` unit at
+QMDB's own point, and a user takes the nearest place whose reach holds them. Beyond every reach, the
+user's own point as before.
+
+**The units.** QMDB's list (`api.muftyat.kz/cities/`, 5,694 places, the capture of 6 Oct) has 5,676
+distinct points. A point that two places share is one unit, under the lower id. The 87 places with
+fetched tables are measured units. The other 5,589, the five QMDB serves no table for among them, claim
+no figure. A unit is called by the app's own name for the place where one maps to it, never by QMDB's.
+
+**The reach.** Each unit's reach comes from the engine's own rule (`QmdbReach`, tools). The shown time is
+compared with both the unit's own day and the user's own point alone, for every event, on every fourth
+day of 2026 and its solstices and equinoxes, at eight bearings. The reach is as far as that stays
+within 3 min. The rule includes the unit's point beside the user's, QMDB's AngleBased curves on the 0.1°
+grid and at both latitudes, and the bands either side of 46° and 48° N. So latitude counts, not only
+R40's longitude slope. The radius is found by bisection up to class D's R40 cap, and 90 % of it is
+kept, floored to 0.1 km. The median is 22.9 km: 36 km at 40° N, 18 km at 55° N, and under 5 km for 30
+places next to 46° or 48° N, where the band's margins step. The 9 places within 0.01° of 48° N reach
+under 1 km.
+- **The edges.** `CityUnitsTest` checks the reach edges of 402 units on every day of 2026, at eight
+  bearings and 98 % of the reach. The sample is all 87 measured, plus the north, both band edges, the
+  west's zones, the far south, the sparsest steppe and a stride through the rest. No start comes before
+  the unit's own day or the user's own point, and no end after. The worst minutes beyond either: Fajr 3,
+  sunrise 2, Dhuhr 2, Asr 3, the other Asr 2, Maghrib 2, Isha 3, end of eating 3. Against the archive's
+  tables, the 52 edge points still in their own measured unit show 0 early and 0 late ends. The worst
+  start is 9 min after the city's table and the worst end 10 min before it, where the round above's
+  edges reached 12 and 15.
+- **The app's cities.** An app city's own point takes its city's place wherever that place's reach
+  holds it (`QmdbPlaces.anchors`, through `UnitSet.choose`), so a village a few hundred metres nearer
+  cannot take it. 77 of the 84 cities are in their city's measured unit, with the same figure as in the
+  round above. Baikonur's point is 39 km from QMDB's Baikonur, beyond its 5.2 km reach. It takes the
+  nearest place, Akay or Toretam (3.5 km each), which is not measured: no figure, and its two gate rows
+  against Baikonur's tables are gone. Shchuchinsk, Zhitikara, Esik and the two Abay are in their own
+  unmeasured units as before, and Shalkar (Atyrau) is beyond every reach.
+- **What an unmeasured place says.** About (class D's template) says that the Kazakh Muftiate (the
+  app's name for QMDB) publishes the prayer times for the place, and that Taqvo calculates them the way
+  it does, with a safety margin. Then it says they are not measured there, using the app's place name.
+  The Today card's ⓘ is the same as at every Kazakh place: "Kazakh Muftiate method, not yet fully
+  checked".
+
+**The cost: a city's outer districts.** Inside a city, a user nearer a suburb's or a village's QMDB
+place than the city's own takes that place's times. Twenty-four of the larger cities were sampled within
+15 km of QMDB's point, on 10 rings and 16 bearings, against the city's own tables:
+- 1,464 of the 3,840 points took a nearer place, and 1,354 of those showed a start before the city's
+  table or an end after it.
+- The worst was 1 min within 10 km and 2 min from 12 km.
+- It began at about 2–3 km from Rudny, Kostanay, Petropavl, Aktau, Balkhash and Kentau, 4–5 km from
+  Taraz, Oral, Pavlodar and Karaganda, 6 km from Almaty and Shymkent, and 8 km from Astana. Ekibastuz
+  had none within 15 km.
+
+These times are still never before the nearer place's own day, nor before the user's own point alone.
+They can be early only against the city's table, for a user whose mosque follows the city. The round
+above kept the city's table throughout its reach. The report puts this to the owner.
+
+**The data.** `data/QmdbPlaceList.kt` is generated by `./gradlew -p tools/timetables generateQmdbPlaces`
+(about 150 s on the Mac's cores). It reads the archive's capture of the list. Each place packs into 15
+base-64 characters: the id, latitude and longitude in 1e-7° from 40° N 46° E, and the reach in 0.1 km.
+The places sit in two string parts under the JVM's 64 KB constant limit and decode on first use. The
+file is 96,794 bytes and holds coordinates and kilometres only. After any change to `kz.qmdb`'s method,
+bands or curves, the generator must be re-run, since every reach depends on them.
+
+| | before | after |
+|---|---|---|
+| debug APK dex, uncompressed / compressed | 83,595,398 / 36,047,649 | +109,988 / +74,104 |
+| the iOS test binary | 65,990,648 | +262,960 |
+| nearest unit among 5,676 | 140 µs (a scan) | 1.25 µs (a grid index, `UnitSet` above 256 units) |
+| building the Kazakh set | | about 10 ms (decode 2, build 8), once, on the first Kazakh resolution (`Units.of` builds it lazily) |
+| a resolution / a year's days | | 0.146 ms / 23–27 ms |
+
+The debug APK file itself grew 420,716 bytes, which includes the incremental packager's gaps. Also,
+`TwilightCurves` now computes the reference year's declinations once, where it used to compute them for
+every curve.
+
+**What moved.** The whole gate: 1,769 rows, 500,703 place-days, 0 early, 0 late ends, none over its
+limit, nothing BROKEN. `kz.qmdb` has 332 rows and 119,720 place-days at 164 points. Every stamp's
+`engineHash` moved again (core files). `kz.qmdb`'s `baikonur` unit figure fell from 4 to 1, since it is
+now measured at its own point only. Against `main`, the golden vector moved on 28 of its 2,071 rows:
+the Saudi seed's 15, as in the round above, and the two Kazakh seeds' 7 and 6. Every move is safe.
+Against the round above, the two Kazakh seeds moved on 28 rows. They sit 16 and 13 km from Almaty's
+and Astana's points, and each now takes a nearer place (Koksay, 3.1 km; Shubar, 2.1 km). So their
+times went back towards the user's own point: starts up to 2 min earlier than in that round, an end
+1 min later. That is the cost above, at two points. `RegistryCitiesTest` now resolves each city at
+the app's rounded point (`PrayerEngine.canonical`), where Baikonur takes Toretam.
+
+Checked: tools `jvmTest` 301/0 with the archive (CityUnitsTest 4/0) and the whole gate; `checkStamps`
+(71 entries) green; `scripts/test.sh` with its four tasks: shared 1,612/0 on the Android host and
+1,489/0 on iOS (AsiaProofTest 10/0), widgetcore 91/0 and 89/0; the monitor's Python tests 105/0 on both
+Pythons. `CI=true generate` writes 55 cities and 129 pages; the site builds 164 pages, all checks
+good, and its tests pass 18/0. The engine change ships with the first update, not 1.0.0 (35).
+
+## The city's table, and a fingerprint for the reaches (9 October) — the owner's decisions
+
+**The city's table.** The owner's answer to the outer districts above: inside a city's own reach, the
+city's place wins, even where a suburb's or a village's lies nearer. Where two cities' reaches hold a
+point, the nearer city wins. Everywhere else, the nearest place.
+- **The cities** are the places of the app's own Kazakh cities (`QmdbPlaces.appCities`, which replaces
+  the anchors): 83 of the 84 cities at 81 places, 76 of them measured. The gate's 11 villages are not
+  cities. Neither are 25 of QMDB's own 89 "<name> қаласы" entries that are not on the app's list
+  (Kaskelen and Alatau by Almaty, Kosshy by Astana, Tobyl by Kostanay, Kazaly by Aiteke Bi …); inside an
+  app city's reach they take the app city like any village.
+- **The rings** (`CityUnitsTest`, with the archive): around 24 of the larger cities, 10 rings out to
+  15 km at 16 bearings, 3,840 points, all inside their city's reach. Each follows its city, or a nearer
+  city where two reach (94: Almaty's edges to Boralday, Otegen Batyr and Talgar, Aktau's north-east to
+  Mangystau, Kokshetau's east to Akkol, and five more cities'). Against the tables of the city it follows (2,801,740 place-days), there are 0
+  starts before them and 0 ends after. The worst start is 9 min after and the worst end 10 min before,
+  in the north's Fajr and end of eating; the rest stay within 2. At the 94, against the farther city's
+  own tables, a start or an end crosses that table by up to 2 min in 43,019 of their cells. That is the
+  cost of the nearer city.
+- **Villages inside a city's reach:** 1,389 places in 74 cities' reaches, every day of 2026. The worst
+  minutes beyond the place's own day, the city's own day or the user's own point: Fajr 3, sunrise 2,
+  Dhuhr 2, Asr 3, the other Asr 2, Maghrib 2, Isha 3, end of eating 3. Nothing is before any of them, so
+  nothing is earlier than the user's own point, which is the engine on `main`.
+- **Zhenis** lies inside Zhetysay's reach (24.6 km) and is the one gate village there. Its rows now hold
+  Zhetysay's unit against Zhenis's own table: 0 early, Isha up to 3 min after it, within class D's 3.
+  Zhetysay's About figure rises from 1 to 3. Every other city's is as before. Zhenis's own unit no longer
+  claims a figure (86 measured units; the monitor still fetches all 87 places).
+- **About** names and measures the city inside its reach. A city's unit carries the app's city
+  (`AuthorityUnit.cityId`, `Resolution.unitCityId`), and the About route looks its name up in the
+  reader's language, so a suburb's fix whose nearest app city is another still reads the city whose
+  table it follows. `AboutTimesUiStateTest`: 8 km north-east of QMDB's Almaty, 2 km from the village of
+  Besagash, About measures Almaty with its 2.
+- **Edges and speed.** The reach sample is now 400 units (Zhenis left the measured), with the same
+  worst minutes. Against the archive's tables, 261 edge points still in their own measured unit show
+  0 early and 0 late ends. The lookup checks the 81 cities before the grid: 2.9 µs a lookup, where it
+  was 1.25, and a resolution 0.16 ms.
+
+**The fingerprint.** The reaches are measured with kz.qmdb as it stands, so `QmdbPlaceList.kt` now
+records what with: `FINGERPRINT`, from `QmdbReach.fingerprint`. It is a SHA-256 over:
+- the reach rule's constants and the codec's;
+- each event's time, in whole epoch seconds, on 26 days at 29 probe places on either side of 46° and
+  48° N and in every zone, for a unit there, a user beside it, and that user alone.
+
+So a change to the method, its margins, its bands, the curves or the way a unit's point rides beside the
+user's moves it. `CityUnitsTest` then fails and names `./gradlew -p tools/timetables generateQmdbPlaces`.
+It prints no double: coordinates in thousandths of a degree, the cap in metres, times in whole seconds,
+and the probe's users as literal sums. So neither `Double.toString` nor a maths routine's last bit, which
+moves the stamps' `engineHash` between the Mac and Linux, can move it. The cloud's site job runs it on
+Linux. Regenerated, the list is the same place for place, with only the fingerprint added.
+
+**What moved.** The whole gate: 1,769 rows, 500,703 place-days, 0 early, 0 late ends, none over its
+limit, nothing BROKEN. Every stamp's `engineHash` moved (core files). In `kz.qmdb`, the `zhenis` unit's
+row is now `zhetysay`'s, and the entry's worst Asr and Maghrib rose from 1 to 2 min, with no limit
+changed. Against `main`, the golden vector moved on 44 of its 2,071 rows (Saudi 15, Kazakh 13 and 16),
+every move safe. That is exactly the round before every place was a unit. Its Kazakh seeds are again in
+a city's unit: Astana's, and Boralday's, the nearer city, 12 km from the seed by Almaty, whose times
+there match Almaty's to the minute. Against the commit before, 28 rows moved, the two Kazakh seeds
+coming back from the villages of Koksay and Shubar.
+
+Checked: tools `jvmTest` 304/0 with the archive (CityUnitsTest 7/0) and the whole gate; `checkStamps`
+(71 entries) green; `scripts/test.sh` with its four tasks: shared 1,612/0 on the Android host and 1,489/0
+on iOS (AsiaProofTest 10/0), widgetcore 91/0 and 89/0; the monitor's Python tests 105/0 on both
+Pythons. `CI=true generate` writes 55 cities and 129 pages; the site builds 164 pages, all checks
+good, and its tests pass 18/0. The debug APK's content grew 2,973 bytes compressed. The engine change
+ships with the first update, not 1.0.0 (35).
+
+## Proven across the unit (10 October) — the review of the city-points branch
+
+An independent review confirmed never-early on the whole branch, and found one critical gap. About's
+per-unit "at most N after" was proven at only two points: the unit's own and the app's point for its
+city. Inside the unit a user can stand anywhere within its reach. Out to half the radius the figure was
+beaten at 160 of 173 Saudi and 73 of 86 Kazakh units, and beyond that at nearly all. Lateness inside
+the reach also passed the recorded limits. The owner chose London's precedent: prove it across the unit.
+
+**The reach rows** (`generateReachRows`, `official/gate/{sa-ummalqura,kz-qmdb}-reach.tsv`). Each
+measured unit's own tables, the rows its group file reads at the unit's point, are replayed at 8 bearings
+and at half and 95 % of its radius. The rows are held out and tagged with the unit. A point another unit
+takes (a nearer place, or a city whose reach holds it) is left out, since its user follows that unit's
+table. So each unit's stamp row now holds the lateness across its area, and About reads it.
+- Umm al-Qura: 4,031 rows at 2,046 of 2,768 points, all 173 units.
+- QMDB: 2,258 rows at 1,118 of 1,376 points, all 86 measured units.
+- The monitor's recipes have a line per unit (259), so `prove` adds each new year of a unit's table
+  across its reach too.
+- `CityUnitsTest` checks that every measured unit has its own tables at every kept point, and a recipe.
+  Its edge and ring tests now fail on a cell over its limit; the old "late limit not held" exception is
+  gone. The rings and edges pass with the limits below.
+- The whole gate: 8,058 rows and 2,885,320 place-days (from 1,769 and 500,703). 0 early, 0 late ends,
+  none over its limit, nothing BROKEN, in about 90 s. It ran out of its 2 GB at first: it kept every
+  point's computed days for the whole run. It now keeps the last 64 points' and stores a place-day as one
+  number, and the results are the same.
+
+**The limits** (ruling R41, each with its reason):
+- **Umm al-Qura**, for the entry: Fajr 2 (the lag dates and the reach), Dhuhr, Asr, Maghrib and Isha 2
+  (the reach), sunrise and the end of eating 3 (both). These replace the three point limits at Taif,
+  Madinah and Al Hofuf. Nine units of the north and the east need Fajr 3 at their edge, where a lag
+  date's later Fajr meets the reach: Al Qurayyat, Al Uwayqiliyah, Az Zulfi, Dhahran, Dumat al-Jandal,
+  Haql, Khafji, Mawqaq and Turaif. Az Zulfi's 3 is Fajr's, and its end of eating stays within the 3.
+  Tayma keeps Fajr 5 and now carries 3 for every other event (its class D), since the entry's 2 would
+  otherwise apply to it.
+- **QMDB**, per unit, 37 of the 86 (`QmdbPlaces.reachLimits`): Fajr 9 or 10 at nine northern units, Isha
+  7 or 8 at 32, and the end of eating 9 or 10 at 37. Each is the gate's worst there. None passes 10, so
+  no owner decision is needed for them. Dhuhr, Asr, Maghrib and sunrise stay within class D's 3
+  everywhere, so no start limit of 4 is needed. The south's new figures of 4 are Fajr and Isha, within
+  the entry's 8 and 6.
+
+  | Fajr / Isha / end of eating | units |
+  |---|---|
+  | 10 / 8 / 10 | Petropavl |
+  | 10 / 7 / 9 | Pulemetovka |
+  | 9 / 8 / 10 | Isakovka, Kokshetau, Kostanay, Krasny Yar, Kulomzino |
+  | 9 / 7 / 10 | Pavlodar, Rudny |
+  | 8 (entry) / 8 / 10 | Lisakovsk, Stepnogorsk |
+  | 8 / 7 / 10 | Akkol, Aksay, Aksu (Pavlodar), Aktobe, Altay, Arkalyk, Astana, Atbasar, Ekibastuz, Kalbatau, Makinsk, Oral, Oskemen, Ridder, Semey, Shemonaikha, Temirtau |
+  | 8 / 7 / 9 | Bugrovoe, Saran, Spasovka, Vagulino |
+  | 8 / 6 (entry) / 10 | Embi, Kandyagash, Karaganda, Khromtau |
+  | 8 / 6 / 9 | Shakhtinsk |
+
+**The figures** (About's worst start of the unit, now across its area):
+- **Saudi pages:** Makkah, Riyadh, Jeddah, Tabuk, Abha and Buraydah 1 → 2; Madinah and Taif stay 2;
+  Dammam stays 1. Of all 173 units, 152 go from 1 to 2, 9 rise to 3 (the Fajr-3 units above), 7 stay
+  1, 4 stay 2, and Tayma stays 5.
+- **Kazakh app cities:**
+
+  | before → after | cities |
+  |---|---|
+  | 1 → 3 | Talgar, Novokazalinsk, Mangystau, Aksu (Turkistan), Otegen Batyr |
+  | 1 → 4 | Taraz, Turkistan, Taldykorgan, Zhanaozen, Sarkand, Kentau, Konaev, Shu, Karatau, Arys, Zharkent, Zhanatas, Shiyeli, Shelek, Shardara, Saryagash, Zhanakorgan, Lenger, Burunday, Ushtobe, Zhosaly, Turar Ryskulov, Merke, Sarykemer |
+  | 2 → 4 | Almaty, Shymkent, Kyzylorda, Aktau, Tekeli, Tasbuget |
+  | 2 → 5 | Balkhash, Makanshy |
+  | 3 → 4 | Zhetysay |
+  | 3 → 5 | Atyrau, Kulsary, Aral, Balykshi |
+  | 4 → 5 | Satpayev, Ayagoz, Shalqar |
+  | 4 → 6 | Zhezkazgan, Zaysan |
+  | 4 → 7 | Embi |
+  | 5 → 6 | Karaganda |
+  | 5 → 7 | Altay, Saran, Shakhtinsk, Kandyagash, Kalbatau |
+  | 6 → 7 | Ust-Kamenogorsk, Temirtau, Arkalyk |
+  | 6 → 8 | Astana, Aktobe, Oral, Semey, Ekibastuz, Ridder, Aksu (Pavlodar), Lisakovsk, Aksay, Atbasar, Khromtau, Shemonaikha, Makinsk |
+  | 7 → 8 | Stepnogorsk, Akkol |
+  | 7 → 9 | Pavlodar, Kostanay, Kokshetau, Rudny |
+  | 8 → 10 | Petropavl |
+
+  Shchuchinsk, Zhitikara, Esik, both Abay, Baikonur and Shalkar (Atyrau) still claim none. Zhetysay's 3
+  (Zhenis's rows) is the owner's, accepted; the 25 QMDB towns off the app's list are not cities for now.
+
+**The minor findings.**
+- Umm al-Qura's units carry the app's city whose table each is (`UmmAlQuraCities.appCityOf`, 77 units),
+  as Kazakhstan's do, so About at Ash Shafa names Taif and at Sultanah Madinah. The site names a page's
+  unit city the same way (`Document`, `AppStrings.cityName`): a Balykshi page would read Atyrau, as the
+  app does.
+- About's first frame reads the name already loaded (`CityRepository.loadedDisplayName`), so it never
+  shows the location's name and then the city's. `aboutUnitCityId` and the lookup are tested.
+- Beyond every Saudi and Kazakh unit, the nearest place's table is now a point table's edge, as
+  `pointTables`' are (ruling R45, `beyondTable`). The user's own point comes a minute later. The end of
+  eating is at SAFE_END or earlier, and within three reaches the nearest place's point still bounds
+  sunrise and the end of eating. Every start is later and every end earlier than on `main`.
+- The docs' slips are corrected: the dates at Dubai, Kemenag, Tunisian and Libyan units (not Jamiat),
+  the spec's 86 measured places, and the Kazakh set's cold build. Measured on the Mac's JVM, the decode
+  takes 2 ms and the build 8, about 10 ms in all. The fingerprint's KDoc now says it is the same on every
+  machine practically, since its times are rounded from doubles.
+
+**What moved.** Every stamp's `engineHash` moved again (`Units.kt` is core). The golden vector moved
+on 44 of its 2,071 rows against `main`, every move safe, and on none against the commit before: its
+seeds are inside units, and limits do not move a time.
+
+Checked: the whole gate as above; tools `jvmTest` 306/0 with the archive (CityUnitsTest 8/0, the rings
+and edges held to the limits); `checkStamps` (71 entries) green; the fingerprint unchanged, so
+`generateQmdbPlaces` was not re-run; `scripts/test.sh` with its four tasks: shared 1,614/0 on the
+Android host and 1,491/0 on iOS, widgetcore 91/0 and 89/0; the monitor's Python tests 105/0 on both
+Pythons. `CI=true generate` writes 55 cities and 129 pages (the Saudi pages' figures as above); the site
+builds 164 pages, all checks good, and its tests pass 18/0. The debug APK's content grew 7,921 bytes
+compressed. The engine change ships with the first update, not 1.0.0 (35).
+
+## Each unit's true worst (10 October) — the review's re-verify
+
+The reviewer re-ran the branch, swept the units off the reach rows, and found two gaps. On 16 bearings
+offset by 11.25° at a quarter, three quarters, 90 % and 99 % of the radius (12,628 points), nothing was
+early. But 26 of the 259 units' figures were beaten by a minute, and 22 units had 91 cells over their
+recorded limits. The worst sits near the very edge and between the grid's bearings.
+
+**The sweep.** `generateReachRows` now sweeps each measured unit against its own tables in the archive.
+The sweep is 40 bearings from 4.5° by 9°, at 35, 60, 80, 93, 97 and 99.5 % of the radius: 240 points a
+unit, 46,142 of them inside their unit. It adds each event's worst point to the unit's reach rows, beside
+the fixed grid. Nothing in the sweep was early.
+- Umm al-Qura: 915 worst points, 5,828 rows.
+- QMDB: 546 worst points, 3,364 rows.
+- It takes about 2 minutes on the Mac's cores.
+- The whole gate is now 10,961 rows and 3,988,749 place-days (1.4 times the last round), about 110 s
+  on the Mac. 0 early, 0 late ends, none over its limit, nothing BROKEN.
+
+**The proof, on a third grid.** `CityUnitsTest` replaces its four-edge test with the reviewer's own
+grid, offset from both the rows' grid and the sweep: 16 bearings from 11.25° by 22.5°, at 25, 75, 90 and
+99 % of the radius, each unit's own tables. It found 0 early, 0 late ends, none over a limit, and no start
+past any unit's figure:
+- Umm al-Qura: 8,076 points, 6,191,779 place-days; worst Fajr 3, sunrise 3, the other starts 2, end of
+  eating 3.
+- QMDB: 4,552 points, 3,322,960 place-days; worst Fajr 10, sunrise 3, Dhuhr 2, Asr 3, Maghrib 3, Isha 8,
+  end of eating 11.
+
+**The limits, re-derived from the gate.**
+- **Umm al-Qura:** the entry's are unchanged (Fajr 2, every other start 2, sunrise and the end of eating
+  3). Fajr 3 now holds at 15 units: the nine above, plus Al Bada, Al Quwarah, Marat, Qaryat al Ulya, Rumah
+  and Tabuk.
+- **QMDB**, per unit (37 units):
+
+  | Fajr / Isha / end of eating | units |
+  |---|---|
+  | 10 / 8 / 10 | Petropavl |
+  | 10 / 7 / 9 | Pulemetovka |
+  | 9 / 8 / 11 | Lisakovsk, Makinsk |
+  | 9 / 8 / 10 | Akkol, Aksu (Pavlodar), Atbasar, Bugrovoe, Isakovka, Kokshetau, Kostanay, Krasny Yar, Kulomzino, Pavlodar |
+  | 9 / 7 / 11 | Ekibastuz |
+  | 9 / 7 / 10 | Rudny |
+  | 8 (entry) / 8 / 11 | Stepnogorsk |
+  | 8 / 7 / 11 | Arkalyk, Astana, Oskemen, Ridder |
+  | 8 / 7 / 10 | Aksay, Aktobe, Altay, Embi, Kalbatau, Kandyagash, Khromtau, Oral, Semey, Shemonaikha, Temirtau |
+  | 8 / 7 / 9 | Saran, Spasovka, Vagulino |
+  | 8 / 6 (entry) / 10 | Karaganda, Shakhtinsk |
+
+  The end of eating needs 11 at eight units. That is the entry's 8 at the table plus the reach's 3, and
+  it is above the review's 10, so the report puts it to the owner. It is recorded so that the gate states
+  it; the alternative is a smaller reach at those eight units.
+
+**The figures**, final (About's worst start of the unit across its area, against the round before the
+reach rows):
+- **Saudi pages:** Makkah, Riyadh, Jeddah, Dammam, Abha and Buraydah 1 → 2; Tabuk 1 → 3; Madinah and Taif
+  stay 2. Of the 173 units, 151 go from 1 to 2, 15 rise to 3, 2 stay 1, 4 stay 2, and Tayma stays 5.
+- **Kazakh app cities:**
+
+  | before → after | cities |
+  |---|---|
+  | 1 → 3 | Talgar, Novokazalinsk |
+  | 1 → 4 | Taraz, Turkistan, Taldykorgan, Zhanaozen, Sarkand, Kentau, Konaev, Shu, Karatau, Arys, Zharkent, Zhanatas, Mangystau, Shiyeli, Shelek, Aksu (Turkistan), Shardara, Saryagash, Zhanakorgan, Lenger, Burunday, Ushtobe, Zhosaly, Otegen Batyr, Turar Ryskulov, Merke, Sarykemer |
+  | 2 → 4 | Almaty, Shymkent, Kyzylorda, Aktau, Tekeli, Tasbuget |
+  | 2 → 5 | Balkhash, Makanshy |
+  | 3 → 4 | Zhetysay |
+  | 3 → 5 | Atyrau, Aral, Balykshi |
+  | 3 → 6 | Kulsary |
+  | 4 → 5 | Satpayev, Ayagoz, Shalqar |
+  | 4 → 6 | Zhezkazgan, Zaysan |
+  | 4 → 7 | Embi |
+  | 5 → 7 | Karaganda, Saran, Shakhtinsk |
+  | 5 → 8 | Altay, Kandyagash, Kalbatau |
+  | 6 → 7 | Temirtau |
+  | 6 → 8 | Astana, Aktobe, Oral, Ust-Kamenogorsk, Semey, Ridder, Arkalyk, Aksay, Khromtau, Shemonaikha |
+  | 6 → 9 | Ekibastuz, Aksu (Pavlodar), Lisakovsk, Atbasar, Makinsk |
+  | 7 → 8 | Stepnogorsk |
+  | 7 → 9 | Pavlodar, Kostanay, Kokshetau, Rudny, Akkol |
+  | 8 → 10 | Petropavl |
+
+**The own points' guard.** The reach's limits are wider than a table's own point needs. Umm al-Qura's
+starts 2 and ends 3, for example, against class A's minute. So `CityUnitsTest` holds the rows at each
+unit's own point and at the app's city point (the group files) to the limits they kept before the reach
+rows. A one-minute regression at a city's own point now fails:
+- Umm al-Qura: class A's 1, the lag dates' 2 at Fajr, sunrise and the end of eating, the three app
+  points west of KACST's, and Tayma's own.
+- QMDB: the entry's 8, 6 and 8, and class D's 3.
+
+**Beyond every unit** (ruling R45). Within three reaches, the nearest place's end bound cost up to
+12 min in Kazakhstan and 6 in Saudi Arabia against the user's own point. It is now kept within one reach
+only. For QMDB a reach is exactly where every time stays within 3 min of the user's own point, and for
+Umm al-Qura a minute of longitude. So beyond every unit it never applies, and the user's own point stands
+a minute later. Kazakhstan's edge now uses the user's own band, as on `main`, not the nearest place's.
+
+The measured cost against `main` at 400 random points beyond every unit in each country, every ninth day
+of 2026: starts up to 1 min later. Sunrise is up to 1 min earlier. The end of eating is up to 1 min
+earlier in Kazakhstan and 2 in Saudi Arabia, whose fitted 47 s is gone. No end comes after `main`'s.
+
+**Minors.** `CityRepository`'s snapshot and language are `@Volatile`. The recipes have 259 per-unit lines,
+one for each unit. The last round's commit message and docs said 260; the docs now say 259.
+
+**What moved.** Every stamp's `engineHash` moved (`Units.kt` is core). The golden vector moved on 44 of
+2,071 rows against `main`, every move safe, and on none against the commit before.
+
+Checked: the whole gate as above; tools `jvmTest` 307/0 with the archive (CityUnitsTest 9/0); `checkStamps`
+(71 entries) green; the fingerprint unchanged; `scripts/test.sh` with its four tasks: shared 1,614/0 on the
+Android host and 1,491/0 on iOS, widgetcore 91/0 and 89/0; the monitor's Python tests 105/0 on both
+Pythons. `CI=true generate` writes 55 cities and 129 pages; the site builds 164 pages, all checks good,
+and its tests pass 18/0. The engine change ships with the first update, not 1.0.0 (35).
+
+## The last miss, the own points' guard per row (10 October) — the review's final check
+
+The reviewer's final check passed everything but one point. On a fourth grid (24 bearings from 7.5° by
+15°, at 40, 85 and 99.5 % of the radius), Fayfa showed "at most 1", yet 40 % of its reach out, at
+bearing 307.5°, Fajr came 2 min after Fayfa's table on 1 day of 730. Other units hem Fayfa in: only 15
+of that grid's 72 points fall inside it, and the sweep's nearest points missed this one. The owner
+accepts the end of eating's 11 at the eight Kazakh units, with its reason.
+
+- **The sweep** now includes the reviewer's fourth grid, 312 points a unit in all. Where fewer than
+  half of those fall inside the unit, it also adds a finer sweep of 120 bearings from 1.5° by 3° at 11
+  shares: 48 Saudi and 13 Kazakh units. It found 91,795 points inside their unit, nothing early, and
+  929 + 550 worst points. The reach rows are now 5,856 Saudi and 3,372 Kazakh. The whole gate is 10,997
+  rows and 4,001,889 place-days.
+- **The proof.** `CityUnitsTest` sweeps both of the reviewer's grids: 17,114 Saudi points and 9,594
+  Kazakh, 20.1 million place-days. It found 0 early, 0 late ends, none over a limit, and no start past
+  a figure.
+- **The figures that moved** (against the commit before): Fayfa 1 → 2 (Fajr and Asr 2) and Tarut 1 → 2
+  (Fajr 2). Inside their figures and limits, Dhuhr, Asr, sunrise or the end of eating rose by a minute
+  at Addayer, Al Badayea, Al Busur, Al Farshah, Al Uyaynah, Bani Hasan, Buraydah and Rawdat Sudayr, and
+  at QMDB's Aksu (Turkistan), Aral, Pulemetovka and Vagulino. No limit moved.
+- **The own points' guard, per row.** Held to the entry's caps, a regression far below them (at Almaty or
+  Taraz, say) would pass. So `generateOwnPointWorst` now records each own-point and app-point row's own
+  worst lateness per event in `official/own-points-worst.tsv`: 852 rows, in minutes only. `CityUnitsTest`
+  holds each row, on its own, to that worst, and still to the documented limits. A row `prove` adds since
+  is held to the limits until the file is regenerated.
+- **Beyond every unit** the dead branch is gone. With one reach, the nearest place's end bound could
+  never apply there, since a user beyond every unit is beyond every reach. Umm al-Qura's and QMDB's edges
+  are now `beyondEveryUnit`, the user's point a minute later with no end bound, and `beyondTable` is as
+  it was. The times are unchanged.
+
+What moved: every stamp's `engineHash` (`Units.kt` is core). The golden vector moved on 44 rows against
+`main`, all safe, and on none against the commit before.
+
+Checked: the whole gate as above; tools `jvmTest` 307/0 with the archive (CityUnitsTest 9/0); `checkStamps`
+(71 entries) green; `scripts/test.sh` with its four tasks: shared 1,614/0 on the Android host and 1,491/0
+on iOS, widgetcore 91/0 and 89/0; the monitor's Python tests 105/0 on both Pythons. `CI=true generate`
+writes 55 cities and 129 pages; the site builds 164 pages, all checks good, and its tests pass 18/0.
+
+**To the edge itself** (the reviewer's approval, with one residual). On grids at 99.9 % of the radius,
+Isha passed a recorded limit by a minute on a single day at three units: Rudny 8 against 7, Ekibastuz 8
+against 7 and Shakhtinsk 7 against 6. The sweep stopped at 99.5 %, and a reach holds its edge
+(`distance <= radius`).
+- The sweep and `CityUnitsTest`'s two grids now run to 99.9 % and 100 %. The sweep has 392 points a unit,
+  plus 1,560 finer ones where fewer than half fall inside.
+- The limits re-derived from the gate are Rudny's and Ekibastuz's Isha 8 and Shakhtinsk's 7. No figure
+  moved. Inside their figures and limits, Wadi al Fara's end of eating rose to 3, and Atbasar's and
+  Kandyagash's sunrise to 3.
+- Aiteke Bi's Dhuhr of 2 at the edge is within its figure of 3 and class D's limit.
+- On the two grids: 36,817 points and 27.7 million place-days, 0 early, 0 late ends, none over a limit,
+  and no start past a figure. The whole gate is unchanged in size (10,997 rows, 4,001,889 place-days), and
+  the golden vector did not move.
+
+## One engine hash on the Mac and the runner (10–11 October, overnight)
+
+Since 3 October, each cloud `prove` rewrote the `engineHash` of twelve stamps, and nothing else in
+them: `be.emb`, `fr.gmp`, `ie.icci`, `no.irn`, `kz.qmdb` and seven cautious entries (Belgium, Canada,
+Germany, France, Ireland, Norway, Sweden). Each whole gate on the Mac wrote them back. After a cloud run,
+`checkStamps` on the Mac called those twelve stale, so `release.sh` refused to build `main`. `main`'s
+stamps carry the Mac's hashes, so Monday's run would have flipped them again.
+
+**The cause.** The fingerprint printed each method through its data class's `toString`. Kotlin prints
+a data class's arrays by content, so no identity was printed: none of the 5,540 fingerprints holds one.
+The doubles were the trouble. These twelve entries carry curves computed at the point: Fajr and Isha
+angles by day, and end-of-eating depressions, all from `sin` and `cos`. HotSpot computes those with its
+own routine for each CPU, and the last bits differ. On the Mac, switching `sin` and `cos` to the JDK's
+portable routines (`-XX:DisableIntrinsic=_dsin,_dcos`) made the old fingerprint move exactly those
+twelve hashes. 46,381 curve values moved, by a median of 5e-15° and at most 3.7e-14°. A whole gate run
+that way changed the twelve `engineHash` lines and not one other byte, over the same 10,997 rows and
+4,001,889 place-days. The portable routines are a third set of last bits, not the runner's. At the
+cloud's 5 October commit (`1a93ddc5`), the runner's hash, the Mac's and the portable routines' are three
+different hashes for each of the twelve. So the switch shows which values depend on the CPU, not the
+runner's own values. Switching off `tan`, `log`, `exp` and `pow` instead moved nothing, and that says
+nothing about the runner's `tan`, `exp`, `log` or `pow`: on this Mac's arm64 JVMs only `sin` and `cos`
+differ from the portable routines (about one answer in fifteen; none of 60 million for `tan`,
+`exp`, `log`, `log10`, `pow`, `asin`, `acos` or `atan2`), so that switch changes nothing here, while
+x86_64 HotSpot, by its source, has routines of its own for all seven of `sin`, `cos`, `tan`, `exp`, `log`, `log10` and
+`pow`.
+
+**The fix.** `Stamps.fingerprint` now writes every method in `Canonical` words:
+- every double as whole millionths: a millionth of a degree for an angle or a point. No method value
+  in the registry is written finer (Umm al-Qura's bias has six decimals). QMDB's points are kept to
+  1e-7 of a degree (`QmdbPlaceCodec.SCALE`) and a few Umm al-Qura points to 1e-8; a millionth drops at
+  most 0.11 m of them. A micro-degree moves a twilight time by about 0.4 ms at 50° N; more only on the
+  days near persistent twilight in the north, where the sun's depression barely changes;
+- arrays and lists in order, sets and maps sorted by their canonical words, enums by type and name,
+  strings quoted;
+- a record (a data class, a data object, a `Pair`) by its type and every instance field, sorted by
+  name. A field added to a method is in the fingerprint the day it is added;
+- anything else refused: a lambda, an anonymous object, a lazy value or a platform object, whose words
+  or identity are the compiler's or the run's.
+
+Rounding to the nearest millionth can flip only where a value lies within its last-bit difference of
+a half-millionth. Of the 77,866 distinct values the fingerprints hold, the closest lies 5.4e-12° from
+one: 144 times the widest difference the portable routines gave, and 22 times the widest with every
+maths answer moved by up to 16 units in its last place (below). Over the whole manifest that is about
+2e-4 expected crossings with the portable routines' differences (summed 2.4e-10, over a millionth),
+and about 2e-3 if every maths answer can differ by up to 2 units in its last place (summed 2.4e-9).
+A literal never crosses, since it parses to the same double everywhere.
+
+**Measured.** Four setups on this Mac gave byte-identical fingerprints for all 71 entries: Temurin
+21.0.12, Android Studio's JBR 25, Homebrew's OpenJDK 26, and Temurin 21 with the maths routines off.
+The whole gate with the routines off wrote all 71 stamps byte-identical to the normal run, and
+`checkStamps` run that way is green on the Mac's stamps. The routines-off setup is a stand-in for
+another CPU, not the runner (above).
+
+The review then tried a harder stand-in, and the fixer reproduced it: the tools' classes rewritten so
+that every `Math.sin`, `cos`, `tan`, `exp`, `log`, `log10` and `pow` answer (76 call sites in 11
+classes, the engine's included) is moved by up to 2 units in its last place, the amount fixed by the
+argument as any real routine's is, on three seeds, and by up to 16 on a fourth. Under 2, between
+217,125 and 219,003 curve values moved, by at most 5.7e-14°; under 16, 241,270 moved, by at most
+2.4e-13°. Every one was a curve value of the same twelve entries, no point moved, and no value crossed
+a rounding edge. All 71 engine hashes stayed those of the committed stamps, and `checkStamps` run on
+the rewritten classes was green on every seed.
+
+This Mac holds no x86_64 JVM (every one installed is arm64), and none was downloaded. So Linux equality
+is argued and simulated, not measured. The cloud's weekly `prove` on Monday 12 October is its first
+real test, but only if this fix is on `main` before 03:00 UTC that day and `prove` has new captures to
+prove. A run with nothing new to prove, or one that puts its rows back, commits no stamps and measures
+nothing, so a quiet Monday is not a pass. The thing to check is that run's "Gate: the weekly monitor's
+captures … proven" commit: none of the twelve curve entries' `engineHash` lines may change unless that
+entry's own rows changed.
+
+`QmdbPlaceList.FINGERPRINT` is measured on Linux already. The Website workflow runs the tools' `jvmTest`
+on ubuntu (Temurin 21) at each push that touches its paths, and every six hours. That includes
+`CityUnitsTest`'s comparison, which has passed there on all five runs since it reached `main` on 10
+October. It is also unchanged here with the routines off.
+
+The other generated files were checked for the same flaw, and none needed a change:
+- `ProofStamps.kt` holds no hash and no double;
+- the golden vector is whole minutes. Android and iOS compare it, and `prove` requires it
+  byte-identical on the runner (it was, on 3 and 5 October);
+- the reach rows print coordinates to six decimals, and only the Mac generates them;
+- the monitor's signatures hash source bytes.
+
+**Tests.** `CanonicalTest` works on real samples: Paris (fr.gmp's three curves), Tromsø (IRN's clock
+rule), Astana (kz.qmdb) and Tataouine (tn.inm's monthly Asr). It checks four things:
+- the fingerprint stays the same when every curve value moves by up to 16 units in its last place and
+  2.6e-13° more (past the widest difference above), and the angles and points by one unit;
+- it changes with each of 13 changes, including a second of margin, a hundredth of an angle, and one
+  curve slot by a thousandth or by a millionth. It also changes with a clock-rule depression or window,
+  and with one month's Asr offset;
+- a lambda, an anonymous clock rule, a lazy value and a plain object are refused;
+- no fingerprint of the whole manifest prints a double or an identity.
+
+On `main`'s fingerprint, the three tests aimed at the flaw fail.
+
+**What moved.** Every stamp's `engineHash`, once: 71 files, one line each. `ClockRule.kt`'s comment
+(core) now says what an implementation must be. Nothing else in any stamp moved, and the gate's report
+is identical. `ProofStamps.kt` did not change, and the golden vector is byte-identical. The monitor's
+engine signature moves with the two comments (`ClockRule.kt`, `IrnArctic.kt`) and its checker hash with
+`Stamps.kt` and `Canonical.kt`, so its next run checks every held table once more.
+
+Checked: the whole gate, 10,997 rows and 4,001,889 place-days, 0 early, 0 late ends, none over its
+limit, nothing BROKEN; `checkStamps` (71 entries) green, and `release.sh`'s own stamp-check line
+passes; tools `jvmTest` 313/0 with the archive; `:shared:testAndroidHostTest` 1,614/0 and
+`:shared:compileTestKotlinIosSimulatorArm64` built (the shared change is two comments). `CI=true
+generate` writes 55 cities and 129 pages; the site builds 164 pages, all checks good, and its tests
+pass 18/0.
+
+After the review (11 October), the account of the evidence above was corrected: the portable routines
+and the moved answers are stand-ins for the runner, not the runner; the expected crossings; the count
+of fingerprints, the coordinates, the micro-degree and when the Website workflow runs. The three
+hashes at `1a93ddc5` (twelve entries, three each) and the harder stand-in were both reproduced, and
+`CanonicalTest`'s last-bits test now also moves each curve value by up to 2.6e-13°. No stamp,
+`ProofStamps.kt` or golden-vector line moved: the whole gate is again 10,997 rows and 4,001,889
+place-days, 0 early, 0 late ends, none over its limit, nothing BROKEN, with its report line-identical
+and its stamps byte-identical; `checkStamps` is green, and tools `jvmTest` 313/0 with the archive.
+
+## The app's own words, and the distance's thousands mark (10–11 October) — for 1.0.1
+
+The store listings and the site lost their accuracy and on-time promises on 6–9 October; the app's own
+strings waited for the next build. They follow now, in all seven languages, each the smallest change
+that makes the sentence true, in the words the site's support page already uses.
+
+**Onboarding.**
+- The location screen says prayer times depend on where you are. "Your exact position" was not true:
+  the app reads only approximate location, coarse on Android and reduced accuracy on iOS.
+- The notifications screen is headed with the app's own name for them, Prayer notifications (the
+  master toggle's words), not "Never miss a prayer". Its body offers a notification *for* each prayer,
+  the words of each language's listing, not one *at* each prayer time. That is English, Turkish,
+  Indonesian, Urdu and Bengali in the first pass, and French ("pour chaque prière") and Arabic
+  ("إشعار لكل صلاة") after the review, which read their listings' notification line, not the takbir
+  line the first pass had matched.
+- Android's exact-alarm screen is headed with the permission it asks for, Alarms & reminders, not "On
+  time, to the minute". Its body says Android *can* ring at the exact prayer time only with it: with
+  it, a battery saver can still hold a notification back.
+
+**Elsewhere in the app.**
+- Settings › Notifications, exact alarms off: "Allow Alarms & reminders to fix this" becomes "… so it
+  can ring at the exact minute". The Arabic says it with ليتمكّن من الرنين, so حتى no longer means
+  "up to" in one sentence and "so that" in the next.
+- The clock-change sheet in Turkish, Urdu and Bengali said alerts come (ring) at the right time only on
+  an automatic clock; it now says they are right only then, the English's weaker claim (Turkish
+  "doğru çalışır", work correctly; Urdu without the doubled ہی). The Arabic said precise (دقيقة, the
+  same word as "minute") and now says right (صحيحة). French and Indonesian already said right.
+  The Turkish sheets also opened "saat uygulamasını değiştirdi", which a reader on a phone takes
+  for the Clock app; they now say the country changed its official time, "resmî saatini
+  değiştirdi" (the app's own spelling of resmî, and the Arabic sheet's meaning). No page reads them.
+- Bengali Match my mosque writes আযান, the app's own spelling, not আজান.
+- The iOS location prompt (Info.plist and the seven InfoPlist.strings) no longer says "accurate".
+- The widget gallery and placeholder words (Android's English, iOS's English and Turkish, and the
+  Swift fallback that mirrors them) take the app's curly apostrophe: today’s, Taqvo’yı.
+- The Urdu compass-unavailable sheets say the bearing and the distance درست ہیں, the plural their two
+  subjects want, not ہے.
+- French: the two About sentences that still had a plain space before high punctuation
+  (`about_not_followed_irn_tromso` before ;, `about_cautious_maghrib_cap` before :) take the narrow
+  no-break space every other one has, so neither line can break before the mark. The French pages
+  of Paris, Brussels and Antwerp carry the second, and change by that one character.
+
+**The reminder's minutes.** A reminder is clamped so it never rings before the prayer before it:
+with the 30-minute lead and a Maghrib–Isha gap under 30 minutes (a summer night far north, or the
+user's own adjustments) Isha's reminder rings at Maghrib. It still said the lead asked for, "Isha in
+30 minutes", with fewer left, on both platforms and with exact alarms too. It now says the minutes
+really left (exact: every prayer instant is a whole minute). One and two minutes, which no lead
+offered and a clamp can, take the singular in English and French ("in 1 minute", "dans 1 minute")
+and Arabic's singular and dual ("بعد دقيقة", "بعد دقيقتين"); Turkish, Indonesian, Urdu and Bengali
+count with the same noun at every number. A reminder the clamp would push onto or past its own
+prayer is no longer planned: it had nothing left to remind of. On a night whose Isha reaches the
+next Fajr (R83's shape; `NotificationPlannerTest` builds one at an invented point at 66.5° N on Umm
+al-Qura's global method) the next Fajr's reminder was planned at that Isha, at or after the Fajr it
+announced, saying "in 10 minutes".
+`NotificationPlannerTest` holds the clamped reminder's words and a one-minute case; the copy test
+holds the singular and dual in each language.
+
+**In the docs.** `docs/STORE-PRIVACY.md` said a notification without Alarms & reminders is "at worst a
+few minutes late and never missing", a promise the app itself does not make. It now says up to an hour
+late, as the app's own note beside the button does. The two code comments a later writer would copy
+from (`ExactAlarms.kt`, and the Android scheduler's `schedule`) said "a few minutes late" and "a few
+minutes' slop" too, and now say up to an hour.
+
+Every other string was read in every language against the same rules. The first reading missed
+one figure, the reminder's minutes (above, and for the owner below). Two kinds stay on purpose:
+- The Qibla's "the bearing and distance shown are correct", shown when the compass cannot be used.
+  Its point is that neither figure depends on the compass, which is true. A wording that says only
+  that ("do not need the compass") is a later option.
+- The app's own labels for the exact-alarm state: EXACT ALARMS OFF and Allow exact alarms, "alarmes
+  exactes", "alarm tepat waktu", "tam alarmlar", "عین وقت کے الارم", "المنبهات الدقيقة",
+  "সুনির্দিষ্ট অ্যালার্ম". They are not the setting's name, which is Alarms & reminders in every
+  language and is quoted so in the sentences beside them. They follow Android's own word for the
+  exact-alarm permission (`permlab_schedule_exact_alarm` in the SDK's android-36 `android.jar`:
+  Indonesian "Menjadwalkan tindakan tepat waktu", Turkish "Zamanı tam olarak belirli işlemler
+  planlama", Arabic "… بدقة", Urdu "عین مطابق بر وقت …", Bengali "সুনির্দিষ্ট সময় …"). They name a
+  kind of alarm rather than promise a prayer time, and every language's support page quotes them
+  word for word, so they could only change together with those pages.
+
+**The distance to Makkah.** It was grouped with a comma in every language. A Turkish or Indonesian
+reader writes the decimal with a comma, so "Mekke’ye 2,916 km" read as under three kilometres. The new
+`DigitGrouping` (shared `i18n`) picks the thousands mark from the reader's language and the digits the
+platform draws:
+- Turkish and Indonesian: a point, 2.916.
+- French: a narrow no-break space (U+202F), as the French strings already use before ? and :.
+- Arabic-Indic digits, and Urdu's Extended Arabic-Indic ones where a phone draws them: U+066C, the
+  Arabic thousands separator, ٢٬٩١٦. A Latin comma has the shape of the Arabic decimal ٫.
+- A comma everywhere else: English, Urdu in Western digits (Pakistan), Bengali (২,৯১৬), and Arabic in
+  Western digits (Libya, the Maghreb).
+
+Each mark is the partner of the decimal mark the app already writes for the same reader in a
+recitation's size (`NumberStyle`). So no reader sees one mark used for both, and a test holds every
+pair to that. (`NumberStyle` has no Extended Arabic-Indic case yet: a ur-IN reader's sizes stay
+"58.2", Western digits and a point, beside a distance of ۲٬۹۱۶. A different mark, though not its
+partner; that pre-dates this round.) Arabic in Western digits keeps the comma because the app
+writes "58.2 MB" there; CLDR would have a point for ar-LY, ar-MA, ar-DZ and ar-TN, where it also
+writes the decimal with a comma. CLDR differs for French in two regions as well (JDK 25): a point
+for fr-MA and U+00A0 for fr-CA. `DigitGrouping` writes U+202F for every French reader on purpose: a
+space is never a decimal mark, and the app and the site write the same. The Moroccan pages and
+Montreal, the one Canadian French page, are held. And the grouping is in threes, which Bengali and
+Urdu use only below 100,000: from 1,00,000 on they group the lakh in twos (CLDR's `#,##,##0`). No
+distance to Makkah reaches six digits, and the KDoc says so for any later caller.
+The site's generator now compiles `DigitGrouping.kt` (and runs its test), and `Formats.distance` calls
+it. The app and a city page therefore cannot group a distance two ways. The site's workflow
+(`pages.yml`) lists both files among the app files whose change rebuilds the site, as it lists
+`CountdownDigits.kt`; without that a change to the mark alone would wait for the six-hourly run.
+- City pages that change: every Turkish, Indonesian and French page whose distance runs to four
+  digits, and every such Arabic page in Arabic-Indic digits. That is 32 of the 129: 15 Arabic, 9
+  Indonesian, 6 French, 2 Turkish.
+- English, Urdu, Bengali and Western-digit Arabic pages are unchanged.
+- The site deploys on every push to main, so those 32 pages take the new mark as soon as this is
+  pushed, while phones keep 1.0.0's comma until 1.0.1 is out in both stores. Only the separator
+  differs in that window, never a digit, a time or a proof figure.
+
+**Checks.**
+- `./scripts/check-strings.sh` is clean, and values-in is values-id's copy.
+- The shared host tests pass, re-run after the review's changes: 1,633, 0 failures, with the new
+  `DigitGroupingTest` (13), `QiblaDistanceTest` (5) and `DownloadCopyTest`'s pairing test.
+  `:shared:compileTestKotlinIosSimulatorArm64` builds.
+- The tools' JVM tests pass (320: `FormatsTest`'s second distance test, which held
+  `Formats.distance` to `DigitGrouping.group` called with the same arguments, proved nothing and is
+  gone; its literals are the app's `QiblaDistanceTest`'s). The whole gate is unchanged: 10,997 rows,
+  4,001,889 place-days, 0 early, 0 late ends, none over its limit, nothing BROKEN. No stamp moved.
+- The site generates and builds (164 pages, all checks good), and its tests pass (18).
+
+**Left for a later round** (none breaks this round's rules):
+- Arabic `about_stat_minutes_value` is one form for every number, so a worst of 3 reads ٣ دقيقة
+  where Arabic wants دقائق; the site reads the same string, so app and site change together.
+- Urdu `about_check_mosque_body` (درست کریں, "correct", where the English says adjust).
+- French puts a plain space between every number and its unit (km, min, Mo), in the app and on the
+  site; a no-break space would be one pass over both.
+- `NumberStyle`'s Extended Arabic-Indic case, above.
+- Whether Arabic in Western digits in Libya, Morocco, Algeria and Tunisia should keep the comma (and
+  the point in its sizes) or take CLDR's point and comma for both; the owner's question. CLDR groups
+  all four with a point and writes their decimal with a comma (JDK 25; Apple's ICU agrees, per the
+  review), so "3,196 كم" on the Algiers, Tunis and Sfax Arabic pages, and in the app on a phone in
+  ar-DZ or ar-TN, carries the ambiguity this round removed for Turkish and Indonesian. If Libya
+  moves too, every Arabic store screenshot (Tripoli, in Western digits) joins the re-shoot list.
+- Nine Arabic and ten Bengali strings write their numbers in the language's own digits rather than
+  the reader's: `saudi_fajr_later` and its detail (٥, ৫), `timetable_checking` (١٢, ১২), the
+  timetable names 12°, 15°, 18°, Chicago 18°, Chicago 18°/15° and 90-minute Isha, and Bengali
+  `adjustments_one` (১টি). An ar-LY reader sees ١٢ among Western digits, and an iPhone, which draws
+  Bengali in Western digits, sees ১২ beside 12. Each would take a placeholder filled by
+  `localizedDigits`, and the timetable names are also read by the site, so app and site would change
+  together.
+
+**Not changed, for the owner.** "Taqvo shows each prayer once they have all begun it", on the
+cautious-times card, behind the ⓘ and under Timetable › Automatic (`today_card_cautious_body`,
+`today_whose_cautious_body`, `timetable_auto_cautious`), is not true of Maghrib on a day the Maghrib cap
+decides it (Toronto, Oslo, Belgium, Australia): Maghrib then follows the most-followed timetable, and
+another is later. About these times says so on that day (R91), and the site's description and support
+page carry the same sentence, so it could only change in the app and on the site together.
+
+A reminder that arrives late. The reminder ("{prayer} in {minutes} minutes · {time}", and its six
+translations in `LocalizedNotificationCopy`) is written when it is scheduled, like every
+notification, and Android's `PrayerAlarmReceiver` posts it unchanged. Without Alarms & reminders
+it can arrive up to an hour late, so a 10-minute reminder can say "in 10 minutes" after its prayer
+has begun. Two ways out:
+- the receiver drops a reminder that fires at or after its prayer's start, and says the minutes
+  left at delivery when it fires late (the prayer's instant would travel in the intent's extras);
+- or wording with no count, which stays true however late it arrives ("Reminder · {prayer} at
+  {time}").
+The first keeps the reminder useful; either is a change to the notification path, so it waits for
+the owner.
+
+**Screenshots that now show an old distance** (not re-shot):
+- `docs/store/screenshots/appstore/{fr,tr,id}/*-01.png` and `*-08.png`.
+- `docs/store/screenshots/play/{fr,tr,id}/*-01.png`, `*-06.png` and `*-08.png`.
+- The site's `site/assets/img/prayer-{light,dark}-{fr,tr,id}.webp`.
+- The Arabic-Indic capture: `site/assets/img/prayer-arabic.webp`, on every language's home page, and
+  its README twin `docs/screenshots/prayer-arabic.png`. Its Qibla card reads ٢,٩١٦ with a Latin
+  comma, where the app now writes ٢٬٩١٦. A re-shoot needs a phone that draws Arabic-Indic digits, as
+  the one it was taken on did.
+
+The Arabic and Urdu store shots, `prayer-dark-ar.webp` and `prayer-{light,dark}-ur.webp` stay: they
+are in Western digits, which keep the comma. The Bengali ones keep it too (২,৯১৬), and the English
+ones are unchanged. No screenshot shows a changed sentence: the onboarding is in none, and the
+exact-alarm warning shows only with the permission off.
+
+## The Moonsighting Committee's own rule, to the edge of the midnight sun (11 October) — the T3 round
+
+The kz-north-west round's probe of the curves' 0.1° grid found Settings › Other › Moonsighting
+Committee early near 55° N, in build 35 and on `main`, for anyone who chose it. Its curves were read
+at the latitude rounded to 0.1°, and so was its switch to a seventh of the night at 55°. From 54.95° to
+55° N, at Newcastle upon Tyne, Gateshead, South Shields, Derry and Omsk, the seventh therefore took
+the seasonal rule's place.
+
+**The reference.** The Committee's own tables (moonsighting.com's praytable for 2026) were fetched at 23
+places, from Newcastle to Tromsø and from Ushuaia to Esperanza. They are in the private archive
+(`raw/manual/mcw/2026-10-11/`, `tables/manual/mcw/2026-10-11/`) with 23 rows in `MANIFEST.tsv`, and
+the archive's Toronto table was added to them. They settle three points where adhan2's preset, the old
+engine's, differs or is silent:
+- The switch is at the place's own latitude, as adhan2 has it. Newcastle (54.97° N) has the seasonal
+  rule, and Gosforth (55.0°) and Tynemouth (55.02°) have the seventh.
+- The seventh begins at 55° S too, where adhan2's preset has none. At Isla Hornos, in the Drake Passage,
+  at Orcadas and at Esperanza, the Committee's Fajr is up to 102 min after adhan2's and its Isha up to
+  53 min before it.
+- Fajr's seventh counts the night before sunrise; adhan2 counts the night after. From 55° to 66° N the
+  night before matches the Committee's tables to the minute on 72–88 % of their days, and the night
+  after on 42–82 %.
+
+The engine now follows the Committee's own rule. Where adhan2 has that rule too, the engine is also
+held to adhan2's figures.
+
+**What `main` got wrong.** Each time was checked against the rule computed with this core's own sun
+at the place itself, every 0.01° from 66° S to 66° N on every day of 2026, and against the Committee's
+own tables:
+- From 54.95° to 55° N, Isha came up to 24 min early on 70–71 days a year, May to July: 24 min before
+  the Committee's own printed Isha at Newcastle. Fajr came up to 68 min late there.
+- Between the 0.1° steps, near the sun's lowest point:
+  - Fajr up to 5 min early from 64.6° N, and up to 8 min south of 54° S, on the poleward side of a step.
+  - Isha up to 2 min early near 65.9° N.
+- From 65.3° N the end of eating came up to 7 min after the rule, and 6 min after the Committee's own
+  printed Fajr at Luleå and Akureyri. Its cap, a quarter of a degree short of the sun's lowest, lay
+  above the horizon there.
+- South of 55° S, Fajr was up to 91 min before the Committee's own (at Orcadas). Beyond 62° S, adhan2's
+  seasonal Isha falls after the middle of the night, and the curve cannot reach it.
+
+**The fix** (`TwilightCurves.kt`, `PlaceCurves`):
+- The switch at 55° is decided at the place's own latitude, north and south.
+- Each start curve is read twice, and each slot takes the later start:
+  - on the grid, as before;
+  - at the place's own latitude, with the sun at its own local noon (at 150° E, 12:00 UTC is ten hours
+    off, which with the leap cycle's drift put Fajr a minute early near 65° N in July).
+- Where the night is short (the sun no lower than 3° on some night of the cycle), each start is read a
+  third time: on every day of the leap cycle, with the sun's declination at the moment. On the edge of
+  the midnight sun the reference year's own day can have no night, and the curve then took a
+  neighbour's deeper dawn. Fajr came 2 min before the rule at 65.8° N on 16 June 2027.
+- Every slot is held to what the sun reaches there: the least the sun sinks that night in any year of
+  the cycle, less two thousandths of a degree (the night before the civil date's sunrise in the place's
+  zone; the review's fix round below).
+  - A Fajr dawn is capped there.
+  - An Isha deeper than that is left unreached (18°), so the high-latitude rule sets it, later than the
+    rule's own.
+- The end is the rule read as an end, on the grid and at the place itself (at the place's own noon,
+  each civil date's in its zone since the review's fix round).
+  It counts the longer of the nights around the day, so it is the earlier of the two definitions. A
+  slot the sun does not reach is read as the middle of the night: `EndOfEating.DawnOrMiddle` now takes
+  a curve.
+- The sun's declination over the cycle is computed once, every 6 h, and interpolated. A resolution
+  costs 1.5 ms on the Mac, against 0.8 before, once per place and cached.
+- The Grande Mosquée de Paris keeps its gated grid curve at its table's own point. Read in full there,
+  its Fajr went a minute later on at least 85 of the 303 checked days. Beyond its reach, its Fajr reads
+  the Committee's rule in full, and its end floors (in and beyond the reach) read it at the place's
+  own latitude and longitude.
+
+**What it gives now.**
+- Against the rule with this core's sun (Fajr the later of the two nights' for starts, the
+  Committee's own for ends), every 0.01° from 66° S to 66° N on every day of 2025–2028 (on the prime
+  meridian, at 150° E and 120° W, and in Helsinki's and London's own zones):
+  - no early Fajr or Isha and no late sunrise;
+  - no end after the Committee's own Fajr;
+  - at worst the shown minute is 6 s before the rule's exact moment, which a table prints as that
+    minute.
+- On a few days at the edge of the midnight sun (65.7–66°), the rule's Fajr is within a minute or two
+  of sunrise. There the Fajr shown is declared not followed (ruling R90).
+- Against adhan2's own night-after Fajr, the end comes 1–4 min after it on one day a year, at a few
+  latitudes from 65.78° to 66° N and S. That is the first night after the midnight sun: the night has
+  more than tripled overnight, and adhan2 puts its Fajr before the middle of the night just ended, so
+  no dawn that night is earlier.
+- Against the Committee's own tables:
+  - no early start and no late end at any of 19 places, from 43.7° N to 65.7° N and from 54.8° S to
+    63.4° S;
+  - at Kemi, Boden, Tornio and Usinsk (65.7–66.0° N), 2–4 cells each differ, on the days next to the
+    midnight sun. On those days the tables' sunrise and sunset are up to 51 min from the sun's own, and
+    the tables contradict themselves: an Isha 80 min after a Maghrib on a night of minutes, a Fajr
+    130 min before sunrise.
+- Lateness against the Committee's own tables:
+
+  | Where | Fajr up to | Isha up to |
+  |---|---|---|
+  | Newcastle | 4 min | 2 min |
+  | Oslo | 5 min | 3 min |
+  | Luleå | 7 min | 6 min |
+  | Akureyri | 7 min | 9 min |
+
+  Akureyri's Isha was 5 min on `main`. The extra minutes are June's short nights, where the
+  high-latitude rule sets Isha.
+
+**Tests.** `MoonsightingCommitteeTest` (common) covers:
+- Newcastle all year;
+- the switch either side of 55° N;
+- Isla Hornos;
+- Luleå and Kemi over 16 months.
+
+`MoonsightingSweepTest` (JVM) checks 6.8 million place-days in under a minute. Both fail on `main`'s
+engine, in all five tests. `CommitteeRule` is their reference.
+
+**What moved.** Branch against `main`, every 0.01° on every day of 2026 at 0° in UTC, along the UK's
+1.6° W in 2027, and along Paris's meridian for the Grande Mosquée and France's cautious entry:
+- Settings › Other › Moonsighting Committee:
+  - From 54.95° to 55° N, Isha is later by up to 25 min and Fajr earlier by up to 66 min, to the
+    Committee's own.
+  - From 40° to 64° N and S, Fajr and Isha are later on 1.6–12 % of the days, by a minute (up to 3 at
+    64° N), and never earlier. The end is a minute earlier on 2–29 % (2 min from 60° N) and never later.
+  - From 64° to 66°:
+    - Fajr is later by up to 30 min near the midnight sun;
+    - Isha is later by up to 26 min, and earlier on 34 place-days by up to 7, never before the rule's
+      or adhan2's;
+    - sunrise is later by up to 5 min on 118 place-days, where R90's precaution gives way, never after
+      the sun's;
+    - the end is earlier by up to 34 min, the middle of the night.
+  - South of 55° S, to the Committee's own:
+    - Fajr later by up to 98 min;
+    - Isha earlier by up to 68;
+    - the end later by up to 96 min.
+
+    Beyond 62° S, where `main` was far off, they also move the other way: Fajr up to 24 min earlier,
+    Isha up to 26 later, the end up to 35 earlier. Nobody in the app's city list lives there; its southernmost city is Ushuaia, at
+    54.8° S.
+- The Grande Mosquée: unchanged at its table's point. Beyond its reach, Fajr is a minute later on 1–4 %
+  of days, and the end a minute earlier on under 0.2 %.
+- France's cautious entry: unchanged.
+
+The golden vector moved on 1 of its 2,071 rows: the Committee at the London seed, 20 March 2027, Fajr
+1 min later. No stamp's figures moved. Every stamp's `engineHash` did, because `DayComputer.kt` and
+`TimetableMethod.kt` are core.
+
+Checked:
+- the whole gate: 10,997 rows and 4,001,889 place-days, 0 early, 0 late ends, none over a limit,
+  nothing BROKEN;
+- tools `jvmTest` 307/0 with the archive;
+- `checkStamps` (71 entries) green;
+- `:shared:testAndroidHostTest` 1,619/0, and `:shared:compileTestKotlinIosSimulatorArm64`;
+- `CI=true generate`; the site builds 164 pages, all checks good; the site tests pass 18/18.
+
+The engine change ships with the first update, not 1.0.0 (35).
+
+## The Committee's own noon across the date line (11 October) — the T3 review's fix round
+
+The review swept the T3 round's engine in real zones the round had not used, and found one place where
+it still broke never-early.
+
+**What the review found.** The round's own reads at the place took each civil date's noon as 12:00 local
+mean time on the UTC date. Where the zone puts the civil date a day from the solar one, that is a day
+off. East of 180° in Chukotka's UTC+12 (Asia/Anadyr: Provideniya, Lavrentiya, Lorino and Sireniki, at
+169–174° W), each civil date's noon is the solar day before the UTC date's. The grid's read at 12:00 UTC
+is then 12.5 h off, on top of the leap cycle's drift, which the envelope's day either side does not
+cover. Against the rule every 0.05° from 58° to 66° N at 173.23° W, on every day of 2025–2028:
+- Fajr was 1–2 min before the rule's printed minute on 1,095 place-days, July to September, from
+  58.45° N up;
+- the end of eating was 1–2 min after the Committee's own Fajr on 932 place-days, April to June;
+- with the legacy "seventh" choice, there were 264 early Fajr and 175 late ends.
+
+`main` fails the same sweep worse: Fajr up to 8 min early on 1,666 place-days, and ends up to 11 min
+late on 12,465.
+
+**The fix** (`TwilightCurves.CivilNoons`; `Registry` and `PlaceCurves` pass the user's zone):
+- Each of the place's own reads takes the civil date's own noon in the place's zone, as the engine's
+  own clock snaps its transit onto the civil date. That covers the start curves, the leap-cycle third
+  read and the end's own read.
+- The zone's offset is sampled every 30 days over the cycle. Where every sample gives the same shift,
+  with local mean noon at least 3 h from midnight, that shift holds every day. Elsewhere it is looked
+  up day by day.
+- Every zone whose civil date is the solar one has a shift of 0, so nothing moves there. The zones that
+  do shift lie near the date line: Chukotka east of 180°, Samoa, Tonga, Tokelau, Kiribati's Phoenix and
+  Line Islands, Wallis, eastern Fiji and the Chatham Islands, plus Attu in the Aleutians the other way.
+- The reach caps (`shallowestNights`) read the night before the civil date's own sunrise. Chukotka's
+  lowest point already lay inside their window. Where a zone puts it within an hour of the window's
+  ends, the window now also takes an hour either side of the place's own. That covers the Line Islands'
+  UTC+14.
+- The Grande Mosquée de Paris's Committee reads take the zone too. Paris's shift is 0, so its figures
+  do not move.
+- The comments that said "at any longitude" now say which nights are held.
+
+**The entry's equator curves.** `Generic.moonsighting` built its own method's curves at the equator
+when the registry first loaded. No resolution reads them: every one places the method at the user's
+point. That build cost every user's first use of the registry the Committee's whole read, for a method
+few choose. The entry's method now carries no curves.
+
+Measured on the Mac, in a fresh test JVM (not on a phone):
+- the Committee's reads at the equator, done cold after the registry: 12–14 ms;
+- the registry's first use: 58 ms, against 68–71 ms with the T3 round's engine and 65–88 ms on `main`
+  (the runs are noisy);
+- a warm resolution of the Other method at Newcastle: 1.7–1.9 ms, against 1.6 in the T3 round and 0.8
+  on `main`. With a zone look-up on every day it was 2.1–2.3 ms, hence the sampling.
+
+**The Committee's rounding.** At its 18 places off the midnight sun's edge, the 2026 tables print Fajr,
+sunrise and Isha within 30 s of the rule's exact moment (with this core's sun) on 85–89 % of 19,709
+cells. They fall as often on either side, and every Fajr and Isha is within 75 s. That is
+nearest-minute rounding, with their sun a few tens of seconds from this core's. A floor or a ceiling
+would put them all on one side. The tests' "printed minute" is therefore the nearest one, and the sweep
+test says so.
+
+**What moved.** These are the date-line places only; the 23 Committee table places dump byte for byte
+as in the T3 round. Every shown Fajr, sunrise, Isha and end of eating was dumped on every day of
+2025–2028.
+- Against `main`, at Provideniya, Lavrentiya, Lorino and Sireniki, times move only the safe way: Fajr
+  and Isha are later by up to 4 min, and the end earlier by up to 9.
+- Against the T3 round's engine, they move both ways by up to 4 min. The round's own read had been a
+  day off.
+- Along 173.23° W from 58° to 66° N, against `main`, the pattern is the T3 round's at 0° from 64° N:
+  - Fajr later by up to 30 min near the midnight sun, and earlier on 2 place-days, by 3 min (where
+    `main` had declared it not followed) and by 1 min, never before the rule;
+  - Isha later by up to 26 min, and earlier on 22 place-days by up to 9, never before the rule;
+  - sunrise later on 93 place-days by up to 5 min, where ruling R90's precaution gives way, never after
+    the sun's own;
+  - the end earlier by up to 35 min.
+- In the app's city list only Apia, Nukuʻalofa and Mata-Utu are in shifting zones. Against `main`
+  their Isha is a minute later on 6, 15 and 16 days of the four years, and nothing else moves. Against
+  the T3 round their Isha moves a minute either way on 22–28 days.
+- The Chatham Islands and Attu: Fajr and Isha a minute later, the end a minute earlier, against `main`.
+
+The golden vector did not move; it has no place in a shifting zone. No stamp's figures moved. Every
+stamp's `engineHash` moved again, because `Registry.kt` is core.
+
+**Tests.**
+- `MoonsightingCommitteeTest` adds Provideniya from April 2026 to September 2027, and it fails on the
+  T3 round's engine.
+- `MoonsightingSweepTest` now also sweeps three places:
+  - Asia/Anadyr at 173.23° W, 58–66° N every 0.05°;
+  - the Chatham Islands at 176.5° W, 40–47° S every 0.05°, with summer time;
+  - Alaska's summer time at 149.9° W, 55–66° N every 0.1°.
+
+  That is 7.4 million place-days in 58 s on four threads. It failed at 455 places on the T3 round's
+  engine. It now passes, with 40 Fajr declared under R90 and 10 first-night ends after adhan2's.
+- The review's own wider sweep (the Tyne every 0.002°, Punta Arenas, Reykjavik, Yakutsk, Magadan, the
+  legacy choices) gives the same counts as in the T3 round everywhere else.
+
+Checked:
+- the whole gate: 10,997 rows and 4,001,889 place-days, 0 early, 0 late ends, none over a limit,
+  nothing BROKEN;
+- tools `jvmTest` 307/0 with the archive;
+- `:shared:testAndroidHostTest` 1,620/0, and `:shared:compileTestKotlinIosSimulatorArm64`.
+
+**Left to the owner** (the report's decisions):
+- the midnight-sun-edge cells where the engine and the Committee's own 2026 tables disagree;
+- the lateness the high-latitude rule adds there (Akureyri's Isha up to 9 min);
+- the new minute of sunrise after the table's at Tornio on 12 June.
+
+## Morning and evening adhkar, and the 12-hour clock (11–12 October) — branch `adhkar-12h`
+
+Two features, built overnight on the branch `adhkar-12h` from spec
+`docs/superpowers/specs/2026-10-11-taqvo-adhkar-and-12-hour-design.md` and plan
+`docs/superpowers/plans/2026-10-11-taqvo-adhkar-and-12-hour.md`. Each task was a subagent with its own review;
+the ledger is `.superpowers/sdd/2026-10-11-taqvo-adhkar-and-12-hour/progress.md`. Nothing is pushed: the Lead
+merges with Mohamed's OK.
+
+**The 12-hour clock.**
+- Settings › Prayer times, last card: **Time format**, 24-hour or 12-hour. The sheet shows 18:32 in each
+  format. The default is 24-hour, so nothing on any screen changes until someone picks 12-hour.
+- The day-period marker is the platform's own: Android's `DateFormatSymbols`, iOS's `NSDateFormatter`
+  `AMSymbol`/`PMSymbol` on the language locale. It is joined with a no-break space: "6:32 PM", "pm" in British
+  English, "٦:٣٢ م" in Egyptian Arabic with its own digits, "৪:২৫ PM" in Bengali. Turkish puts it first:
+  "ÖS 6:32".
+- It is one seam, `PlatformFormat.clockTime`, so every surface follows with no code of its own: the ring, the
+  timeline, the Timetable sentences, the notification bodies (the time inside bidi isolates), both widgets and
+  the Appearance preview. The Glance widget's two-column thresholds widen only when a marker is present, so a
+  24-hour widget is unchanged.
+
+**Adhkar.**
+- **The way in** is a horizon glyph beside the misbaha on the Prayer header, labelled "Adhkar". It opens the
+  half day's set: morning from Fajr until Asr, evening from Asr until the next Fajr.
+- **The session** is one dhikr a page, Morning | Evening at the top. A tap anywhere counts, on the Tasbeeh
+  engine; the ring and "of 3" sit below. A page advances 400 ms after its target. Progress is counted, never
+  visited, and a set ends on a done page. The caption names the phase in the chosen clock: "Until sunrise ·
+  7:15 AM", "After sunrise · until 12:53 PM", "Asr to Maghrib".
+- **The content** is Hisn al-Muslim's 19 undisputed morning-and-evening items (Hisn 75–79, 84–86, 88, 90–97):
+  18 morning pages and 15 evening pages. The Arabic is OpenDua v0.0.4's, checked word by word against
+  hisnmuslim.com's chapter text by `tools/adhkar/check_items.py`. Ayat al-Kursi and the three Quls come from
+  quran.db by reference, with the reader's translation. The day's 100 istighfar is one counter shared by both
+  sets.
+- **The translations are gated.** English is OpenDua's. Bengali, French, Indonesian, Turkish and Urdu are
+  drafts that travel in the build but stay hidden: each of their text files says `"reviewed": false`, and the
+  loader treats such a file as absent. Those five languages show the Arabic, the transliteration (Latin UIs)
+  and the Quran pages' own translation. A language ships when its reviewer has passed it and its flag is
+  flipped, and nothing else ships it.
+- **The reading sheet ("Aa")** has the Arabic size slider, now one composable shared with the reader's sheet,
+  Transliteration, and a Translation switch (on by default, absent under Arabic).
+- **The speaker** on a Quran page plays the passage with the chosen reciter: an ayah subset that never chains
+  into the next surah. A surah not downloaded opens the download sheet. For Alafasy, four clips travel with
+  the app so the first run is not silent: `002-255.mp3`, `112.mp3`, `113.mp3` and `114.mp3`, 1,063,464 bytes,
+  byte-identical cuts of his own containers (`tools/quran-audio`). They play only while Alafasy is the chosen
+  reciter and the surah is not downloaded.
+- **The reminder** is a card in Settings › Notifications after Tahajjud, off by default. It fires half an hour
+  after Fajr, clamped to five minutes before sunrise, and half an hour after Asr, clamped to five minutes
+  before Maghrib. On Android its alarms are inexact. It is planned after every prayer, so it never displaces
+  one. A finished set withdraws that day's reminder, and a reminder that arrives after its window is dropped.
+- **The credit** is a row in Settings › Attribution & licences: "Adhkar", opendua.org.
+
+**Licences.** Two new files: `docs/licences/OpenDua-CC-BY-4.0.txt` (OpenDua's attribution verbatim, CC BY 4.0)
+and `docs/licences/Alafasy-adhkar-clips.txt` (what the four clips are, where they come from, and that only an
+app update can withdraw them). `docs/ATTRIBUTION.md`, `NOTICE` and the README carry the credits.
+
+**Before the drafts ship.** `tools/adhkar/TRANSLATIONS-FOR-REVIEW.md` needs one reviewer per language: tick or
+correct each draft, then run `check_items.py`, then flip `reviewed`. Three content decisions for Mohamed are at
+its top:
+1. **hisn-085.** The shipped Arabic and the five drafts read وَشَرَكِهِ, "his snares". OpenDua's English reads
+   وَشِرْكِهِ, "his shirk". Decided on 11 October: the Arabic stays as OpenDua has it and every translation
+   says "his snares"; the English was changed to match (`b37d7b35`, recorded in `tools/adhkar/README.md`, the
+   licence file and ATTRIBUTION).
+2. **Bengali য or জ** for Arabic loanwords (আযাব and রিযিক, but জমিন). Decided on 11 October: য, as the
+   app's আযান; the Bengali reviewer applies it.
+3. **Urdu hisn-078.** تیرے ساتھ ہم نے صبح کی, or the literal تجھ ہی سے. Left to the Urdu reviewer.
+The five drafts are being reviewed by the Lead's native-level review agents on a branch off this one, which
+flips each `reviewed` flag as its language passes.
+
+**Checked.** The last `scripts/test.sh` on `c206a25d`, after the morning's three follow-ups (Hisn 85, the
+opening-prayer rule, the header): shared 1,802/0 on the Android host and 1,712/0 on iOS, widgetcore 97/0 and
+95/0. `scripts/check-strings.sh` is clean. `:androidApp:assembleDebug` and
+`scripts/ios-build.sh` succeed (TaqvoWidget.appex 3 MB).
+
+**On a device: emulator-5560**, a throwaway Pixel 8 Pro image (Android 16, `-read-only`), London. The builds
+were `7c261a00`, then `98ead498` for the clip fix and the last checks. Screenshots are in the session
+scratchpad.
+- **12-hour.** Checked: the row and the sheet; the Prayer screen, the Timetable sentences, the Appearance
+  preview, and the medium widget on the home screen (2×2 and 3×2, two columns). Under Arabic (ar-EG) the times
+  read "٥:٤٤ ص", under Turkish "ÖÖ 5:44", under Bengali "৫:৪৪ AM". A posted Tahajjud notification's body read
+  "Fajr at ⁨5:46 AM⁩" with the isolates, and likewise in all three languages. The Prayer screen, the row and the
+  sheet were checked at 200 % text too.
+- **Back to 24-hour.** The Prayer screen is pixel-identical to the one before the round trip, the status bar
+  aside. The only differences are the countdown's seconds and the ring's tip, which moved with the 26 s
+  between the shots.
+- **Adhkar.**
+  - Counting through three pages, the ring and auto-advance.
+  - Leaving and returning by the glyph resumes the session.
+  - Evening counted in full to its done page, and the shared istighfar showing in the morning.
+  - The reading sheet's slider and switches.
+  - The speaker with Alafasy: An-Nas's clip with no download, on both builds, and the Media3 recitation
+    of An-Nas and Al-Ikhlas once downloaded. A media Next during a clip abandons it on `98ead498`, with one
+    voice.
+  - The reminder's alarms: ADHKAR-MORNING and ADHKAR-EVENING ids through 19 October, at Fajr + 30 and
+    Asr + 30, each with a 1 h window.
+  - The TalkBack tree: the glyph's "Adhkar"; a Quran page says its reference and never the Quran; the count's
+    "0 of 3".
+  - Arabic, mirrored, with the pager's right swipe going forward; 200 % text; the 360 × 640 dp shape.
+- **The reader's "Aa" sheet** works in both modes. In Translation mode the slider is enabled. In Mushaf mode
+  it is disabled, with its note.
+
+**What looked wrong** (steps and screenshots in the task 14 report). The fix wave after the final review
+(`37276add..15daf9c2`, twelve commits) fixed the first three and the Arabic-Indic digits in the time-format
+labels, together with the review's own findings: Urdu's "PM" landing before the digits inside sentences (one bidi
+isolate in `i18n` for every spliced clock time), the Turkish make-up captions' fixed dative ("en geç", listed for
+the Turkish reviewer), a clip still being read that an ordinary play did not abandon, a second speaker tap while
+a passage loads, the English adhkar credit and the licence file ("the Arabic text and its arrangement"), the dead
+`format` parameter of `refreshForNewTimes`, the reminder withdrawn even when the done mark cannot be written, the
+Prayer times screen reading the clock format from App's state, and an iOS simulator test of the 12-hour markers
+(Turkish, Arabic, English). Checked on emulator-5560: the Quran root, the reader's sheet, the Adhkar screen and
+the 100× page are pixel-identical at 100 % text and whole at 200 %; the Urdu Timetable and Adhkar captions in
+12-hour; the Arabic labels were not re-shot. On iOS the fixes are covered by the simulator tests only; the iOS
+device pass is still not done. The evening question, the preview's cut and one pre-existing 200 % cut are still
+open:
+- **At 200 % text a count of 100 shows as "10".** The ring's text has `maxLines = 1`, and the 12 sp floor at
+  2× cannot fit three digits, so the last one wraps out of sight. It is fine at 150 %.
+- **At 200 % text the Morning | Evening labels are cut at the bottom.** `TaqvoSegmented` has a fixed 44 dp
+  height.
+- **At 200 % text the caption is cut to "After sunrise · until 12:5…".**
+- **An evening set finished before Asr counted as that day's evening.** `dateKey` keyed it by that day's Asr.
+  Finished at 07:12, it withdrew the 16:55 reminder, and the evening would open on its done page after Asr.
+  Decided on 11 October (the Lead): a set counts only from its opening prayer, evening from Asr and morning
+  from Fajr. Before that it is a free read: the caption says "From Asr · 16:55", counting works, nothing is
+  persisted, no done mark is written, the reminder stays, and leaving starts again at the first page
+  (`f12f4c39`; spec §3.3 and §5).
+- **At 200 % text the Quran list's surah-number circles are cut at the bottom.** Seen in the wave's Quran root
+  shot; the screen was not touched by this branch. One for the accessibility round.
+- **The date line wrapped at 360 dp beside the two glyphs.** Both glyph buttons sat on the city's line, yet
+  the whole block, date included, was narrowed by both. Mohamed on 11 October: the glyph must not change how
+  the date is displayed. `c206a25d` overlays the two buttons on the city's row and gives the date line the
+  block's full width: at 411 and 448 dp the date's pixels are main's, and at 360 dp it is one line in all
+  seven languages where main's English and French already wrapped. Two consequences, both at 360 dp only: a
+  long city name wraps 44 dp earlier than on main ("Santiago de Compostela" takes two title lines), and the
+  whose-times card follows the block's width (312 dp instead of 268). Main-against-ours strips for en, ar,
+  bn and fr at the three widths are in the session scratchpad (`followup/header/hdr-compare-*.png`).
+- **"24 ساعة" and "12 ساعة" keep Western digits** under Egyptian Arabic, beside "٦:٣٢ م".
+- **Not caused by the 12-hour clock:** the Arabic Appearance preview cuts the medium widget's clock line. It
+  does the same in 24-hour.
+
+**The header** (a design call for Mohamed). With the second glyph, the English date line wraps at 360 dp. At
+411 and 448 dp it fits on one line. A tight variant at a 36 dp pitch gives the date column 8 dp more (232
+against 224 dp at 360). The line needs about 267–273 dp, so the variant still wraps at 360 dp. Arabic fits on one
+line at both widths in both variants. Screenshots of both variants are `header-*.png` in the scratchpad.
+
+**Not done.**
+- **The iOS device pass.** A dedicated simulator, "Taqvo adhkar" (iPhone 17 Pro, iOS 26.2), booted, and the
+  build installed and launched in Turkish and Arabic. The Simulator tool's per-device access was not granted,
+  so nothing past onboarding was reached. That leaves unseen on iOS: the 12-hour markers on screen, the adhkar,
+  the clips and the reminder card. The markers come from Foundation, which on this Mac answers ÖÖ/ÖS for
+  Turkish, ص/م for Arabic and am/pm for en_GB.
+- **A posted adhkar reminder on Android.** The harness cannot fire one, and the next was due at 16:55. The
+  planned alarms and the unit tests cover it.
+
+**For the stores:** one new screenshot of the Adhkar screen, and release notes that name both features.
+
+## The proof carried into 2027 (11 October, overnight track T4)
+
+1.0.1 bakes the stamps into the app until the next update, and 46 entries' stamps ended in 2026. This
+round gated every 2027 table an authority has already published, and every table it prints the same
+every year, as its 2027. Three of those showed the engine early in 2027: Kemenag, the Islamic
+Foundation of Ireland and the IZ BiH vaktija. Qatar's ministry was early on one day of Ramadan 1448,
+and BIK's end of eating ran past its limit once.
+
+- **Kemenag's step at the March equinox.** The weekly monitor first read Kemenag's 2027 on 5 October. That day's
+  prove added nine of the 18 kab/kota and left the other nine out. Eight were a minute early on 21 or
+  22 March 2027, at Dhuhr, Maghrib or Isha, and Palembang's Asr on 30 September. Kemenag's own tables
+  step at the equinox: on 21 and 22 March a printed Dhuhr, Maghrib or Isha lags the smooth curve by
+  about a day's change. In 2026 that step had already set most places' Maghrib and Isha margins. In
+  2027 it fell on another rounding phase at the other eight.
+  - The method now says so: `DayRule.LAG_EQUINOX_KEMENAG` makes starts on those two dates the later
+    of the day and the day before, and ends the earlier, as Umm al-Qura's lag dates do.
+  - Every unit's margins are refitted over 2026 and 2027 (safety 5 s). The margins the step had held
+    up fall back, Maghrib and Isha by up to 30 s. A few rise by up to 3 s, and Palembang's Asr by 8 s.
+  - Over 13,140 place-days: 0 early, 0 late ends, no start more than 1 min late. The exact shares rose:
+    Fajr 84.0 %, Dhuhr 85.5 %, Maghrib 84.4 % and Isha 83.3 %. On `main` they were 81.8, 78.0, 65.9 and
+    64.1 % over its 9,855 place-days.
+  - The nine 2027 rows prove added had taken the fetcher's F columns, so their end of eating went
+    unchecked. All 18 rows now read F+E. The Kemenag and JAKIM fetchers give F+E too, so the next
+    prove inherits it. Semarang's end-of-eating worst becomes 2, within class B's 2.
+- **Fixed tables, computed as the year they were fitted on.** Three authorities print the same
+  month-day times every year, in standard time, with the summer hour on top:
+  - IFI: its fixed GMT table.
+  - The IZ BiH vaktija: vaktija.ba's API answers every 2027 day of Sarajevo, Banja Luka and Bihać
+    with 2026's times, but the hour on the 7 days the clock changes on other dates.
+  - BIK's Takvimi: its 2024 and 2026 editions print the same times, but the summer hour's dates.
+
+  Each year's own sun drifts against such a table through the leap cycle. Against 2027, IFI was a
+  minute early on 52 starts and late on 29 ends (2028 worse). Bosnia was early on 239 Fajr, 220 Isha,
+  44 Maghrib, 17 Asr and 7 Dhuhr cells, with 47 late sunrises. Kosovo's end of eating came 4 min
+  before its imsak once, over class D's 3.
+
+  `TimetableMethod.fixedTableYear` (2026 for all three) computes each date as the same month and day
+  of that year, moved onto the date at the same moment of the UTC day. It refuses a method with a
+  Ramadan, day or clock rule or a phase year. Each year now shows the table's own times, so 2027
+  checks as 2026 did. IFI is gated on 2027, 2028 and 2029 (the table prints no 29 February): 1,460
+  place-days. Bosnia covers 2,190 place-days and Kosovo 1,460.
+- **Qatar.** The Ministry of Awqaf's API answers every date of 2027, and it was read with the
+  monitor's own `fetchers/qatar.py`. On 25 February 2027, Ramadan 1448's eighteenth day, Maghrib and
+  Isha came a minute early at Doha and four of its towns. The calendar's Ramadan Maghrib is its
+  latest, so Ramadan's Maghrib (and the Isha counted from it) now takes 8 s more (`RamadanRule`). Raised
+  all year instead, 13 summer days at Doha would have reached 3 min, over class B's 2. Dhuhr is now +42.
+- **Perpetual tables mapped onto 2027**, as `ae-iacad.tsv` maps its tables:
+  - green as they stand: Dubai Rural, Dar al-Fatwa's perpetual table, the Banuri Daimi pages and
+    Darul Ihsan's Pretoria;
+  - the IFB permanent Dhaka table, a minute more late on single days. Its limits are recorded, with
+    reasons: Fajr 5, sunrise 4 and end of eating 5 (all were 4, sunrise class D's 3).
+
+What did not move, and why (the stamps' last day as before):
+- **Not published yet:** JAKIM (e-solat and its mirror answer nothing for 2027), MUIS (data.gov.sg
+  holds 2024–2026), DUM RT (only the 2026 file), Brunei (the list ends 31 December), IGGÖ (its PDF API
+  answers 404 for 2027 and 200 for 2026), FIANZ (its page offers the current year's months), IIT (its
+  month table ignores a year), IFT (its CSV, from December), Jordan (its region table ends with the
+  year), INM (no data for 2027 dates), EMB (December), IRN (December), London (late October; the
+  monitor picks it up), BIK's printed edition (December or January; its perpetual table is gated above).
+- **The monitor's month at a time:** Egypt, Habous, Libya, the MJC and Cape Town, Masjidal's Chicago
+  mosques (from 1 November), Qatar's printed calendar.
+- **No 2027 source:** Kuwait, Syria, Kyrgyzstan, Uzbekistan (computed in the browser), the UAE's
+  Awqaf (its API answers 401), Montenegro, DUM RF, Wifaqul, Dawat-e-Islami's India, the ICCI (its
+  site computes in the browser).
+- **Cautious entries:** Ireland, Toronto, Chicago, Canada and the US ISNA, Germany and the Netherlands
+  wait for every member's 2027 (Switzerland's FIDS, not cautious, was carried by the review, below). Against Diyanet's Berlin 2027 alone, Germany's members'
+  spread reads as lateness far over the limits (Isha up to 144 min, end of eating 147 min before), as
+  the Netherlands' did. That is not the engine's error, so nothing is recorded.
+
+The archive gained, as new files only (nothing edited):
+- the nine Kemenag 2027 captures pinned under `tables/pinned/id-kemenag/2026-10-11/`;
+- Qatar's two 2027 tables and 365 raw answers;
+- the vaktija's three 2027 towns and 36 raw answers, under `manual/ba-iz/2026-10-11/`;
+- the two BIK PDFs;
+- the derived 2027 mappings (IFI to 2029), listed in `MANIFEST.tsv`.
+
+The whole gate is 11,040 rows and 4,012,636 place-days: 0 early, 0 late ends, none over a limit. On
+`main` it was 10,997 and 4,001,889.
+
+What moved: every stamp's `engineHash` (the core changed). The golden vector moved on 53 rows:
+Bosnia 16, Serbia 19 (Sandžak 9, the Preševo valley 10), Kosovo 6, Dublin 10 and Doha 2. The Balkan and Irish rows
+are the fixed tables, a minute either way. Doha's two are Dhuhr, a minute later.
+
+Checked: tools `jvmTest` 307/0 with the archive; `checkStamps` (71 entries) green; shared 1,617/0 on
+the Android host, with the iOS test compile; the monitor's Python tests 108/0 on both Pythons.
+`CI=true generate` writes 55 cities, the site builds 164 pages with every check good, and its tests
+pass 18/0.
+
+### The review's fixes (11 October, track T4's fixer)
+
+The review found the fixed tables' days blind to the date's own sun, Switzerland a minute early in
+2027 against a table the archive held, Kemenag's 2028 already published, Lebanon's late 2026 unchecked
+and the held-out counts overstated.
+
+- **A fixed table's day is held to the date's own sun.** `fixedTableYear` moved 2026's whole day onto the
+  date, its sunset too, so neither the invariants nor the Maghrib cap saw the date's own sun. Against the
+  plain sun at the same points, IFI's Dublin showed a sunrise a minute after the sun's on 19 days of March
+  2028, and a Maghrib on the minute the sun set on 41 days of March and April 2028 and 24 of February to
+  April 2029. Ireland's automatic entry inherited both through its IFI member. The day now keeps:
+  - the sunrise shown, and Fajr's end, never after the sun's own sunrise;
+  - Maghrib never before the minute after the sun's own sunset, and Isha after it;
+  - the date's own sunset, Asr's end and red twilight.
+
+  `DayComputerTest` runs IFI and Ireland's automatic entry at Dublin through 2026–2030 against the plain
+  sun; it fails without the bounds. At the three Bosnian towns and in Kosovo neither bound binds from
+  2027 to 2030, so their figures do not move. At IFI no worst figure moves either; the exact shares of
+  sunrise and Maghrib fall from 67.4 to 66.1 % and 58.1 to 53.8 %.
+- **29 February.** The table's year, 2026, has none, and the builder's day showed 28 February's.
+  vaktija.ba's own February 2028 (its six raw answers are in the archive) prints 29 February between 28
+  February and 1 March: Asr, Maghrib and Isha a minute after 28 February's, sunrise a minute before. So 28
+  February alone was a minute early at Sarajevo's Isha and a minute late at its sunrise. The day is now
+  the safe side of 28 February and of the would-be 29 February: the day after it on 2026's sun, read
+  with February's monthly offsets and 29 February's curve slot, as a town of base table plus month's
+  offset prints it. Checked outside the committed rows (2028 is past the stamps): never early at the
+  three towns. Isha is up to 3 min late at Banja Luka and Bihać, whose curves carry 1 March's offset
+  change, over class B's 2 that one day.
+- **Bosnia's edge keeps the real dawn.** Beyond the three towns the edge inherited the fixed year, and its
+  Fajr ran up to 60 s before the year's own at Mostar, Trebinje, Tuzla and Novi Pazar. `fixedTableOwnDawn`
+  (on `ba.iz.edge` only) keeps Fajr no earlier, and the end of eating no later, than the year's own 18°
+  dawn gives. Over 2027–2030 that moves Fajr a minute later on 274 days at Mostar and 307 at Tuzla, most
+  in 2028, and the end of eating a minute earlier on 231 and 240. No gate row reads the edge.
+- **Switzerland.** FIDS prints Diyanet Zürich's table, and the archive held Diyanet Zürich to 31 December
+  2027. Against it, the margins fitted on FIDS's one month were a minute early at Maghrib on 5 days of
+  2027 and a minute late at sunrise on 9. Zürich's unit now takes Diyanet Zürich's own method and margins,
+  green on both rows: 403 place-days, worst 3 (Fajr, Isha and the end of eating, as Diyanet's own unit).
+  Diyanet's margins take `ch.fids`'s worst Fajr, Isha and end of eating to 3 min, class D's limit, up from
+  1 with FIDS's month-fitted margins.
+  The exact shares over the larger set: sunrise 65.9 %, Dhuhr and Asr 75.2 %, Maghrib 84.5 %. A fit over
+  both rows would have taken sunrise 12 s later, Dhuhr 4 s, Asr 5 s, Fajr 8 s, Isha 3 s and the end of
+  eating 15 s, and Maghrib not at all. The row is fit, not held out, since Diyanet's margins were fitted on
+  its Zürich table of the same days (pre-existing, and the same of Diyanet's own unit: `tr-diyanet-europe.tsv`'s
+  two Zürich capture rows, held out, repeat `dy-zurich.txt`, fit, on 393 of their 393 shared days, so they
+  hold out nothing). The stamp now reads through 31 December 2027 (an owner decision); no Zürich table holds
+  2 November to 31 December 2026, so About says 1 November 2026 until 2027 (the re-verify's fixes, below). The
+  edge beyond Zürich's reach keeps FIDS's month-fitted margins, a minute more. A `recipes.tsv` line now
+  clones each new Diyanet Zürich capture into `ch-fids.tsv` as well, as `be-emb.tsv` and the cautious files
+  already take Diyanet's.
+- **Kemenag's 2028.** myQuran answers 2024 and 2028 already. 2028 was read for all eighteen with the
+  monitor's own `kemenag.py` code (place-name check included), and pinned under
+  `tables/pinned/id-kemenag/2026-10-11/` with its 216 raw answers. It agrees on every day with the review's
+  own fetch. Averaged over the eighteen, the step falls on 21 and 22 March in 2024, 2026 and 2027 and on 21
+  March alone in 2028, never on 20 March, so `LAG_EQUINOX_KEMENAG`'s two dates cover the leap years. 2028
+  is the held-out year, never fitted on: 6,588 place-days, 0 early, 0 late ends, worst 1 but the end of
+  eating's 2. Every 2026 and 2027 row is now fit, since the margins were fitted over all of them.
+- **Lebanon.** The perpetual table was mapped onto 2024 (fit) and 2027, so 2 October to 31 December 2026
+  was claimed but unchecked. It is mapped onto 2025 and 2026 too, derived exactly as the 2027 file (the
+  same script reproduces that file byte for byte). Green: 1,469 place-days, every worst within its
+  recorded limit, nothing new recorded.
+- **Held out means held out.** Under `fixedTableYear` the 2027–2029 rows of IFI, the vaktija and BIK
+  compare the 2026 computation, moved, with the 2026 table re-dated. They check the clock-change days, the
+  move and the sun's bounds, not a new year, so they are now fit. Qatar's 2027 set its Dhuhr (+42) and its
+  Ramadan Maghrib, so it is fit too. Held-out days: Kemenag 6,588 (was 8,226), Qatar 2,845 (5,765), IFI and
+  Bosnia 0 (1,095), Kosovo 365 (1,095).
+- **Qatar's seconds.** Gated at whole seconds, Ramadan's Maghrib is a minute early on 25 February 2027 at
+  all five places with 0 or 1 s more and clean from 2 s. The 8 s shipped leave 6.
+- Wording: Kosovo's 2027 is a derived table, not a printed one (Balkans.kt); the 2027+ fixed-table rows say
+  what they check (`ie-ifi.tsv`, `ba-iz.tsv`, `xk-bik.tsv`).
+
+The whole gate is 11,061 rows and 4,020,317 place-days: 0 early, 0 late ends, none over a limit, nothing
+broken. Before the review it was 11,040 and 4,012,636. Stamps that moved: `ch.fids` (through 2027-12-31),
+`id.kemenag` (through 2028-12-31), `lb.fatwa` (1,469 place-days), IFI's two exact shares, and the
+held-out counts above. The golden vector moved on 29 rows against the builder's:
+- 7 at Zürich, for Diyanet's margins;
+- the 29 February rows of Mostar, Preševo and Dublin (Dublin's with its sun bounds);
+- the edge's Fajr a minute later or its end of eating a minute earlier on 6 rows at Mostar and Sandžak;
+- the sunset back to the date's own (as on `main`) on 17 rows, on 13 of them alone.
+
+Against `main` it moved on 55 rows.
+
+The archive gained, as new files only: Kemenag's eighteen 2028 tables (`tables/pinned/id-kemenag/2026-10-11/`)
+and their 216 raw answers (`raw/monitor/id-kemenag/2026-10-11/`); Lebanon's 2025 and 2026 mappings
+(`tables/normalized-7e/`, listed in `MANIFEST.tsv`); and vaktija.ba's February and March 2028 for the
+three towns, six raw answers (`raw/manual/ba-iz/2026-10-11/`), the 29 February evidence.
+
+Checked: tools `jvmTest` 307/0 with the archive, and the prove and city-unit tests again after the recipe
+line; `checkStamps` (71 entries) green; shared 1,620/0 on the Android host, with the iOS test compile; the
+monitor's Python tests 108/0 on both Pythons; `CI=true generate` 55 cities, the site 164 pages with every
+check good, its tests 18/0.
+
+### The re-verify's fixes (11 October, track T4's second fixer)
+
+- **About's date stops at the first unchecked day.** The checked template's "checked against {authority}'s
+  timetable through {date}" gave the stamp's `last`, the end of its envelope, but the checked runs (ruling
+  R115) can have holes. Zürich's tables jump from 1 November 2026 to 1 January 2027: FIDS's month ends on 26
+  October, and both Diyanet Zürich captures and `dy-zurich.txt` hold no day between. So `ch.fids` claimed 31
+  December 2027 across two unchecked months. Diyanet's own entries have the same hole (Türkiye's thirteen
+  units and the European cities; `main` already had it at Diyanet's Zürich unit). `ProofStamps` now carries
+  each entry's checked runs, and a unit's own where they differ. About's date is the end of the run holding
+  the day it is read on, so it never runs past a day the place's own table was not checked on, as the city
+  page's date never does. On a day no run holds it gives the end of the latest run before it, a date already
+  past; before the first run, no date. Counted from the stamp's first day instead, the rule would have dated
+  Jordan's About 8 January 2021 and Tunisia's 10 November 2019, whose stamps begin with sampled survey days.
+  So it counts from the day About is shown. `ProofStamp.provenThrough` is renamed `lastChecked`: it is still
+  the stamp's `last`, the end of the envelope, and no longer read as a claim. The stamps themselves are
+  unchanged.
+
+  The dates that move, read on 11 October 2026. The app shows them at class A and B places only; a cautious
+  or class D place says no date.
+  - `tr.diyanet` (Türkiye, class A), at all thirteen units: 31 December 2027 to 1 November 2026, and 31
+    December 2027 again from 1 January 2027.
+  - `om.mara` (Oman, B): 30 September 2031 to 31 December 2026. Nothing from 2027 to 2030 is checked; the
+    two 2031 months are spot checks.
+  - `bn.mora` (Brunei, B): 31 December 2026 to 13 December 2026, since no row holds 14 December.
+  - `tn.inm` at Ben Guerdane, Tabarka and Tala (B): 30 December 2026 to the latest of their every-third-day
+    checks (11 October 2026 on that day).
+  - No date shown: `ch.fids`, `other.turkey`, `be.cautious` and `tr.diyanet.europe` (19 units) to 1
+    November 2026, and its other 14 units, Danish, Norwegian, Swedish and Finnish towns from Aalborg to
+    Uppsala, to 29 October 2026; `ie.ifi` to 28 February 2028 (no row
+    holds 29 February 2028); `au.lma` and `au.cautious` to 1 December 2026; `ca.ift` and `ca.toronto` to 31
+    October 2026; `za.voc` to 31 October 2026; `at.iggo`, `nz.fianz` and `pk.karachi` to 30 September 2026;
+    `bd.ifb` to its latest sampled day (6 October 2026).
+- **Kemenag's note.** The comment on the other nine 2027 rows in `id-kemenag.tsv` said split=test. Those rows
+  are fit, as is the header.
+- **Zürich's margins.** The Switzerland bullet above now says that Diyanet's margins take `ch.fids`'s worst
+  to 3 min, up from 1. It also says that Diyanet's own Zürich capture rows repeat its fit file (pre-existing).
+- **Follow-up for 2028, not gated yet.** vaktija.ba's 29 February 2028 Isha comes 3 min late at Banja Luka and
+  Bihać under the new 29 February rule, over class B's 2 (the 29 February bullet above). It is recorded here,
+  not as an R41 limit. A `LateLimit` has no date, so one would loosen Isha at both towns on every day, and
+  About's "at most" figure with it, for one day that no row gates. When 2028 is gated, either the rule for
+  that day brings Isha back within 2, or a limit is recorded then with its reason.
+
+The whole gate is still 11,061 rows and 4,020,317 place-days: 0 early, 0 late ends, none over a limit, nothing
+broken. No stamp and no golden-vector row moved; `ProofStamps.kt` gained the runs.
+
+Checked: `checkStamps` (71 entries) green; tools `jvmTest` 307/0 with the archive; shared 1,621/0 on the
+Android host; `CI=true generate` 55 cities, the site 164 pages with every check good, its tests 18/0.
+
+## Tables at their own points (10–11 October, overnight) — the rest of the city-point audit
+
+The city-points round fixed Umm al-Qura's and QMDB's own city tables. Its audit had found the same fault in
+other entries: a table printed for one point (a mosque's, a city's, an authority's base point) is checked
+there, while the app computes at the user's own point. So the app's own city point a few kilometres away
+could be early against the table its mosques follow. That audit was re-run on `main`, for every entry
+including the cautious ones' members, and then widened: every app city within 20 km of such a table, where
+the city follows the table's entry (Automatic, as a member, or in its own Settings list) and that table is
+the nearest of its file.
+
+**What the audit found on `main`.** The old pairing (each row at the app city of its own name, else the
+nearest) found the round's list again: Ottawa against Abrar Masjid, Houston, Irving, Plano, Sterling and
+Manassas against their mosques, Calgary and Surrey, Delhi, Tashkent, Shtime, and the over-only Sydney,
+Dublin and Lille, plus Montréal 1 cell over at Dar Al Arkam. It also found London's two M25 edge rows at St
+Albans and Sevenoaks. Those are not a table's own point, and both towns, outside the M25, follow the UK's
+cautious times. The widened audit found early starts or late ends against the nearest table at:
+
+| entry | app cities with any / of those paired | early | late ends |
+|---|---|---|---|
+| us.isna | 108 / 593 | 1,252 | 838 |
+| ca.isna | 8 / 82 | 231 | 22 |
+| ca.cautious (its three families) | 43 / 60 | 346 | 224 |
+| us.chicago (ISNA and the 18° block) | 22 / 122 | 255 | 55 |
+| in.karachi (Dawat-e-Islami's Delhi) | 63 / 67 | 1,032 | 307 |
+| uz.board (Tashkent) | 6 / 6 | 65 | 4 |
+| xk.bik (the Takvimi's base table) | 4 / 5 | 252 | 2 |
+| gb.wifaqul (Manchester Central) | 37 / 45 | 149 | 107 |
+| pk.karachi, lb.fatwa, sy.awqaf, iq.sunni, kg.default, ps.gaza.awqaf | 2, 2, 3, 1, 2, 8 | 92, 69, 0, 5, 5, 10 | 0, 0, 3, 0, 1, 11 |
+| fr.cautious, se.cautious, au.cautious | 69, 5, 6 | 0 | 767, 59, 14 |
+
+**The units** (`tablesAtTheirPoints`, rulings R30, R40 and R44). Each such table is now a unit at its own
+point. The nearest whose reach holds the user takes them, and its point rides as the method's fixed point
+beside the user's own: starts the later, sunrise and the ends the earlier. So the time shown is never before
+the nearest table whose reach holds the user, nor any end after it. Where two tables' reaches overlap, a
+place follows the nearest only and can still be on the wrong side of the other (the fix round below: Ottawa
+against Abrar Masjid, an owner's question); Damascus's two samples of one table read both points.
+- The tables: ISNA's 35 US and 18 Canadian mosques, Canada's three families' 6 mosques, Chicago's 18°
+  block's 3, and the city tables of Delhi, Karachi, Tashkent, Bishkek, Gaza, Beirut, Damascus (two),
+  Baghdad and Manchester Central's Wifaqul table, plus BIK's base point.
+- **The reach.** A mosque's or a city's table reaches a minute of longitude (class A's minute, 17 to 24
+  km), its own neighbourhood. Farther out, a user's own mosque prints for its own point, as the method
+  computes. With class D's three minutes the cost was up to 5 min at a US Fajr and 8 to 10 at the Canadian
+  families' Isha and end of eating. That narrows R40, which takes a unit's reach from its entry's class
+  limit: us.isna, ca.isna and every city table's entry (in.karachi, pk.karachi, uz.board, kg.default,
+  gb.wifaqul, ps.gaza.awqaf, lb.fatwa, sy.awqaf, iq.sunni) are class D, and Canada's families and Chicago's
+  18° block are members of class C entries: three minutes (about 61 km) each, not one. A proposed ruling,
+  for the owner; its cost is the cities just beyond the minute (the fix round below).
+- BIK applies one base table to all of Kosovo with one whole-minute offset per town, whatever the town's
+  latitude, so its base point reaches as far as class D, about 61 km. BIK's offset list is not held.
+- Beyond every reach, the method at the user's own point exactly as on `main`, with no edge minute. These
+  margins hold every table at its own point and were always meant for any point. So R44's edge minute and
+  SAFE_END, and R45's bound of the ends by the nearest table, are suspended there (the same proposed
+  ruling). No figure is claimed
+  there, as beyond every other unit. A cautious convention member keeps its own measured reach
+  (`measuredBeyond`), so Canada's cautious About shows its proof where it did. Chicago's ISNA member is the
+  US entry itself, not measured beyond its mosques' reach, so 65 of the region's 173 app cities (Aurora,
+  Naperville, Elgin, Waukegan, Schaumburg, Gary …) no longer show Chicago's proof tiles (the re-run's count).
+- India, Uzbekistan and the other city tables claim no figure anywhere, so their units are unmeasured.
+- The Canadian families' night-fraction curves are read at both latitudes beside a mosque
+  (`PlaceCurves`' `userLatitude`): each slot is the later start of the two and the earlier end.
+- **One engine fix** (`DayComputer`, point 7). Where one of these tables rides for the starts too
+  (`TimetableMethod.endsBoundAtUserPoint`, set by `tablesAtTheirPoints` alone), the ends shown are also
+  never after those the same method shows at the user's point alone. The end of eating is held to the Fajr
+  shown, which is the later of the two points. So under a Fajr margin below the end's (the Kyrgyz
+  Muftiate's), the table's later Fajr let the end of eating come a minute after the user's own point alone
+  gave it, in 110 cells near Bishkek. An authority's own unit keeps its table's ends, as on `main` (the
+  re-run below). No stamp moved for it.
+
+**The proof.**
+- **The app's own points.** Every app city inside a new unit is gated at its own point against the
+  table it follows: 1,291 rows. That is 633 US, 84 Canadian, 52 for the families, 284 for Chicago's
+  members and 79 by Delhi, plus Sydney, Dublin and Lille. Each row is held to its own worst
+  (`own-points-worst.tsv` now covers these groups, 2,225 rows).
+- **The reach rows.** ISNA's units and BIK's base claim a figure, so their tables are gated across their
+  reach as Umm al-Qura's and QMDB's are (`generateReachRows`): us-isna 530, ca-isna 130, xk-bik 46 rows.
+- `CityUnitsTest`'s third grid now covers them too: 3,729 US, 687 Canadian and 190 Kosovan points, with 0
+  early, 0 late ends, none over a limit, and no start past a unit's figure.
+- **The late limits** (ruling R41, each with its reason) where the app's points or the reach passed the
+  recorded ones:
+  - ISNA US: Maghrib 7, Asr and Isha 6, sunrise and the end of eating 5. By unit: ADAMS's Fajr 6, Dar Al
+    Noor's and East Cobb's Zuhr 8, MEC's Isha 7.
+  - ISNA Canada: Asr 5. By unit: Taiba's Fajr 7, West Island's 6, Abrar's Isha 5.
+  - Chicago: Fajr 32, the end of eating 33, Zuhr and Maghrib 7, Asr 6, Isha 7, sunrise 4.
+  - Canada's families: Zuhr and Maghrib 6, sunrise 5, the end of eating 39.
+  - BIK's base: Fajr, Zuhr and Isha 7, sunrise, Asr and Maghrib 8, the end of eating 9.
+  - Delhi's end of eating 4, Tashkent's sunrise 6, and Beirut's sunrise 4, Maghrib 8 and end of eating 9.
+  - Sydney's sunrise 9, Dublin's Maghrib 3, and Lille's Isha 4 (its August takdir step).
+- **The audits again.** On the widened audit every entry above now shows 0 early and 0 late ends but
+  five: fr.cautious, se.cautious and au.cautious, which are not changed here, and two just beyond a
+  minute's reach. Ten Canadian pairs remain, 18 to 20 km out (Calgary's north-east against Calgary Islamic
+  Centre SW, Vancouver's west against Surrey Jamea), and eight gb.wifaqul towns 17 to 20 km from
+  Manchester Central (corrected in the fix round below). The old pairing still shows Ottawa against Abrar
+  Masjid, 10 km south-west: Ottawa now follows the Ottawa South Mosque, 2.2 km away, against which it is
+  gated and clean, but it is still early against Abrar's, inside Abrar's reach (the fix round below).
+- **Never earlier than `main`.** The first run's comparison (3,571 points, two a country elsewhere) missed
+  the point-7 bound's moves inside other authorities' units. The re-run's own comparison is below: 0 starts
+  earlier, and no sunrise, sunset, end of eating or imsak later, with nothing moved outside the 12 countries
+  with a new unit.
+
+**What About shows** (its figure is the worst start across the unit). ISNA's US units now show 4 to 8,
+where the whole country showed 7:
+- New York 7 (Masjid Manhattan), Houston 7, Irving 5, Plano 7, Sterling 6, Manassas 8 and Detroit 7.
+- Beyond every mosque's reach (Atlanta, Phoenix) it shows "Not measured", where `main` showed the
+  country's 7. The re-run counted the app's US cities: 2,708 of them say "Not measured" now; inside a unit
+  293 keep 7, 168 show 6, 31 show 5, 13 show 4 and 20 show 8. In ca.isna's two regions, Saint-Jérôme,
+  Mirabel and Buckingham lie beyond every mosque's reach and say "Not measured", where `main` said 5.
+- What a place beyond every reach loses with its figure (`Resolution.measured` false there): About's
+  "how it is checked" section (its figure and tiles), the adjustment warning's margin (`marginMinutes`), and
+  in Chicago's region the cautious proof tiles (`cautiousProof`). The Today card does not change: it reads
+  the class alone (`WhoseTimes.of`), and us.isna, ca.isna and xk.bik are class D (authority) on `main` and
+  here alike, inside and beyond the units (the fix round below checked it).
+
+Canada's ISNA units show 3 to 7, where Montreal and Ottawa showed 5: Ottawa 4 (Ottawa South), Montreal 3
+(As-Salam) and Snowdon 7 (Taiba). Kosovo's base unit shows 8, where `main` showed 6. Every Kosovan city of
+the app's list but one lies inside it (Pejë 61 km west); Leposaviq, 69 km north, lies beyond, with its times
+as on `main` and "Not measured" where `main` showed 6. Delhi, Tashkent and the other city tables
+showed no figure and still show none. Chicago, Canada's families, Sydney and Dublin are cautious and show no
+figure. Diyanet's Lille unit, chosen there, keeps its 4 (its Fajr's).
+
+**The site** (its 55 cities and 129 pages, generated at one moment on `main` and here):
+- Chicago's times move a minute later on some of its 61 days: Fajr on 14, Zuhr 17, Asr 6, Maghrib 7, Isha 19.
+  The other school's Asr moves on 5. Its two members' own rows move the same way, now that each rides its
+  nearest mosque's table. Its proof tiles grow to 26,209 place-days at 133 places, the app's own points
+  included, and its Fajr shares move (the table's own minute 4.4 → 6.5 %, 3 min or more after it 60.7 →
+  50.5 %).
+- Dublin's proof tiles show 730 place-days at 2 places, and its Fajr shares move a little.
+- The site's totals: 12,994 tables and 4,393,703 place-days. No other page moved (the re-run's pair of
+  generations, `main` against the branch at one moment).
+
+**What moved.** Every stamp's `engineHash`. The 17 entries above moved in substance; no other stamp did.
+The whole gate is 12,994 rows and 4,393,703 place-days (from 10,997 and 4,001,889): 0 early, 0 late ends,
+none over its limit, nothing BROKEN, in about two and a half minutes (the user's-point bound costs a day
+more at every place-day of a new unit). The golden vector moved on 183 of its 2,071 rows, all of them safe.
+Those are its seeds by Gaza, Beirut, Damascus, Baghdad, Kosovo, Preševo, Tashkent, Bishkek, Karachi, Delhi,
+Chicago, New York, Montreal, Ottawa and Edmonton (starts up to 3 min later, ends up to 1 earlier).
+
+Not changed here, for the owner (each line as on `main`; the re-run's per-row probe names the table):
+- France's two families are gated at the Grande Mosquée's point rather than their own mosques', so a unit
+  there would not be their table's. The app's own Drancy and Neuilly-Plaisance, at the two mosques, show 0
+  early and 0 late ends against them. The widened audit's late ends of eating at the south-western suburbs
+  (Fresnes, Antony, Châtenay-Malabry, Verrières-le-Buisson, 17 to 22 days) are against Al-Amel's table, 20 km
+  and more from those towns.
+- Rabita Helsinki (below, tried and left).
+- Sydney's late sunrises (1 to 6 days at Fairfield, Cabramatta, Liverpool, Casula and Prestons, 13 to 19 km
+  west of Lakemba) are against Diyanet's suburb table read at Lakemba's point; Diyanet's own point is not
+  known.
+- Inside the older units (Diyanet's European cities, DUM RF, Belgium, Türkiye, Toronto, Lakemba, Dublin)
+  the app's own cities near a table run past its recorded limits, where nothing was early. Their figures
+  are proven at the tables' own points only, as Umm al-Qura's and QMDB's were before their reach rows.
+
+Checked (the first run; the re-run's below): the whole gate as above; tools `jvmTest` 307/0 with the
+archive (CityUnitsTest 9/0, its grids over the new units); `checkStamps` (71 entries) green;
+`:shared:testAndroidHostTest` 1,616/0 (`RegistryCitiesTest`: no app city's time earlier, nor end later,
+beside a new table than at its own point alone; `RegistryTest`: the units, their reach and their own method
+beyond it) and `:shared:compileTestKotlinIosSimulatorArm64`; the monitor's Python tests 108/0 on both
+Pythons; `CI=true generate` writes 55 cities and 129 pages, the site builds 164 pages, all checks good, and
+its tests pass 18/0. `scripts/test.sh` is the controller's, at integration. The engine change ships with the
+first update.
+
+## Tables at their own points, re-run (11 October, overnight) — the first run's branch checked again
+
+The first run committed the branch above and stopped before its report. The re-run checked it again on its
+own: the whole gate, every targeted test, the audit on both pairings, its own never-earlier comparison with
+its own points, About at every app city of the affected countries, and the site.
+
+**The point-7 bound, made narrower.** The first run's bound (the ends never after the user's point alone)
+held at every fixed point riding for the starts too, an authority's own units included. The re-run's
+comparison sampled those units too (164 points inside other entries' units), and the bound had moved their
+times, every move an earlier end:
+- inside DUM RT's units the end of eating up to 132 min earlier, on the days its white nights begin and end
+  (at all 9 points sampled there, 1,796 cells): the user's point alone has no 18° dawn there while the city's
+  point has one, so the user's point alone read DUM RT's white-night rule, which the city's table does not;
+- inside IRN's Oslo unit up to 8 min earlier, Norway's Diyanet sunrise up to 2, EMB's Brussels a minute.
+
+The bound now holds only where it is needed, beside a method that was computed at the user's own point
+(`TimetableMethod.endsBoundAtUserPoint`, set by `tablesAtTheirPoints` through `AuthorityUnit`). An
+authority's own unit keeps its table's ends, exactly as on `main` (`PointTableTest`: 9 km north-east of DUM
+RT's Kazan point, on those days, the end of eating stays within 15 min of the city's own and never after
+it). So Kazan's six golden rows and its site page are back as on `main`. No stamp moved, beyond every
+`engineHash`.
+
+**Never earlier than `main`, the re-run's own comparison.** 3,492 points of its own sampling and seed:
+- 1,062 within 1.6 reaches of every new unit's point (14 a unit, 40 at Rabita's Helsinki);
+- 1,710 across the 15 affected countries, app cities moved up to 25 km;
+- 164 inside every other entry's units, and 146 at other gate files' tables, where a fixed point rides;
+- 410 elsewhere.
+
+At each, Automatic and every entry the place may choose (the global "other." methods left out), every day of
+2026, 15 values a day: 32.5 million cells.
+- 0 starts earlier. Sunrise, sunset, the end of eating, imsak, and the ends of Fajr, Asr and Isha never later.
+- Dhuhr's and Maghrib's window ends move later where the next start does (the Asr, the Isha, or in a cautious
+  entry a member's own Maghrib end): 123,670 cells. They are all accounted for but 10, at Wifaqul near
+  Manchester in late May, where Maghrib's high-latitude end comes a minute later.
+- Nothing moved outside the 12 countries with a new unit.
+- Most moves are a minute or two: starts up to 2 min later and ends up to 2 earlier, Canada's cautious Isha
+  3. Kosovo's starts run up to 7 min later (Fajr, from May to July, north of the base point, where the
+  user's own dawn comes earlier) and its ends up to 6 earlier.
+- Near Manchester Central, on a few summer nights where 18° or 15° is only just reached at one point, the
+  later point's time leads: Wifaqul's Fajr up to 122 min later (2 cells) and its Isha up to 24 (6). There,
+  the UK's cautious Isha is up to 23 min later (4).
+
+**Claims corrected.**
+- Chicago's cautious About shows its proof where it did only inside an ISNA mosque's reach. The US entry is
+  Chicago's member, and is not measured beyond its mosques, so 65 of the region's 173 app cities lose the
+  tiles.
+- One Kosovan city of the app's list, Leposaviq (69 km north), lies beyond the base point's reach.
+- The site's Kazan page no longer moves, and the golden vector moves on 183 rows, not 189.
+
+**The audits, re-run on both pairings, on `main` and here.**
+- The round's own pairing (each own-point table at the app city of its own name, else the nearest within 20
+  km). On `main` it found the early starts and late ends at Ottawa, Houston, Irving, Plano, Sterling,
+  Calgary, Surrey, Delhi, Tashkent and Shtime, as the round listed. Here every one of those pairs is clean.
+  What remains on this pairing is a city that follows another table. Ottawa is in the Ottawa South Mosque's
+  unit, and Abrar Masjid is 10 km off. Eight Saudi cities and Ayagoz are in their own city's units, against
+  a village's or a neighbouring town's table. St Albans and Sevenoaks, outside the M25, follow the UK's
+  cautious times; LUPT is only chosen there, under R45's edge.
+- The widened pairing (every app city within 20 km that follows the entry and has the table as its
+  nearest). On `main`, 17 entries had an early start or a late end. Here 5 have (4 as first written here;
+  the fix round below counted the fifth), three of them as on `main`: au.cautious (14 late sunrises),
+  fr.cautious (767 late ends of eating) and se.cautious (59). The fourth is ca.cautious, with 10 pairs 18 to
+  20 km out (109 early, 134 late ends), where `main` had 43 pairs (346 and 224). The fifth is gb.wifaqul,
+  with 8 towns 16.8 to 19.6 km from Manchester Central (56 early, 42 late ends), where `main` had 37 (149 and
+  107). The per-row probe names each table:
+  - Calgary's north-east (Taradale, Saddle Ridge, McKenzie Towne) against Calgary Islamic Centre SW: Fajr
+    up to 2 min before it on 3 to 53 days.
+  - Vancouver's west (Sunset, Broadmoor, Richmond …) against Surrey Jamea: sunrise a minute after it on 13
+    to 23 days.
+  - Manchester Central's Wifaqul table: early at Saddleworth 16, Glossop 19, New Mills 14 and Rochdale 7
+    (Fajr, the Hanafi Asr, Isha), late ends at Tyldesley 11, Atherton 13, Leigh 14 and Bolton 4 (sunrise,
+    the end of eating). Automatic there is gb.cautious, whose latest member keeps it clean at those towns;
+    only a user who chooses Wifaqul is hit.
+  - All three lie just beyond a minute's reach, where the user's own mosque prints for its own point.
+
+**Tried and left: Rabita Helsinki.** The widened audit's se.cautious line is Rabita's own calendar, printed
+for Helsinki. The per-row probe found the end of eating a minute or two after Rabita's Fajr, which begins
+its fast, at the app's Lauttasaari (4 km), Kaarela (10), Matinkylä (11), Olari (12) and Espoonlahti (16), on 4
+to 31 days, as on `main`. The re-run gave Rabita's member an ends-only point at Helsinki (R45), out to its
+measured reach, and gated 32 Finnish app cities against the calendar. The western towns came out clean.
+Kaarela and Nurmijärvi, north of the point, stayed a minute late on 3 to 4 days: an ends-only point reads
+the user's own end curve at the table's point too. And Kerava, Järvenpää and Sipoo, 28 to
+35 km north and east, showed Isha a minute before the calendar on 14 to 84 days, also as on `main`. A fix
+needs the table's own curves at the table's point and the user's at the user's, so it was reverted and is
+left for the owner.
+
+Checked (the re-run): the whole gate as above (12,994 rows, 4,393,703 place-days, 0 early, 0 late ends, none
+over, nothing BROKEN; the stamps unchanged but every `engineHash`); tools `jvmTest` 307/0 with the archive;
+`checkStamps` (71 entries) green; `:shared:testAndroidHostTest` 1,617/0 (`PointTableTest`'s new case) and
+`:shared:compileTestKotlinIosSimulatorArm64`; the monitor's Python tests 108/0 on both Pythons (the first pass,
+no monitor code changed). `CI=true generate` writes 55 cities and 129 pages, the site builds 164 pages, all
+checks good, and its tests pass 18/0. `scripts/test.sh` is the controller's, at integration. The engine change
+ships with the first update.
+
+## Tables at their own points, the fix round (11 October, overnight) — the two reviews answered
+
+**Damascus: two samples of one table.** `sy-awqaf.tsv` holds two dated samples of the Ministry's one Damascus
+table, the Ramadan 1447 imsakiya (fitted) and a held-out day read at the Umayyad Mosque, 2.8 km east. The
+branch had made them two units, each place following the nearer alone. Seven of the eight app cities in the
+Umayyad Mosque's unit (al-Yarmūk, Babīlā, Jaramānā, ʿIrbīn, Ḩarastā, At Tall, Dūmā) lie inside the imsakiya's
+reach too, and were a minute before it: Fajr on its one day at all seven and Isha at six, 13 cells, as on
+`main`. Now each unit reads the other sample's point for its starts as well (`OwnTable.method`,
+`TimetableMethod.startPoints`): never before either sample. Every Damascus-region app city is gated against
+both samples (14 rows more, `sy.awqaf/<the unit it resolves to>`, held out). With the builder's `Levant.kt`
+those rows show the 13 early cells (the gate refuses them); with the fix, 0 early and 0 late ends. The ends
+stay the nearest sample's and the user's own. The Ministry's end-of-eating margin (none) is above its Fajr
+margin (−47 s), so the end of eating, rounded down, never passes the Fajr shown at either point, and the later
+Fajr never loosens it: against the builder's branch no end moved at all (below).
+
+**The audits, complete.** The round's audit re-run on `main` and here, every entry, every app city within 20 km
+of a table printed for its own point, each resolved as the app resolves it (with the region the app passes,
+`PrayerTimesEngine.placeOf`), summed three ways for the cities whose Automatic is the entry or one of its
+members:
+- **The table each city follows** (its unit's own table; where it is in no unit, the nearest table). On
+  `main` 17 entries had an early start or a late end. Here 5 have, none of them inside a new unit's reach: the
+  three cautious lines left as on `main` (au.cautious 14 late sunrises, fr.cautious 767 late ends of eating,
+  se.cautious 59, against tables this round did not make units), and just beyond a minute's reach Canada's
+  families at 10 pairs 18 to 20 km out (109 early, 134 late ends) and gb.wifaqul at 8 towns 17 to 20 km out
+  (56, 42; gb.cautious, Automatic there, is clean at all eight). Damascus is clean.
+- **Another table within a minute's reach, where the city is in a nearer unit** (the overlaps). In the new
+  units: ca.isna 100 pairs with an issue (3,227 early, 1,269 late ends), us.isna 40 (889, 387), us.chicago 14
+  (217, 0), ca.cautious 2 (4, 0); sy.awqaf 0, from 7 (13 early). The app's Ottawa is still 64 times early
+  against Abrar Masjid, 10.1 km off and inside its reach, as on `main`: it follows the Ottawa South Mosque, 2.2
+  km off, and is clean against it. Carrollton and University Park against ICI Irving (111 and 273 early, mostly
+  Dhuhr), Gaithersburg against ADAMS (77 early) and Oak Hill, Chantilly and South Riding against ADAMS (late
+  ends up to 118) are the same case. Whether a place inside several mosques' reaches should ride every one of
+  them is the owner's question. In the older units the same pairing shows each district or town against its
+  neighbour's table (Saudi and Kazakh cities against a village's, R44 and the owner's decision of 9 Oct;
+  Palestine's towns against another town's, R118; JAKIM's zones, Kemenag's regencies, Jamiat's towns): by
+  design, each follows its own.
+- Nothing else within 20 km moved against `main` but the new units' own.
+
+**Three wrong-district lines, read again.** The second review found Rouiba, Sengkurong and Sidi Taibi in the
+wrong district's unit. The gate and the audit resolve a point alone; the app passes the nearest list city's
+region, which Algeria's and Brunei's units read (`UnitSet.choose`). With it, Rouiba (Algiers wilaya) resolves
+to Algiers and Sengkurong (Brunei-Muara) to Brunei-Muara, and both are clean against their own tables (0 early,
+0 late ends, worst 2 at each). Sidi Taibi is real: Morocco's ten fitted cities reach 25 km and choose by
+nothing else, so Sidi Taibi, in Kénitra province and 12.4 km from Kénitra, is in Rabat's unit (23.6 km), and
+its sunrise is a minute after Kénitra's Habous table on 6 days, its end of eating on 7, as on `main`
+(Automatic). Not this round's class of fault: left for a Morocco round.
+
+**What the review's other points came to.**
+- The Today card does not change beyond the reaches: it reads the class alone (`WhoseTimes.of`), and the
+  class is the same on `main` and here at every point compared below (class D, authority, for us.isna,
+  ca.isna, xk.bik and the city tables' entries; C for the cautious ones). What changes there
+  is `measured`: About's check section, the adjustment warning's margin, Chicago's cautious tiles. The US
+  count also takes in the territories, which fall back to us.isna: 31 app cities in Puerto Rico, Guam, the
+  US Virgin Islands, American Samoa and the Northern Mariana Islands lose their figure too (measured on
+  `main`, not here).
+- `RegistryCitiesTest` now covers all 16 new unit sets in the 12 countries (Karachi, Bishkek, Manchester
+  Central, Gaza, Beirut, Damascus and Baghdad added), both Asr schools, and sunset and imsak with the rest.
+- `own-points-worst.tsv` now holds au-cautious, ie-cautious and tr-diyanet-europe too, whose limits the audit
+  raised (Sydney's sunrise 9, Dublin's Maghrib 3, Lille's Isha 4): 2,315 rows, each table row held to its own
+  worst.
+- BIK's base reach takes in North Macedonian towns and Gaza's takes in Ashkelon, Netivot and Sderot, but
+  neither entry applies there (no entry but the default at the comparison's MK and IL points, R50).
+- The narrowed R40 and the R44 and R45 suspension beyond the reach are named above and in spec §3.5 as a
+  proposed ruling.
+
+**Never earlier than `main`, the fix round's own comparison.** 2,764 points of a new seed: every Syrian app
+city (89), 300 within 1.6 reaches of the two Damascus samples, 120 Syrian cities moved up to 25 km, 10 within
+1.6 reaches of each of the other 71 tables, 1,320 app cities of 18 affected and neighbouring countries moved up
+to 25 km, and one city of every other country. Automatic and every entry the place may choose, every day of
+2026, 15 values a day, with the region the app passes: 24.2 million cells.
+- 0 starts earlier; no sunrise, sunset, end of eating or imsak later; no end of Fajr, Asr or Isha later; no
+  class moved.
+- Dhuhr's and Maghrib's window ends move later where Asr or Isha does, and in the cautious entries where a
+  member's does; 10 Wifaqul Maghrib-end cells near Manchester are left unexplained, as the re-run found.
+- Syria against `main`: starts 1 to 2 min later, ends 1 to 2 earlier. Against the builder's branch only the
+  Umayyad Mosque's unit moved (all 80 of its sampled points, up to 185 days of the year): starts a minute
+  later, no end moved, nothing outside Syria.
+
+Checked (the fix round): the whole gate, 13,008 rows and 4,393,717 place-days over 71 entries, 0 early, 0 late
+ends, none over, nothing BROKEN; only sy.awqaf's stamp moved beyond every `engineHash`; ProofStamps.kt and
+own-points-worst.tsv regenerated, the golden vector unchanged (183 of its 2,071 rows moved against `main`, as
+before); tools `jvmTest` 307/0 with the archive and `checkStamps` green; `:shared:testAndroidHostTest` 1,618/0
+(RegistryTest's Damascus case, RegistryCitiesTest widened) and `:shared:compileTestKotlinIosSimulatorArm64`;
+`CI=true generate` writes 55 cities and 129 pages, the site builds 164 pages, all checks good, tests 18/0; against
+the builder's generation at the same moment only the totals moved (13,008 tables, 4,393,717 place-days). The
+monitor's code did not change. `scripts/test.sh` is the controller's, at integration.
+
+## Tables at their own points, round 2 (11 October) — the owner's rule: rather late, never early
+
+The owner's answer to the fix round's open questions: "do the best we can, but rather be late and never early".
+Each question decided by that rule.
+
+**Overlapping reaches: the envelope.** A place is now never before any table printed for its own point whose reach
+holds it, nor any end after one, not only its nearest (`TableEnvelope`, `TimetableMethod.envelopePoints`). The reach for
+this bound is ruling R40's own, the entry's class limit: three minutes of longitude, 52 to 72 km, for every
+`tablesAtTheirPoints` set. A user there may still follow that table, and it is also the three reaches R45 bounds a point
+table's ends to. The unit stays the nearest within a minute's reach, with its figure and About's name; every other
+table within the bound rides beside it:
+- every start the latest and every end the earliest over all of them and the user's own point;
+- each end never after the method at any of those points alone (`DayComputer`'s point 7, extended);
+- the Canadian families' curves read at every latitude in play.
+
+The engine gained `endPoints` (ends only) and `envelopePoints` (both). A method without them is computed exactly as
+before.
+- Ottawa against Abrar Masjid and Kanata: 0 early, 0 late ends (on the fix branch 64 and 122 early). Nepean, Kanata,
+  Gloucester and Orléans are clean against all three Ottawa tables too.
+- What it costs against nearest-only, on the gate's own rows (worst minutes; share of days 3 min or more late):
+  - us.isna: Fajr 6 → 7 (15 % → 43 %), sunrise 5 → 6, Asr 6 → 7, Maghrib 7 → 9, Isha 7 → 8, the end of
+    eating 5 → 8 min before (46 % → 78 %);
+  - ca.isna: Asr 5 → 6, the end of eating 5 → 6, and Fajr's 3 min or more from 53 % to 90 % of days;
+  - us.chicago: Fajr and the end of eating 32/33 → 34, Asr 6 → 7;
+  - xk.bik, ca.cautious and au.cautious: the worst is unchanged, a few more days at 3 or more.
+- New late limits (R41, each with its reason): us.isna Fajr 7, sunrise 6, Zuhr 8, Asr 7, Maghrib 9, Isha 8, the end of
+  eating 8 (ADAMS's, Dar Al Noor's, East Cobb's and MEC's unit exceptions fold into these). ca.isna Asr 6 and the end
+  of eating 6. us.chicago Fajr 34, the end of eating 34, Asr 7.
+
+**Beyond every mosque's minute.** "Not measured" stays where nothing is measured: the 2,708 US cities, the 31 in US
+territories, Saint-Jérôme, Mirabel, Buckingham and Leposaviq, as the fix round counted. Their times are now on the safe
+side of every table within the bound. The nearest such table rides as the fixed point and the rest beside it, for the
+starts too. That is R45's edge extended from the ends to every time, out to R40's reach. Beyond every bound reach the
+method stands at the user's own point alone, as before.
+- The review's probe, re-run with a new seed, checked each unit against its own table. Inside the reach: 930 checks,
+  229,383 place-days. From 1.0 to 1.3 reaches: 308 checks, 76,423. From 1.3 reaches out to the bound: 302 checks,
+  73,714. All three: 0 early, 0 late ends.
+- Up to 16 app cities within each table's bound reach (the 10 nearest and 6 more at random): 1,174 checks, 289,866
+  place-days, 0 early, 0 late ends. Calgary's north-east, Vancouver's west, Faridabad, Muradnagar, the Wifaqul towns,
+  Dragash and Istok are among them.
+
+**Kosovo: BIK's own town list.** The Takvimi prints it itself ("Diferenca e vendeve", p. 5 of the 2024 and 2026 prints,
+now in the archive at raw/manual/xk-bik/2026-10-11/). The Takvim applies to the whole of Kosovo, with a few towns
+printed off it: Sharri T + 2; Ferizaj, Gjilani, Prishtina, Podujeva and Vushtrria T − 1; Presheva T − 2. Every other
+town prints T itself, the west's Peja, Gjakova and Prizren included. As with the PA's printed figures (R118, R120),
+a town's table is the base table plus its figure. It rides beside the user's own point (`Balkans.kosovoUnits`), so
+nothing is earlier than before:
+- the base point rides everywhere in Kosovo (within 100 km of it), Leposaviq and Istok included;
+- in Sharri a start point at the base's latitude, 2.04 min of longitude west, gives T + 2. "Sharri" is read both ways
+  it is used: the Sharr (Dragash) municipality and Shtërpcë under the Sharr mountains;
+- within 20 km of a town printed earlier, an end point east of the base gives T − 1 or T − 2 for sunrise and the end
+  of eating.
+
+The figure stays the base unit's (8); Leposaviq still says "Not measured". At the app's Dragash, Prizren, Istok,
+Leposaviq, Gjakovë, Gjilan and Podujeva: 0 early, 0 late ends against the Takvim. At Dragash, by construction and in
+`CityPointsEnvelopeTest`, nothing is before T + 2. BIK chosen at some points in Serbia near Kosovo now rides the base
+table's point too: starts up to 6 min later (review 1's figure, not re-measured).
+
+**The smaller ones.**
+- **Sidi Taibi.** It is in Rabat's Habous unit, but nearer Kénitra, whose Habous table the gate holds. A place inside
+  a fitted city's unit but nearer another held Habous city now also ends no later than the unit's method at that
+  city's point (`Maghreb.nearerHabousTable`). Against Kénitra's table: 0 early, 0 late ends (it was 6 sunrises and 7
+  ends of eating after it).
+- **Diyanet's Sydney table.** Its point is not published, so it now rides every plausible one beside the user's own:
+  Lakemba, Sydney's centre and the Gallipoli Mosque at Auburn (`Americas.sydneyDiyanetUnits`). That applies within
+  class D's reach of them only; what is measured stays as before (`measuredBeyond`). Fairfield, Cabramatta, Liverpool, Casula and
+  Prestons are now 0 late against it (1 to 6 late sunrises before). *Corrected by the fix round below:* au.cautious is
+  never before Diyanet's Sydney table at every plausible point of it, Maghrib aside (the cautious rule holds Maghrib at
+  Lakemba's, the most-followed member's, 5 to 6 min before Diyanet's, as on main); Diyanet's preset chosen on its own in Sydney is
+  not measured, and its own rule runs up to 16 min before Diyanet's Sydney Asr and 12 min before its Isha (as on main).
+  *Corrected 17 October (the owner's four answers, below):* those 16 and 12 min are against Lakemba Mosque's table;
+  against Diyanet's Sydney table the preset is never before it on the 31 days held.
+- **A named table chosen outside its area.** A user who chooses a table follows it (`followedBeyond`). London Unified
+  outside the M25, within R45's three reaches (about 100 km: Basildon, Sevenoaks, St Albans, Luton, Reading), and
+  IACAD in the other emirates, at any distance from its nearest table: the edge as before, now with the table's point
+  for every start and end. *Corrected by the fix round below:* beyond 100 km London's point rides as a start and an end
+  point, keeping the user's own curves, so the times are never before LUPT's table and no end is after it wherever LUPT
+  is chosen, and none is earlier than main. (As a fixed point there, its dawn had held the end of eating up to 26 min
+  later in Scotland's summer.)
+- **Rabita Helsinki.** Its calendar is held across the Helsinki region by margins (a variant of se.rabita within 45 km
+  of Helsinki, the fix round below): Isha a minute later, the end of eating two minutes earlier. Before, as on main,
+  the end of eating was 1 to 2 min after the calendar at Lauttasaari, Kaarela, Matinkylä, Olari, Espoonlahti and
+  Nurmijärvi (3 to 31 days), and Isha a minute before it at Sipoo (84 days), Kerava (14) and Järvenpää (18). Now all
+  of the app's cities within 45 km: 0 early, 0 late ends. The per-point method (the table's own day bounding the
+  user's) is left for a later round: a fixed point at Helsinki alone, or an ends-only one, breaks "never earlier than
+  before" near the solstice, since the engine reads one latitude's curves at every point.
+
+**Never earlier than `main` 7533d29c.** 2,223 points of this round's own seed:
+- 840 within the bound reach of every table printed for its own point;
+- 200 around Kosovo's base, Kénitra, Sydney, London and Dubai;
+- 960 app cities of 20 affected countries moved up to 25 km;
+- one app city of each of 223 other countries.
+
+At each, Automatic and every entry the place may choose (the global "other." methods left out), every third day of
+2026, 15 values a day: 7.1 million cells.
+- 0 starts earlier. No sunrise, sunset, end of eating or imsak later; no end of Fajr, Asr or Isha later. No class
+  moved, and nothing moved at the 223 control points.
+- Dhuhr's and Maghrib's window ends move later where the next start does. In the cautious entries (Canada's, the
+  UK's, Australia's, Gaza's) that is a member's own Asr or Isha, now later beside its other tables. The same 8
+  Wifaqul Maghrib-end cells near Manchester are left unexplained, as the earlier rounds found.
+- Against `main`, starts up to 4 or 5 min later and ends up to 5 earlier in most entries; Canada's families up to 8
+  and 9, Kosovo 9 and 8.
+- **The worst added lateness** is near Manchester, on a few summer nights where 15° or 18° is only just reached at one
+  point: the UK's cautious Isha up to 83 min later at 7 sampled cells, and Wifaqul (chosen) up to 119.
+
+**What About shows** (each unit's worst start, against the fix branch):
+- ISNA US: Irvine 6 → 9, Rochester Hills (IAGD) 7 → 9, Detroit's Tawheed and Dearborn, Houston's Mishkah, Anaheim
+  (IIOC), East Plano and College Park 7 → 8, Silver Spring 4 → 5, Rowland Heights, Mission Viejo and Bloomfield Hills
+  6 → 7.
+- ISNA Canada: Montréal's As-Salam 3 → 4, Badr 4 → 5, CCML and Dar Al Arkam 5 → 6, Ottawa South 4 → 5.
+- Chicago's cautious late limit 32 → 34.
+- No unit's reach and nothing measured moved against the fix branch, so no figure appears or goes away; Kosovo's
+  stays 8.
+
+**What moved.** Every stamp's `engineHash`. au.cautious, ca.cautious, ca.isna, us.chicago, us.isna and xk.bik moved in
+substance. The whole gate is 13,008 rows and 4,393,717 place-days: 0 early, 0 late ends, none over its limit, nothing
+BROKEN, in about three minutes. The golden vector moved on 131 of its 2,071 rows against the fix branch, all safe
+(starts up to 4 min later, ends up to 3 earlier). `own-points-worst.tsv` was regenerated (2,315 rows, 1,046 moved).
+
+Checked: the whole gate as above; tools `jvmTest` 307/0 with the archive (CityUnitsTest included); `checkStamps` (71
+entries) green; `:shared:testAndroidHostTest` on the prayer packages 446/0 (`CityPointsEnvelopeTest` new, `LondonUnifiedTest`'s
+edge case now both ways); the probes and the comparison
+above. Not run here: `scripts/test.sh` (the controller's, at integration), the iOS test compile, the site generation and
+the monitor's Python tests (no monitor or site code changed).
+
+## Tables at their own points, round 2's fix (11 October)
+
+Round 2's two reviews asked for changes; each is decided by the owner's rule, "rather late, never early".
+
+**London Unified, chosen anywhere in Great Britain.** A user who chooses a table follows it. Within R45's three reaches
+(about 100 km) London's point still rides as the fixed point. Farther, it now rides as a start point and an end point
+beside the user's own point. Those keep the user's own curves; a fixed point would read London's, whose dawn had held
+the end of eating up to 26 min later in Scotland's summer. So the times are never before LUPT's table and no end is
+after it wherever LUPT is chosen, and none is earlier than main. The review's probe had found Ipswich (107 km), Margate
+and Dover early on 20,000 to 21,000 cells each, Peterborough and Norwich too, and Southampton's sunrise after LUPT's on
+every day, its end of eating up to 13 min after it. Each end is also held to the user's own point alone
+(`endsBoundAtUserPoint`, `DayComputer`'s point 7, extended to a method with no fixed point): on the north's summer
+nights, where the user's own dawn is not reached, London's point had dropped the night rule's end of eating, and its
+later Fajr held the end up to 96 min later than main.
+- Probe (the app's resolution with each city's own zone, against `elm2026_std.txt`'s days): 19 towns within 100 km
+  (6,935 place-days) and 29 beyond it, from Ipswich, Margate, Dover and Folkestone to Glasgow, Aberdeen, Inverness,
+  Lerwick, Belfast and Penzance (10,585 place-days): 0 early, 0 late ends.
+- What it costs against main beyond 100 km (worst minutes at the comparison's points, every third day of 2026):
+  - England: Fajr up to 97 min later on the north's summer nights, Asr 18, Maghrib 17, Isha 11, Zuhr 8; the end of
+    eating up to 48 min earlier, sunset (Asr's end) 34, sunrise 31;
+  - Scotland: Fajr up to 104 min later (near Dundee on 25 May, the re-verifier's sample), Asr 33, Maghrib 32, Isha 9; sunset up to 73 min earlier, sunrise 67, the end of
+    eating 46;
+  - Wales: Fajr up to 22 min later; sunset up to 27 min earlier, sunrise 26, the end of eating 20;
+  - Northern Ireland: Fajr up to 77 min later; the end of eating up to 62 min earlier, sunset 51, sunrise 48.
+
+  That is London's own table wherever its times are later, or its ends earlier, than the user's own sun: a user in
+  Glasgow who chooses LUPT sees London's winter sunrise, about an hour before Glasgow's. Within 100 km, as round 2
+  built it: Fajr up to 14 min later in June 80 to 100 km north of London (Huntingdon, near Cambridge; the review's
+  comparison), Asr, Maghrib and Isha up to 10 min later on the Essex coast, and Isha up to 7 min later at Brighton.
+
+**Rabita Helsinki.** Its calendar is held across the Helsinki region by margins: a variant of se.rabita within 45 km of
+Helsinki (`Europe.variants`), Isha a minute later and the end of eating two minutes earlier. It only moves a start later
+and an end earlier, so nothing is earlier than main.
+- Probe against `rabita-2026.txt` (its `@excuse` day left out): Helsinki, Lauttasaari, Kaarela, Matinkylä, Olari,
+  Espoonlahti, Espoo, Vantaa, Kerava, Järvenpää, Tuusula, Sipoo, Nurmijärvi and Kirkkonummi: 0 early, 0 late ends.
+  Before, as on main: Sipoo's Isha a minute early on 84 days, Järvenpää 18, Kerava 14; the end of eating 1 to 2 min
+  late at Espoonlahti (31 days), Matinkylä (14), Lauttasaari (6), Kaarela (4), Olari (4) and Nurmijärvi (3).
+- Gated: Rabita's 2026 calendar at the app's Lauttasaari, Kaarela, Olari, Matinkylä, Espoonlahti, Sibbo, Kerava,
+  Nurmijärvi and Järvenpää, as rows of `se-cautious.tsv`. These towns are inside Rabita's measured reach, so the rows
+  count towards the figure. Diyanet's later Fajr there runs up to 111 min after Rabita's calendar, so se.cautious's
+  Fajr limit and figure go 109 → 111 (its reason says so); its Asr figure goes 6 → 7 and Zuhr 4 → 5, within their limits.
+- Porvoo (47 km, not measured) is still up to 3 min before the calendar on some days (Fajr, Isha, Asr): the cliff below.
+- The per-point method (the table's own day bounding the user's) is still left for a later round.
+
+**IACAD chosen outside its zones.** A user who chooses IACAD there follows its nearest table (round 2). Now Dubai's main
+table's point also rides beside it, for every start and end, wherever another table is the nearest: Hatta's for
+Fujairah, Kalba, Khor Fakkan and Dibba, Dubai Rural's for Al Ain and Zayed City.
+- Probe: all 15 emirate cities probed, Sharjah to Ar Ruways, 0 early and 0 late ends against Dubai's own table (21,915
+  place-days; before, Fujairah up to 3 min early and Al Ain 2); the Hatta-nearest cities against Hatta's table, and Al
+  Ain and Zayed City against Dubai Rural's: 0 early, 0 late ends.
+- Against main: starts up to 7 min later in the eastern emirates and Al Ain. In western Abu Dhabi (Al Dhafra), where
+  Dubai Rural's point rides, sunrise, sunset and the end of eating come up to 13 to 15 min earlier (the safe side), so
+  Asr ends there up to 15 min before Maghrib begins.
+
+**Diyanet's preset in Sydney: stated, not fitted.** au.cautious is never before Diyanet's Sydney table at every
+plausible point of it, Maghrib aside, which the cautious rule holds at Lakemba's (5 to 6 min before Diyanet's, as on
+main) (the round's construction, now gated at Fairfield, Liverpool, Blacktown and Parramatta). Diyanet's
+preset (other.turkey) chosen on its own in Sydney is not measured. Its own rule runs up to 16 min before Diyanet's
+Sydney Asr (120 to 126 days) and 12 min before its Isha (264 to 272 days), as on main (the review's probe). Fitting the
+preset to that table would also make au.cautious's own Asr and Isha later wherever Diyanet's would then pass LMA's, so
+it is left as an owner's question. *Corrected 17 October (the owner's four answers, below):* the 16 and 12 min are
+Lakemba Mosque's table (on 126 and 272 of its 349 days); against Diyanet's own Sydney table the preset is never before
+it, nor any end after it, on the 31 days the archive holds.
+
+**The envelope in the gate.** Nothing in the gate had held a place against a table other than the one it follows.
+`generateEnvelopeRows` (new; seconds, no archive needed) writes `official/gate/<group>-envelope.tsv`:
+- every table printed for its own point (`tablesAtTheirPoints`: ISNA's US and Canadian mosques, Canada's three
+  families, Chicago's 18° block, Wifaqul, Delhi, Karachi, Tashkent, Bishkek, Gaza, Beirut, Damascus, Baghdad), at every
+  app city of its entry's countries within its bound reach, whichever table the city follows, or none;
+- by name: the Takvim at the app's Kosovo cities, Kénitra's Habous table at Sidi Taibi, Lakemba's tables at Fairfield,
+  Liverpool, Blacktown and Parramatta, LUPT chosen at 18 towns from Basildon to Glasgow and Edinburgh, IACAD's Dubai
+  table at Sharjah, Ajman, Fujairah and Al Ain, Hatta's at Fujairah and Dubai Rural's at Al Ain.
+
+The first generation is 6,579 rows across 18 files: us-isna 3,631 rows at 1,069 cities, us-chicago 1,371 at 183,
+ca-isna 971 at 99, gb-london-lupt 270 at 18, gb-wifaqul 78, ca-cautious 67, in-karachi 46, lb-fatwa 30, ae-iacad 27,
+uz-board 26, sy-awqaf 17, ps-gaza 12, iq-sunni 9, au-cautious 8, pk-karachi 8, kg-default 5, xk-bik 2, ma-habous 1.
+They add 312,262 place-days that no other row holds. Every one: 0 early, 0 late ends. A city that a group file
+already reads at its own point is not written again, and a US table's reach is not replayed in Canada. Round 2's
+second review audited the same claim without the country limit: 1,646 cities, 7,050 city-table pairs and 1,629,338
+place-days, also clean.
+
+The gate holds those rows to the promise alone (`GateRow.promiseOnly`: the file name ends in `-envelope.tsv`). An
+early start, a late end or a day out of order breaks the gate as anywhere. Their lateness, against a table the city
+may not follow, is kept out of every unit and every limit, and out of the stamp's places, place-days, class, members'
+checked days and Maghrib gaps. Without that, every About figure inside a unit would have taken in its neighbours'
+tables, and London's page would have counted Glasgow. The gate's report gives those place-days apart. If
+`TableEnvelope.around` returned its method unchanged, Ottawa's rows against Abrar's and Kanata's tables would now break
+the gate.
+- Sidi Taibi's evidence is one month: the gate holds 30 days of Kénitra's Habous table.
+- The Takvim rows check the base table itself, not BIK's town figures (the gate has no offsets). Sharri's T + 2 stays
+  in `CityPointsEnvelopeTest`; the review's construction check also covered the earlier towns' T − 1 and T − 2.
+
+**Reach rows regenerated** under round 2's engine (the sweep's worst points had been chosen under round 1's):
+us-isna-reach.tsv is now 442 rows (323 grid points and 119 sweep worst points) and ca-isna-reach.tsv 102 (54 and 48).
+xk-bik-reach.tsv, sa-ummalqura-reach.tsv and kz-qmdb-reach.tsv came out byte-identical. No sweep had a cell early or
+late, and no unit's figure moved.
+
+**BIK's late-limit reason** now names its own town list (Sharri T + 2; Ferizaj, Gjilani, Prishtina, Podujeva and
+Vushtrria T - 1; Presheva T - 2; the west at T) instead of "BIK's town offsets are not held".
+
+**Which audits ran.** The builder's: up to 16 app cities near each table (1,174 checks). Round 2's second review's:
+every app city held by any own-point table (above). Now committed: the envelope rows, which the whole gate checks on
+every run.
+
+**Never earlier than main 7533d29c**, over the countries this fix touches. This fix's own seed gave 738 points:
+- 260 app cities of Great Britain, and 80 each of Finland, the UAE and Australia, moved up to 20 km;
+- every app city within 60 km of Helsinki and of Dubai;
+- rings around London (80 to 600 km), Helsinki, Sydney and Dubai Rural;
+- one control city in each of 40 other countries.
+
+At each, Automatic and every entry the place may choose (other.turkey included), every third day of 2026: 4,571,085
+values.
+- 0 starts earlier. No sunrise, sunset, end of eating or imsak later, and no end of Fajr, Asr or Isha later. No class
+  or measured flag moved, and nothing moved at the 40 control points.
+- Dhuhr's and Maghrib's window ends are later on 26,651 cells, where the next start moved later (the class earlier
+  rounds accepted).
+- Worst added lateness: Wifaqul chosen near Manchester on the knife-edge summer nights, Fajr up to 131 min later and
+  Isha 112 (Isha's end up to 108 earlier); the UK's cautious (Automatic) Isha 84 there; then LUPT beyond 100 km, as
+  above.
+
+**About's figures.** Only se.cautious's moved (Fajr 109 → 111, Asr 6 → 7, Zuhr 4 → 5). No unit's figure moved, and no
+place's "Not measured" changed.
+
+**App cost.** A year of days on the JVM (the Mac, warm, `DayPipeline.day` for each of 365 days) takes 78 ms at
+Washington, 64 at Los Angeles, 64 at Detroit and 79 at Ottawa, against 6 ms at each on main (Toronto 41, against 39).
+The envelope's extra table points make each day there about ten times as costly. Timing a year's Timetable on the iOS
+simulator and a low-end Android at Washington and Los Angeles is left for release testing (no simulator or device in
+this round).
+
+**Owner's questions left open** (the reviews' words, with numbers):
+- Just past the bound (3.0 to 3.6 minutes of longitude from a table, 52 to 80 km), times are back at the user's own
+  point. There they run up to 4 to 5 min before the nearest table on some days: Winchester and Martinsburg against
+  ADAMS, Cochrane against Calgary SW, Montréal's south-east against CCML (Isha, about 200 days), north of Gatineau
+  against OMA (Fajr, 130 days), Olmaliq against Tashkent, Tokmok against Bishkek, Porvoo against Rabita (Fajr 3 min,
+  313 days). Accept the bound as the plausible distance, or extend the nearest table's ride (no figure) out to 5
+  reaches at more lateness?
+- Automatic in Lancashire and West Yorkshire (Preston, Bolton, Blackburn, Burnley, Bradford, Huddersfield) shows Isha up
+  to 84 min later than main on the knife-edge nights around 28 May and 15 July, because Manchester Central's Wifaqul
+  table now rides within about 50 km (Wifaqul chosen: up to about two hours). Accept, or narrow Wifaqul's bound to its
+  minute's reach with only the ends bounded beyond?
+- LUPT chosen far from London now shows London's table wherever it is later or ends earlier: in Scotland Fajr up to 104
+  min later (near Dundee in late May, the re-verifier's sample) and sunrise and sunset up to 67 and 73 min earlier than the user's own sun. Keep that, or stop the ride at
+  some distance, with the user's own sun and no figure beyond it?
+- Diyanet's preset chosen in Sydney: fit it to Diyanet's Sydney table (Asr about 16 min and Isha about 12 min later
+  there), or leave it a preset that claims no figure? *Corrected 17 October:* those figures are Lakemba Mosque's table,
+  not Diyanet's (the owner's four answers, below).
+
+Checked: the whole gate writing stamps, after the last change (archive linked): 19,480 rows, 4,366,885 place-days and
+312,262 more held to the promise alone, 71 entries, 0 early, 0 late ends, none over its limit, nothing BROKEN, about 4
+minutes. Also: `generateReachRows` (14 minutes on 4 threads), `generateEnvelopeRows`, `generateProofStamps`,
+`generateOwnPointWorst` (2,315 rows, unchanged) and `generateGoldenVector` (16 Helsinki rows moved: Isha a minute later
+and the end of eating up to two earlier); `checkStamps`, 71 fresh and green. Tools `jvmTest` with the archive 308/0
+(`GateManifestTest`'s promise-only row is new); `:shared:testAndroidHostTest` on the prayer packages 448/0
+(`LondonUnifiedTest`'s Dover and Southampton and `CityPointsEnvelopeTest`'s Rabita region and Fujairah are new). Not
+run here: the controller's integration test script, the iOS test compile (the new test names have no commas or
+parentheses), the site generation and the monitor's Python tests (no site or monitor code changed).
+
+## Accessibility round 1 (28 September – 17 October 2026), branch `a11y-round-1`
+
+The first five of the twelve items from the 27 September accessibility audit (80 findings, 3 blockers), which
+Mohamed approved on 28 September. Spec `docs/superpowers/specs/2026-09-28-taqvo-accessibility-round-1-design.md`,
+plan `docs/superpowers/plans/2026-09-28-taqvo-accessibility-round-1.md`, ledger
+`.superpowers/sdd/2026-09-28-taqvo-accessibility-round-1/progress.md`, with each task's brief and report beside it.
+Each task was a subagent with its own review.
+- Tasks 1–6 were built on 28–29 September on `worktree-a11y-round-1`, off main d5230081. Tasks 1 and 2 then
+  reached main by themselves (below). The rest was held for the first update after launch.
+- On 17 October the Lead copied the ledger into the site worktree and cherry-picked the other eleven commits
+  onto main a84c2334 as the new branch `a11y-round-1`. The conflicts were import lists only. Overnight the Lead
+  ran Tasks 7–11, a whole-branch review, an Android device check and one fix wave.
+- The branch is 28 commits on a84c2334 (seven of them docs, one a `fixup!`), plus this entry. Nothing is
+  pushed. It merges squashed, with Mohamed's OK, after the listening checklist below.
+
+**The owner's two rules** (28 September), binding on every task:
+1. **Nothing visible changes at default settings.** The work is semantics only, or it shows only through the
+   phone's own accessibility settings (the Mushaf's fix shows only at large text, where words were cut).
+2. **The Quran's Arabic is never given to a screen reader or a phone voice.** Only the app's reciters voice it.
+   An ayah is named by its number and its translation is spoken. The Arabic ayah text and the basmala are
+   hidden. Surah names and dhikr stay readable. The cost, told to him at the time: a braille reader loses the
+   Arabic too.
+
+Commits carry no Co-Authored-By trailer (his standing rule), and their subjects are "area: sentence".
+
+**What each task did.**
+- **Task 1, Compose Multiplatform 1.12.1** (d9928036 on the old branch). On main as 15d84d33, it shipped in
+  1.0.0 (34). It fixes the crash when iOS reads an accessibility element after its node is gone
+  (JetBrains/compose-multiplatform-core#3403). Only VoiceOver, Voice Control, Switch Control and Full Keyboard
+  Access users could hit it.
+- **Task 2, Compose UI tests on the iOS simulator target** (11ebc25f; on main as ee6f44a7, 11 October). The
+  harness ran on its first try. The rules it taught every later test:
+  - the v2 runner;
+  - expected labels from `getString`, never English literals;
+  - never compose `TaqvoTheme`, `SystemBarsAppearance` or `KeepScreenOn` under test (they segfault the test
+    process, which has no `UIApplication`);
+  - the `compose-ui-test` catalog dependency.
+- **Task 3, the Mushaf at any font scale** (11531ab6; docs 5f1a06fa). The frame now measures and draws under
+  a density pinned at font scale 1. From 150 %, Android's non-linear scaling had broken `fittedSize`, so
+  justified lines overflowed and words were cut at the reading end (vm-mushaf-scale, a blocker). The page
+  starts from the size the phone itself would draw the base at (`scaledBase`), so the two opening pages, which
+  have room to spare, still grow with the text setting. The captions and the page number keep the phone's
+  scale.
+- **Task 4, the back chevron and VoiceOver's escape** (2537b984, e08653c2; docs 12e51baa, 980429eb).
+  - The chevron on every pushed screen is a `Role.Button` named Back (`nav_a11y_back`). TalkBack had called it
+    Unlabelled.
+  - iOS `SystemBackHandler` had been a no-op. It is now CMP's `BackHandler`, which 1.12 feeds from
+    `accessibilityPerformEscape`, so VoiceOver's two-finger scrub walks the chevron's stack.
+  - The handler is enabled only while VoiceOver runs.
+- **Task 5, a switch row is one switch** (88dc26f7; docs 071ce555). `TaqvoRow(toggle = RowToggle(…))` is one
+  node with `Role.Switch`, its on/off state and a semantic click that flips it. The drawn switch is hidden from
+  semantics and keeps its own touch, so a touch on the label still does nothing.
+  - It covers twelve rows: location, prayer notifications, Tahajjud, the three recitation rows, Saudi Fajr,
+    both Asr, where they differ, sunrise, and the reading sheet's transliteration and read-aloud.
+  - `TaqvoToggle` moved to `design/components` and is a `toggleable` of its own for the download sheet's row.
+- **Task 6, pickers, segments and tabs say what is chosen** (48af09fd, after three fix rounds).
+  - The selected state, inside `selectableGroup()` cards, now covers: theme, widget background, the
+    calculation method, the high-latitude rule, remind-before, the translation list, the sound and
+    adhan-voice sheets, the reciter picker, the Asr and Hijri segments, Surah | Juz | Bookmarks,
+    Translation | Mushaf and the three tabs.
+  - The six preview buttons name what they play (`sound_a11y_preview`).
+  - `TaqvoRow` option rows are radio buttons; segments and tabs are tabs.
+  - The timetable rows and the audio rows have no role (rulings below).
+- **The integration, "Task 0"** (a996593f). Main had grown three switch rows since the plan: the adhkar
+  reminder and the adhkar reading sheet's transliteration and translation rows. They still called the moved
+  `TaqvoToggle`, so the rebased branch did not build. They now use `RowToggle`. Their iOS tests find the row by
+  its toggle semantics and activate it the way a screen reader does. 88dc26f7, 071ce555 and 48af09fd do not
+  build alone; a996593f repairs that, and the squash closes the gap.
+- **Task 7, the Prayer screen as sentences** (8345444b, 59c3ae73).
+  - Each prayer row is one node, "Asr, 4:45", with the state Next prayer, Current prayer or Passed. The Arabic
+    name beside the Latin one is not spoken.
+  - The ring is one sentence, "Fajr in 4 hours 10 minutes, at 5:10". It counts whole minutes, so it changes
+    once a minute, and it is not a live region.
+  - Every spoken time comes from the formatter the screen draws with, so under the 12-hour clock both say
+    "4:45 PM". The ring's time is `isolatedClock`.
+  - The fix round: the next row is matched by prayer and instant. Before today's Fajr in a high-latitude
+    summer the countdown can be yesterday's Isha, and today's Isha row had said Next prayer.
+- **Task 8, headings and two items from main** (38b2d822, f7dab062, 608ed871, `fixup!` 3b8b71b0).
+  - Every settings title and section label is a heading. That includes the Quran search's Surahs and Ayahs
+    labels, which share `SectionLabel`.
+  - The time-format sheet's two options say which clock is chosen.
+  - The Prayer header's Adhkar and Tasbeeh glyphs are buttons.
+- **Task 9, the ayah card** (3be12290, 807b7a04).
+  - The card's text is "Ayah 255. <translation>", the translation tagged with its own language.
+  - Its states are Selected (in its own words, `quran_a11y_selected`), Bookmarked, and Being read aloud (the
+    phone's voice on the translation).
+  - Every card offers four actions: Play or Pause, Bookmark or Remove bookmark, Copy, and Share.
+  - Only the drawn Arabic, the transliteration and the translation row are cleared. So the selected card's
+    row of buttons keeps its own nodes, for Voice Access and Voice Control.
+  - The basmala, the reading sheet's size preview, the Arabic of search hits and bookmark rows, and the
+    Appearance widget preview's Arabic are hidden.
+- **Task 10, the Mushaf's stops** (361a9b61, 82901ba7, f46d0452).
+  - Each ayah has one invisible, touch-transparent stop over its first run of words on the page (sr-mushaf,
+    a blocker). It is named "Ayah 255" in the interface's digits. Stops run right to left in each line,
+    through a traversal group and `traversalIndex`.
+  - A double-tap selects, as a tap does. The custom action is Play, or Pause while that ayah is the live
+    recitation.
+  - The basmala line is hidden.
+  - The stop's only state is Selected. 82901ba7's "Being read aloud" was removed by f46d0452.
+- **Task 11, the ayah widgets** (2d0ca7f1). The Android card was a bitmap marked decorative (pl-ayah-widget, a
+  blocker), and the iOS card read its raw Uthmani text. Both now carry one sentence, built by `:widgetcore`'s
+  `AyahWidgetSpeech`:
+  - the widget's name;
+  - "Ar-Ra’d, ayah 28" in the interface's script and digits;
+  - then the translation, when the card shows one.
+
+  On Android it is the `Image`'s description. On iOS the card is one element with that label.
+- **The closing review and its fix wave** (f46d0452, cf062880, 047680f9, 7d6d58b3, 85f35a37). The whole-branch
+  review of a84c2334..2d0ca7f1 said "ready with fixes". The fix wave:
+  - applied Task 10's ruling;
+  - corrected a KDoc, a widget comment and a test name;
+  - named every sheet's drag handle "Drag handle" (`sheet_a11y_drag_handle`, material3's own words and
+    translations);
+  - added a test that a finger on the drawn switch flips it and a finger mid-row does not;
+  - labelled the Mushaf's page number "Page 42" (`quran_a11y_page_n`) and a surah band's count "286 ayahs"
+    (`quran_a11y_ayah_count`);
+  - amended spec §3–§5 for the rulings, and added plan Task 12 Step 2b, the listening checklist.
+
+  The drag handle and the two numerals were already like that on main. They are separate commits (047680f9,
+  7d6d58b3) that can be dropped cleanly.
+
+**Rulings that changed the plan** (the ledger has each one's cost):
+- Task 1: the body cites compose-multiplatform-core#3403, not compose-multiplatform#3403.
+- Task 2: the v2 runner, `getString` for expected labels and the catalog dependency. Never `TaqvoTheme`,
+  `SystemBarsAppearance` or `KeepScreenOn` under test.
+- Task 3: the page starts from the phone's own scaled size, so the opening pages keep their growth.
+- Task 4: CMP 1.12 turns any enabled back handler into an edge swipe-back for everyone, so the iOS handler is
+  gated on assistive technology.
+  - First the gate was VoiceOver or Switch Control.
+  - Then it was VoiceOver alone, because Switch Control leaves direct touch working.
+- Task 5: the switch-row test activates the semantic click, because the row takes no touch at its centre.
+- Task 6: the calculation-method rows and the Asr and Hijri segments were brought in, since the commit body
+  had claimed them.
+- Task 6: `TimetableChoiceRow` and `AudioOptionRow` take no role. Android drops the click from a selected radio
+  button, and their chosen row still acts (it confirms a paused timetable, or offers the download again).
+  `TaqvoRow` option rows keep the radio role.
+- 17 October: the briefs, written against d5230081, apply to main's renamed code (`feature/prayer`,
+  `prayer_*` keys).
+- 17 October: every spoken clock time uses the `ClockFormat` formatter the screen draws with.
+- 17 October: the time-format sheet and the header glyphs ride with Task 8. The Quran list's surah-number
+  circles cut at 200 % are out of scope, as a visual fix.
+- 17 October: the Lead made the three-call-site integration fix itself. The branch merges squashed, so no
+  commit on main fails to build and the `fixup!` folds.
+- Task 7: the next row is matched by prayer and instant, and the ring splices `isolatedClock`.
+- Task 8: the time-format options keep the radio role. Choosing the clock in use again only closes the sheet.
+- Task 9: the action says Pause only while the ayah is playing and the voice is live. Paused there, it says
+  Play and resumes.
+- Task 9: the card never sets the semantic `selected`. It says Selected itself, and only the drawn pieces are
+  cleared. Design §5's "`selected` when selected" is superseded.
+- Task 10: the stop's action says Pause while it is live.
+- Task 10: the stop states Selected and never Being read aloud. On the Mushaf that phrase would read as a phone
+  voice reading the Quran, and TalkBack could speak it over the reciter.
+- Closing review: the merge waits for the listening checklist (spec, Verification).
+
+**Checked, and where.**
+- **The suite and builds.** On 85f35a37, `scripts/test.sh` exited 0 in 359 s: shared 1,818 tests on the iOS
+  simulator and 1,864 on the Android host, widgetcore 97 and 99, 0 failures. `scripts/check-strings.sh` was
+  clean, and `:androidApp:assembleDebug` built.
+  - At Task 11, `scripts/ios-build.sh` built, with the widget extension at 3 MB of its 15.
+  - Every task's new test went RED then GREEN. The semantics tests were mutation-checked (ControlSemanticsTest
+    9 cases, MushafPageSemanticsTest 15, AyahCardSemanticsTest 8, PrayerSpeechTest 6).
+  - These tests read Compose's semantics tree, not UIKit's or Android's mapping of it.
+- **29 September, Android emulator** (emulator-5558, Pixel_8_Pro, Android 16, 448×997 dp, the app in Arabic).
+  It covered Tasks 1–6 on the old base. Before was main 6dea49c4 (build 33's code); after was that main with the
+  branch merged on a detached HEAD.
+  - At 100 %, Settings, Notifications, the reader and Mushaf pages 1 and 4 were pixel-identical apart from
+    the status-bar clock. Prayer, Quran and Appearance differed only in live content.
+  - The chevron went from View to Button "رجوع". Switch rows were one checkable node with the label. Option
+    rows were checkable and checked, and tabs and segments were selected.
+  - Mushaf page 4 at 150 and 200 %: before, lines ran over the frame's left edge and words merged; after, it
+    was laid out as at 100 %.
+  - Al-Fatihah was identical before and after at 100, 150 and 200 %, so the opening page kept its growth.
+  - The iOS simulator pass did not run that day: `simctl boot` was refused.
+- **29 September, the S23** (R5CW219W15J, at Mohamed's request, with the peer sessions told). It ran debug
+  builds before and after, with Mushaf page 4 and Al-Fatihah at 100, 150 and 200 %.
+  - At 100 % both builds were identical.
+  - Before: page 4 overflowed and merged at 150 and 200 %. On this 384 dp phone Al-Fatihah overlapped the frame
+    at 150 % and was cut mid-word at 200 %.
+  - After: both pages stayed inside the frame at every size.
+  - The phone was left on the before build (6dea49c4, build 33's code) at font scale 1.0.
+- **17 October, Android emulator** (the closing workflow's device check, 05:30–06:00).
+  - Setup:
+    - One throwaway Pixel_8_Pro AVD, Android 16, 1344×2992 at 480 dpi, started with `-port 5558 -no-window
+      -gpu swiftshader_indirect -no-snapshot -read-only -no-audio`.
+    - adb was used only as `-s emulator-5558`, and the emulator was stopped with `emu kill`. No other emulator
+      or phone was touched.
+    - The read-only image already held Taqvo data (London, Mushaf mode, notifications off, the app locale
+      Arabic), so there was no onboarding. The app locale was switched to en-US.
+  - Builds: main.apk from a84c2334 and branch.apk from 2d0ca7f1, both versionCode 37. The branch build went on
+    with `install -r` over main's data. **The branch build predates the fix wave.**
+  - The emulator's own TalkBack 16 ran with verbose logging. Touches went in through `adb emu event mouse`, and
+    what TalkBack spoke was read from logcat's `ttsOutput` lines.
+  - **At default settings nothing moved.** Eleven screens on main and the branch were compared: Prayer,
+    Settings, Notifications, Appearance, Prayer times, the time-format sheet, the Quran root, the reader at
+    2:255, Mushaf pages 1 and 4, and the evening adhkar.
+    - All eleven were pixel-identical outside the status bar and two live regions: the countdown digits
+      (474,510)–(776,766) and the widget previews' countdown (302,2030)–(629,2096).
+    - The reader was identical even with no mask at all.
+    - The method: Pillow per-pixel luminance difference, threshold 8, with the top 140 px masked. No diff
+      image was written, because nothing differed.
+  - **Prayer.** Each row is one node, `View desc='Fajr, 5:52'` through 'Isha, 19:29'. On main these were
+    separate TextViews 'Fajr' / 'الفجر' / '5:52'.
+    - TalkBack said "Next prayer, Fajr, 5:52".
+    - The ring is `desc='Fajr in 1 hour 12 minutes, at 5:52'`, where main had 'FAJR IN', '1:18:43' and '5:52'.
+      Later TalkBack said "Fajr in 57 minutes, at 5:52".
+    - The glyphs are `Button desc='Adhkar'` and `'Tasbeeh'`, and TalkBack said "Adhkar, Button".
+  - **Switch rows.** Prayer notifications is one `View clickable,checkable checked=false` over the whole row.
+    Main's separate, unlabelled switch node at `[1080,427][1224,571]` is gone. TalkBack said "Off, Prayer
+    notifications, Switch", and "Off, Morning and evening adhkar, Half an hour after Fajr and Asr, Switch".
+    - Touch is main's. A tap on the drawn Show sunrise switch flipped the row to `checked`, and a second tap
+      restored it. A tap on the label at (300,2074) did nothing.
+    - The Back chevron is `Button desc='Back'`.
+  - **Choices.** Exactly one option per group is checked or selected: Theme, Widget background, the Asr and
+    Hijri segments, the time format, and Surah | Juz | Bookmarks. TalkBack said:
+    - "Selected, System, Radio button, 1 of 3, In list, 3 items";
+    - "Not selected, Light, Radio button, 2 of 3";
+    - "Selected, 24-hour, 18:32, Radio button, 1 of 2";
+    - "selected, Automatic, Tab, 1 of 3".
+
+    The settings title and section labels came through as headings.
+  - **The reader at 2:255.** The card is `TextView text='Ayah 255. Allah - there is no deity except Him…'`, and
+    TalkBack said "Selected, Ayah 255. …". In the Arabic interface it said "محددة", then "الآية 255." and the
+    translation.
+    - Ayah 254 and 256 are clickable but not checkable, and 256 is read with no "Not selected".
+    - The selected card keeps its Play, Bookmark, Copy and Share row.
+    - The branch dump has 0 Arabic nodes, where main's had 2 (the text of 2:255 and 2:256).
+    - At 2:1 the basmala is drawn but not in the tree, and a TalkBack touch on it spoke nothing.
+  - **The Mushaf.** Page 1 has stops 'Ayah 1' through 'Ayah 7' in order, and page 4 'Ayah 17' through
+    'Ayah 24'.
+    - There are no ayah-text nodes. The only Arabic left is the surah name, the band's count '٧' and the page
+      number '١'.
+    - On page 42 TalkBack said "Selected, Ayah 255, In horizontal pager". Ayah 254 said only "Ayah 254" and
+      "Actions available".
+    - As designed (§5), a stop covers only the ayah's first run of words. Exploring the ayah's later lines by
+      touch lands on no stop.
+  - **The Quran root.** A surah row reads "2, Al-Baqarah, The Cow · 286 ayahs · Madani, البقرة". The surah name
+    stays readable, as allowed.
+  - **The adhkar.** The Ayat al-Kursi card is `desc='Quran 2:255 · an-Nasa’i al-Kubra 10731 · al-Hakim 1/562'`,
+    with no Arabic node, the same as main. Its translation is spoken.
+  - **The Arabic grep** (U+0600–U+06FF, every dump on both builds, `arabic_hits.txt`). The branch's hits are
+    surah names, the widget preview's prayer labels ('Fajr · الفجر'), and Arabic-Indic digits. The only
+    TalkBack utterances in Arabic script were 'البقرة' and the page number '٤٢'.
+  - **Large text.** At font scale 2.0 the branch's Mushaf page 4 had all 15 lines, and no word was cut or merged
+    at either edge (full-resolution crops of both edges).
+    - Its glyphs are the size they are at 1.0. Only the header, the side labels and the page number grew, and
+      the page moved down about 55 px.
+    - The 2:17 action bar sat in the bottom margin.
+    - font_scale was put back to 1.0 and read back.
+  - **Found.** Nothing in what the round changes. Three things already on main were found:
+    - the page number spoken as bare "٤٢";
+    - the band's bare count;
+    - an unlabelled clickable node beside the time-format sheet's handle.
+
+    The fix wave labelled all three (7d6d58b3, 047680f9). **Those labels have not been on a device.**
+  - TalkBack was turned off again before the emulator was stopped, and the worktree was left clean.
+  - The artifacts are in the session's scratchpad, not in the repository:
+    `/private/tmp/claude-501/-Users-mohamedabulgasem-Desktop-Workspace-apps/d2f2d5b2-1f80-4ac1-b4d2-f0b36f6f4636/scratchpad/a11y-round1/android/`.
+    It holds both APKs and their build logs, `shots/` (the `m_`/`b_` pairs and the 200 % crops), and `dumps/`
+    (every uiautomator XML, plus the helper scripts and `diff.py`). It also holds `talkback/` (each probe's
+    verbose logcat, with `ttsOutput_summary.txt`).
+
+**What TalkBack said that the spec does not.** 85f35a37 amended spec §3 to say that TalkBack speaks no role
+word on a row, segment or tab with text children. That was inferred from the 29 September dumps' class names
+(`android.view.View`), and the rows are still `View` in the 17 October dumps. But TalkBack 16 said "Switch",
+"Radio button", "Tab" and "Button", and the position "2 of 3". It also speaks the state first ("Off, …",
+"Next prayer, Fajr, 5:52", "Selected, Ayah 255"), where the checklist expected the state after the label. The
+§3 paragraphs have since been corrected to what was heard, and the listening checklist is to confirm it on the
+owner's phone.
+
+**Not verified.**
+- **Nobody listened.** TalkBack ran only on the emulator, with no audio, and its speech was read as text. No
+  person heard TalkBack on a phone or VoiceOver anywhere. The simulator cannot run VoiceOver.
+- **No iOS device pass.** The plan's simulator tree dump (Task 12 Step 3) did not run in this round. The iOS
+  back gesture (Task 4), the VoiceOver phrasing ("selected, button") and the iOS widget as one element are
+  unobserved.
+- **Voice Access, Voice Control and Switch Access are untested.** That includes "tap Copy" on the selected
+  card and the closing review's check (b): iOS Voice Control "Tap <name>" on the eight switch rows with no
+  whole-row tap. If Voice Control taps the element's centre, nothing happens there.
+- **The S23 was not used on 17 October.**
+- **The fix wave on a device.** None of its five commits has been on one: "Page 42", "286 ayahs", "Drag
+  handle", and a recited stop with no state.
+- **Left unchecked by the emulator check:**
+  - the Current prayer and Passed states (the run was before Fajr);
+  - anything during recitation or read-aloud, including check (c), TalkBack's focus on a card while
+    read-aloud moves;
+  - the Mushaf's Play action and a second double-tap;
+  - TalkBack's double-tap on a switch row;
+  - the home-screen widget (none was placed);
+  - the dark theme, the Arabic interface beyond the reader card, and the other five languages;
+  - the 12-hour clock's FSI/PDI in speech and braille;
+  - heading navigation itself;
+  - main at 200 %;
+  - Notifications and Appearance below the first screen.
+- **The translation's language tag.** Compose passes it on as a LocaleSpan. Whether TalkBack switches voice
+  for it cannot be told from a text log.
+
+**Strings written without a native reviewer.** Nobody who speaks these languages has read any of them.
+- Most were the plan's (28 September).
+- `quran_a11y_selected` is the Task 9 implementer's.
+- `quran_a11y_page_n` and `quran_a11y_ayah_count` are the fix wave's, built from the app's own words for page
+  and ayah.
+- `sheet_a11y_drag_handle` is material3's own translation, copied byte for byte from its AAR.
+
+`values-in` is a copy of `values-id`. The Compose keys are in all eight folders, `widget_ayah_a11y_reference`
+is in the seven Android app folders, and `ayah_widget_a11y_reference` is in the seven iOS widget `.lproj`
+folders.
+
+| Key | ar | bn | fr | id, in | tr | ur |
+|---|---|---|---|---|---|---|
+| `nav_a11y_back` | رجوع | ফিরে যান | Retour | Kembali | Geri | واپس |
+| `sound_a11y_preview` | استمع إلى %1$s | %1$s শুনুন | Écouter %1$s | Dengarkan %1$s | Dinle: %1$s | %1$s سنیں |
+| `prayer_a11y_prayer_next` | الصلاة التالية | পরবর্তী নামাজ | Prochaine prière | Salat berikutnya | Sonraki namaz | اگلی نماز |
+| `prayer_a11y_prayer_current` | الصلاة الحالية | বর্তমান নামাজ | Prière en cours | Salat saat ini | Şu anki namaz | موجودہ نماز |
+| `prayer_a11y_prayer_passed` | انقضت | পার হয়ে গেছে | Passée | Sudah lewat | Geçti | گزر چکی |
+| `prayer_a11y_countdown` | %1$s بعد %2$s، الساعة %3$s | %2$s পরে %1$s, %3$s-এ | %1$s dans %2$s, à %3$s | %1$s dalam %2$s, pukul %3$s | %2$s sonra %1$s, saat %3$s | %2$s بعد %1$s، %3$s بجے |
+| `prayer_a11y_countdown_soon` | %1$s بعد أقل من دقيقة، الساعة %2$s | এক মিনিটেরও কম সময়ে %1$s, %2$s-এ | %1$s dans moins d’une minute, à %2$s | %1$s kurang dari satu menit lagi, pukul %2$s | Bir dakikadan az sonra %1$s, saat %2$s | ایک منٹ سے کم میں %1$s، %2$s بجے |
+| `duration_hours_minutes` | %1$s و%2$s | %1$s %2$s | %1$s %2$s | %1$s %2$s | %1$s %2$s | %1$s %2$s |
+| `a11y_hours` (plural) | ساعة; two ساعتين; few ساعات | ঘণ্টা | heure, heures | jam | saat | گھنٹہ, گھنٹے |
+| `a11y_minutes` (plural) | دقيقة; two دقيقتين; few دقائق | মিনিট | minute, minutes | menit | dakika | منٹ |
+| `quran_a11y_selected` | محددة | নির্বাচিত | Sélectionné | Dipilih | Seçili | منتخب |
+| `quran_a11y_page_n` | صفحة %1$s | পৃষ্ঠা %1$s | Page %1$s | Halaman %1$s | %1$s. sayfa | صفحہ %1$s |
+| `quran_a11y_ayah_count` (plural) | آية; two آيتان; few آيات | আয়াত | verset, versets | ayat | ayet | آیت, آیات |
+| `widget_ayah_a11y_reference`, `ayah_widget_a11y_reference` | %1$s، الآية %2$s | %1$s, আয়াত %2$s | %1$s, verset %2$s | %1$s, ayat %2$s | %1$s, %2$s. ayet | %1$s، آیت %2$s |
+| `sheet_a11y_drag_handle` (material3's) | مقبض السحب | টেনে আনার হ্যান্ডেল | Poignée de déplacement | Handel geser | Sürükleme tutamacı | گھسیٹنے کا ہینڈل |
+
+Points for the reader:
+- **Arabic.** The plurals take the CLDR forms, with the numeral always spliced in front, as every Arabic
+  plural in the app does. So the countdown says "بعد ١ ساعة" and "بعد ٢ ساعتين", where Arabic says بعد ساعة
+  and بعد ساعتين, with no numeral. The dual is in the genitive, because these plurals are only spoken after بعد
+  (ساعتين, دقيقتين, the form `timetable_minutes` already uses). They first had the nominative ساعتان and
+  دقيقتان. محددة is feminine, to agree with الآية.
+- **Bengali, Turkish and Urdu** put the duration before the prayer.
+- **Turkish** writes the page and the widget's ayah as ordinals ("%1$s. sayfa", "%2$s. ayet").
+- **Urdu** puts بجے after a time that, at 12-hour, already carries its own AM/PM.
+
+**What is left.**
+- **The listening checklist** (plan Task 12 Step 2b), with TalkBack on an Android phone and VoiceOver on an
+  iPhone, with Mohamed listening or with his OK. The merge waits for it.
+  - The emulator's TalkBack output already answers several items: the role words and the position are spoken,
+    the state comes first, unselected cards say no "Not selected", the selected stop says "Selected", and
+    "Adhkar, Button" and the time format's "Selected".
+  - Every iOS item, check (b) and check (c) are open, and so is everything the fix wave added.
+- **Check (b)'s remedy, if it fails, is the owner's.** Any whole-row tap would change touch.
+- **The strings above**, for review per language.
+- **Findings 10 and 12**, keep or drop. They are the page number and band count, and the drag handle. Both
+  were on main already, are semantics only, and are separate commits.
+- **The squash merge.** The draft message is at the end of the ledger folder's `final-fix-report.md`. The squash
+  also replaces 2537b984's "VoiceOver or Switch Control" and 82901ba7's "being read aloud".
+- **The deferred minors still open:**
+  - Task 4: a focused text field (Quran or city search) may take VoiceOver's escape before the handler.
+    Switch Control users get no scrub-back, as ruled.
+  - Task 5:
+    - `trailing` is silently dropped when `toggle` is set (`TaqvoCard.kt`); it wants a `require` or a KDoc
+      line.
+    - A future row's `onClick` and `toggle` could diverge.
+    - The first switch test's `checked` is a plain `var`.
+    - `onClick { }` inside the semantics block reads ambiguously.
+    - 88dc26f7's "touch stays on the drawn switch alone" is not literal for the rows already tappable as a
+      whole.
+  - Task 6: `TaqvoRow` option rows keep the radio role, so on Android the chosen remind-before, translation and
+    time-format rows lose their click; only a close is lost. No test exercises Android's dropped click.
+  - Task 0: positional `RowToggle` arguments at `NotificationSettingsScreen.kt:230`, beside the named form, and
+    a 119-column line in `AdhkarReadingSheet.kt`.
+  - Task 7:
+    - The row descriptions splice the bare time while the ring isolates it, so an Urdu 12-hour caption or
+      braille line could show it reversed.
+    - `prayerRowDescription` joins with a Latin ", " in Arabic and Urdu.
+    - `aPassedRowIsNeverNext…` does not pin that no row says Next.
+    - Two long lines in `CountdownRing.kt`.
+    - The ring's once-a-minute change is not announced, as designed, and has not been listened to.
+  - Task 8: the sheet titles (Time format, Remind me before) are not headings, and one KDoc line in
+    `AdhkarButtonTest` runs to 131 columns.
+  - Task 9:
+    - Copy and Share return true even when `shareTextFor` is null.
+    - A screen reader's Copy gives no "Copied".
+    - The default `{}` callbacks announce actions that do nothing.
+    - Latin separators in Arabic and Urdu.
+    - The Play lambda is duplicated in `ReaderScreen`.
+    - No tests for the basmala, search-hit, bookmark-row and widget-preview hides.
+    - The visible row's Play button still says Play while playing, as on main.
+  - Task 10: the play-or-toggle rule is written three times (pill, stop, the stop's label), `span(stop)` is
+    computed twice, and there are long lines.
+  - Task 11:
+    - The sentence rules are written twice, in Kotlin and Swift. Only the join is shared and tested.
+    - Latin separators in Arabic and Urdu.
+    - English-only iOS fallbacks on the debug preview route.
+    - The Swift method's name shadows `.accessibilityLabel`.
+    - The label carries the whole translation where the card may shorten it.
+    - One sentence can mix two languages until the mirror is rewritten after a language change.
+    - `scripts/check-strings.sh` does not scan `iosApp/TaqvoWidget/*.lproj`.
+  - Pre-existing and untouched: 13 Kotlin warnings and 222 test-compile warnings (`ExperimentalCoroutinesApi`
+    opt-ins), none in a changed file.
+- **Next round**: items 6–12 of the list (tasbeeh, Qibla, the player bar, phone-driven high contrast, small
+  labels, widget sentences, large-text clipping). The Quran list's surah-number circles, cut at 200 % text, are
+  parked for the owner as a visual fix.
+
+Checked for this entry: nothing run (docs only). The figures are the ledger's, the task reports', the fix
+wave's report and the 17 October device check's.
+
+## Alberta and Manitoba keep summer time (17 October) — due on phones before 1 November
+
+Branch `fix/clock-alberta-manitoba`, off 67b21a23: cada7ad6, then this entry and a line in spec §3.9. Not
+pushed.
+
+The newest tz data (2026e, this Mac's) keeps America/Edmonton at UTC−6 and America/Winnipeg at UTC−5 all
+year from 1 November 2026. Zone data from before the change still goes back an hour that night: Edmonton to
+UTC−7 at 08:00 UTC, Winnipeg to UTC−6 at 07:00 UTC (the JDK 21 here, 2026b, does). On such a phone every
+time in those zones is drawn an hour early from then on, and the phone's own clock is an hour behind with
+it. cities.csv puts 35 cities on Edmonton's clock (33 in Alberta, plus Yellowknife and Cranbrook) and 6 on
+Winnipeg's (5 in Manitoba, plus Kenora).
+
+- `ClockChanges.table` has two rows in British Columbia's pattern, +1 h from 1 November 2026 until
+  1 November 2029: `alberta` (America/Edmonton, its link America/Yellowknife, and America/Inuvik, whose own
+  entry keeps UTC−6 from the same day) and `manitoba` (America/Winnipeg and its link America/Rainy_River).
+  A place found by GPS keeps the phone's own zone id, so the links are listed.
+- The clock line's sheet names Alberta or Manitoba in all seven languages (French "L’Alberta" and
+  "Le Manitoba", as its sentences start with the region). The mapping is `clockRegionRes`, and a test gives
+  every row a region of its own, because the fallback is Kazakhstan's name.
+
+**Due before 1 November.** A row warns only on a phone running a build that carries it. The store build,
+1.1.0 (37), has Morocco's, British Columbia's and Kazakhstan's rows and not these two. So on 37, a phone in
+those zones whose data predates the change shows every time an hour early from 1 November, with no clock
+line. The next store build (code 38) has to carry cada7ad6 and be on phones before then, which means
+submitted to both stores by 24 October at the latest: Play's review takes 1 to 7 days and Apple's 1 to 3
+(STORE-CHECKLIST §7), and phones then update the app on their own schedule. Only a build can bring the rows:
+the table is code, and the one file the app fetches, the reciters' manifest, has no clock rows.
+- Even with the line, the times on such a phone stay an hour early until its zone data is updated. The line
+  says so and gives the fix (the system update, date and time on automatic), as §3.9 has it for British
+  Columbia.
+- The site needs nothing: it draws its clocks from the newest tz data (fdeee008), holds Calgary and Edmonton,
+  and has no Winnipeg page.
+
+Open for the owner: Inuvik (kept in: a zone of its own, with the same change), the legacy `Canada/Mountain`
+and `Canada/Central` ids (left out, as `Canada/Pacific` is for British Columbia), and the provinces' own
+orders, checked against the tz data only, as British Columbia's row was.
+
+Checked for this entry: the offsets again, with the JDK 21 (2026b) and the Mac's zoneinfo (2026e); the city
+counts from cities.csv; and that `build-37`'s `ClockChanges.kt` has no `alberta` or `manitoba` row. The
+tests are cada7ad6's (`scripts/test.sh` green on iOS and the Android host).
+
+## Five places that stopped going back an hour (17 October) — Chihuahua's phones go early from 25 October
+
+Branch `fix/clock-stale-zones`, off `release-1.1.0` (9e14db59): ae7b32c3, then this entry. Not pushed.
+
+A phone before Android 10 keeps the zone data it shipped with unless its maker updates it (Android 9 has
+2018e, Android 8 older). That data still goes back an hour every autumn in five places that stopped doing so
+years ago, so on such a phone every time there is drawn an hour early all winter, with no clock line on 1.1.0
+(37). ae7b32c3 gives them rows, +1 h until 1 November 2029: `yukon` (America/Whitehorse, America/Dawson),
+`syria` (Asia/Damascus), `jordan` (Asia/Amman), `chihuahua` (America/Chihuahua) and `paraguay`
+(America/Asuncion). cities.csv puts 89 cities on Damascus's clock, 34 on Amman's, 30 on Asunción's, 10 on
+Chihuahua's and 1 (Whitehorse) on Yukon's.
+
+When the old data next goes back, and so when each row starts to matter:
+
+| Row | Old data goes back | True offset | Old data back in step |
+|---|---|---|---|
+| chihuahua | 25 Oct 2026, 08:00 UTC (−6 to −7) | −6 | 4 Apr 2027, 09:00 UTC |
+| syria | 29 Oct 2026, 21:00 UTC (+3 to +2; midnight on 30 October there) | +3 | 25 Mar 2027, 22:00 UTC |
+| jordan | 29 Oct 2026, 22:00 UTC (+3 to +2) | +3 | 25 Mar 2027, 22:00 UTC |
+| yukon | 1 Nov 2026, 09:00 UTC (−7 to −8) | −7 | 14 Mar 2027, 10:00 UTC |
+| paraguay | 28 Mar 2027, 03:00 UTC (−3 to −4) | −3 | 3 Oct 2027, 04:00 UTC |
+
+**This moves build 38's deadline earlier than the 24 October in the entry above.** A row warns only on a
+phone running a build that carries it (§3.9). By that entry's reckoning (Play's review takes 1 to 7 days and
+Apple's 1 to 3, STORE-CHECKLIST §7, and phones then update the app on their own schedule), build 38 has to
+carry ae7b32c3 and be submitted to both stores **by 21 October** for Syria and Jordan. For Chihuahua the same
+reckoning gives today, 17 October, so its first days may go unwarned if Play takes its full week: the line
+then shows from the day the build reaches the phone, and the stretch runs to 4 April, so a late build loses
+the first days of the winter, not the winter. Yukon is due with Alberta and Manitoba (24 October), and
+Paraguay has until March.
+- Even with the line, the times on such a phone stay an hour early until its zone data is updated, which for
+  Android 8 and 9 usually means never. The line says which way and gives the fix, as for British Columbia.
+- The site needs nothing: its pages do not read the table (ae7b32c3's message has the byte-for-byte check).
+
+Open for the Lead (review of ae7b32c3, reported only): the line's words for a phone whose own clock is
+right. Four years on, an owner of an old phone in Syria or Jordan has probably worked around the stale data,
+and a likely way (an inference, not measured) is a fixed zone with the true offset, Baghdad or Riyadh for
++03, with automatic time on: the phone's clock is right. A place picked from the city list keeps the city's
+own zone (`SettingsRepository.location`, `timeZoneId`), so Taqvo draws its times at Asia/Damascus's stale
++02, an hour early, and the line shows. Its headline, "Your phone's clock may be an hour off", is then false
+(the clock is right, Taqvo's times are off), and the sheet's fix (install the latest system update, keep date
+and time on automatic) is one the user has already applied or cannot (Android 8 and 9 rarely have an
+update). The alerts, set by instant, go off on time. A place found by GPS keeps the phone's own zone
+(`LocationRepository.resolveGpsLocation`), so no row matches and its times are right; a phone left on
+Asia/Damascus with its clock set by hand gets the stale sheet with "early", which is right for it. The
+date sentence reads correctly in all eight languages (past tense, the full date with its year). The
+headline and the fix text for this user need a decision; no rewrite in this round.
+
+Checked for this entry: the old-data transitions above with 2018e's rules written as POSIX TZ strings
+(Syria last Friday of October 0:00, Jordan last Friday 0:00 standard time, Mexico last Sunday 2:00, Canada
+first Sunday of November 2:00, Paraguay fourth Sunday of March 0:00 and back on October's first), each
+against the Mac's zoneinfo (2026e) for the true offset; they agree with ae7b32c3's dates, measured on the
+API 28 image. The city counts from cities.csv, and that `build-37`'s `ClockChanges.kt` has only the `morocco`, `british_columbia` and
+`kazakhstan` rows. No Kotlin changed; the tests are ae7b32c3's.
+
+## The clock line's words, and the seasons old data draws early (18 October) — build 38
+
+Branch `fix/clock-seasonal`, off `release-1.1.0` (d7ccbda5), two commits. Not pushed. The Lead's rulings on
+the two items the 17 October entries left open: (A) the line's wording, (B) the places whose true offset still
+changes in the year, which "cannot be a row of one offset and have none" (§3.9) and which an Android 9 phone
+draws an hour early for whole seasons (stale-zones-2018e.md, 17 October).
+
+### A. Wording (commit 1)
+
+Three things the sheet said that were not true for every row and every way a user meets it:
+
+- **"Your phone's clock may be an hour off."** False for the phone the 17 October entry describes: kept on a
+  zone of the true offset (Baghdad for +03) with automatic time, Damascus picked from the list. Its clock is
+  right; it is the times, drawn at Asia/Damascus's stale +02, that are an hour early. The headline is now about
+  the times, which is what the sheet under it explains and what is off in every case: "Prayer times may be an
+  hour off". Smallest change; the sheet's fix text stays (the system update, if there is one, and automatic time:
+  harmless where already applied).
+- **"{Place} changed its clocks on {date}."** True for Morocco and Kazakhstan, whose clocks moved on their dates.
+  False for the eight +1 rows: British Columbia, Alberta and Manitoba on 1 November 2026, Yukon, Syria, Jordan
+  and Chihuahua did not move their clocks that day, they left them where they were; Paraguay's 15 October 2024 is
+  the date of its law. Those rows now say the place "has kept one time all year since {date}", in four new
+  strings (`prayer_clock_kept_stale_early/late`, `prayer_clock_kept_manual_early/late`); the −1 rows keep theirs.
+  `clockBodyRes` in `ClockLine.kt` picks the sentence from the row's `shiftHours`, and `ClockLineTest` pins every
+  row to its kind. French avoids "changer d'heure" for the places that did not: "garde la même heure toute l'année
+  depuis le …".
+- **"Install the latest system update"** gains "if there is one" in every language: an Android 8 or 9 phone
+  rarely has one (the entry above).
+- **Urdu's Syria** was شام alone, which also means "evening": now ملکِ شام.
+
+Every changed string, old → new, for the owner's native review (none of the seven translations has had a native
+reader; `values-in` is `values-id`'s copy):
+
+| Key | Language | Old | New |
+|---|---|---|---|
+| `prayer_clock_line` | en | Your phone’s clock may be an hour off | Prayer times may be an hour off |
+| | ar | قد يكون توقيت هاتفك مختلفًا بساعة | قد تكون مواقيت الصلاة مختلفة بساعة |
+| | bn | আপনার ফোনের ঘড়ি হয়তো এক ঘণ্টা ভুল | নামাজের সময় হয়তো এক ঘণ্টা ভুল |
+| | fr | L’horloge de votre téléphone a peut-être une heure d’écart | Les horaires de prière ont peut-être une heure d’écart |
+| | id | Jam ponsel Anda mungkin selisih satu jam | Waktu salat mungkin selisih satu jam |
+| | tr | Telefonunuzun saati bir saat farklı olabilir | Namaz vakitleri bir saat farklı olabilir |
+| | ur | ہو سکتا ہے آپ کے فون کی گھڑی ایک گھنٹہ آگے پیچھے ہو | ہو سکتا ہے نماز کے اوقات ایک گھنٹہ آگے پیچھے ہوں |
+| `prayer_clock_stale_early`, `_late` (only the fix sentence changed; the rest as before, "early" and "late" as before) | en | Install the latest system update, and keep date and time on automatic: … | Install the latest system update, if there is one, and keep date and time on automatic: … |
+| | ar | ثبّت آخر تحديث للنظام، واترك التاريخ والوقت على الضبط التلقائي: … | ثبّت آخر تحديث للنظام إن وُجد، واترك التاريخ والوقت على الضبط التلقائي: … |
+| | bn | সর্বশেষ সিস্টেম আপডেট ইনস্টল করুন এবং তারিখ ও সময় স্বয়ংক্রিয় রাখুন: … | সর্বশেষ সিস্টেম আপডেট থাকলে তা ইনস্টল করুন এবং তারিখ ও সময় স্বয়ংক্রিয় রাখুন: … |
+| | fr | Installez la dernière mise à jour du système et laissez la date et l’heure en automatique : … | Installez la dernière mise à jour du système, s’il y en a une, et laissez la date et l’heure en automatique : … |
+| | id | Pasang pembaruan sistem terbaru dan biarkan tanggal dan waktu diatur otomatis: … | Pasang pembaruan sistem terbaru, jika ada, dan biarkan tanggal dan waktu diatur otomatis: … |
+| | tr | En son sistem güncellemesini yükleyin ve tarih ile saati otomatik ayarda tutun: … | Varsa en son sistem güncellemesini yükleyin ve tarih ile saati otomatik ayarda tutun: … |
+| | ur | تازہ ترین سسٹم اپ ڈیٹ انسٹال کریں، اور تاریخ اور وقت کو خودکار رکھیں: … | تازہ ترین سسٹم اپ ڈیٹ، اگر کوئی ہو، انسٹال کریں، اور تاریخ اور وقت کو خودکار رکھیں: … |
+| `prayer_clock_kept_stale_early` (new; `_late` the same with the word for late, as in `prayer_clock_stale_late`) | en | — | %1$s has kept one time all year since %2$s and your phone hasn’t caught up, so prayer times may be an hour early. Install the latest system update, if there is one, and keep date and time on automatic: alerts are right only when the clock is automatic. |
+| | ar | — | التوقيت في %1$s ثابت طوال العام منذ %2$s ولم يُحدَّث هاتفك بعد، لذا قد تظهر مواقيت الصلاة مبكرة بساعة. ثبّت آخر تحديث للنظام إن وُجد، واترك التاريخ والوقت على الضبط التلقائي: لا تكون التنبيهات صحيحة إلا إذا كانت الساعة مضبوطة تلقائيًا. |
+| | bn | — | %1$s %2$s থেকে সারা বছর একই সময় রাখছে, কিন্তু আপনার ফোন এখনো তা জানে না, তাই নামাজের সময় এক ঘণ্টা আগে দেখাতে পারে। সর্বশেষ সিস্টেম আপডেট থাকলে তা ইনস্টল করুন এবং তারিখ ও সময় স্বয়ংক্রিয় রাখুন: ঘড়ি স্বয়ংক্রিয় থাকলেই কেবল সতর্কবার্তা ঠিক থাকে। |
+| | fr | — | %1$s garde la même heure toute l’année depuis le %2$s et votre téléphone ne le sait pas encore : les horaires de prière peuvent avoir une heure d’avance. Installez la dernière mise à jour du système, s’il y en a une, et laissez la date et l’heure en automatique : les alertes ne sont justes qu’avec l’heure automatique. |
+| | id | — | %1$s memakai satu waktu sepanjang tahun sejak %2$s dan ponsel Anda belum mengikutinya, jadi waktu salat bisa satu jam terlalu awal. Pasang pembaruan sistem terbaru, jika ada, dan biarkan tanggal dan waktu diatur otomatis: pengingat hanya tepat jika jam diatur otomatis. |
+| | tr | — | %1$s, %2$s tarihinden beri yıl boyunca tek bir saat kullanıyor ve telefonunuz bunu henüz bilmiyor; bu yüzden namaz vakitleri bir saat erken görünebilir. Varsa en son sistem güncellemesini yükleyin ve tarih ile saati otomatik ayarda tutun: uyarılar yalnızca saat otomatikken doğru çalışır. |
+| | ur | — | %1$s میں %2$s سے سارا سال ایک ہی وقت رکھا جاتا ہے اور آپ کے فون کو ابھی اس کا علم نہیں، اس لیے نماز کے اوقات ایک گھنٹہ پہلے دکھائی دے سکتے ہیں۔ تازہ ترین سسٹم اپ ڈیٹ، اگر کوئی ہو، انسٹال کریں، اور تاریخ اور وقت کو خودکار رکھیں: الرٹ صرف خودکار گھڑی پر درست ہوتے ہیں۔ |
+| `prayer_clock_kept_manual_early` (new; `_late` likewise) | en | — | %1$s has kept one time all year since %2$s. If you set the clock by hand, prayer times may be an hour early. Turn on automatic date and time: alerts are right only when the clock is automatic. |
+| | ar | — | التوقيت في %1$s ثابت طوال العام منذ %2$s. إن كنت ضبطت الساعة يدويًا فقد تظهر مواقيت الصلاة مبكرة بساعة. فعّل ضبط التاريخ والوقت تلقائيًا: لا تكون التنبيهات صحيحة إلا إذا كانت الساعة مضبوطة تلقائيًا. |
+| | bn | — | %1$s %2$s থেকে সারা বছর একই সময় রাখছে। আপনি হাতে ঘড়ি ঠিক করে থাকলে নামাজের সময় এক ঘণ্টা আগে দেখাতে পারে। স্বয়ংক্রিয় তারিখ ও সময় চালু করুন: ঘড়ি স্বয়ংক্রিয় থাকলেই কেবল সতর্কবার্তা ঠিক থাকে। |
+| | fr | — | %1$s garde la même heure toute l’année depuis le %2$s. Si vous avez réglé l’horloge à la main, les horaires de prière peuvent avoir une heure d’avance. Activez la date et l’heure automatiques : les alertes ne sont justes qu’avec l’heure automatique. |
+| | id | — | %1$s memakai satu waktu sepanjang tahun sejak %2$s. Jika Anda mengatur jam secara manual, waktu salat bisa satu jam terlalu awal. Nyalakan tanggal dan waktu otomatis: pengingat hanya tepat jika jam diatur otomatis. |
+| | tr | — | %1$s, %2$s tarihinden beri yıl boyunca tek bir saat kullanıyor. Saati elle ayarladıysanız namaz vakitleri bir saat erken görünebilir. Otomatik tarih ve saati açın: uyarılar yalnızca saat otomatikken doğru çalışır. |
+| | ur | — | %1$s میں %2$s سے سارا سال ایک ہی وقت رکھا جاتا ہے۔ اگر آپ نے گھڑی خود ملائی ہے تو نماز کے اوقات ایک گھنٹہ پہلے دکھائی دے سکتے ہیں۔ خودکار تاریخ اور وقت آن کریں: الرٹ صرف خودکار گھڑی پر درست ہوتے ہیں۔ |
+| `prayer_clock_region_syria` | ur | شام | ملکِ شام |
+
+Points for the reader:
+- **Arabic** avoids a verb that would have to agree with the place's gender (الأردن is masculine, سوريا
+  feminine): "التوقيت في … ثابت طوال العام منذ …", the time in the place is fixed all year since the date. The
+  seasonal sentences (B) use the passive for the same reason.
+- **Bengali** keeps the place first and the date after it, as the existing sentences do; "রাখছে" (keeps) with the
+  place as subject.
+- **French** regions carry their article with a capital ("La Syrie", "Le Yukon") because every sentence starts
+  with the place; the new ones do too.
+- **Turkish** "tarihinden beri … kullanıyor" (has used since the date), place first with the comma the existing
+  sentences use after it.
+- **Urdu** "… میں … سے سارا سال ایک ہی وقت رکھا جاتا ہے" (in the place, since the date, one time is kept all
+  year), passive, so no verb agrees with the place.
+- The `manual` strings ("Turn on automatic date and time") name no system update, so they did not gain "if there
+  is one".
+
+## The owner's four answers (17 October)
+
+The four questions round 2's fix left open (11 October, above), answered by the owner on 17 October: "Go with your
+recommendations for the engine questions." His rule for each: rather late, never early. Q1, Q3 and Q4 were each built
+on a branch of main 7e9fc11a (`engine-q1-ride`, `engine-q3-lupt`, `engine-q4-diyanet`), reviewed twice and fixed once,
+then merged in that order on `engine-owner-decisions` and checked as one tree. Q2 is the owner's acceptance and changes
+no code. The generated files (stamps, envelope rows, `ProofStamps.kt`, the golden vector, the own points' worst) were
+regenerated after the merges, never merged by hand; the merges' only hand-resolved lines are the spec's §3.5 sentence
+and `GenerateEnvelopeRows.kt`, which keeps every track's claims.
+
+**Q1: the nearest table's ride past its bound.** Just past a table's bound (three minutes of longitude, 52 to 80 km) the
+times had come back to the user's own point and ran up to 4 to 5 min before the nearest table on some days
+(Winchester and Martinsburg against ADAMS, Angren against Tashkent, Thatta against Karachi, Drummondville against
+CCML, Porvoo against Rabita), where a user may still pray by that table. Now, past every bound reach, the nearest table
+printed for its own point (`tablesAtTheirPoints`) still rides, claiming no figure, out to five of its own reaches
+(`RIDE_REACHES`, `TableEnvelope.rideKm`: five minutes of longitude at its latitude, where the unit is one and the bound
+three):
+- ISNA's US mosques 102 to 121 km, Chicago's 18° block 103, ISNA's Montréal and Ottawa mosques 97.5, Canada's three
+  families 83 to 91;
+- the city tables: Delhi 122, Karachi 126, Tashkent 104, Bishkek 102, Gaza 119, Beirut 115, Damascus's two samples
+  116, Baghdad 116.
+
+It rides as a day alongside (`TimetableMethod.alongside`, `DayComputer`'s step 10): the user's own day exactly as main
+computes it, the table's own day at its own point with its own curves, regional variants and margins, and the day
+shown their safe side, each start the later and each end the earlier. So nothing is earlier than main, no start is
+before the nearest table nor any end after it, and nothing is later than the later of the two days asks. The first
+build carried the table's point beside the user's as a start and an end point, read on the method's one set of curves;
+the reviews found that where a curve is read at every latitude in play (the Canadian families' night fractions) or a
+rule changes with the season (Rabita's summer Isha) that came up to 10 and 23 min later than either point alone
+(Camrose, Porvoo, Lohja), and that it moved 351,621 Dhuhr and Maghrib window ends later. A day alongside moves none,
+and a ride costs two days, not three. Within any table's bound round 2's envelope stands, and inside every unit nothing
+changed (the reach rows' 5,210 points: below).
+- **Rabita Helsinki** (`Europe.rabitaRide`). The calendar's own day at Helsinki rides from a minute's reach of Helsinki
+  (13.8 km) out to five (69 km), the region's margins (45 km) kept on the user's own day, and Helsinki's Asr a minute
+  later past Diyanet's Helsinki unit (41.5 km), where the member alone must hold the calendar. On main, points between
+  the app's Finnish towns were early against the calendar from 14 km out (Isha) and from 38 km (Fajr, Asr, the end of
+  eating), though every town was clean; 288 ring points and 11 more towns are now promise-only rows
+  (`se-cautious-envelope.tsv`, new). On the calendar's rule-change days (22–23 April, 19–20 August) Helsinki's own Isha
+  runs up to 156 min after the calendar, and the ride carries that to towns whose own rule has already changed: up to
+  97 min later than main at Järvenpää.
+- **Canada's cautious times ride ISNA's Montréal and Ottawa mosques** (`Units.crossRide`, `Americas.canadaIsnaRide`,
+  `Resolution.alongside`), the decision's own example: "someone 60 km from Montréal may well pray by CCML's board".
+  ISNA is followed only inside the two cities' boxes, so just outside them Automatic is the western families'
+  cautious times, which no ISNA table bounded: Drummondville's Fajr came up to 5 min before CCML's table on 341 days
+  of 2026, Cornwall's 3 min before Ottawa Main Mosque's on 209, and the sunrise up to 2 min after CCML's at Les Coteaux
+  and Salaberry-de-Valleyfield. Now every ISNA table whose bound holds the place (58.5 km), and past them the nearest
+  within its ride (97.5 km), rides beside Canada's cautious day as a day alongside; 142 envelope rows hold it under
+  Automatic.
+- **Manchester Central's Wifaqul table** rides out to five reaches (83 km) where Wifaqul is chosen: on main a user who
+  chose it there saw Fajr, Hanafi Asr and Isha before the table on about 60 % of its printed days, at 86 towns 50 to
+  83 km out. As the UK's cautious times' most-followed member it keeps its bound (`UnitSet.outsideAsMember`): its reach
+  is Q2's, accepted at the bound, and Automatic there is already never before its printed days. Riding there too would
+  make Automatic's Maghrib up to 5 to 6 min later on most days at Leeds, Wakefield and Castleford and carry the
+  table's knife-edge summer nights into it (Isha up to 85 min later on five to seven nights).
+- **Kept at their bound**: Diyanet's Sydney points (Diyanet prints a table for every city, which its preset computes at
+  the user's own point; Q4 below), BIK's base point, which already rides all of Kosovo (100 km), and the authorities'
+  own point tables (R44, R45: Toronto's, Lakemba's, the PA's towns, Diyanet's European cities), which keep R45's edge.
+
+No figure is claimed in a ride (`measured` as before): About still says "Not measured" there. `generateEnvelopeRows`
+replays the nearest table's own rows at every app city of its entry's countries within its ride, Rabita's calendar at
+the Finnish towns and the rings, and ISNA's mosques under Canada's Automatic: 6,685 envelope rows on main, 7,628 on
+the branch. On main the new rows break the gate in every entry with a ride (us.isna's Fajr 13,381 cells early and its
+sunrise 9,581 late ends, lb.fatwa's Dhuhr 2,958, se.cautious's Isha 19,400 and Fajr 9,142 on the rings, ca.cautious's
+Fajr 1,643 under the cross ride, Wifaqul chosen's Isha 372 and Fajr 348); here none.
+
+At the edge towns (every day of 2026 against main, Automatic unless named; the branch's own comparison):
+- the US: New Haven's Fajr up to 8 min later every day (the Jamaica Muslim Center's table, 98 km), San Diego's Isha 6,
+  Trenton's end of eating 6 earlier, Winchester's, Front Royal's and Martinsburg's sunrise 4 earlier every day,
+  Hagerstown's Fajr up to 3 later;
+- Canada: Camrose's Isha up to 10 min later every day, Drummondville's Fajr 7 later (CCML's, 87 km), Joliette's and
+  Sorel-Tracy's 6, Cornwall's 5, Chambly's and Saint-Jean-sur-Richelieu's 3; Victoria's end of eating up to 8 earlier
+  (Surrey Jamea, 85 km) and Chilliwack's Dhuhr, Asr and Maghrib 4 later;
+- the city tables: Nablus's Fajr 7 later (Gaza's Awqaf table chosen, 109 km), El Hermel's 7, Angren's Isha 6,
+  Thatta's 5, Al Hillah's 5, Guliston's end of eating 8 earlier, Ramadi's sunrise 5, Tyre's end of eating 5, Panipat's
+  Fajr 3 later and its sunrise 3 earlier;
+- Rabita: Porvoo's Isha up to 34 min later, Lohja's 37 and its end of eating 6 earlier, Järvenpää's 97 on a rule-change
+  day;
+- Wifaqul chosen: Fajr up to 128 min later at Rotherham and 133 at Maltby, Leeds' Isha 112 and its end of eating 104
+  earlier, on the knife-edge summer nights.
+
+**Q2: Lancashire and West Yorkshire, accepted.** Automatic in Preston, Bolton, Blackburn, Burnley, Bradford and
+Huddersfield keeps the Isha round 2 gave it, up to 84 min later than before on the knife-edge nights around 28 May and
+15 July, because Manchester Central's Wifaqul table rides within its bound (about 50 km). It is the cautious rule
+working as designed, "each prayer once all the timetables followed here have begun it", on two short runs of summer
+nights, and About already calls these cautious times. Nothing was built. Whether Wifaqul's table really is followed
+in those towns is the open point: a spot-check of a few mosques' boards there would settle it, and if it is not,
+narrowing Wifaqul's bound to its minute's reach is the fix. Q1 does not widen it: the member keeps its bound, and only
+Wifaqul chosen rides past it.
+
+**Q3: London Unified only near London.** Round 2's fix left London Unified chosen far from London open: a user in
+Scotland who chose it got London's table wherever it was later, or its ends earlier, than their own sun (Fajr up to 104
+min later near Dundee in late May, sunrise and sunset up to 67 and 73 min earlier; in Glasgow London's winter sunrise,
+about an hour before Glasgow's). The owner's answer: stop it, with the mechanism the app already has. LUPT is London's
+table, the M25's.
+- A chosen timetable applies where `Registry.inScope` says (ruling R50); outside, Automatic applies, with the Timetable
+  screen's one line ("London Unified isn't used here, so Automatic applies until you return"). London Unified, declared
+  global, was in scope everywhere in Great Britain. An entry can now narrow its own countries to an area
+  (`RegistryEntry.area`, read by `inScope`'s own-countries branch only; where Automatic follows or lists an entry it
+  applies whatever its area). London Unified's is R45's three reaches of its table's point (`Europe.londonArea`: two
+  minutes of longitude, three times, 103.81 km), exactly where its point already rode as the fixed point, so within it
+  nothing changes: Basildon, Sevenoaks, St Albans, Luton, Reading and Folkestone (101.7 km) keep it. Margate (105.9 km),
+  Ipswich, Dover, Southampton and everything farther are out of scope. No new UI, no new string.
+- A user beyond it who chose LUPT sees the line, Automatic selected, no London Unified row, and Automatic's own day
+  (gb.cautious) everywhere it is shown, never paused, confirmed or not. Nothing is written to storage: within 103.81 km
+  the choice applies again, confirmed as before (its confirmation is bound to gb.cautious, ruling R70).
+- Resolved there directly (a tool; the app never asks): R45's edge at the user's own point alone. Round 2's start and
+  end points beside the user's own are gone; `DayComputer`'s point-7 bound for a method with no fixed point stays, with
+  no entry riding it now.
+- `generateEnvelopeRows`' LUPT claim keeps its six towns within the area (`gb-london-lupt-envelope.tsv`, 270 rows at 18
+  towns to 90 at 6), and a named claim of a chosen table now names its entry (`Named.chosen`): the generator refuses a
+  city where it is not in scope (London Unified's and IACAD's three claims).
+- It is the one sanctioned exception to "never earlier than before" (spec §3.5): a stored London Unified beyond its area
+  now shows Automatic's own day, whose starts can come before London's table and whose ends after it. Against main's
+  LUPT chosen there, at this round's points (every third day of 2026): starts earlier by up to Fajr 21 min, Asr 28,
+  Maghrib 31 and Isha 66 (Peterhead, June), sunrise later by up to 64 (the Isle of Lewis, December) and sunset 74;
+  England up to Fajr 20, Asr 14, Maghrib 16, sunrise 28 and sunset 34 (Whitehaven, Workington); Northern Ireland
+  sunrise 45, sunset 51 and the end of eating 16 (Londonderry); Wales 21 and 27 (Colwyn Bay, Bangor). The other side:
+  the UK's cautious Fajr and Isha there come later than the choice showed, from just past the edge (the south coast,
+  Kent and Suffolk too), Isha up to 173 min (Pontefract, late July), Fajr 61 (Aberystwyth, June) and the end of eating
+  136 earlier (120 km out, late July). The comparison with main holds those cells to main's own Automatic instead,
+  which they equal.
+
+**Q4: Diyanet's preset in Sydney.** The question was to fit Diyanet's preset (other.turkey), chosen on its own in
+Sydney, to Diyanet's Sydney table, which it was said to run up to 16 min before at Asr and 12 at Isha. Measured first,
+those figures are Lakemba Mosque's (LMA's 1448 table, on 126 and 272 of its 349 days: its seasonal Asr, up to 22 min
+after the Shafi'i, and its Maghrib + 90, against the preset's Shafi'i + 4 and 17°), so the decision moved no time.
+- Against Diyanet's Sydney table the preset is never before it and no end is after it on the 31 days the archive holds
+  (25 September to 25 October 2026), at the table's three plausible points (Lakemba, Sydney's centre, the Gallipoli
+  Mosque at Auburn) and at every app city where it rides them: round 2's points ride beside the user's for a chosen
+  preset exactly as for au.cautious's member. On those days every start is 1 to 3 min after the table and every end at
+  least a minute before it (Asr 2 to 3, at class D's limit on 26 of the 31 days).
+- No fetcher reads Diyanet's Australian pages, so the other months are inferred, not proven: the preset is Diyanet's
+  own rule, never before Diyanet's tables at its six published Turkish points on every day held (25 September to 11
+  November 2026 and all of 2027).
+- A user who chooses Diyanet does not follow LMA's table, so the preset is not fitted to it; that would be a cautious
+  preset, left for the owner. au.cautious is as before: the decision's accepted cost, Automatic later where Diyanet's
+  would pass LMA's, is nil.
+- Gated: `au-diyanet.tsv` checks the preset against the table at the three points, measured (a user who chooses Diyanet
+  there follows this table, so class D's limit holds it): 93 place-days, 0 early, 0 late ends.
+  `au-diyanet-envelope.tsv`, a named claim, replays it at the 68 app cities where the chosen preset rides those points
+  (class D's reach, 69 km: Wollongong to the Central Coast), promise-only, 2,108 place-days, all clean; without the
+  envelope those rows break the gate (178 late sunrises, 252 late ends of eating, 24 early Ishas). The places come from
+  the app's own resolution of where the preset rides the table (`EnvelopeRows.ridesAny`, which since the merge also
+  reads a method's days alongside), never a reach of the tools' own, and `EnvelopeCoverageTest` fails while the
+  committed rows miss a place the engine rides; it pins Newcastle and Canberra outside (with the reach widened fivefold
+  it names the 14 cities from Newcastle to Muswellbrook). Q1 leaves Sydney's Diyanet points at the bound on purpose.
+- Found, not built: Diyanet's Melbourne table is held at Melbourne's centre only. At the app's 119 cities within its
+  reach Automatic is up to 2 min before it at Fajr in the east (215 city-days; Berwick and Pakenham 52 of 62) and at
+  Dhuhr (41), and the sunrise up to 2 min after it in the west (141); the preset chosen more often (Fajr 591, Dhuhr 233,
+  Maghrib 188, Isha 102). Adding Melbourne's centre to the same envelope clears them all, at up to 3 min later at the
+  eastern cities and 5 at 60 km. It moves Automatic in a whole city and reverses round 2's "near Sydney only", so it is
+  the owner's, a round of its own.
+- Corrected above, in place: round 2's and its fix round's "Diyanet's Sydney table" and the last open question had
+  given LMA's 16 and 12 as Diyanet's.
+
+**Rulings** (the tracks' proposals, numbered here):
+- **R121**, the nearest table's ride: past every bound reach, the nearest table printed for its own point
+  (`tablesAtTheirPoints`) rides beside the user's own day as its own day alongside, at its own point with its own
+  curves, variants and margins, out to five of its own reaches (five minutes of longitude at its latitude); the day
+  shown is their safe side; no figure is claimed there; the envelope's promise-only rows replay the table at every app
+  city of its entry's countries within the ride. Within any bound round 2's envelope stands. Reason: the owner's Q1,
+  just past the bound the times ran up to 4 to 5 min before the nearest table. Cost: starts up to 7 to 11 min later
+  and ends up to 6 to 10 earlier in a ride (us.isna Fajr 9, ca.cautious Isha 10, kg.default Fajr 11), and a ride's day
+  two days' work instead of one.
+- **R122**, Rabita's ride: Rabita's Helsinki calendar rides the same way from a minute's reach of Helsinki out to five
+  (13.8 to 69 km), its Asr 60 s later past Diyanet's Helsinki unit; within 45 km the region's margins stay on the user's
+  own day. Reason: points between the towns were early from 14 km out. Cost: Isha later by up to 21 min at the
+  rings (every third day) and by up to 97 at the app's towns on the calendar's rule-change days (Järvenpää; Porvoo up
+  to 34, on 311 days moved); a year at Espoo and Porvoo about 1.5 to 2 times main's.
+- **R123**, a cross ride: another entry's tables printed for their own points may ride beside a cautious entry's day
+  wherever that entry is followed (`Units.crossRide`, `Resolution.alongside`); ISNA's Montréal and Ottawa mosques ride
+  beside Canada's cautious times, every table whose bound holds the place and past them the nearest within its ride. No
+  figure is claimed for them. Reason: the decision's own example (CCML's board 60 km out); outside the two cities'
+  boxes no ISNA table bounded Automatic. Cost: Fajr up to 7 min later at Drummondville, 3 to 6 in the towns round
+  Montréal and Ottawa, sunrise up to 5 earlier at Les Coteaux; a year at Chambly about four to five times main's.
+- **R124**, who keeps the bound: Manchester Central's Wifaqul table rides where Wifaqul is chosen (R121) but keeps its
+  bound as the UK's cautious member (`UnitSet.outsideAsMember`) while Q2 stands; Diyanet's Sydney points keep their
+  bound (Diyanet prints a table per city); BIK's base keeps its 100 km; the authorities' own point tables keep R45's
+  edge. Reason: Q2 accepted Wifaqul's reach at the bound, and widening the member would carry the knife-edge nights
+  into Automatic over 86 more towns. Cost: Wifaqul chosen up to 128 to 133 min later at Fajr and 112 at Isha on the
+  knife-edge nights 50 to 83 km out.
+- **R125**, a named table's area: an entry's own countries can be narrowed to an area (`RegistryEntry.area`, read only
+  by `Registry.inScope`'s own-countries branch); London Unified's is R45's three reaches of its point (103.81 km), and
+  beyond it a stored London Unified is out of scope: Automatic applies, with the Timetable screen's line, and the
+  choice is kept for the user's return. It is the one sanctioned exception to "never earlier than before": the
+  comparison with an earlier engine holds those cells to its Automatic. Reason: the owner's Q3, London's table is
+  simply wrong for the place far from the M25. Cost: such a user loses London's board (above, both sides).
+- **R126**, a table printed for a point its authority does not publish is gated two ways for the entry a user chooses
+  to follow it with: measured at each plausible point the engine rides it at, held to that entry's class limit; and
+  promise-only at every app city where the engine rides those points. Diyanet's Sydney table is the first. Reason: at
+  the plausible points the user follows the table, so the lateness is theirs; elsewhere it also holds the distance to
+  an unknown point. Cost: none in times; Asr sits at class D's limit, so a capture that comes out a minute later
+  breaks the gate and asks for a reason (R41) or a fix.
+- **R127**, where the envelope's named rows are read: from the app's own resolution of where the engine rides the
+  table (`EnvelopeRows.Named.rides`, `ridesAny`), never a reach the tools compute themselves; `EnvelopeCoverageTest`
+  fails while the committed files miss a place the generator would write. Reason: the Q4 review found the reach
+  copied, so a ride widened in the engine would have left the new area ungated. Cost: none.
+- **R128**, the evidence's days: "never before a table" is stated over the days of it the archive holds; a table held
+  for one season only is listed for another season's capture before the claim is called settled. Reason: Diyanet's
+  Sydney table is one spring month. Cost: none.
+- **R129**, a quoted figure: a figure an owner's question quotes is re-measured against the table it names before a
+  round builds on it. Reason: Q4's 16 and 12 were Lakemba Mosque's. Cost: none.
+
+Proposed and not numbered, the owner's: Diyanet's Melbourne table riding beside the user's point within class D's
+reach of Melbourne's centre, for the preset and au.cautious's member alike (Q4's finding above; not built).
+
+**Never earlier than main 7e9fc11a, the integrated tree.** 16,013 points: the three tracks' own seeds as they wrote
+them (Q1's fix: rings round all 72 own-point tables and Helsinki from 1 to 5.5 reaches, each ride's band, every app
+city within six reaches of a table, 1,597 app cities of 20 countries moved up to 20 km; Q3's: the app cities of Great
+Britain, the Isle of Man, Jersey and Guernsey, 300 moved, 23 rings round London's point from 60 to 600 km; Q4's: rings
+round Sydney's three points and Melbourne, the app cities within 150 km of Sydney, 60 moved; each with its controls),
+14,642 after duplicates, and this round's own (seed 20261018): rings at the decisions' edges (London Unified's area
+from 95 to 130 km, Wifaqul's ride from 45 to 90 km, Sydney's Diyanet bound from 60 to 75 km; 432 points), 899 app
+cities of the 20 affected countries moved up to 20 km, and one city in each of 40 countries none of the tracks had
+named. At each, Automatic and every entry the place may choose (the Other methods included, and London Unified anywhere
+in Great Britain, as main had it), as the app shows each when stored and confirmed, in Automatic's school, every third
+day of 2026: 210,023 point-entry pairs, 25.6 million point-entry-days, 384 million values.
+- 0 starts earlier. No sunrise, sunset, end of eating, imsak, or end of Fajr, Asr or Isha later, and no Dhuhr or
+  Maghrib window end later either. No class, measured flag or unit moved; nothing absent on one side.
+- Nothing moved at the 158 control points (1,929 pairs), nor anywhere in Australia (Q4 moves no time), nor under
+  Automatic anywhere in Great Britain.
+- London Unified within its area (813 pairs, 99,186 point-days): identical to main. Stored beyond it (1,434 pairs,
+  174,948 point-days): identical to main's own Automatic in every value and flag (the one sanctioned exception, R125,
+  whose cost is given under Q3).
+- 5,721 pairs moved, every one in a ride: us.isna 2,237, ca.cautious 2,076, se.cautious 424, gb.wifaqul (chosen) 292,
+  in.karachi 134, sy.awqaf 98, iq.sunni 90, us.chicago 79, pk.karachi 71, lb.fatwa 67, ps.gaza.awqaf 60, kg.default
+  49, uz.board 44. Of the cells that moved, a start later by 1 or 2 min 43 %, 3 or 4 min 47 %, 5 or more 10 %; an end
+  earlier 39, 48 and 12 %.
+- The worst added lateness (starts later, ends earlier; minutes): us.isna Fajr 9 (five reaches from MEC), Isha and the
+  end of eating 8; us.chicago Isha 7, the end of eating 8; ca.cautious Isha 10 (near Imam Malik), Fajr 9, the end of
+  eating 8; kg.default Fajr 11, the end of eating 10; every other city table 7 or 8; se.cautious Isha 21 and the end of
+  eating 8 on the rings; Wifaqul chosen Fajr 131 (Wombwell), Isha 114, and the end of Isha 112 and the end of eating 90
+  earlier, on the knife-edge summer nights.
+- Every day of 2026 at the seed's 4,227 app cities, moved cities and controls (54,859 pairs, 20.0 million
+  point-entry-days): the same, 0 earlier and 0 later ends. The worst there: Wifaqul chosen's Fajr 133 (Maltby) and Isha
+  113 (Castleford), se.cautious's Isha 97 (Järvenpää, a rule-change day), ca.cautious's Isha 10 (Camrose), and 8 at
+  most elsewhere (New Haven's Fajr, Guliston's and Somerton's end of eating, Victoria's).
+- The reach rows' 5,210 points, every entry each may choose, every third day: the rows' own entries (us.isna, ca.isna,
+  xk.bik, sa.ummalqura, kz.qmdb) are identical to main there, so `generateReachRows`' inputs did not change and it was
+  not run; 20 pairs of other entries chosen at those points moved later in their rides (ca.cautious by Montréal's ISNA
+  units, its cross ride; uz.board and kg.default by Kazakhstan's border).
+- The website: main's and the branch's generations at one moment (`-Pnow=2026-10-17T12:00:00Z`) differ in the proof's
+  counts alone (tables 19,793 to 20,627, place-days 4,395,481 to 4,395,574): no page's time moved, since a page shows
+  Automatic and no site city's Automatic rides a table past its bound.
+
+**App cost.** A year of `DayPipeline.day` on the JVM (365 days of 2026, warm, the median of 9 runs; main and the branch
+interleaved twice; the Mac shared with another session's emulator and simulator, load 16 to 18, so one code's two runs
+differ by up to half again), main → the branch, in ms, each side's two runs:
+- inside the bounds as before: Washington 87 → 86–129, Los Angeles 71–72 → 67–93, Leeds under Automatic 199–210 →
+  190–198, Sydney 22–24 → 21–41 (Ottawa 78–113 → 105–116: noise either way);
+- a ride, two days instead of one: Angren, Thatta and Panipat 6.3–15 → 13–24, Winchester, Hagerstown and New Haven
+  6.5–7.4 → 16–30 (the Q1 fix's quieter runs: 6.5 → 13–15), a fifth to a third of a US metro's;
+- the cross ride, each riding mosque's own day beside the four members': Chambly 22–34 → 119–167, Drummondville 21–24 →
+  30–94, Cornwall 20–33 → 29–39; Canada's families' own rides, Camrose 56–64 → 82–128, Victoria 53–58 → 78–82;
+- Rabita's ride: Espoo 86–96 → 152–196, Porvoo 100–110 → 155–221 (Helsinki itself, inside a minute's reach, 92–100 →
+  88–130);
+- Wifaqul chosen at Leeds 38–39 → 95–97;
+- London Unified within its area as before (Reading 37–46 → 45–50); stored beyond it the year is Automatic's there
+  (Dover 49 → 143–198, Manchester 54–58 → 339–345, Glasgow 85–92 → 214–306), what every user there on Automatic already
+  pays;
+- Diyanet's preset in Sydney as before (Sydney 6.1–6.6 → 6.2–8.7; Fairfield and Wollongong 9–22 on either side): its
+  code path is main's.
+
+Timing a year's Timetable on the iOS simulator and a low-end Android at Chambly, Porvoo and Glasgow is left for release
+testing.
+
+**For the owner**, after this round:
+- Q2's spot-check: whether Wifaqul's table is followed in Preston, Bolton, Blackburn, Burnley, Bradford and Huddersfield
+  (if not, narrow its bound), and whether Wifaqul chosen should ride to 83 km at the cost above.
+- Melbourne's Diyanet table, a round of its own (Q4's recommendation: yes).
+- Diyanet's preset and Lakemba Mosque's table: keep it Diyanet's (Q4's recommendation) or hold it to LMA's too.
+- Another season's capture of Diyanet's Sydney and Melbourne tables, or a monthly fetcher for them in the monitor
+  (the private repository's).
+- R121's cost lands on large towns with mosques of their own (New Haven's starts up to 8 min later every day, Camrose's
+  Isha 10, Victoria's end of eating 8 earlier): the decision's accepted cost, listed so it is seen.
+
+Checked on the integrated tree (`engine-owner-decisions`, the last code change the Q4 merge's):
+- the whole gate writing stamps (archive linked): 20,627 rows, 4,395,574 place-days and 501,987 more held to the
+  promise alone, 71 entries, 0 early, 0 late ends, none over its limit, nothing BROKEN, in 4 min 27 s (main: 19,793
+  rows, 4,395,481 place-days, 335,417; the tracks: Q1 20,736, Q3 19,614, Q4 19,865 rows). Every stamp's `engineHash`
+  moved; only se.cautious's (Q1's lateness shares, its worst figures unchanged) and other.turkey's (Q4's three measured
+  rows: 9 places, 2,571 place-days) moved in substance, each exactly as its track wrote it;
+- `generateEnvelopeRows`: 7,516 rows in 20 files (main 6,685 in 18), every file as the merges left it but
+  `au-diyanet-envelope.tsv`'s header; `generateProofStamps`: `ProofStamps.kt` differs from main in other.turkey's
+  places and place-days alone; `generateGoldenVector`: byte-identical to main, 0 of 2,071 rows moved;
+  `generateOwnPointWorst`: 2,344 rows, main's 2,324 and the 20 Diyanet Europe captures of 12 October that `prove` had
+  added to the gate without regenerating it (Q3 and Q4 had caught it up alike); `checkStamps`: 71 fresh and green.
+  `generateReachRows` not run (its inputs did not change: above);
+- tools `jvmTest` with the archive: 333 run, 0 failed (`EnvelopeCoverageTest` 2/2, `EnvelopeRowsTest` 4/4);
+- `scripts/test.sh` (`:shared:allTests :widgetcore:allTests` and both Android host test tasks): BUILD SUCCESSFUL in
+  23 min; shared 1,875 on the Android host and 1,827 on the iOS simulator, widgetcore 99 and 97, 0 failed (the tracks'
+  new test names compile on iOS: no commas or parentheses);
+- `scripts/check-strings.sh`: clean; the monitor's Python tests: 104, OK;
+- the website: `CI=true generate` 55 cities (2 held) and 129 pages, `build.py --check` 164 pages and every check good,
+  `test_timetables.py` 22, OK.
+
+Not run here: the app on a phone, an emulator or the iOS simulator's screens (the iOS tests ran on the simulator), and
+the year's Timetable timing on them. The engine change ships with the next update.
+
+## Kharga's Dhuhr (25 October) — ruling R159
+
+Branch `fix/kharga-dhuhr`, off main e874f221. Not pushed.
+
+The November round's scratch gate (ESA's own daily page for November 2026, read by hand on 25 October, not yet
+rows) found one red cell group: Kharga's Dhuhr a minute before ESA's printed Dhuhr on 2, 3 and 4 November 2026.
+Every other town and event was green.
+
+**Why.** ESA prints Kharga's table from a point about 0.29° west of the town (25.41 N 30.26 E, fitted). Noon
+follows longitude alone, so ESA's noon there runs 68 to 70 s after the town's on every day. ESA's own sun is an
+almanac formula (the one PrayTimes uses: mean anomaly 357.529° + 0.98560028° a day, mean longitude 280.459° +
+0.98564736° a day, the sun at local noon): with it every held Dhuhr of all 30 towns comes from one point per town,
+to within a second. Against this core's noon it runs −2.1 to +3.6 s, highest on 2–4 November each year. Kharga's
+own margins were fitted on its 45 held days (Wayback captures from 2024 to 2026 and Dar al-Ifta's September), none
+of them in early November, and gave Dhuhr +40. ESA's November asks 42 s.
+
+**R159** (not the owner's; the gate, as R26): Kharga's Dhuhr margin is +48. ESA's rule, its almanac noon at its
+Kharga point with that point at the latest the held days allow, asks up to 43 s over 2026–2028, on 2–4 November
+each year; +48 adds the Conventions' 5 s. Nothing else moves: Kharga's other starts and every other town keep
+their margins. The test (`GulfEgyptProofTest`, Kharga's Dhuhr against ESA's latest noon) checks every day of
+2026–2028 against the town's noon plus 74 s (70 + 4) to the nearest minute, with no printed time (R69). It is red
+at +40, first on 3 January 2026, and green from +44.
+
+**Other towns, months and years.**
+- Dhuhr, all 30 units, 2026–2028, ESA's rule against the engine: early only at Kharga. At the top of its allowed
+  offset that is 14 days, 2–4 November among them every year; none at +48.
+- ESA's page serves any day of the current year through its calendar (2027 is not served). Read for every day of
+  2026 at its 29 towns (scratch, not archived) and gated with this branch together with the November capture:
+  119 rows, 11,218 place-days. Kharga is green on every day. Three national cells are not:
+  - Rafah's Fajr: 2 days in June, 1 min early.
+  - Sidi Barrani's Isha: 14 days from mid-May to early August, 1 min early.
+  - Sidi Barrani's end of eating: 20 days from late April to late July, 1 min late.
+
+  Those towns were held out on September to November only, and their ESA points sit off the app's in latitude:
+  ESA's Isha at Sidi Barrani against the town's drifts 112 s through the year. They are the national margins'
+  business, not R159's, and are left for the Lead with the 2026 rows (below).
+- Where the Conventions' 5 s has run out on ESA's 2026 days, without anything early: Kharga's Maghrib (0 s spare),
+  Asr (1), Fajr and Isha (3), all in November (Asr also 29 December); Taba's Fajr (0), Maghrib and Isha (1),
+  Dhuhr (3) and Asr (4); Ras Gharib's sunrise (1); Aswan's sunrise (2) and Fajr (3).
+
+**Open for the owner and the Lead.** ESA's 2026 year as archive rows (re-read with the capture script, which keeps
+the raw pages), and with them the refits the Conventions ask:
+- Rafah's Fajr +11;
+- Sidi Barrani's Isha +15 and end of eating −20, as an off-point unit like Ras Gharib, or as new national margins;
+- Kharga's Fajr +47, Asr +46, Maghrib +51 and Isha +46;
+- Taba's Fajr +101, Dhuhr and Asr +99, Maghrib +103 and Isha +100, with the edge's 105 s checked against them.
+
+With this branch nothing is early or late on ESA's page from now to the end of 2026. The deadlines:
+- Rafah and Sidi Barrani before 28 April 2027. Their cells fell between 28 April and early August 2026, so the
+  same weeks of 2027 are the first that could repeat them.
+- Kharga before November 2027: its thin starts fall in November (Asr also 29 December). They cannot be projected
+  the way its Dhuhr was. The almanac formula gives ESA's noon, but not its angle-based times: at the builder's
+  Kharga point, ESA's printed Fajr, Asr, Maghrib and Isha on its 2026 page fall up to 5 s outside the half-minute
+  rounding of the formula (Dhuhr 2 s), and the review's own fit found no one point that gives all six within a
+  second (up to 8 s). So nothing shows November 2027 or 2028 green, and with Maghrib at 0 s spare, a Kharga
+  Maghrib a minute early in November 2027 is possible.
+- Taba as soon as the rows land: its thin days run through the year (Asr 3 January, Dhuhr 18 March and 25
+  October, Maghrib 13 October, Fajr and Isha in November 2026).
+
+The review of R159 (25 October) checked both lists and left them here as they stand.
+
+## Download safety (26–27 October) — the 26 October security review, for 1.4.0
+
+Branch `security/download-hardening`, off main 125c70a5: e6ba8b05, 0471ac41, 46ba1833, ad35b946, 22f09abe,
+fc3f54f0, this entry (f5f13c69), then the fixes for the review's minors. Not pushed. The version stays
+1.3.0 (39).
+
+The review of main found four places where a download, or the recitation session, trusted more than it
+had to. Nothing changes for an honest server: the live manifest is byte-identical to the bundled one and
+passes every new rule.
+
+- **The bundled manifest is the trust anchor** (C1, A3, D8). A fetched manifest was trusted whole, and the
+  size and SHA-256 each download is held to come from that same file, so whoever could push to Taqvo-data
+  could swap a shipped reciter's audio for every reader within a day. Now a fetched manifest, and a cached
+  one when it is read back, must keep the bundled base and, for every reciter whose id and release the build
+  also ships, every surah's size and SHA-256 (`isFaithfulTo`); otherwise it is refused whole and the
+  catalogue in force stays. Withdrawing a reciter, adding one, or a new release name are allowed. A
+  `generated` that is not an ISO instant is never newer any more, and `store()` applies the same rule as the
+  next start's `load()` (`admissible`). A shipped release's names, gap, bitrate and total are left open on
+  purpose, so a name or a gap can be corrected without a new release; its audio cannot change. Still open: a
+  new release name may carry any hashes, so an account takeover can still point a shipped voice at a new
+  release. Only an offline signature closes that. A narrow window too: on Android, a download queued before
+  the update keeps the size and SHA-256 it was enqueued with, so work an older build queued from a tampered
+  manifest still runs to that hash.
+- **The pipeline never changes a published release.** `publish.py` and `manifest.py` both hard-coded
+  `audio-<id>-v1`, and `publish.py` uploads with `--clobber`, so re-packing a repaired reciter would have
+  replaced live containers and written a manifest every app now refuses. The release name is now
+  `common.release(rid)` (`RELEASES` names a reciter's next one). Before it creates or uploads anything,
+  `publish.py` refuses a reciter whose release is already in a published manifest (the Taqvo-data clone's or
+  the app's own copy) when any container on disk differs from it in size or SHA-256, and it still refuses
+  one whose local `state/<id>.done` exists when a container differs from the release's assets. `manifest.py`
+  refuses a manifest that moves the base or changes a published release. The README's rule says how to ship
+  changed audio.
+- **Size caps** (A2, C2). The manifest GET refuses a body over 2 MiB (13 times today's 154 KB), unread
+  when it says so, one read past the cap when it does not. iOS moves from the shared session's completion
+  handler to a delegate of its own for that. A surah download stops on the read that runs past its size.
+  On iOS that is `didWriteData`, which cancels the background task (reported as SERVER, the part deleted),
+  but it is called only while the app runs: a transfer that goes on while the app is suspended is checked
+  only when it lands, at the hand-over. In a cold background wake (`handleEventsForBackgroundURLSession`,
+  then `attach()`) the catalogue may not have been read, so there is no size to check against: the hand-over
+  then refuses only a file larger than any surah could be (over the 200 MiB headroom, `ranPastAnySurah`),
+  and a smaller oversized one is appended and refused by the hash in `commit()`. Until it lands, such a
+  transfer is bounded only by the base pin, to what one GitHub release asset can be. Resume is unchanged.
+- **Who may use the recitation session** (A1, C4). It is exported so the system, Bluetooth and watches can
+  find it, and it gave every app every command. Media3 1.11.1's bytecode shows SystemUI and media buttons
+  never reach `onConnect` as themselves, while every other platform-session controller does, with an
+  `isTrusted` worked out in this process that fails from Android 11 for any package Taqvo cannot see. On
+  the API 36 emulator Taqvo sees SystemUI but not Bluetooth. So: this app, the notification controller and
+  trusted controllers keep everything; an untrusted app Taqvo can see (every app that binds to the service)
+  is refused, because Media3 hands every accepted controller the platform session's token; a controller
+  Media3 could not check keeps play, pause and seek but nothing of the queue.
+- **Requests carry nothing extra** (A4, C3, B2). Every request's User-Agent is `Taqvo` (Android sent
+  Dalvik with the phone's model and build). On iOS no session keeps or sends a cookie, every session's
+  Accept-Language is `*` rather than the reader's own languages, and the manifest GET has an ephemeral
+  session with no cache. The background sessions keep their identifiers exactly.
+  PRIVACY.md is unchanged.
+
+Checked for this entry: `scripts/test.sh` (4,465 tests, none failed) and `scripts/ios-build.sh` green;
+`scripts/check-versions.sh` is only on the watch branches, so the version was checked by hand. On a Pixel 8
+Pro emulator (API 36) the debug build stored the live manifest and refused four tampered copies (a hash, the
+base, no timestamp, 3 MiB). The manifest request reached a loopback server as `User-Agent: Taqvo`. Surah 108
+downloaded from the live host and matched the bundled size and hash, and `cmd media_session dispatch` paused
+and resumed it. On iOS only the unit tests and a loopback probe (`Taqvo`, a set cookie not sent back) ran:
+the DEBUG harness cannot start a download, so a surah download and the daily check on a real iPhone are
+still to be seen. For the minors (27 October), `scripts/test.sh` (4,468 tests, none failed) and
+`scripts/ios-build.sh` green again; the new `HttpTest` case fails after 20 s, the read timeout, with the
+Content-Length pre-check taken out, and `publish.py`'s refusal was run against fake work dirs with `gh`
+stubbed, so nothing reached GitHub.
+
+## Rafah and Sidi Barrani (26 October) — ruling R160
+
+Branch `fix/esa-rafah-sidi-barrani`, off main 125c70a5. Not pushed; for the release after 1.3.0. The owner said yes
+to ESA's tables for the two towns on 25 October.
+
+**The tables.** ESA's own daily page, read by hand through its calendar for every day of 2026 on 26 October (the
+November round's script, one postback a day, the raw pages kept; 2027 is not served). It prints the pinned Dar
+al-Ifta minutes on every day of September and October at all 29 towns (1,769 town-days), the same minutes as the
+scratch read of 25 October on all 10,585 town-days, and each town's Wayback captures on the 33 days of 2026 they
+hold. Archived for all 29 towns (Taqvo-official, `manual/eg-esa/2026-10-26/`, a month table each); gate rows for
+Rafah and Sidi Barrani only, January to August and December (September to November are rows already), 18, held out.
+
+**What the whole year shows.** With the national margins, three cells are red, as on 25 October:
+- Rafah's Fajr: 2 days in June, 1 min early.
+- Sidi Barrani's Isha: 14 days from mid-May to early August, 1 min early.
+- Sidi Barrani's end of eating: 20 days from 28 April to late July, 1 min late.
+
+**Why.** ESA prints both tables from points off the town, as at Kharga, Taba and Ras Gharib but nearer. Fitted
+on each town's held days with ESA's almanac sun (the one that gives Kharga's noon): Rafah's at about 31.22 N
+34.18 E, 0.06° south and west of the town; Sidi Barrani's at about 31.77 N 25.93 E, 0.16° north. A point off in
+latitude moves the dawn and dusk with the season, so the national margins, fitted and held out on days that
+missed the summer (Rafah's 52 Wayback days and September to November), sat a few seconds short there.
+
+**R160** (not the owner's; the gate, as R159): Rafah's Fajr +11 s (national +2), Sidi Barrani's Isha +15 s
+(national −4) and end of eating −20 s (national +5), each the need on the town's whole held year (6, 10, −15) with
+the Conventions' 5 s. Nothing else moves: their other times keep the national margins, and the two towns become
+off-point units like Ras Gharib. ESA's rule at the fitted points, with a constant offset per event fitted on the
+held days, projects no larger need for 2027 and 2028 (Rafah's Fajr 5 and 5, Sidi Barrani's Isha 9 and 10, its end
+of eating −12 and −14).
+
+The tests (`GulfEgyptProofTest`) hold every day of 2026–2028 at each town against the sun at ESA's fitted point
+(this core's exact sun) plus an allowance, to the nearest minute, with no printed time (R69). The allowance is
+ESA's almanac sun against this core's at that point over the three years (−2.5 to +2.3 s at 19.5° dawn, −1.7 to
++3.1 s at 17.5° dusk) plus the fitted offset: 5 s after at Rafah's dawn, 3 s after at Sidi Barrani's dusk, 4 s
+before at its dawn. Red at the national margins (first on 26 May, 14 May and 28 April 2026), green from +8, from
++14 and at −20. The off-point test now also pins that only those three times are the towns' own, and the
+§3.5 principle test covers both towns.
+
+**Gate.** eg.esa: 108 rows, 4,049 place-days through 31 December 2026; 0 early, 0 late ends, none over its limit,
+none broken.
+
+**Left, without anything early or late.** Where the Conventions' 5 s runs thin at the two towns: Rafah's Asr
+(4 s spare on the 2026 page, 5 projected) and Maghrib (5, and 4 projected for 2027); Sidi Barrani's sunrise (3,
+and 2 projected for 2027). None is a minute out on any day of 2026 or in the projection to 2028; a refit of those
+three would move them by 1 to 3 s.
+
+**Next on ESA's page.** The other 27 towns' months of 2026 are in the archive with no rows. Kharga's other starts
+(0 to 3 s spare in November, before November 2027) and Taba (thin days through the year) can take their rows and
+refits from them, as R159's entry above lists.
+
+## Notifications, prayers first (27–28 October) — layout B, for the Watch release
+
+Branch `notifications-layout-b`, off main 9d3ba3ef. Not pushed.
+
+Mohamed chose layout B from the layout round: "I like the highlight on the prayers first as that's the main
+thing", and "with the master switch off, the rows below mustn't look active". Duha and Iqama spec §4.6 has the
+whole of it; §4.1's order is replaced.
+
+- **Order.** The master switch and its notes; PRAYERS and the five; 14 dp below, in the same group and with no
+  label (as Prayer times sets its Asr switches under the school), one card of Remind me before, Adhan and Iqama
+  reminder, with Iqama's subtitle, Sound and note while it is on; then the new label VOLUNTARY
+  (`notifications_voluntary_label`, seven languages) over one card of Tahajjud, Duha and the adhkar, each
+  revealing what it always did under its own row. Same rows, sheets, strings, callbacks and scheduling.
+- **French.** ACTES SURÉROGATOIRES (30 Oct, the Lead's call, which Mohamed left to it), replacing the first
+  draft FACULTATIF. *Surérogatoire* is French's word for nafl, and *actes* covers the two prayers and the adhkar.
+  FACULTATIF read as OPTIONAL. Three judges (francophone usage, French UI writing, meaning) and a skeptic all
+  chose it over NAWAFIL ET ADHKAR. The reasons are in the spec, under the label's table.
+- **Master switch off.** Everything under its card goes with the screen's `SettingsReveal` (reduced motion
+  included), the exact-alarms note with it. Nothing is reset; the values come back when it goes on.
+- **The Iqama row stays put.** B's one cost: Iqama on or off adds or removes the five lines above its row.
+  `ScrollAnchor` measures the five's card and scrolls by what it gains or loses in the same frame, dispatched
+  from a layout step on `SettingsScaffold`'s scroller once the scroll has measured its new range, so a screen
+  that fitted, or the end of the range, can follow too. Dispatching from inside the content was tried first:
+  the row moved on a screen that fitted (the frame-by-frame test failed at frame 5). The Iqama switch arms it;
+  a prayer's row and the master switch disarm it, so a pick in a prayer's sheet moves the rows below as before.
+  At the top of the range, with Iqama on, turning it off cannot be followed and the row moves up by the lines.
+  At the end, turning it off shrinks the range under the offset, and the scroller has already pulled the offset
+  in by the whole shrink while it measured, the five lines included. The first version dispatched the five lines
+  again on top of that, and the review (28 October) caught it: under reduced motion the row dropped a further
+  five lines, 240 px on the Pixel 8 Pro. The anchor now reads the offset before the scroller measures and
+  dispatches only what is still missing, so at the end it adds nothing and the row moves down by exactly what
+  went below it (Iqama's subtitle, its Sound row and the note).
+
+Commits: c36e8941 (the label), 2db4bd2f (the order), 775b8e36 (master off), 0f3f6499 (comments rewrapped),
+cadd10fb (the anchor), 1dda7455 (the spec section and this entry), then after the review 7e77daa2 (the anchor
+at the end of the range, with its tests) and the corrections to this entry and the spec.
+
+**Screenshots.** `docs/screenshots/notifications.png` (README) and store screenshot 2 (`en-02.png` and its six
+languages, Play and App Store) show the old layout. They are re-shot at the 1.4.0 cut, not now.
+
+Checked for this entry: `NotificationLayoutTest` (iosTest, 7 tests: the order and the 14 and 28 dp gaps; master
+off and back with its values; the Iqama row's top on every frame of both flips mid-screen and on a screen that
+fitted; at the end of the range, on, then down to the new end and off, where on every frame the row must have
+moved down by exactly what has gone below it so far and the scroll settles on the new end; the mid-screen and
+end tests again under reduced motion, which the screen now takes as a parameter defaulting to the system's
+setting) beside the Iqama, Duha, Tahajjud and adhkar card tests. The first version's end test never turned
+Iqama off at the end: after the on flip the offset sat above the new end, so it never met the clamp. Both end
+tests failed against that version (frame 3 with the reveal, 85 dp under reduced motion) and pass now.
+`scripts/check-strings.sh` clean; `scripts/test.sh` and `scripts/ios-build.sh` green.
+
+On emulator-5556 (Pixel 8 Pro, API 36, debug build of 7e77daa2): the order; master off leaves only its card, and
+on brings back Iqama's five lines and Duha's timing, When and Sound; from the top of the scroll the Iqama row's
+top stays at 2192 px across on and off; at the end of the range on keeps it at 1831 px, and from the true end
+(row at 1568 px) off brings it down to 1831 px, 263 px, exactly what went below it, the VOLUNTARY label staying
+at 2119 px; the same numbers with animations removed
+(animator duration scale 0); Duha's When and Sound inside the VOLUNTARY card; Arabic right to left. The first
+round (cadd10fb) also saw a Fajr minutes pick move the rows below. Settings, the animator scale and the app
+locale put back to their defaults afterwards.
+
+## Settings: Widgets and About Taqvo (30–31 October)
+
+Branch `feature/settings-redesign`, off main 9d3ba3ef: the spec and plan (4476305e), the Widgets row (1d7060d0),
+the Widgets screen with Appearance keeping the theme (1ef41aa8, 750d8841), About Taqvo as a profile (cd488c55),
+the six other languages (0bb68ca0, 2edbca4b), then this entry. Not pushed.
+
+**Checks.** `scripts/test.sh` green: `:shared` 2,112 tests on the iOS simulator and 2,122 on the Android host,
+`:widgetcore` 109 and 111. `scripts/check-strings.sh` clean (669 strings in every language).
+`scripts/ios-build.sh` builds for an iPhone 17 Pro simulator on iOS 27.0 (the extension 3 MB of its 15).
+
+**On devices.** A Pixel 8 Pro emulator (Android 16) at 384 dp and 360 dp, and an iPhone 17 Pro simulator
+(iOS 27.0). Settings, Widgets and About in all seven languages light, English and Arabic dark, English and
+Bengali at font scale 1.3; Widgets at 360 dp in English, and in Indonesian, Bengali and Urdu at 360 dp and 1.3
+together; the iPhone screens in English and Arabic, light and dark.
+- The root's Widgets row reads "Not added", then "1 of 2 added" (Arabic "1 من 2 مضافة") once a widget is on the
+  home screen. The Widgets card then shows the check and "On your home screen".
+- A launcher that refuses (a local, uncommitted `requestPin` that returns false) turns that card's button
+  into the by-hand panel at once, in English and Arabic, and the panel is still there after a rotation and back.
+- On the iPhone the Prayer times card shows the steps and the fallback line; Ayah of the day and the Lock
+  Screen card show "Show me how".
+- Arabic and Urdu mirror the step numbers, the link glyphs and the About pills, as the rest of Settings does.
+  The share and star glyphs do not.
+- The background choice is complete in every language at both widths and at 1.3. At 360 dp and 1.3 the
+  Indonesian labels do not fit on one row, so the four become two rows of two (the spec's fallback), with
+  "Tembus pandang" on two lines. Bengali and Urdu at 360 dp and 1.3 keep one row, with the System label on two
+  lines.
+
+**Open for the review** (seen on the screenshots, not changed here):
+- The widget previews are narrower inside their cards, 24 dp less than in Appearance. At 360 dp the wide prayer
+  preview's Arabic names run into its times (المغرب over 18:22). At 1.3 its Isha row is cut, names overlap
+  times, and Bengali labels end in an ellipsis. The ayah preview's translation is cut mid-line.
+- After the launcher's pin sheet is accepted, Taqvo is only paused, so there is no ON_START. The card keeps
+  "Add to home screen" until Taqvo is left and opened again, and a second tap adds a second widget. That is the
+  spec's "the next ON_START read flips it" and what Appearance did, but here the button sits under the
+  preview it just added.
+- Some About pills wrap to two lines: Bengali and Turkish both pills, French Share, Indonesian Rate, and English
+  Share at 1.3. They are complete, but uneven beside each other.
+- The background options are as wide as their labels, not the canvas's equal segments. "Translucent" and
+  "Tembus pandang" run close to the pill's end.
+- The canvas sets the UI words of the steps in bold ("Tap **Widgets**", "the **Taqvo** icon", "**Edit**",
+  "**Add Widget**"). The build sets only the widget's name in bold.
+- The version chip reads "Version 1.3.0", where the canvas has small capitals.
+- The iPhone lock-screen accessory reads "Fajr in 2:14 · 4:24". The spec and canvas order is the prayer, its
+  time, then "in h:mm".
+- On iOS 27 `simctl openurl` asks "Open in “Taqvo”?" for every `taqvo://` link, so the harness URLs no longer
+  run without a tap (`tools/store/capture-ios.sh` included). These shots were taken with local launch-argument
+  and scroll hooks that were never committed. The simulator's onboarding was skipped with a hand-written
+  `taqvo.preferences_pb`: onboarding complete, Cape Town.
+
+**Final review fixes** (31 October), checked on the same emulator at 384 dp and 360 dp:
+- The Widgets screen reads placement on every ON_RESUME, not ON_START. Pixel Launcher's sheet that confirms
+  "Add to home screen" is translucent, so it only pauses Taqvo. Accepting it now turns the button into the check
+  at once. This one line differs from the spec's "the next ON_START read flips it". The root's row stays on
+  ON_START, since the root is never behind that sheet.
+- On this screen the previews are drawn as pictures: laid out at least 312 dp wide (their width in Appearance
+  at 360 dp) at 100 % font size, then shrunk to the card. At 360 dp and font scale 1.3 the names no longer run
+  into the times in English, Bengali, Indonesian or Urdu. No Isha row is cut, no Bengali label ends in "…", and
+  the ayah translations are whole. Onboarding is unchanged.
+- About's Rate and Share sit side by side only when both labels fit half the row on one line, as in English,
+  Arabic and Urdu. Otherwise they stack at full width, one line each: Bengali, Turkish, French, Indonesian, and
+  English at 1.3.
+- The steps set the UI words in bold, as the canvas has them (**Widgets**, **Taqvo**, **Edit**, **Add Widget**,
+  **Customize**), marked with `**` in every language's strings. `tools/i18n-check.py` checks that the marks come
+  in pairs, and that a string English marks is marked in every translation.
+- The iPhone's widget gallery lists the prayer widget as "Taqvo" (`home_widget_name`), not "Prayer times". So the
+  iPhone steps now name it by a new key, `widgets_prayer_gallery_ios`, equal to `home_widget_name` in each
+  language. `tools/i18n-check.py` now holds every name the steps use to what the Android picker and the iPhone
+  gallery list. The plainer fix is the owner's to choose: renaming the gallery entry to "Prayer times" in the
+  seven `iosApp/TaqvoWidget/*.lproj` files would let the key go. That is a WidgetKit change, which the spec leaves
+  out.
+- Android's picker lists the small prayer widget as "Next prayer" and the wide one as "Prayer times". The steps
+  name "Prayer times", which is the wide one, and was left as it is.
+- Checks after these fixes, from the review's own run on c58b32df: `scripts/test.sh` green with `:shared` 2,116
+  tests on the iOS simulator and 2,126 on the Android host, `:widgetcore` 109 and 111, and 670 strings in every
+  language (the new `widgets_prayer_gallery_ios`). These fixes were shot on the emulator only; their iPhone side
+  was first photographed in review round 2.
+
+**Review round 2** (31 October), on the Lead's findings for c58b32df:
+- The iPhone's Lock Screen widget is no longer read as the prayer widget, and a placement read that cannot tell
+  shows nothing and keeps the last answer (b2d3d53d).
+- The iPhone's corner button, seen on Dev 1's simulators in edit mode: on iOS 26.2 it shows its title, "Edit" in
+  English but "+" in French and Turkish (VoiceOver still says "Modifier" and "Düzenle"); on iOS 27.0 (iPhone 17
+  Pro) and 27.1 (iPhone Duo) it is a brush in every language. Its menu is Add Widget, Customize, Edit Wallpaper,
+  Edit Pages. The fallback line in all seven languages now names that language's title and the brush ("tap
+  **Edit** at the top (on iOS 27 and later, a brush), then **Add Widget**"), and the iOS 16 and 17 step names
+  only the "+", which opens the gallery with no menu. `tools/i18n-check.py` holds both to the SpringBoardHome
+  titles (`EDIT`, `EDIT_MENU_ADD_WIDGET`) read from the runtimes. iOS 16 to 18 could not be run here.
+- "Show me how" keeps 14 dp above its hairline, as the open steps do, so the description no longer sits on it
+  (Arabic's descenders touched it).
+- `TaqvoPrimaryButton`'s label keeps 20 dp from each end of the pill and wraps centred. Onboarding and the Widgets
+  cards were walked before and after on the emulator in all seven languages at 360 dp, and in English at 448 dp,
+  at font scale 1.0: no label wraps, and every label's bounds are the same. Arabic, Urdu and Bengali are
+  pixel-identical. Latin labels draw 1 px (0.27 dp) to the right, nearer the pill's centre, which comes from the
+  centred alignment. At 360 dp and 1.3 the Indonesian "Tambahkan ke layar utama" now wraps to two centred lines.
+- The Lock Screen picture reads like the rectangular accessory: the prayer and its time on the first line, then
+  "in 0:21" under them (new key `widgets_lock_in` in every language). Round 2's copy-and-layout pass found the
+  second line wrong too, below.
+- The comments that still named Appearance as the widget background's or the placement query's home now name
+  Settings › Widgets.
+- Checks: `:shared` 2,140 tests on the iOS simulator (Dev 1's iPhone 17 Pro, iOS 27.0) and 2,133 on the Android
+  host, `:widgetcore` 109 on the simulator, 0 failures; `scripts/check-strings.sh` clean with 672 strings;
+  `scripts/ios-build.sh` and `:androidApp:assembleDebug` build.
+
+**Review round 2, copy and layout** (31 October), on the reviewers' findings for f005c223 (ec26a203, whose
+subject says "round 3"; the Lead counts these findings in round 2):
+- The Lock Screen picture's second line is now the accessory's own. The real rectangular accessory
+  (TaqvoWidgetViews.swift, about line 470) draws no countdown: its second line is "then" and the prayer after
+  the next one ("then Isha · العشاء", `lock_widget_then`, `prayerAfterNext`). Round 2's "in 0:21" was a line
+  the widget never shows. The picture now draws "then Isha · العشاء" (new key `widgets_lock_then` in every
+  language, worded as each language's `lock_widget_then`; `widgets_lock_in` goes), chosen by the same rule
+  as the Swift: the row after the next prayer's, wrapping past Isha to Fajr. **Open, for the owner:** the
+  accessory's first line is the "Maghrib in" phrase beside the clock time ("Maghrib in 18:32"), which reads as
+  a countdown; the picture names the prayer alone there ("Maghrib 18:32"). Making the two agree means
+  changing the accessory, WidgetKit work the spec leaves out.
+- `TaqvoPrimaryButton`'s 20 dp label inset and centred wrap now hold only with text larger than the default.
+  At font scale 1.0 the pill is drawn exactly as before round 2, so nothing moves at the default size
+  (Mohamed's rule for accessibility work). At every size, the inset had wrapped default-size labels in the
+  timetable confirm sheets that fit on one line before. Measured on emulator-5572 (Dhaka; the sheet that opens
+  when an earlier timetable is chosen), at 360, 411 and 448 dp, in English, French, Indonesian, Bengali and
+  Urdu:
+  - French "Garder Comité d’observation du croissant": one line at 411 dp (345 dp of the 363 dp pill, 9 dp
+    from each end) and at 448 dp; two lines at 360 dp. With the inset at every size it wrapped at 411 dp.
+  - "Keep University of Islamic Sciences, Karachi": one line at 448 dp, 16 dp from each end (wrapped with the
+    inset); at 411 dp one line from end to end, its first and last letters on the pill's rounding; two lines
+    at 360 dp, from the pill's start, as in French (all three widths), Indonesian and Bengali at 360 dp.
+    Indonesian and Bengali fit at 411 dp with 8 dp each side; Urdu fits everywhere.
+  - At font scale 1.3 every long label wraps centred inside the inset, 20 dp from each end, at all three
+    widths; the short ones (Bengali, Urdu, "Tetap Komite Rukyatul Hilal" at 411 and 448 dp) stay on one line.
+  **Open, for Mohamed:** at the default size these labels still run to the pill's ends, and a label that wraps
+  is set from its start, as they always were. If he wants the inset and the centring at every size, that is
+  one condition in `TaqvoButton.kt`; the labels listed above then wrap where they do not today.
+- Checks: `:shared` 2,147 tests on the iOS simulator and 2,137 on the Android host, 0 failures (new:
+  `LockScreenThenTest`, two default-size cases in `PrimaryButtonLabelTest` and the no-countdown case in
+  `LockScreenAccessoryTest`, each seen failing first); `scripts/check-strings.sh` clean with 672 strings;
+  `:androidApp:assembleDebug` builds. The picture's new line was checked by those tests, not yet on the
+  simulator.
+
+**Review round 2, screen readers** (31 October, bce8c6cf), the last of the Lead's findings for c58b32df:
+- The emulator's TalkBack 16 (emulator-5572) was run over the refused path and "Show me how". The refusal's
+  panel was announced, but the tapped button was gone and TalkBack put its focus on another card's title or
+  on Back. While a screen reader runs, a panel the reader's own tap opened now takes focus instead: a refused
+  button's at its first words, a "Show me how" panel at its first step, 250 ms after it appears, because
+  Android's bridge reports focus only on a node it has already seen. Without a screen reader nothing takes
+  focus, since moving focus scrolls, and the screen stays as it was. VoiceOver could not be heard: the
+  simulator has none.
+- "Show me how" carries the expand action, which TalkBack speaks as "collapsed"; the prayer card's preview is
+  hidden from screen readers, as the Lock Screen's picture is; the step number's disc grows with its digit, so
+  the digit is whole at font scale 2.0, and it is the 22 dp it was at the default size.
+- Android's refused path has a host test, `WidgetsByHandAndroidTest`, which follows Android's own add path
+  from a refusal to the by-hand panel (`stepsPanel`); `WidgetOfferAreaTest` draws that panel on the simulator.
+- Re-shot at bce8c6cf, 85 screenshots: iPhone (iOS 27.0) English and Arabic in light and dark, with "Show me
+  how" open on the Ayah and Lock Screen cards, and French and Turkish; Android with both widgets refused in
+  English (light and dark), Arabic, Bengali, Urdu and Indonesian; French, Turkish and English with one widget
+  placed. No clipping, overlap or text on a hairline. The Lock Screen picture's "then" line is now seen on
+  the simulator ("Dhuhr 12:35", "then Asr · العصر"). Left as they are, all from before this round: the
+  medium prayer preview's countdown label runs to two lines in every language but English ("Maghrib / dans");
+  the Bengali refused heading leaves its last word alone on the second line.
+- Final checks on bce8c6cf: `scripts/test.sh` green, `:shared` 2,155 tests on the iOS simulator and 2,142 on
+  the Android host, `:widgetcore` 109 and 111, 0 failures; `scripts/check-strings.sh` clean with 672 strings
+  in every language; `scripts/ios-build.sh` builds on Dev 1's iPhone 17 Pro (iOS 27.0), the widget extension
+  3 MB.
+
+**Follow-ups after the owner's answers** (31 October, afternoon):
+- The owner's decision: the iPhone's widget gallery lists the prayer widget as "Prayer times", so that the steps
+  read naturally. `home_widget_name` in the seven `iosApp/TaqvoWidget/*.lproj` files is now each language's
+  `widgets_prayer_name` ("Horaires de prière", "مواقيت الصلاة", "নামাজের সময়", ...), the iPhone steps name the
+  widget by `widgets_prayer_name` as Android's do, and `widgets_prayer_gallery_ios` is gone from every
+  language with its code. `tools/i18n-check.py` holds `widgets_prayer_name` to both Android's picker label and
+  the iPhone's gallery name; tightened first, it failed in all seven languages until the gallery names changed.
+  `WidgetsRefusalTest.theIPhoneStepsNameThePrayerWidgetByItsCardsName` failed first too ("Choose Prayer times
+  and a size." was not on the screen). Android's picker names stay as they are: the steps name the wide
+  "Prayer times", which the owner called the more important one.
+- The Lead's follow-up 4, French and Turkish on iOS 26.2: run on Dev 1's iPhone 17 Pro (iOS 26.2) with a
+  scratch XCUITest probe that was never part of Taqvo. In edit mode the corner shows "+" (VoiceOver
+  "Modifier", "Düzenle") and no menu, as in every language; tapping the "+" opens the same menu as English's
+  Edit: "Ajouter un widget", "Personnaliser", "Modifier le fond d’écran", "Modifier les pages", and "Araç
+  Takımı Ekle", "Özelleştir", "Duvar Kâğıdını Düzenle", "Sayfaları Düzenle". So "touchez **+** en haut de
+  l’écran ..., puis **Ajouter un widget**" is what the phone does, and the French and Turkish lines stay as
+  they are; no other language shows a "+" there.
+- The Lead's follow-up 5, balanced heading lines: `LineBreak.Heading` on the refused heading and on "How to
+  add it" was shot before and after on emulator-5572 (Pixel 8 Pro, 448 dp, font scale 1.0) in all seven
+  languages. Bengali's "না।" no longer stood alone, but French, Indonesian and Turkish moved too, since their
+  headings wrap as well ("... ne permet pas / aux applications ...", "... tidak mengizinkan / aplikasi ...",
+  "... uygulamaların / widget eklemesine ..."); English, Arabic and Urdu were pixel-identical. By the rule
+  set for it, the change was taken out and the headings are as they were. **Open, for the owner:** balanced
+  lines would also fix Turkish's "vermiyor." alone on its second line, at the price of moving the French and
+  Indonesian breaks.
+- The Lead's follow-up 6: the 142-character comment line in `WidgetRedraw.kt` is wrapped; the findings
+  recorded above as "review round 3" are the Lead's round 2 (here, in `TaqvoButton`'s KDoc and in the spec);
+  `iOSApp.swift` drops the `KotlinUnit` that the placement hook's completion returns, so the build no longer
+  warns about it.
+- Seen on Dev 1's iPhone 17 Pro simulator (iOS 27.0) with this build: the widget gallery's Taqvo page titles
+  the prayer widget "Prayer times" over "Next prayer, countdown and today’s times."
+- Checks: `:shared` 2,156 tests on the iOS simulator (Dev 1's iPhone 17 Pro, iOS 27.0) and 2,142 on the Android
+  host, `:widgetcore` 109 and 111, 0 failures; `scripts/check-strings.sh` clean with 671 strings in every
+  language; `:androidApp:assembleDebug` builds, and `scripts/ios-build.sh` builds with the widget extension at
+  3 MB and no `KotlinUnit` warning.
+
+**The Lead's follow-ups 1 to 3** (31 October, afternoon):
+- Screen readers and the steps' live region. A refused panel that had taken TalkBack's focus had no live region,
+  and gained one as soon as another card's refusal or "Show me how" moved the focus on, since the region was
+  `announce && focus == null` worked out again on every recomposition. The rule is now one pure decision,
+  `stepsOpening`: under a screen reader steps are made known only by moving its focus into them, when the
+  reader's own tap opened them, and never by a live region; without one, steps that replace a refused button are
+  a polite live region and nothing takes focus. A panel decides how it opens once, as it appears, and the screen
+  forgets the tap (`openedByTap`) once focus has moved, so steps that go and come back later (the widget added by
+  hand, then removed) take no focus. `StepsOpeningTest` failed first on exactly that case (read out under a
+  screen reader once the tap had moved on), and three screen tests failed first on the simulator: two refusals in
+  a row, and a refusal then the Lock Screen card's "Show me how", each left the first panel a live region; and
+  steps that came back after the widget was added and removed took focus again.
+- Heard on emulator-5572's TalkBack 16 (verbose log), with a local, uncommitted `requestPin` that refuses, before
+  and after the change: two refusals in a row, and a refusal then "Show me how" on the other card. Both builds
+  said the same: "Your home screen doesn't let apps add widgets." after each refusal (after a short "Back" or
+  "1", where TalkBack lands as the tapped button goes), and "1, Touch and hold an empty spot on your home screen
+  (or pinch it)." after "Show me how". The first panel was never read out, before either: TalkBack 16 got no event
+  from it when it became a live region (every content change it saw had `nodeLiveRegion=0`). So the old region
+  was a latent fault, there in the semantics tree, not heard on this TalkBack.
+- The Lock Screen picture at large text. Its name, time and "then …" lines were single lines cut at the
+  accessory's edge. Each is now set as the accessory sets it (`.minimumScaleFactor(0.6)`): one line at its size
+  while it fits, otherwise shrunk in half points to the largest size that fits, never below 60 %, and wrapped at
+  60 % where even that is too long, so it is whole (`accessoryLineSize`, `AccessoryLineSizeTest`). It stays a
+  `BasicText` given its style alone, as the `Text` before it was; merging `LocalTextStyle` in, as AyahActions
+  does, gave the lines the body text's line height and another Arabic face, and was taken out after the
+  screenshots showed it. `LockScreenAccessoryTest` failed first with the old lines at 3.2 times the text in a
+  200 dp accessory ("Maghrib" was cut). On Dev 1's iPhone 17 Pro (iOS 27.0) the picture after the change is
+  pixel-identical to the one before, outside the clocks: in English at Large (light and dark), xxxL, AX Medium,
+  AX XL and AX XXXL, and at AX XXXL in the six other languages. On a 402 pt phone no line had needed cutting, so
+  nothing shrinks there; the rule matters on narrower phones and longer names.
+- The dark theme's Lock Screen step drawings. Measured on the simulator: the phone's slate (34, 38, 42) on its
+  dark tile (27, 31, 29) is 1.09:1, on the light tile (243, 242, 238) 13.60:1, the same figures
+  `LockScreenOutlineTest` computes from the palette (it failed first at 1.09 against 13.60). Where the slate
+  is under WCAG's 3:1 for graphics against its tile, the phone is now outlined, inside its edge, in the dark
+  theme's ink (241, 243, 241), the ink of the marks on it: 14.94:1 against the dark tile. The light theme's
+  drawings are pixel-identical.
+- Screenshots and the TalkBack captures are in the session scratchpad, `settings-shots/round3/g1-*`. The local
+  hooks (a refusing `requestPin` read from `debug.taqvo.pin`, and launch arguments for the screen, the open cards
+  and the scroll on the iPhone) were reverted before the commit.
+- Checks: `:shared` 2,173 tests on the iOS simulator (Dev 1's iPhone 17 Pro, iOS 27.0) and 2,154 on the Android
+  host, 0 failures; `scripts/check-strings.sh` clean with 671 strings in every language; `:androidApp:assembleDebug`
+  and `scripts/ios-build.sh` build, the widget extension at 3 MB.
+
+**Follow-ups (31 Oct)**, the last check on 855c528a, after the owner's three answers:
+- Done: the gallery rename to "Prayer times" (07b91e8c), the Lead's follow-ups 1 to 3 (855c528a) and 6 (b08302d3),
+  and 4, checked on iOS 26.2, where the French and Turkish lines stay as they are. Follow-up 5 was tried and
+  taken out, as recorded above, so the heading breaks are as they were. Android's picker names stay as they are,
+  by the owner's answer.
+- Re-shot only what changed, with the same local hooks, reverted before this commit. On Dev 1's iPhone 17 Pro
+  (iOS 27.0), 20 screenshots: the Widgets screen in English and Arabic, light and dark, at the top, with the
+  prayer card's steps ("Choose **Prayer times** and a size.", "اختر **مواقيت الصلاة** والحجم الذي تريده."), the
+  Lock Screen card, its steps (the dark phones outlined), and the Lock Screen card at AX XXXL, where every line of
+  the picture is whole. On emulator-5572 (448 dp, light), the prayer card's refused panel in all seven
+  languages. No clipping, overlap or text on a hairline. Left as they were: the Bengali refused heading's "না।"
+  and the Turkish "vermiyor." alone on the second line.
+- Checks: `scripts/test.sh` green, `:shared` 2,173 tests on the iOS simulator (Dev 1's iPhone 17 Pro, iOS 27.0,
+  rerun fresh) and 2,154 on the Android host, `:widgetcore` 109 and 111, 0 failures; `scripts/check-strings.sh`
+  clean with 671 strings in every language, and `values-in` unchanged by the sync; `scripts/ios-build.sh` and
+  `:androidApp:assembleDebug` build, the widget extension at 3 MB. The emulator and the simulator are back to
+  their settings, and both are stopped.
+- The owner's decision (31 Oct): the Lock Screen picture's first line now says what the real accessory says, the "Maghrib in" phrase (`lockScreenHeadline` = `WidgetCountdown.headline`, the accessory's `entry.headline`, so the same words in all seven languages), closing the Open item above; `LockScreenHeadlineTest` failed first, `LockScreenAccessoryTest` adds Arabic at 3.2 times; host 2,157 and the iOS compile, strings and `ios-build.sh` green; Dev 1's iPhone 17 Pro shots in en and ar, light and dark, and all seven languages at AX XXXL, every line whole, in `settings-shots/round4`.

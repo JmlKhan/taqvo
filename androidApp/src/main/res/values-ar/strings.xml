@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">تقفو</string>
+    <string name="widget_small_label">الصلاة القادمة</string>
+    <string name="widget_medium_label">مواقيت الصلاة</string>
+    <string name="widget_ayah_label">آية اليوم</string>
+    <string name="widget_small_description">الصلاة القادمة وعد تنازلي مباشر.</string>
+    <string name="widget_medium_description">الصلاة القادمة والعد التنازلي ومواقيت اليوم.</string>
+    <string name="widget_ayah_description">آية اليوم مع ترجمتها.</string>
+    <!-- Spoken only: the ayah widget's reference for a screen reader. %1$s the surah, %2$s the ayah number. -->
+    <string name="widget_ayah_a11y_reference">%1$s، الآية %2$s</string>
+    <!-- The daily-dua widget's picker title and line, and its reference; %1$s the number in Hisn al-Muslim. -->
+    <string name="widget_dua_label">دعاء اليوم</string>
+    <string name="widget_dua_description">دعاء اليوم من الأذكار.</string>
+    <string name="widget_dua_reference">حصن المسلم %1$s</string>
+</resources>

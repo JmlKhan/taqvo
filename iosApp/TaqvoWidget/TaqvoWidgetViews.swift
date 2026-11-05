@@ -1,0 +1,555 @@
+import WidgetKit
+import SwiftUI
+// The extension links `widgetcore.framework` alone — a slim Kotlin/Native framework with no
+// Compose in it, because a WidgetKit extension runs under a ~30 MB memory ceiling. This file is
+// also a member of the *app* target (for the `-taqvoWidgetPreview 1` debug route), which links
+// `shared`; `shared` re-exports `:widgetcore`, so the Kotlin types below are spelled identically
+// either way.
+#if TAQVO_WIDGET_EXTENSION
+import widgetcore
+#else
+import shared
+#endif
+
+/// Must match `IosKeyValueStore.APP_GROUP_ID` in `widgetcore/src/iosMain/.../KeyValueStore.ios.kt`
+/// and both `.entitlements` files. A mismatch is silent: the widget reads an empty suite and
+/// shows the placeholder state forever.
+let taqvoAppGroupId = "group.taqvo.app"
+
+let taqvoSnapshotKey = "snapshot"
+let taqvoBackgroundKey = "widget_background"
+
+// MARK: - Copy
+
+/// The prayer widgets' own strings.
+///
+/// Looked up by hand rather than handed to SwiftUI as a `LocalizedStringKey`, for the reason
+/// `TaqvoAyahWidget.placeholderText` gives: this file is a member of the *app* target too and the
+/// strings table ships only in the extension's bundle, so the `-taqvoWidgetPreview` route would
+/// draw the raw keys. The fallbacks are the same copy `Localizable.strings` carries.
+///
+/// The two `Widget` declarations at the bottom of this file are the exception — a
+/// `WidgetConfiguration` is only ever built inside the extension, so those use
+/// `LocalizedStringKey` exactly as the ayah widget does.
+private enum TaqvoWidgetStrings {
+
+    static var placeholderTitle: String {
+        localized("prayer_widget_placeholder_title", en: "Taqvo", ar: "تقفو")
+    }
+
+    static var placeholderBody: String {
+        localized(
+            "prayer_widget_placeholder_body",
+            en: "Open Taqvo to load your prayer times.",
+            ar: "افتح تقفو لتحميل مواقيت الصلاة."
+        )
+    }
+
+    /// The prayer after the next one, on the rectangular complication. `%@` is the already-
+    /// localised display name, so only the word in front of it is translated here.
+    static func then(_ prayer: String) -> String {
+        String(format: localized("lock_widget_then", en: "then %@", ar: "ثم %@"), prayer)
+    }
+
+    private static func localized(_ key: String, en: String, ar: String) -> String {
+        let value = Bundle.main.localizedString(forKey: key, value: key, table: nil)
+        guard value == key else { return value }
+        let arabic = Locale.current.language.languageCode?.identifier.hasPrefix("ar") ?? false
+        return arabic ? ar : en
+    }
+}
+
+// MARK: - Reading the mirror
+
+enum TaqvoMirror {
+    /// The mirror the app last wrote, or nil before it has written one. Everything an entry shows
+    /// is worked out from it at that entry's own moment, through the same `:widgetcore` rules the
+    /// Android widget uses; no timestamp of the write is needed, because every mirror since the
+    /// two-day schedule carries absolute prayer instants. Past that schedule there is no honest
+    /// countdown left, and the entry names the prayer without a number (B16) rather than
+    /// extrapolating one from the write.
+    static func read() -> WidgetSnapshot? {
+        let store = KeyValueStore_iosKt.createWidgetKeyValueStore()
+        return WidgetInputsMirror.shared.read(store: store)
+    }
+
+    static func background() -> WidgetBackground {
+        let store = KeyValueStore_iosKt.createWidgetKeyValueStore()
+        // Task 25 mirrors the Appearance setting into this key; until then every widget renders
+        // the default, exactly as the Android widget does.
+        guard let raw = store.getString(key: taqvoBackgroundKey) else { return .followTheme }
+        return WidgetBackground.entries.first { $0.name == raw } ?? .followTheme
+    }
+}
+
+// MARK: - Timeline
+
+struct TaqvoEntry: TimelineEntry {
+    let date: Date
+    let content: WidgetContent?
+    /// Minutes remaining at the moment this entry was worked out, from `WidgetCountdown`; nil
+    /// when the mirror has run past its schedule and no honest countdown exists, in which case
+    /// no number is drawn.
+    let countdownMinutes: Int64?
+    /// `WidgetCountdown.headline`: the "next prayer in" phrase, or the prayer's name alone when
+    /// `countdownMinutes` is nil, so "in" never dangles over a missing number.
+    let headline: String
+    /// `WidgetCountdown.ringProgress`: the ring's fill, empty when `countdownMinutes` is nil
+    /// rather than the fill frozen at the moment of writing.
+    let ringProgress: Float
+    let background: WidgetBackground
+    /// `WidgetSnapshot.languageTag`, or `""` for the placeholder entry. Kept alongside `content`,
+    /// which does not carry it, for anything that has to know which language the mirror was
+    /// written in; the countdown's *digits* come from `arabicIndicDigits` below rather than from
+    /// this tag (D2).
+    let languageTag: String
+    /// `WidgetSnapshot.arabicIndicDigits`: the digit set the *app* draws, as its own
+    /// `PlatformFormat` answered when it wrote the mirror. The countdown is the one number this
+    /// extension composes itself, so it is the one that has to be told rather than left to derive
+    /// its own answer from `languageTag` — a device whose ICU data disagrees with CLDR's default
+    /// for that tag (an `ar-LY` S23) then showed the countdown in different digits from the clock
+    /// times beside it (D2, S23 round).
+    let arabicIndicDigits: Bool
+
+    /// Built through the shared `WidgetDigits` against the mirror's recorded choice, so this
+    /// countdown, the Android one and the app all agree (D2 — it used to ask `NumberFormatter` for
+    /// the locale default instead, which is the guess the mirror now replaces). Minute-granular and
+    /// redrawn at most once a minute, so the per-second tabular-jitter exception of the Prayer
+    /// screen's ring (spec §4.2) does not apply. Nil with `countdownMinutes`.
+    var countdownText: String? {
+        countdownMinutes.map { minutes in
+            let m = max(0, minutes)
+            let text = String(format: "%d:%02d", m / 60, m % 60)
+            return WidgetDigits.shared.localize(text: text, nativeDigits: arabicIndicDigits, languageTag: languageTag)
+        }
+    }
+}
+
+struct TaqvoTimelineProvider: TimelineProvider {
+    /// Spec §4.5 asks for a countdown, so an entry a minute for the next hour: WidgetKit renders
+    /// entries the system already holds without waking the extension. Each entry starts on a whole
+    /// minute and is worked out half-way through it (`WidgetMinutes`), so it reads what the Prayer
+    /// screen reads for every second it is on screen bar the minute's first, and no entry goes on
+    /// counting to a prayer that has begun (B36).
+    private static let entryCount = 60
+
+    func placeholder(in context: Context) -> TaqvoEntry {
+        TaqvoEntry(
+            date: Date(), content: nil, countdownMinutes: nil, headline: "", ringProgress: 0,
+            background: .followTheme, languageTag: "", arabicIndicDigits: false
+        )
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (TaqvoEntry) -> Void) {
+        let entry = Self.entries(from: Date()).first!
+        // The widget gallery asks for a snapshot before the app has necessarily written a mirror.
+        // A gallery card reading "open Taqvo to load your prayer times" sells nothing, so the
+        // preview shows a representative day instead; a real home-screen render never takes
+        // this branch because it is not a preview.
+        if context.isPreview && entry.content == nil {
+            completion(Self.sampleEntry(background: entry.background))
+        } else {
+            completion(entry)
+        }
+    }
+
+    /// A plausible afternoon, in the gallery's own language, for the preview alone.
+    static func sampleEntry(background: WidgetBackground) -> TaqvoEntry {
+        let tag = Locale.current.language.languageCode?.identifier ?? "en"
+        // The gallery's own language, through the same tables the live widget uses: Sabah · الفجر
+        // in a Turkish gallery, فجر alone in an Urdu one, never the English names.
+        func name(_ prayer: Prayer) -> String {
+            PrayerNaming.shared.display(
+                prayer: prayer, languageTag: tag,
+                localizedName: PrayerNaming.shared.name(prayer: prayer, languageTag: tag)
+            )
+        }
+        let rows: [WidgetPrayerRow] = [
+            WidgetPrayerRow(prayer: .fajr, displayName: name(.fajr), clockTime: "5:35", isCurrent: false),
+            WidgetPrayerRow(prayer: .dhuhr, displayName: name(.dhuhr), clockTime: "12:46", isCurrent: false),
+            WidgetPrayerRow(prayer: .asr, displayName: name(.asr), clockTime: "16:03", isCurrent: true),
+            WidgetPrayerRow(prayer: .maghrib, displayName: name(.maghrib), clockTime: "18:32", isCurrent: false),
+            WidgetPrayerRow(prayer: .isha, displayName: name(.isha), clockTime: "19:50", isCurrent: false),
+        ]
+        let content = WidgetContent(
+            nextPrayerDisplayName: name(.maghrib),
+            countdownMinutes: 21,
+            nextClockTime: "18:32",
+            rows: rows,
+            ringProgress: 0.86,
+            countdownLabel: PrayerNaming.shared.countdownLabel(prayer: .maghrib, languageTag: tag),
+            nextPrayerShortName: PrayerNaming.shared.shortName(prayer: .maghrib, languageTag: tag)
+        )
+        return TaqvoEntry(
+            date: Date(), content: content, countdownMinutes: 21, headline: content.countdownLabel,
+            ringProgress: 0.86, background: background, languageTag: tag,
+            arabicIndicDigits: WidgetDigits.shared.defaultsToArabicIndic(languageTag: tag)
+        )
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<TaqvoEntry>) -> Void) {
+        // The app calls WidgetCenter.shared.reloadAllTimelines() whenever the mirror changes, so
+        // `.atEnd` is only the floor for a phone whose owner has not opened the app in an hour.
+        completion(Timeline(entries: Self.entries(from: Date()), policy: .atEnd))
+    }
+
+    static func entries(from start: Date) -> [TaqvoEntry] {
+        let background = TaqvoMirror.background()
+        guard let snapshot = TaqvoMirror.read() else {
+            return [TaqvoEntry(
+                date: start, content: nil, countdownMinutes: nil, headline: "", ringProgress: 0,
+                background: background, languageTag: "", arabicIndicDigits: false
+            )]
+        }
+        let minutes = WidgetMinutes.shared.timeline(
+            nowEpochSeconds: Int64(start.timeIntervalSince1970), count: Int32(entryCount)
+        )
+        return minutes.map { minute in
+            // The first entry is dated at the start of the minute already under way, so the
+            // widget is right from the reload on rather than from the next whole minute.
+            let date = Date(timeIntervalSince1970: TimeInterval(minute.showAtEpochSeconds))
+            let epoch = minute.evaluateAtEpochSeconds
+            // Each entry is the widget as it should read at that minute: past a prayer the next
+            // one takes over, its row lights up and the label changes, with no reload needed.
+            let content = WidgetContentBuilder.shared.build(snapshot: snapshot, nowEpochSeconds: epoch)
+            let derived = WidgetCountdown.shared.remainingMinutesAt(snapshot: snapshot, nowEpochSeconds: epoch)
+            return TaqvoEntry(
+                date: date,
+                content: content,
+                countdownMinutes: derived?.int64Value,
+                headline: WidgetCountdown.shared.headline(content: content, remainingMinutes: derived),
+                ringProgress: WidgetCountdown.shared.ringProgress(content: content, remainingMinutes: derived),
+                background: background,
+                languageTag: snapshot.languageTag,
+                arabicIndicDigits: snapshot.arabicIndicDigits
+            )
+        }
+    }
+}
+
+// MARK: - Palette
+
+extension Color {
+    /// `WidgetPaletteColors` hands over plain ARGB longs precisely so neither platform's widget
+    /// target needs a UI-framework colour type as a shared-code dependency; this is the one place
+    /// iOS converts it to something SwiftUI can paint.
+    init(argb: Int64) {
+        let a = Double((argb >> 24) & 0xFF) / 255.0
+        let r = Double((argb >> 16) & 0xFF) / 255.0
+        let g = Double((argb >> 8) & 0xFF) / 255.0
+        let b = Double(argb & 0xFF) / 255.0
+        self.init(.sRGB, red: r, green: g, blue: b, opacity: a)
+    }
+}
+
+/// Applies the user's background choice. `TRANSLUCENT_OR_FROSTED` is *Frosted* on iOS: WidgetKit
+/// cannot sample the wallpaper for its own blur, so the honest equivalent is the system widget
+/// material rather than a fake translucent fill (spec §4.5).
+struct TaqvoWidgetSurface: ViewModifier {
+    let colors: WidgetPaletteColors
+    let frosted: Bool
+    /// False for the in-app debug preview route, where `containerBackground(for: .widget)` does
+    /// nothing because there is no widget container to paint.
+    let inWidgetContainer: Bool
+
+    /// The card's own edge padding, gated the same way the background fill below is: inside a
+    /// widget container, `containerBackground` (iOS 17+) already applies WidgetKit's standard
+    /// content margins, so a card that added its own on top would be inset twice. Below iOS 17 —
+    /// this app's deployment target — the container falls back to a plain `.background`, which
+    /// insets nothing, so the card needs its own padding there exactly as it does outside a
+    /// container altogether (the in-app preview route, where there is no container at all).
+    /// Centralised here, rather than duplicated per widget, so any card that opts in via
+    /// `taqvoSurface` gets the iOS 16 case right without re-deriving it.
+    static func cardPadding(inWidgetContainer: Bool) -> CGFloat {
+        guard inWidgetContainer else { return 14 }
+        if #available(iOS 17.0, *) { return 0 }
+        return 14
+    }
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if inWidgetContainer, #available(iOS 17.0, *) {
+            if frosted {
+                content.containerBackground(.regularMaterial, for: .widget)
+            } else {
+                content.containerBackground(Color(argb: colors.backgroundArgb), for: .widget)
+            }
+        } else if frosted {
+            // iOS 16 has no containerBackground; the material still reads as frosted here.
+            content.background(.regularMaterial)
+        } else {
+            content.background(Color(argb: colors.backgroundArgb))
+        }
+    }
+}
+
+extension View {
+    func taqvoSurface(_ colors: WidgetPaletteColors, frosted: Bool, inWidgetContainer: Bool) -> some View {
+        modifier(TaqvoWidgetSurface(colors: colors, frosted: frosted, inWidgetContainer: inWidgetContainer))
+    }
+}
+
+// MARK: - Home screen
+
+struct TaqvoHomeWidgetView: View {
+    @Environment(\.widgetFamily) private var environmentFamily
+    @Environment(\.colorScheme) private var colorScheme
+    let entry: TaqvoEntry
+    /// Set only by the in-app debug preview, where there is no widget environment to read.
+    var familyOverride: WidgetFamily? = nil
+    var inWidgetContainer: Bool = true
+
+    private var family: WidgetFamily { familyOverride ?? environmentFamily }
+
+    private var colors: WidgetPaletteColors {
+        // FOLLOW_THEME resolves against the widget's own rendering environment, which is what the
+        // user actually sees — not the app process's last known appearance.
+        WidgetPalette.shared.colorsFor(background: entry.background, systemIsDark: colorScheme == .dark)
+    }
+
+    var body: some View {
+        Group {
+            if let content = entry.content {
+                if family == .systemSmall {
+                    small(content)
+                } else {
+                    medium(content)
+                }
+            } else {
+                placeholder
+            }
+        }
+        .taqvoSurface(colors, frosted: entry.background == .translucentOrFrosted, inWidgetContainer: inWidgetContainer)
+    }
+
+    /// Spec §4.5 small: next prayer name, countdown, clock time. One question answered.
+    private func small(_ content: WidgetContent) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            // Already the fully-localised "next prayer in" phrase (e.g. "Dhuhr in" / "متبقٍّ على
+            // الظهر") — never compose an "in" suffix here, or a hardcoded English word leaks into
+            // every non-English locale, which is exactly the bug this field exists to close. With
+            // no honest countdown it is the name alone and the number below is left out (B16).
+            Text(entry.headline)
+                .font(.system(size: 15, weight: .semibold))
+                .minimumScaleFactor(0.7)
+                .lineLimit(2)
+                .foregroundColor(Color(argb: colors.accentArgb))
+            if let countdown = entry.countdownText {
+                Text(countdown)
+                    .font(.system(size: 34, weight: .medium, design: .rounded))
+                    .monospacedDigit()
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
+                    .foregroundColor(Color(argb: colors.textArgb))
+            }
+            Text(content.nextClockTime)
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(Color(argb: colors.textArgb).opacity(0.7))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+
+    /// Spec §4.5 medium: countdown on the left, all five times on the right, current in accent.
+    private func medium(_ content: WidgetContent) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            VStack(alignment: .leading, spacing: 4) {
+                // See `small(_:)` — same already-localised "next prayer in" phrase.
+                Text(entry.headline)
+                    .font(.system(size: 14, weight: .semibold))
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(2)
+                    .foregroundColor(Color(argb: colors.accentArgb))
+                if let countdown = entry.countdownText {
+                    Text(countdown)
+                        .font(.system(size: 36, weight: .medium, design: .rounded))
+                        .monospacedDigit()
+                        .minimumScaleFactor(0.6)
+                        .lineLimit(1)
+                        .foregroundColor(Color(argb: colors.textArgb))
+                }
+                Text(content.nextClockTime)
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(argb: colors.textArgb).opacity(0.7))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: 2) {
+                // Sunrise is absent by construction: `rows` comes from `ObligatoryPrayers`.
+                ForEach(content.rows, id: \.prayer) { row in
+                    HStack(spacing: 8) {
+                        // No `minimumScaleFactor` here: in the old fixed 130 pt column the longest
+                        // name ("Maghrib · المغرب") shrank on its own and read as a different size
+                        // from the four rows around it. Every row is set at the same size now.
+                        Text(row.displayName)
+                            .font(.system(size: 12, weight: row.isCurrent ? .semibold : .regular))
+                            .lineLimit(1)
+                        Spacer(minLength: 8)
+                        Text(row.clockTime)
+                            .font(.system(size: 12, weight: row.isCurrent ? .semibold : .regular))
+                            .monospacedDigit()
+                    }
+                    .foregroundColor(Color(argb: row.isCurrent ? colors.accentArgb : colors.textArgb))
+                }
+            }
+            // Exactly as wide as its longest row and no wider, so the countdown block on the
+            // left keeps the rest. (`layoutPriority` here let the spacers inside each row claim
+            // the whole card and pushed the countdown out of existence.)
+            .fixedSize(horizontal: true, vertical: false)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var placeholder: some View {
+        VStack(spacing: 4) {
+            Text(TaqvoWidgetStrings.placeholderTitle)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(Color(argb: colors.accentArgb))
+            Text(TaqvoWidgetStrings.placeholderBody)
+                .font(.system(size: 12))
+                .multilineTextAlignment(.center)
+                .foregroundColor(Color(argb: colors.textArgb).opacity(0.7))
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Lock screen
+
+struct TaqvoLockScreenWidgetView: View {
+    @Environment(\.widgetFamily) private var environmentFamily
+    let entry: TaqvoEntry
+    var familyOverride: WidgetFamily? = nil
+
+    private var family: WidgetFamily { familyOverride ?? environmentFamily }
+
+    /// The one after the next — the "then …" line. `rows` is in prayer order and excludes
+    /// Sunrise, so the row following the next prayer is the answer, wrapping past Isha to Fajr.
+    static func prayerAfterNext(_ content: WidgetContent) -> WidgetPrayerRow? {
+        guard !content.rows.isEmpty,
+              let i = content.rows.firstIndex(where: { $0.displayName == content.nextPrayerDisplayName })
+        else { return content.rows.first }
+        return content.rows[(i + 1) % content.rows.count]
+    }
+
+    var body: some View {
+        face.lockScreenContainer()
+    }
+
+    @ViewBuilder
+    private var face: some View {
+        if let content = entry.content {
+            switch family {
+            case .accessoryCircular:
+                // Spec §4.5: ring + name + countdown — a real progress ring, the same
+                // motif CountdownRing uses on the Prayer screen, fed by the entry's `ringProgress`
+                // (empty, with no number, once there is no honest countdown).
+                ZStack {
+                    AccessoryWidgetBackground()
+                    Gauge(value: Double(entry.ringProgress).clamped01()) {
+                        EmptyView()
+                    } currentValueLabel: {
+                        VStack(spacing: -1) {
+                            // The interface language's own name, whole (`PrayerNaming.shortName`),
+                            // the Arabic with its article. The gauge gives this label 40.6 × 29 pt
+                            // whatever the ring's size, and every name fits it at 11 pt: Maghrib,
+                            // the widest at 45 pt, draws at 0.9; المغرب needs 34. Clipping to four letters cut
+                            // every Arabic name and left "Akşa" in Turkish (B37).
+                            Text(content.nextPrayerShortName)
+                                .font(.system(size: 11, weight: .medium))
+                                .minimumScaleFactor(0.6)
+                                .lineLimit(1)
+                            if let countdown = entry.countdownText {
+                                Text(countdown)
+                                    .font(.system(size: 12, weight: .bold))
+                                    .monospacedDigit()
+                                    .minimumScaleFactor(0.6)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+                    .gaugeStyle(.accessoryCircularCapacity)
+                }
+            default:
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack {
+                        // The next prayer's name as the list writes it, beside its start time, as
+                        // the "then" line names the one after: "Maghrib in" beside a start time read
+                        // as a countdown (the owner's decision, 3 Nov 2026).
+                        Text(content.nextPrayerDisplayName)
+                            .font(.headline)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                        Spacer(minLength: 4)
+                        Text(content.nextClockTime)
+                            .font(.headline)
+                            .monospacedDigit()
+                    }
+                    // The prayer after the next, with its time at the line's end under the next
+                    // prayer's (the owner's decision of 1 November: a name with no time said little).
+                    if let then = Self.prayerAfterNext(content) {
+                        HStack {
+                            Text(TaqvoWidgetStrings.then(then.displayName))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
+                            Spacer(minLength: 4)
+                            Text(then.clockTime)
+                                .monospacedDigit()
+                        }
+                        .font(.caption2)
+                        .opacity(0.7)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            }
+        } else {
+            Text(TaqvoWidgetStrings.placeholderTitle)
+        }
+    }
+}
+
+private extension Double {
+    func clamped01() -> Double { Swift.min(1, Swift.max(0, self)) }
+}
+
+private extension View {
+    /// iOS 17 and later draw "Please adopt containerBackground API" over a widget whose view never
+    /// calls `containerBackground(for: .widget)`, the Lock Screen's included. The 1.4.0 build (Xcode
+    /// 27.2) showed it on the iPhone 12 (iOS 27.0) where 1.3.0's had drawn. The Lock Screen draws its
+    /// own backdrop, so the container's is clear; the round widget keeps its AccessoryWidgetBackground
+    /// in the view, where the in-app preview route, which has no container, sees it too.
+    @ViewBuilder
+    func lockScreenContainer() -> some View {
+        if #available(iOS 17.0, *) {
+            containerBackground(for: .widget) { Color.clear }
+        } else {
+            self
+        }
+    }
+}
+
+// MARK: - Widget declarations
+
+struct TaqvoHomeWidget: Widget {
+    let kind = "TaqvoHomeWidget"
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TaqvoTimelineProvider()) { entry in
+            TaqvoHomeWidgetView(entry: entry)
+        }
+        .configurationDisplayName(LocalizedStringKey("home_widget_name"))
+        .description(LocalizedStringKey("home_widget_description"))
+        .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}
+
+struct TaqvoLockScreenWidget: Widget {
+    let kind = "TaqvoLockScreenWidget"
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TaqvoTimelineProvider()) { entry in
+            TaqvoLockScreenWidgetView(entry: entry)
+        }
+        .configurationDisplayName(LocalizedStringKey("lock_widget_name"))
+        .description(LocalizedStringKey("lock_widget_description"))
+        .supportedFamilies([.accessoryCircular, .accessoryRectangular])
+    }
+}

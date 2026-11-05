@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget picker's picture of the dua card (previewLayout, Android 12+): the light card with
+     one of its supplications, in the Glance card's own colours (WidgetPalette, light). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FBFAF7"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="سُبْحَانَ اللَّهِ وَبِحَمْدِهِ"
+        android:textColor="#16160F"
+        android:textSize="24sp" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/widget_dua_label"
+        android:textColor="#B5820B"
+        android:textSize="11sp" />
+</LinearLayout>

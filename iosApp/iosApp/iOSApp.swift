@@ -1,0 +1,500 @@
+import SwiftUI
+import BackgroundTasks
+import UIKit
+import UserNotifications
+import WidgetKit
+import shared
+
+private let refreshTaskId = "com.taqvo.app.refresh"
+
+/// The two things SwiftUI's `App` cannot express: the notification-centre delegate and
+/// `handleEventsForBackgroundURLSession`.
+///
+/// iOS relaunches the app when a background download finishes and delivers the news here — to a
+/// process that has no URL sessions at all, so nothing would arrive until one with the right
+/// identifier is recreated. `wakeRecitationDownloads` does both halves: it recreates the sessions
+/// and holds the completion handler, which Foundation requires to be called once every delegate
+/// callback has been delivered.
+final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+
+	/// The delegate has to be set before the app finishes launching, or a notification that arrives
+	/// in the meantime is presented by the default rules — which is to say not at all.
+	func application(
+		_ application: UIApplication,
+		didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+	) -> Bool {
+		UNUserNotificationCenter.current().delegate = self
+		return true
+	}
+
+	/// Without this, iOS shows nothing at all while the app is in the foreground: no banner and, for
+	/// a prayer, no adhan. That is exactly the moment a user is most likely to be looking at Taqvo,
+	/// so a notification is presented in full whether or not the app happens to be open.
+	func userNotificationCenter(
+		_ center: UNUserNotificationCenter,
+		willPresent notification: UNNotification,
+		withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+	) {
+		completionHandler([.banner, .list, .sound])
+	}
+
+	/// A tap on a notification. An adhkar reminder's opens its set's session (adhkar spec §5);
+	/// Kotlin reads the identifier and ignores every other one, so a prayer's tap still just brings
+	/// the app forward. Recorded in `LaunchRequests`, not acted on here: on a cold launch this
+	/// arrives before `ContentView`'s composition exists to navigate, as a widget's link does.
+	func userNotificationCenter(
+		_ center: UNUserNotificationCenter,
+		didReceive response: UNNotificationResponse,
+		withCompletionHandler completionHandler: @escaping () -> Void
+	) {
+		if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
+			LaunchRequests_iosKt.openAdhkarFromNotification(identifier: response.notification.request.identifier)
+		}
+		completionHandler()
+	}
+
+	func application(
+		_ application: UIApplication,
+		handleEventsForBackgroundURLSession identifier: String,
+		completionHandler: @escaping () -> Void
+	) {
+		// The identifier goes with it: this is called once per background session, each time with a
+		// handler belonging to that session alone, and there are two of them (Wi-Fi and cellular).
+		SurahDownloader_iosKt.wakeRecitationDownloads(identifier: identifier, completion: completionHandler)
+	}
+}
+
+@main
+struct iOSApp: App {
+
+	@UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
+	init() {
+		BGTaskScheduler.shared.register(forTaskWithIdentifier: refreshTaskId, using: nil) { task in
+			Self.handleAppRefresh(task: task as! BGAppRefreshTask)
+		}
+		Self.installWidgetRefreshHook()
+		Self.installWidgetPlacementHook()
+		Self.scheduleNextRefresh()
+	}
+
+	var body: some Scene {
+		WindowGroup {
+			#if DEBUG
+			// Hidden debug route: `xcrun simctl launch booted com.taqvo.app -taqvoWidgetPreview 1`
+			// renders the real widget views full screen against the real App Group mirror. There is
+			// no simctl command that places a widget on a simulator home screen, so this is how a
+			// widget render gets captured. The whole branch is compiled out of a release build, along
+			// with `TaqvoWidgetPreviews.swift` itself: a user default is writable by anyone with the
+			// device, and a route nobody should reach is best absent rather than merely unreachable.
+			if Self.widgetPreviewRequested {
+				TaqvoWidgetPreviewScreen(section: Self.widgetPreviewSection)
+			} else {
+				root
+			}
+			#else
+			root
+			#endif
+		}
+	}
+
+	/// The app itself. Named because `#if` cannot straddle the two halves of an `if`/`else`, so the
+	/// debug route above needs something to fall through to that the release build also uses.
+	private var root: some View {
+		ContentView()
+			.onAppear {
+				Self.scheduleNextRefresh()
+				Self.reloadWidgets()
+				#if DEBUG
+				RecitationHarness.runLaunchURLs { Self.openAyah(from: $0) }
+				#endif
+			}
+			.onOpenURL { url in
+				#if DEBUG
+				if RecitationHarness.handle(url) { return }
+				#endif
+				Self.openAyah(from: url)
+			}
+	}
+
+	/// True for `-taqvoWidgetPreview 1` (which lands in `UserDefaults`' argument domain) and for
+	/// `SIMCTL_CHILD_TAQVO_WIDGET_PREVIEW=1`, since `simctl launch` swallows some leading-dash
+	/// arguments before the app ever sees them.
+	static var widgetPreviewRequested: Bool {
+		#if DEBUG
+		if UserDefaults.standard.bool(forKey: "taqvoWidgetPreview") { return true }
+		if ProcessInfo.processInfo.arguments.contains("-taqvoWidgetPreview") { return true }
+		return ProcessInfo.processInfo.environment["TAQVO_WIDGET_PREVIEW"] == "1"
+		#else
+		return false
+		#endif
+	}
+
+	/// Which widgets the route draws: `all` (the default) or `ayah`, from
+	/// `-taqvoWidgetPreviewSection ayah`. The ayah card's Large family is 382 pt tall, so the two
+	/// families plus the four prayer ones do not fit one screenshot, and `simctl` cannot scroll.
+	///
+	/// `#if DEBUG` like its caller: the `UserDefaults.standard` read is the app's only one, and a
+	/// release binary that does not make it has one fewer required-reason API to declare.
+	#if DEBUG
+	static var widgetPreviewSection: String {
+		UserDefaults.standard.string(forKey: "taqvoWidgetPreviewSection")
+			?? ProcessInfo.processInfo.environment["TAQVO_WIDGET_PREVIEW_SECTION"]
+			?? "all"
+	}
+	#endif
+
+	/// The ayah widget's tap target (design spec §7-8): `taqvo://ayah/<surah>/<ayah>`, set as the
+	/// widget's `widgetURL`. Anything else on the `taqvo` scheme is ignored rather than guessed at,
+	/// so a future link shape cannot silently open the wrong ayah.
+	///
+	/// `LaunchRequests` only *records* the request; `App` collects it and pushes the reader (or the
+	/// Mushaf page, in Mushaf mode). That indirection is what makes a cold launch work — the
+	/// request is set here, before `ContentView`'s composition exists to navigate.
+	static func openAyah(from url: URL) {
+		guard url.scheme == "taqvo", url.host == "ayah" else { return }
+		let parts = url.pathComponents.filter { $0 != "/" }
+		guard parts.count == 2, let surah = Int32(parts[0]), let ayah = Int32(parts[1]) else { return }
+		// A malformed or stale widget URL (e.g. a surah number outside the Quran's own range)
+		// must not reach `openAyahFromWidget`, which trusts its arguments rather than re-validating.
+		guard (1...114).contains(surah), ayah >= 1 else { return }
+		LaunchRequests_iosKt.openAyahFromWidget(surah: surah, ayah: ayah)
+	}
+
+	static func handleAppRefresh(task: BGAppRefreshTask) {
+		scheduleNextRefresh()
+		task.expirationHandler = { task.setTaskCompleted(success: false) }
+		DispatchQueue.global(qos: .background).async {
+			let success = BackgroundRefreshBridge.shared.runBackgroundRefresh()
+			reloadWidgets()
+			task.setTaskCompleted(success: success)
+		}
+	}
+
+	static func scheduleNextRefresh() {
+		let request = BGAppRefreshTaskRequest(identifier: refreshTaskId)
+		// Six hours, not a day: the task now also notices a journey (spec §16.5), and iOS decides
+		// the actual moment anyway — a shorter earliest date only gives it more chances.
+		request.earliestBeginDate = Date(timeIntervalSinceNow: 6 * 60 * 60)
+		try? BGTaskScheduler.shared.submit(request)
+	}
+
+	/// `refreshWidgets()` is `expect`/`actual` in shared code, but `WidgetCenter` is Swift-only, so
+	/// the iOS actual is a hook the app fills in here — the one place that can actually make the
+	/// call. `PrayerViewModel.refresh()` runs once a second, so the hook does the de-duplication
+	/// Kotlin cannot: it reloads only when the serialised snapshot has genuinely changed.
+	static func installWidgetRefreshHook() {
+		WidgetRefreshBridge.shared.onRefresh = { reloadWidgets() }
+	}
+
+	/// Settings › Widgets and the Settings root ask which Taqvo widgets are placed; `WidgetCenter` is
+	/// the only thing that knows, it is Swift-only, and it answers asynchronously, so the shared code
+	/// hands over a completion and this fills it in.
+	///
+	/// It hands back the kind of every placed widget, or nil when WidgetKit failed, and the shared
+	/// side decides which widget each kind is (`WidgetPlacement.ios.kt`, where that is tested): the
+	/// Lock Screen widget is a kind of its own and must never read as the prayer widget on the Home
+	/// Screen. The `answered` guard is not defensive dressing: `getCurrentConfigurations` is not
+	/// contractually single-shot, and the Kotlin side treats a second resume as a programming error.
+	/// A failure is "cannot tell", which shows no status and offers nothing, never "placed".
+	static func installWidgetPlacementHook() {
+		WidgetPlacement_iosKt.iosWidgetPlacementHook = { completion in
+			var answered = false
+			let answer: ([String]?) -> Void = { kinds in
+				guard !answered else { return }
+				answered = true
+				// A Kotlin function type returns Unit, which reaches Swift as a KotlinUnit that says
+				// nothing; it is dropped here by name so the build does not warn about it.
+				_ = completion(kinds)
+			}
+			WidgetCenter.shared.getCurrentConfigurations { result in
+				switch result {
+				case .success(let widgets):
+					answer(widgets.map { $0.kind })
+				case .failure:
+					answer(nil)
+				}
+			}
+		}
+	}
+
+	/// Only ever read or written on the main thread — see `reloadWidgets()`. Covers every mirror a
+	/// widget draws from: the prayer snapshot, the background choice *and* the ayah pool. Each was
+	/// added because leaving it out made a real change invisible — the background choice used to
+	/// be missing, so picking Light or Dark for the widget background (Settings › Widgets now,
+	/// Appearance then) did nothing on the home screen until WidgetKit's hourly reload happened to
+	/// come round, and the ayah pool used to be missing, so switching translation left the old one
+	/// on the ayah card until its timeline ran out a week later. Anything a widget reads out of the
+	/// App Group has to be represented here.
+	private static var lastMirrorKey: String?
+
+	/// `reloadWidgets()` is reached from a Kotlin-invoked closure (`PrayerViewModel.refresh()` runs
+	/// on whatever dispatcher it is collected on) and from the background-task queue in
+	/// `handleAppRefresh`, so neither the `lastSnapshot` dedupe nor `WidgetCenter` can assume the
+	/// main thread. Everything below therefore runs on it: inline when it already is, and
+	/// synchronously otherwise so callers that sequence work after a reload — `handleAppRefresh`
+	/// calls `task.setTaskCompleted` next — still see it finished. `sync` cannot deadlock here
+	/// because it is never reached from the main thread (that branch runs inline) and the main
+	/// thread never blocks on these callers.
+	private static func onMain(_ work: () -> Void) {
+		if Thread.isMainThread {
+			work()
+		} else {
+			DispatchQueue.main.sync(execute: work)
+		}
+	}
+
+	static func reloadWidgets() {
+		onMain {
+			let defaults = UserDefaults(suiteName: taqvoAppGroupId)
+			let snapshot = defaults?.string(forKey: taqvoSnapshotKey)
+			let background = defaults?.string(forKey: taqvoBackgroundKey)
+			// The ayah pool mirror is ~30 KB, so it is folded in by hash and length rather than
+			// concatenated whole — this key is rebuilt once a second by `PrayerViewModel.refresh()`.
+			// `hashValue` is per-process seeded, which is fine: `lastMirrorKey` never outlives the
+			// process either, and a fresh process reloading once more is the harmless direction.
+			let ayah = defaults?.string(forKey: AyahPoolMirror.companion.KEY) ?? ""
+			let key = (snapshot ?? "") + "|" + (background ?? "")
+				+ "|" + String(ayah.hashValue) + "|" + String(ayah.count)
+			guard key != lastMirrorKey else { return }
+			lastMirrorKey = key
+			WidgetCenter.shared.reloadAllTimelines()
+		}
+	}
+}
+
+#if DEBUG
+import MediaPlayer
+
+/// Debug-only remote control for the recitation player, the iOS twin of `androidApp`'s
+/// `RecitationHarnessReceiver`: slice 3a task 3 has to be verified on a simulator before task 4
+/// gives recitation any UI. `#if DEBUG`, so none of it is in a shipping build.
+///
+/// It rides the `taqvo` URL scheme the widget already registers, because that is the only channel
+/// `simctl` has into a running app:
+///
+/// ```
+/// xcrun simctl openurl <udid> "taqvo://recite/load?surah=36&ayah=1&reciter=ar.alafasy"
+/// xcrun simctl openurl <udid> "taqvo://recite/next"
+/// ```
+///
+/// Commands: `load` (with `translation=en.sahih` to read that translation aloud after each ayah),
+/// `play`, `pause`, `toggle`, `next`, `prev`, `seek?ayah=n`, `stop`, `state`, `nowplaying` (dumps
+/// `MPNowPlayingInfoCenter`), `reconcile`, `voices` (what this phone's voices answer for every
+/// bundled language), `speech?translation=<id>` (read-aloud changed while a surah plays; `none`
+/// turns it off). Everything is `NSLog`ged with the prefix `TaqvoHarness`, which is how the ayah
+/// boundary, the gap and the translation are actually measured:
+///
+/// ```
+/// xcrun simctl spawn <udid> log show --last 2m --predicate 'eventMessage CONTAINS "TaqvoHarness"'
+/// ```
+enum RecitationHarness {
+
+	private static var watcher: Timer?
+	private static var last: String = ""
+	private static var launchURLsRun = false
+
+	/// The URLs in `TAQVO_HARNESS_URLS` (`SIMCTL_CHILD_TAQVO_HARNESS_URLS="url url …" xcrun simctl launch …`),
+	/// each handled as `onOpenURL` would, two seconds after launch and a second and a half apart. iOS 27 asks
+	/// "Open in Taqvo?" before `simctl openurl` reaches the app, which no script can answer, so the store and
+	/// README captures relaunch with their URLs instead. Once per process: `onAppear` can run again.
+	static func runLaunchURLs(openAyah: @escaping (URL) -> Void) {
+		guard !launchURLsRun, let list = ProcessInfo.processInfo.environment["TAQVO_HARNESS_URLS"] else { return }
+		launchURLsRun = true
+		let urls = list.split(separator: " ").compactMap { URL(string: String($0)) }
+		for (i, url) in urls.enumerated() {
+			DispatchQueue.main.asyncAfter(deadline: .now() + 2 + 1.5 * Double(i)) {
+				NSLog("TaqvoHarness launch url %@", url.absoluteString)
+				if !handle(url) { openAyah(url) }
+			}
+		}
+	}
+
+	/// True if this URL was a harness command, so the real `taqvo://ayah/...` route never sees it.
+	static func handle(_ url: URL) -> Bool {
+		guard url.scheme == "taqvo", url.host == "recite" else { return false }
+		let command = url.pathComponents.filter { $0 != "/" }.first ?? ""
+		let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+		func value(_ name: String) -> String? { query.first { $0.name == name }?.value }
+		func number(_ name: String, _ fallback: Int32) -> Int32 {
+			value(name).flatMap { Int32($0) } ?? fallback
+		}
+		let player = AppContainerKt.appContainer.recitationPlayer
+		let reciterId = value("reciter") ?? "ar.alafasy"
+		let surah = number("surah", 1)
+		let ayah = number("ayah", 1)
+		NSLog("TaqvoHarness cmd=\(command) reciter=\(reciterId) surah=\(surah) ayah=\(ayah)")
+		switch command {
+		case "load":
+			watch()
+			let playWith = reciter(reciterId, gapMs: number("gap", -1))
+			let text = NowPlayingText(
+				title: "Surah \(surah)",
+				subtitle: "Mishary Rashid Alafasy",
+				previousAyahLabel: "",
+				nextAyahLabel: ""
+			)
+			// Read-aloud (spec §5.6): the translation read after each ayah, if the phone has a
+			// voice for its language.
+			if let id = value("translation") {
+				spoken(id, surah: surah) { speech in
+					NSLog("TaqvoHarness speech \(speech?.translationId ?? "none") \(speech?.texts.count ?? 0)")
+					player.load(reciter: playWith, surah: surah, startAyah: ayah, text: text, speech: speech) { _ in }
+				}
+			} else {
+				player.load(reciter: playWith, surah: surah, startAyah: ayah, text: text, speech: nil) { _ in }
+			}
+		// Read-aloud live (spec §2): `speech?translation=fr.hamidullah`, or `none` for off.
+		case "speech":
+			let id = value("translation") ?? "none"
+			let surahNow = (player.state.value as? PlaybackState)?.surah?.int32Value ?? surah
+			if id == "none" {
+				NSLog("TaqvoHarness setSpeech none")
+				player.setSpeech(speech: nil)
+			} else {
+				spoken(id, surah: surahNow) { speech in
+					NSLog("TaqvoHarness setSpeech \(speech?.translationId ?? "none") \(speech?.texts.count ?? 0)")
+					player.setSpeech(speech: speech)
+				}
+			}
+		// Read-aloud (spec §4): what this phone's voices answer for every bundled language.
+		case "voices":
+			for language in ["en", "ar", "fr", "tr", "id", "ur", "bn"] {
+				AppContainerKt.appContainer.speechVoices.status(language: language) { status, error in
+					NSLog("TaqvoHarness voice \(language) \(status.map { "\($0)" } ?? "failed: \(String(describing: error))")")
+				}
+			}
+		case "play": player.play()
+		case "pause": player.pause()
+		case "toggle": player.toggle()
+		case "next": player.next()
+		case "prev": player.previous()
+		case "seek": player.seekToAyah(n: ayah)
+		case "stop": player.stop()
+		case "state": NSLog("TaqvoHarness state \(player.state.value as Any)")
+		case "nowplaying": logNowPlaying()
+		case "reconcile":
+			AppContainerKt.appContainer.recitationLibrary.reconcile { _ in
+				NSLog("TaqvoHarness reconciled \(reciterId)")
+			}
+		case "refresh":
+			// The background refresh task's body, run on demand after `simctl location set`.
+			DispatchQueue.global(qos: .background).async {
+				let ok = BackgroundRefreshBridge.shared.runBackgroundRefresh()
+				NSLog("TaqvoHarness background refresh ok=\(ok)")
+			}
+		// The store-screenshot run: `taqvo://recite/screen?name=qibla`, `.../theme?name=dark`,
+		// `.../mode?name=mushaf` open a screen, set the theme or the reading mode by name.
+		case "screen":
+			LaunchRequests.shared.openScreen(name: value("name") ?? "prayer")
+		// `taqvo://recite/search?q=%D8%A7%D9%84%D8%B5%D9%84%D8%A7%D8%A9` types a Quran search
+		// (open the quran screen first): the results are something a simulator run has to see.
+		case "search":
+			LaunchRequests.shared.search(query: value("q") ?? "")
+		// What iOS is actually holding: every pending notification whose id starts with
+		// `prefix` (default: all), soonest first. `taqvo://recite/pending?prefix=TAHAJJUD`.
+		case "pending":
+			let prefix = value("prefix") ?? ""
+			UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+				let mine = requests.filter { $0.identifier.hasPrefix(prefix) }
+					.sorted { (($0.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate() ?? .distantFuture) < (($1.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate() ?? .distantFuture) }
+				NSLog("TaqvoHarness pending total=\(requests.count) matching=\(mine.count)")
+				for request in mine.prefix(6) {
+					let at = (request.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate()
+					NSLog("TaqvoHarness pending \(request.identifier) at=\(String(describing: at)) title=\(request.content.title) body=\(request.content.body) sound=\(String(describing: request.content.sound))")
+				}
+			}
+		// `taqvo://recite/tahajjud?name=on` (or off): the settings toggle, for the screenshot run.
+		case "tahajjud":
+			AppContainerKt.appContainer.setTahajjud(on: value("name") == "on") { _ in }
+		case "theme":
+			let mode: ThemeMode = value("name") == "dark" ? .dark : (value("name") == "light" ? .light : .system)
+			AppContainerKt.appContainer.settingsRepository.setThemeMode(mode: mode) { _ in }
+		case "mode":
+			let mode: ReadingMode = value("name") == "mushaf" ? .mushaf : .translation
+			AppContainerKt.appContainer.settingsRepository.setReadingMode(mode: mode) { _ in }
+		case "translation":
+			AppContainerKt.appContainer.settingsRepository.setTranslation(id: value("id") ?? "en.sahih") { _ in }
+		default: NSLog("TaqvoHarness unknown command \"\(command)\"")
+		}
+		return true
+	}
+
+	/// The lock screen's own copy of what is playing. Logged rather than looked at, because a
+	/// simulator's lock screen cannot be reached from `simctl`.
+	static func logNowPlaying() {
+		guard let info = MPNowPlayingInfoCenter.default().nowPlayingInfo else {
+			NSLog("TaqvoHarness nowPlayingInfo is nil")
+			return
+		}
+		let artwork = info[MPMediaItemPropertyArtwork] as? MPMediaItemArtwork
+		NSLog("""
+			TaqvoHarness nowPlayingInfo keys=\(info.keys.count) \
+			title=\(info[MPMediaItemPropertyTitle] ?? "nil") \
+			artist=\(info[MPMediaItemPropertyArtist] ?? "nil") \
+			duration=\(info[MPMediaItemPropertyPlaybackDuration] ?? "nil") \
+			elapsed=\(info[MPNowPlayingInfoPropertyElapsedPlaybackTime] ?? "nil") \
+			rate=\(info[MPNowPlayingInfoPropertyPlaybackRate] ?? "nil") \
+			artwork=\(artwork.map { "\($0.bounds.size)" } ?? "nil")
+			""")
+		let centre = MPRemoteCommandCenter.shared()
+		NSLog("""
+			TaqvoHarness commands play=\(centre.playCommand.isEnabled) \
+			pause=\(centre.pauseCommand.isEnabled) toggle=\(centre.togglePlayPauseCommand.isEnabled) \
+			next=\(centre.nextTrackCommand.isEnabled) prev=\(centre.previousTrackCommand.isEnabled) \
+			seek=\(centre.changePlaybackPositionCommand.isEnabled) \
+			skipFwd=\(centre.skipForwardCommand.isEnabled)
+			""")
+	}
+
+	/// `StateFlow` cannot be collected from Swift, so the state is polled and logged on change —
+	/// which is all the ayah-boundary measurement needs, at four times the player's own tick.
+	private static func watch() {
+		guard watcher == nil else { return }
+		watcher = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+			let state = AppContainerKt.appContainer.recitationPlayer.state.value as! PlaybackState
+			let line = "ayah=\(state.ayah?.intValue ?? -1)/\(state.ayahCount) "
+				+ "playing=\(state.playing) speaking=\(state.speaking) "
+				+ "pos=\(state.positionMs) dur=\(state.durationMs) "
+				+ "clock=\(state.surahPositionMs)/\(state.surahDurationMs) "
+				+ "surah=\(state.surah?.intValue ?? -1)"
+			guard line != last else { return }
+			last = line
+			NSLog("TaqvoHarness state \(line)")
+		}
+	}
+
+	/// `buildSpokenTranslation` for the harness. Its completion can arrive on whichever thread the
+	/// last of its reads finished on, and the player is driven from the main thread only, so the
+	/// answer is handed on from the main queue.
+	private static func spoken(_ id: String, surah: Int32, then: @escaping (SpokenTranslation?) -> Void) {
+		SpokenTranslationKt.buildSpokenTranslation(
+			quran: AppContainerKt.appContainer.quranRepository,
+			voices: AppContainerKt.appContainer.speechVoices,
+			translationId: id,
+			surah: surah
+		) { speech, error in
+			if let error = error { NSLog("TaqvoHarness speech \(id) failed: \(error)") }
+			DispatchQueue.main.async { then(speech) }
+		}
+	}
+
+	/// The id and the gap are all playback reads of a `Reciter`; the rest is manifest data.
+	private static func reciter(_ id: String, gapMs: Int32) -> Reciter {
+		let launch = Reciters.shared.LAUNCH.first { $0.id == id }
+		return Reciter(
+			id: id,
+			nameEn: id,
+			nameAr: id,
+			style: "murattal",
+			kbps: 64,
+			gapMs: gapMs >= 0 ? gapMs : (launch?.gapMs ?? 300),
+			hue: launch?.hue.name ?? "AMBER",
+			photo: nil,
+			release: "audio-\(id)-v1",
+			totalBytes: 0,
+			surahs: []
+		)
+	}
+}
+#endif
