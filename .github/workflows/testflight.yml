@@ -9,7 +9,7 @@ name: TestFlight
 # Repository secrets:
 #   ASC_KEY_ID      the key's ID
 #   ASC_ISSUER_ID   the issuer ID shown above the keys list
-#   ASC_KEY_P8      the AuthKey_<id>.p8 file, base64-encoded (base64 -i AuthKey_XXXX.p8)
+#   ASC_KEY_P8      the AuthKey_<id>.p8 file's contents, pasted as-is (or base64-encoded)
 on:
   workflow_dispatch:
     inputs:
@@ -61,7 +61,12 @@ jobs:
         run: |
           [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_KEY_P8" ] || { echo "ASC_KEY_ID and ASC_KEY_P8 secrets are required" >&2; exit 1; }
           key="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
-          echo "$ASC_KEY_P8" | base64 --decode > "$key"
+          # The .p8 pasted as-is, or base64-encoded.
+          if printf '%s' "$ASC_KEY_P8" | grep -q "BEGIN PRIVATE KEY"; then
+            printf '%s\n' "$ASC_KEY_P8" > "$key"
+          else
+            printf '%s' "$ASC_KEY_P8" | base64 --decode > "$key"
+          fi
           echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
       - name: Archive and upload
         env:
