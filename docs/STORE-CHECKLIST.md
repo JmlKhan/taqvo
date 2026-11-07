@@ -17,7 +17,7 @@ accounts on day one: the App Store can be live within about a week, Google Play 
   signed with the upload key, and the version the iOS archive carries too. Every later store
   build takes the next code (29, 30, …); codes 18–27 were device builds and never left the Mac.
 - **Public identity:** seller/developer name "Mohamed Abulgasem" on both stores (Apple shows an
-  individual's legal name; Play matches it), public contact email **support@taqwa.world**
+  individual's legal name; Play matches it), public contact email **jmlkhon17@gmail.com**
   (already forwards to Gmail), website https://taqwa.world, privacy policy
   https://taqwa.world/privacy/ (App Store localisations may use https://taqwa.world/<lang>/privacy/).
   mohamed.abulgasem.ly@gmail.com is the login, not the public contact.
@@ -170,7 +170,7 @@ accounts on day one: the App Store can be live within about a week, Google Play 
 1. https://play.google.com/console/signup, signed in as the new account → **Yourself** (a
    personal account; an organisation would need a D-U-N-S number).
 2. Developer account details: **developer name** "Mohamed Abulgasem" (public), legal name and
-   address exactly as on the ID and the card, **contact email** support@taqwa.world (Google sends
+   address exactly as on the ID and the card, **contact email** jmlkhon17@gmail.com (Google sends
    a code there; it lands in Gmail), contact phone (SMS code), preferred language.
 3. "About you": no other developer accounts (the one closed in April 2024 is history), one app,
    free, personal project.
@@ -267,7 +267,7 @@ costs days.
    safety (does not collect or share any user data); Government app (no); Financial features
    (none); Health (none); Advertising ID (no); **Foreground service permissions** (mediaPlayback
    and dataSync, each with a sentence from STORE-PRIVACY and the YouTube link); Store settings
-   (category Lifestyle, tags, contact email support@taqwa.world, website).
+   (category Lifestyle, tags, contact email jmlkhon17@gmail.com, website).
 3. **Main store listing**: title, short and full description, the 512 icon, the feature graphic
    (`assets/store/feature-graphic-en.png`), 4–8 phone screenshots; then Manage translations →
    Add languages for ar, fr, tr, id, ur, bn with their own text and screenshots (and the Arabic

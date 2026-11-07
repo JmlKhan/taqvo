@@ -50,7 +50,7 @@ Tersedia dalam bahasa Inggris, Arab, Prancis, Turki, Indonesia, Urdu, dan Bengal
 Waktu salat dari mesin milik Taqvo sendiri; arah kiblat memakai pustaka Adhan. Teks Al-Qur’an dari Tanzil Project. Teks zikir dari OpenDua. Tilawah dari Islamic Network, dilisensikan oleh para qari untuk penyebaran gratis. Taqvo tidak berafiliasi dengan otoritas keagamaan yang jadwalnya diikutinya.
 
 Situs web: https://taqwa.world/id/
-Dukungan: support@taqwa.world
+Dukungan: jmlkhon17@gmail.com
 
 ### Release notes (500)
 Yang baru di versi 1.5.0:

@@ -57,7 +57,7 @@ When the app starts and a report exists that has not yet been offered, the root 
 a bottom sheet (the app's `TaqvoBottomSheet`, same chrome as every other sheet):
 
 - Title: **Taqvo closed unexpectedly** (`crash_sheet_title`)
-- Body: *A technical report was saved on your phone. Sending it to support@taqwa.world helps fix
+- Body: *A technical report was saved on your phone. Sending it to jmlkhon17@gmail.com helps fix
   the problem. It contains the app version, your phone model and the error, nothing else.*
   (`crash_sheet_body`)
 - Primary pill: **Send report** (`crash_send`) — opens the mail app (§4) and marks the report as
@@ -87,7 +87,7 @@ A `mailto:` URL opened through `LocalUriHandler`, which hands it to the phone's 
 recipient, subject and body filled in. The person reads what is about to be sent and taps Send
 there; the app never sends anything itself.
 
-- To: `support@taqwa.world` (`AboutLinks.SUPPORT_EMAIL`, the same address as the site and the
+- To: `jmlkhon17@gmail.com` (`AboutLinks.SUPPORT_EMAIL`, the same address as the site and the
   policy).
 - Subject: `Taqvo report · 1.0.0 (20) · Android` (not localised; it is read by support).
 - Body: the report, compacted to fit what mail apps accept from a link. The header lines are

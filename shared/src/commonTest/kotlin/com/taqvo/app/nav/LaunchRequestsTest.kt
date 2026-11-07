@@ -184,7 +184,7 @@ class LaunchRequestsTest {
         val handler = ownLinkUriHandler(object : UriHandler {
             override fun openUri(uri: String) = throw IllegalStateException("nothing opens mailto")
         })
-        assertFailsWith<IllegalStateException> { handler.openUri("mailto:support@taqwa.world") }
+        assertFailsWith<IllegalStateException> { handler.openUri("mailto:jmlkhon17@gmail.com") }
         assertFalse(LaunchRequests.leavingForOwnLink())
     }
 }

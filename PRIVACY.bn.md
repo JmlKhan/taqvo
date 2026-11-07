@@ -89,5 +89,5 @@ iPhone-এ কণ্ঠ যোগ করতে হয় ফোনের সে�
 
 ## যোগাযোগ
 
-আমাদের support@taqwa.world-এ ইমেইল করুন, অথবা github.com/MohamedAbulgasem/Taqwa/issues ঠিকানায় একটি
+আমাদের jmlkhon17@gmail.com-এ ইমেইল করুন, অথবা github.com/MohamedAbulgasem/Taqwa/issues ঠিকানায় একটি
 ইস্যু খুলুন।

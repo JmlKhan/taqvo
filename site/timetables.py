@@ -46,7 +46,7 @@ NEARBY_KM = 900
 AT_KAABA_KM = 5
 MAX_SAME_COUNTRY = 14
 MAX_NEARBY = 6
-SUPPORT_EMAIL = "support@taqwa.world"
+SUPPORT_EMAIL = "jmlkhon17@gmail.com"
 
 MIHRAB = ('<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.56 12.6V8.13c0-2.32 1.38-3.94 3.44-4.75 '
           '2.06.81 3.44 2.43 3.44 4.75v4.47" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" '

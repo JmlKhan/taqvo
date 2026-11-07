@@ -217,7 +217,7 @@
 
     <!-- Çökme raporu: çökmeden sonraki açılışta gösterilen sayfa ve gönderilecek rapor olmadığında e-postadaki satır. -->
     <string name="crash_sheet_title">Taqvo beklenmedik şekilde kapandı</string>
-    <string name="crash_sheet_body">Telefonunuza teknik bir rapor kaydedildi. Bunu support@taqwa.world adresine göndermeniz sorunun düzeltilmesine yardımcı olur. Raporda yalnızca uygulama sürümü, telefonunuzun modeli ve hata bilgisi bulunur.</string>
+    <string name="crash_sheet_body">Telefonunuza teknik bir rapor kaydedildi. Bunu jmlkhon17@gmail.com adresine göndermeniz sorunun düzeltilmesine yardımcı olur. Raporda yalnızca uygulama sürümü, telefonunuzun modeli ve hata bilgisi bulunur.</string>
     <string name="crash_send">Raporu gönder</string>
     <string name="crash_not_now">Şimdi değil</string>
     <string name="crash_mail_no_report">Bu telefonda kayıtlı bir çökme raporu yok.</string>

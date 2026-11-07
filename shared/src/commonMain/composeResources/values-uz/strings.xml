@@ -177,7 +177,7 @@
     <string name="about_open_source_label">OCHIQ KOD</string>
     <string name="about_help_label">YORDAM</string>
     <string name="crash_sheet_title">Taqvo kutilmaganda yopildi</string>
-    <string name="crash_sheet_body">Telefoningizda texnik hisobot saqlandi. Uni support@taqwa.world manziliga yuborish muammoni tuzatishga yordam beradi. Unda ilova versiyasi, telefoningiz modeli va xato bor, boshqa hech narsa yo‘q.</string>
+    <string name="crash_sheet_body">Telefoningizda texnik hisobot saqlandi. Uni jmlkhon17@gmail.com manziliga yuborish muammoni tuzatishga yordam beradi. Unda ilova versiyasi, telefoningiz modeli va xato bor, boshqa hech narsa yo‘q.</string>
     <string name="crash_send">Hisobotni yuborish</string>
     <string name="crash_not_now">Hozir emas</string>
     <string name="crash_mail_no_report">Bu telefonda nosozlik hisoboti saqlanmagan.</string>

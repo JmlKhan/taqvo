@@ -53,7 +53,7 @@ Disponible en anglais, arabe, français, turc, indonésien, ourdou et bengali.
 Horaires calculés par le moteur propre à Taqvo ; direction de la qibla par la bibliothèque Adhan. Texte du Coran du Projet Tanzil. Textes des adhkar d’OpenDua. Récitations de l’Islamic Network, concédées par les récitateurs pour une diffusion gratuite. Taqvo n’est pas affiliée aux autorités religieuses dont elle suit les calendriers.
 
 Site web : https://taqwa.world/fr/
-Assistance : support@taqwa.world
+Assistance : jmlkhon17@gmail.com
 
 ### Release notes (500)
 Nouveautés de la 1.5.0 :

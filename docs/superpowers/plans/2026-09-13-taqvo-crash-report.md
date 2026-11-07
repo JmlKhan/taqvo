@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - No new dependencies. No network. The report holds only: app version and build, platform, device, language tag, thread name, the exception and its trace.
-- Support address is `support@taqwa.world`, one constant (`AboutLinks.SUPPORT_EMAIL`).
+- Support address is `jmlkhon17@gmail.com`, one constant (`AboutLinks.SUPPORT_EMAIL`).
 - File cap 16 000 characters; mail body cap 1 800 characters; the marker is `… (trimmed)`.
 - Every new string exists in `values/strings.xml` and `values-ar/strings.xml` (`scripts/check-strings.sh` must pass).
 - Run `scripts/test.sh` (both targets) before merging. The temporary crash trigger is reverted before merge.
@@ -352,7 +352,7 @@ class CrashLogStore(private val dir: Path, private val fs: FileSystem = FileSyst
 - Test: `shared/src/commonTest/kotlin/com/taqvo/app/crash/ReportMailTest.kt`
 
 **Interfaces:**
-- Produces: `object ReportMail { const val BODY_MAX = 1_800; fun subject(info: DeviceInfo): String; fun body(info: DeviceInfo, report: CrashReport?, noReportLine: String): String; fun mailto(to: String, subject: String, body: String): String; fun percentEncode(s: String): String }`; `AboutLinks.SUPPORT_EMAIL = "support@taqwa.world"`.
+- Produces: `object ReportMail { const val BODY_MAX = 1_800; fun subject(info: DeviceInfo): String; fun body(info: DeviceInfo, report: CrashReport?, noReportLine: String): String; fun mailto(to: String, subject: String, body: String): String; fun percentEncode(s: String): String }`; `AboutLinks.SUPPORT_EMAIL = "jmlkhon17@gmail.com"`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -383,8 +383,8 @@ class ReportMailTest {
 
     @Test
     fun mailtoCarriesRecipientSubjectAndBody() {
-        val url = ReportMail.mailto("support@taqwa.world", "Hi there", "line 1\nline 2")
-        assertEquals("mailto:support@taqwa.world?subject=Hi%20there&body=line%201%0Aline%202", url)
+        val url = ReportMail.mailto("jmlkhon17@gmail.com", "Hi there", "line 1\nline 2")
+        assertEquals("mailto:jmlkhon17@gmail.com?subject=Hi%20there&body=line%201%0Aline%202", url)
     }
 
     @Test
@@ -470,7 +470,7 @@ object ReportMail {
 }
 ```
 
-And in `AboutLinks`: `const val SUPPORT_EMAIL = "support@taqwa.world"`.
+And in `AboutLinks`: `const val SUPPORT_EMAIL = "jmlkhon17@gmail.com"`.
 
 - [ ] **Step 4: Run, expect pass**
 - [ ] **Step 5: Commit** — `git commit -m "crash: the support email, encoded and trimmed"`
@@ -686,7 +686,7 @@ English:
 ```xml
     <!-- Crash report (crash spec §3). -->
     <string name="crash_sheet_title">Taqvo closed unexpectedly</string>
-    <string name="crash_sheet_body">A technical report was saved on your phone. Sending it to support@taqwa.world helps fix the problem. It contains the app version, your phone model and the error, nothing else.</string>
+    <string name="crash_sheet_body">A technical report was saved on your phone. Sending it to jmlkhon17@gmail.com helps fix the problem. It contains the app version, your phone model and the error, nothing else.</string>
     <string name="crash_send">Send report</string>
     <string name="crash_not_now">Not now</string>
     <string name="about_report_problem">Report a problem</string>
@@ -698,7 +698,7 @@ Arabic:
 ```xml
     <!-- تقرير الأعطال -->
     <string name="crash_sheet_title">أُغلق تقوى بشكل غير متوقع</string>
-    <string name="crash_sheet_body">حُفظ تقرير تقني على هاتفك. إرساله إلى support@taqwa.world يساعد على إصلاح المشكلة. يحتوي على إصدار التطبيق وطراز هاتفك والخطأ، لا غير.</string>
+    <string name="crash_sheet_body">حُفظ تقرير تقني على هاتفك. إرساله إلى jmlkhon17@gmail.com يساعد على إصلاح المشكلة. يحتوي على إصدار التطبيق وطراز هاتفك والخطأ، لا غير.</string>
     <string name="crash_send">إرسال التقرير</string>
     <string name="crash_not_now">ليس الآن</string>
     <string name="about_report_problem">الإبلاغ عن مشكلة</string>
@@ -808,6 +808,6 @@ AR: *إذا تعطّل تقوى، يحفظ تقريرًا تقنيًا على ه
 ### Task 6: Device proof on both platforms, then merge
 
 - [ ] **Step 1:** A temporary commit adds a **Crash now** row to About that throws `IllegalStateException("Deliberate test crash")`.
-- [ ] **Step 2 (Android, S23):** signed release build; open About › Crash now; the app dies; relaunch; the sheet appears; Send opens Gmail with To support@taqwa.world, the subject, and the body starting with the header; Back; relaunch: no sheet (offered). Kill and relaunch once more: still no sheet. About › Report a problem: body carries the report. Then Arabic: crash again, sheet in Arabic, Not now, no sheet after relaunch. Screenshots of the sheet in both languages.
+- [ ] **Step 2 (Android, S23):** signed release build; open About › Crash now; the app dies; relaunch; the sheet appears; Send opens Gmail with To jmlkhon17@gmail.com, the subject, and the body starting with the header; Back; relaunch: no sheet (offered). Kill and relaunch once more: still no sheet. About › Report a problem: body carries the report. Then Arabic: crash again, sheet in Arabic, Not now, no sheet after relaunch. Screenshots of the sheet in both languages.
 - [ ] **Step 3 (iOS):** `scripts/ios-build.sh` for the simulator (and the iPhone 12 if attached); Crash now; relaunch; the sheet; Send (on a device with Mail the composer opens; on the simulator `openURL` is a no-op and that is noted); Not now. Confirm `crash-report.txt` exists in the app container.
 - [ ] **Step 4:** Revert the temporary commit (`git revert`), `scripts/test.sh`, merge to main, push.

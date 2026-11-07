@@ -53,7 +53,7 @@ Türkçe, Arapça, İngilizce, Fransızca, Endonezce, Urduca ve Bengalce olarak 
 Namaz vakitleri Taqvo’nın kendi motoruyla hesaplanır; Kıble yönü Adhan kütüphanesiyle. Kur’an metni Tanzil Projesi’nden. Zikir metinleri OpenDua’dan. Tilavetler, karilerin ücretsiz dağıtım için lisansladığı Islamic Network kayıtlarından. Taqvo’nın, takvimlerini izlediği dinî kurumlarla bir bağı yoktur.
 
 Web sitesi: https://taqwa.world/tr/
-Destek: support@taqwa.world
+Destek: jmlkhon17@gmail.com
 
 ### Release notes (500)
 1.5.0 sürümündeki yenilikler:

@@ -55,7 +55,7 @@ Available in English, Arabic, French, Turkish, Indonesian, Urdu and Bengali.
 Prayer times from Taqvo's own engine; the Qibla bearing uses the Adhan library. Quran text from the Tanzil Project. Adhkar texts from OpenDua. Recitations from the Islamic Network, licensed by the reciters for free distribution. Taqvo is not affiliated with the religious authorities whose timetables it follows.
 
 Website: https://taqwa.world
-Support: support@taqwa.world
+Support: jmlkhon17@gmail.com
 
 ### Release notes (500)
 What's new in 1.5.0:

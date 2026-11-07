@@ -18,7 +18,7 @@ everyone work.
 - **A security problem.** Report it privately, as [SECURITY.md](SECURITY.md) describes, never in a
   public issue.
 - **Questions and help.** See [taqwa.world/support](https://taqwa.world/support/), or email
-  support@taqwa.world. Email is also the way in without a GitHub account.
+  jmlkhon17@gmail.com. Email is also the way in without a GitHub account.
 
 Before suggesting a feature, check the [Roadmap](README.md#roadmap). The mosque finder, zakat
 calculator, hadith collections, community features and anything that needs a server are
@@ -52,7 +52,7 @@ otherwise. In more detail:
 
 1. **Open an issue first** for anything beyond a small fix, so the approach can be agreed before
    you spend time on it. Bug reports are most useful with the device, OS version, language, and a
-   screenshot; without a GitHub account, email support@taqwa.world instead.
+   screenshot; without a GitHub account, email jmlkhon17@gmail.com instead.
 2. **Fork and branch** from `main`.
 3. **Keep [the constraints](#the-constraints).**
 4. **Run `./scripts/test.sh`** and add tests for domain logic. Prayer times are held to the gate:

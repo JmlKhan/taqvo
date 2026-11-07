@@ -14,7 +14,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 GROUP = "https://groups.google.com/g/taqvo-testers"
 OPT_IN = "https://play.google.com/apps/testing/com.taqvo.app"
 STORE = "https://play.google.com/store/apps/details?id=com.taqvo.app"
-MAIL = '<a href="mailto:support@taqwa.world?subject=Taqvo%20beta">support@taqwa.world</a>'
+MAIL = '<a href="mailto:jmlkhon17@gmail.com?subject=Taqvo%20beta">jmlkhon17@gmail.com</a>'
 
 COPY = {
     "en": dict(link="Join the Android beta", label="Android beta", h2="Help test Taqvo for Android before it reaches Google Play.",

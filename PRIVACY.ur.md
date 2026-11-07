@@ -91,5 +91,5 @@ docs.github.com/site-policy/privacy-policies/github-general-privacy-statement.
 
 ## رابطہ
 
-ہمیں support@taqwa.world پر ای میل کریں، یا github.com/MohamedAbulgasem/Taqwa/issues پر ایک
+ہمیں jmlkhon17@gmail.com پر ای میل کریں، یا github.com/MohamedAbulgasem/Taqwa/issues پر ایک
 اِشو کھولیں۔

@@ -302,7 +302,7 @@ One template for every class, in seven languages, at `/prayer-times/<slug>/` (En
 - The months full width; the switch row with the label left and the switch right; each month's head has
   the title and Hijri span left and the print button right; the table shows the Hijri column (≥ 1040 px).
 - The app section and, beside it, "More prayer times" (chips: All cities, How Taqvo checks) and
-  "Questions" (Support, support@taqwa.world) in a `1.25fr / 0.75fr` grid (B).
+  "Questions" (Support, jmlkhon17@gmail.com) in a `1.25fr / 0.75fr` grid (B).
 
 ### 3.3 "Where these times come from" (R97)
 

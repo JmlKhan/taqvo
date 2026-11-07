@@ -204,7 +204,7 @@
 
     <!-- Laporan kerusakan: lembar yang muncul saat aplikasi dibuka setelah rusak, dan baris email ketika tidak ada laporan untuk dikirim. -->
     <string name="crash_sheet_title">Taqvo tertutup mendadak</string>
-    <string name="crash_sheet_body">Laporan teknis telah disimpan di ponsel Anda. Mengirimnya ke support@taqwa.world membantu memperbaiki masalah ini. Isinya hanya versi aplikasi, model ponsel Anda, dan kesalahannya.</string>
+    <string name="crash_sheet_body">Laporan teknis telah disimpan di ponsel Anda. Mengirimnya ke jmlkhon17@gmail.com membantu memperbaiki masalah ini. Isinya hanya versi aplikasi, model ponsel Anda, dan kesalahannya.</string>
     <string name="crash_send">Kirim laporan</string>
     <string name="crash_not_now">Nanti saja</string>
     <string name="crash_mail_no_report">Tidak ada laporan kerusakan yang tersimpan di ponsel ini.</string>

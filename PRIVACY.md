@@ -89,4 +89,4 @@ version ships, with the date above updated.
 
 ## Contact
 
-Email support@taqwa.world, or open an issue at github.com/MohamedAbulgasem/Taqwa/issues.
+Email jmlkhon17@gmail.com, or open an issue at github.com/MohamedAbulgasem/Taqwa/issues.

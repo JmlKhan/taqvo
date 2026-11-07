@@ -83,4 +83,4 @@ Google. وعلى iOS، تُستثنى إعداداتك وعلاماتك وعدّ
 
 ## التواصل
 
-راسلنا على support@taqwa.world، أو افتح مشكلة على github.com/MohamedAbulgasem/Taqwa/issues.
+راسلنا على jmlkhon17@gmail.com، أو افتح مشكلة على github.com/MohamedAbulgasem/Taqwa/issues.

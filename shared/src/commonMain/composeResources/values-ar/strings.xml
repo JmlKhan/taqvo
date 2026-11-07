@@ -212,7 +212,7 @@
 
     <!-- تقرير الأعطال: الورقة التي تظهر عند التشغيل بعد عطل، وسطر البريد حين لا يوجد تقرير. -->
     <string name="crash_sheet_title">أُغلق تقفو بشكل غير متوقع</string>
-    <string name="crash_sheet_body">حُفظ تقرير تقني على هاتفك. إرساله إلى support@taqwa.world يساعد على إصلاح المشكلة. يحتوي على إصدار التطبيق وطراز هاتفك والخطأ، لا غير.</string>
+    <string name="crash_sheet_body">حُفظ تقرير تقني على هاتفك. إرساله إلى jmlkhon17@gmail.com يساعد على إصلاح المشكلة. يحتوي على إصدار التطبيق وطراز هاتفك والخطأ، لا غير.</string>
     <string name="crash_send">إرسال التقرير</string>
     <string name="crash_not_now">ليس الآن</string>
     <string name="crash_mail_no_report">لا يوجد تقرير أعطال محفوظ على هذا الهاتف.</string>

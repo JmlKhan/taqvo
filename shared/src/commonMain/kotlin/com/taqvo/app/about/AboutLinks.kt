@@ -10,7 +10,7 @@ package com.taqvo.app.about
  */
 object AboutLinks {
     /** Where "Report a problem" and the crash sheet address their email; the site and the policy say the same. */
-    const val SUPPORT_EMAIL = "support@taqwa.world"
+    const val SUPPORT_EMAIL = "jmlkhon17@gmail.com"
     const val WEBSITE = "https://taqwa.world/"
     const val PRIVACY_POLICY = "https://github.com/MohamedAbulgasem/Taqwa/blob/main/PRIVACY.md"
     const val SOURCE = "https://github.com/MohamedAbulgasem/Taqwa"

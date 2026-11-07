@@ -11,7 +11,7 @@ Report it privately, never in a public issue:
 
 - **On GitHub:** [Report a vulnerability](https://github.com/MohamedAbulgasem/Taqwa/security/advisories/new),
   on this repository's Security tab. Only you and the maintainer see the report.
-- **Without a GitHub account:** email support@taqwa.world with "Security" in the subject.
+- **Without a GitHub account:** email jmlkhon17@gmail.com with "Security" in the subject.
 
 Please include:
 

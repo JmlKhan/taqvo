@@ -24,8 +24,8 @@ class ReportMailTest {
 
     @Test
     fun mailtoCarriesRecipientSubjectAndBody() {
-        val url = ReportMail.mailto("support@taqwa.world", "Hi there", "line 1\nline 2")
-        assertEquals("mailto:support@taqwa.world?subject=Hi%20there&body=line%201%0Aline%202", url)
+        val url = ReportMail.mailto("jmlkhon17@gmail.com", "Hi there", "line 1\nline 2")
+        assertEquals("mailto:jmlkhon17@gmail.com?subject=Hi%20there&body=line%201%0Aline%202", url)
     }
 
     @Test

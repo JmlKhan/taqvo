@@ -364,7 +364,7 @@ time.
 
 No scholar has reviewed these; Mohamed asked and found no one. About cites the sources, the app follows
 only published authority methods and local majorities, and corrections are invited through
-support@taqwa.world.
+jmlkhon17@gmail.com.
 
 ## 5. Proving it
 

@@ -96,4 +96,4 @@ avant la sortie de cette version, et la date ci-dessus sera mise à jour.
 
 ## Contact
 
-Écrivez à support@taqwa.world, ou ouvrez un ticket sur github.com/MohamedAbulgasem/Taqwa/issues.
+Écrivez à jmlkhon17@gmail.com, ou ouvrez un ticket sur github.com/MohamedAbulgasem/Taqwa/issues.

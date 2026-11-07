@@ -71,7 +71,7 @@ store-readiness sweep (targetSdk 36, 0.16.0).
   on every phone (`bundle.language.enableSplit = false`); iOS carries the same seven as `.lproj`
   folders.
 - **Crash report (0.18.0):** an uncaught exception writes a text report on the phone; the next
-  launch offers, once, to email it to support@taqwa.world through the user's own mail app. Nothing
+  launch offers, once, to email it to jmlkhon17@gmail.com through the user's own mail app. Nothing
   is collected or sent automatically, so the data-safety and App Privacy answers are unchanged
   ("Data Not Collected"); the policy's paragraph on it exists in all seven languages.
 - **Read-aloud (1.0.0 (33)):** during recitation, the phone's own text-to-speech voice can read

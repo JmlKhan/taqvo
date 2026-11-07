@@ -93,4 +93,4 @@ menyatakannya sebelum versi itu dirilis, dengan tanggal di atas diperbarui.
 
 ## Kontak
 
-Kirim email ke support@taqwa.world, atau buka issue di github.com/MohamedAbulgasem/Taqwa/issues.
+Kirim email ke jmlkhon17@gmail.com, atau buka issue di github.com/MohamedAbulgasem/Taqwa/issues.
