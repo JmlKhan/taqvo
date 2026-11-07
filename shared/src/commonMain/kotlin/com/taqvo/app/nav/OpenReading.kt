@@ -5,11 +5,10 @@ package com.taqvo.app.nav
  * notification's "open the ayah being recited". [target] is a [Screen.Reader] or a
  * [Screen.Mushaf], already resolved by the caller.
  *
- * The rule that matters is where the Quran root ends up: at the **bottom** of the stack.
- * [Navigator.currentTab] is read from the bottom, and the player bar (spec 3a §5.3) is drawn only
- * while that tab is current — so a reader pushed on top of the Prayer tab, Quran root and all,
- * played its surah with no bar until the tab was left and re-entered. From another tab, or from a
- * stack shaped that way, the stack is therefore replaced with the Quran root first.
+ * The rule that matters is where the Quran root ends up: the nearest tab root under the reader.
+ * [Navigator.currentTab] is that root, and the player bar (spec 3a §5.3) is drawn only while it is
+ * the Quran — so from any other part of the app the stack is replaced with the feed and the Quran
+ * root first, and Back from the reader leads to the surah list and then home.
  *
  * On the Quran tab itself: a reading screen already on top is replaced rather than stacked (a
  * second widget tap, the same rule as the mode toggle), the root gets the reader pushed on it, and

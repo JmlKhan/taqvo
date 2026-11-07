@@ -102,6 +102,36 @@ val WallpaperDusk = WallpaperColors(
     accent = Color(0xFFF0B429),
 )
 
+/**
+ * The feed's text colours (feed spec §7), chosen in the text style editor. Like the wallpapers they
+ * sit on, they are not themed: the reader picks what reads on their wallpaper. "Auto" is not here:
+ * it is the wallpaper's own [WallpaperColors.ink].
+ */
+object FeedInk {
+    val white = Color(0xFFFFFFFF)
+    val cream = Color(0xFFF7EEDC)
+    val black = Color(0xFF16160F)
+    val amber = Color(0xFFF0B429)
+    val sage = Color(0xFFB9D3C2)
+    val rose = Color(0xFFF2C4C0)
+
+    /** The shadow under text and chrome drawn over a wallpaper, so it reads on the light Dawn wash. */
+    val shadow = Color(0x66000000)
+
+    /** The chips and the goal pill's ground over the wallpaper. */
+    val chip = Color(0x33000000)
+
+    /** The home screen's chips and floating buttons (the bell, the help chips, the three pills): a deep green glass. */
+    val glass = Color(0xE0132219)
+
+    /** The Mavzular and Ilovalar screens' ground, and their tiles over it. */
+    val deep = Color(0xFF0E1A14)
+    val tile = Color(0xFF1A2B22)
+
+    /** The heart's fill once liked. */
+    val heart = Color(0xFFE5484D)
+}
+
 /** The Lock Screen slate of the widget previews, deepened. */
 val WallpaperSlate = WallpaperColors(
     top = PreviewLockScreen,

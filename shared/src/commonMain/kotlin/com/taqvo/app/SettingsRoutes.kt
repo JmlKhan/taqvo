@@ -1,5 +1,12 @@
 package com.taqvo.app
 
+import androidx.compose.runtime.collectAsState
+import com.taqvo.app.resources.settings_notifications_off
+import com.taqvo.app.resources.settings_daily_ayahs_value
+import com.taqvo.app.notifications.rememberNotificationPermissionRequester
+import com.taqvo.app.feature.settings.DailyAyahsSettingsScreen
+import com.taqvo.app.ayah.AyahReminderSettings
+import com.taqvo.app.ayah.AyahFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -133,7 +140,15 @@ internal fun SettingsRootRoute(
             format.localizedDigits(value.total),
         )
     }
+    val dailyAyahs by container.onboardingStore.ayahReminders.collectAsState(AyahReminderSettings())
+    val dailyAyahsValue = if (dailyAyahs.enabled) {
+        stringResource(Res.string.settings_daily_ayahs_value, format.localizedDigits(dailyAyahs.minutesOfDay().size))
+    } else {
+        stringResource(Res.string.settings_notifications_off)
+    }
     SettingsRootScreen(
+        dailyAyahsValue = dailyAyahsValue,
+        onOpenDailyAyahs = { navigator.push(Screen.DailyAyahs) },
         // Null only when there is no location at all — the row then reads
         // "Not set" rather than naming a city nobody chose.
         cityName = if (location == null) {
@@ -154,6 +169,8 @@ internal fun SettingsRootRoute(
         onOpenAbout = { navigator.push(Screen.About) },
         reciterName = recitationState.reciter?.let { reciterName(it) }.orEmpty(),
         onOpenRecitation = { navigator.push(Screen.RecitationSettings) },
+        onOpenFavorites = { navigator.push(Screen.Favorites) },
+        onOpenCollections = { navigator.push(Screen.Collections) },
     )
 }
 
@@ -578,9 +595,11 @@ internal fun CitySearchRoute(
                 refreshForNewTimes(container, settings)
             }
             // Reached from onboarding, a successful pick answers the location
-            // question, so the flow continues rather than re-asking it.
+            // question, so the flow continues rather than re-asking it: on to the widget guide,
+            // which onboarding itself passes over (or finishes on) when the reader did not ask
+            // for widgets.
             if (backStack.contains(Screen.Onboarding)) {
-                onboardingStep = OnboardingStep.NOTIFICATIONS
+                onboardingStep = OnboardingStep.WIDGET_GUIDE
             }
             navigator.pop()
         },
@@ -663,12 +682,16 @@ internal fun AttributionRoute(
     val translations by produceState(initialValue = emptyList<com.taqvo.app.quran.TranslationInfo>()) {
         value = container.quranRepository.translations()
     }
+    val feedSources by produceState(initialValue = emptyList<com.taqvo.app.content.ContentSourceInfo>()) {
+        value = runCatching { container.contentRepository.sources() }.getOrDefault(emptyList())
+    }
     AttributionScreen(
         translations = translations,
         // The catalogue in force, so a reciter withdrawn by a manifest
         // refresh leaves the credits with them (spec §2).
         reciters = recitationState.reciters,
         onBack = { navigator.pop() },
+        feedSources = feedSources,
     )
 }
 
@@ -711,6 +734,46 @@ internal fun WallpapersRoute(
         ayahTranslationRtl = ayahTranslationRtl,
         duaTranslationRtl = ui.rtl,
         setter = container.wallpaperSetter,
+        onBack = { navigator.pop() },
+    )
+}
+
+/**
+ * Settings › Daily ayahs. Every change is saved, and the plan armed again so the reminders follow
+ * at once. Switching on asks the system first, as onboarding does: a refusal leaves them off.
+ */
+@Composable
+internal fun DailyAyahsRoute(
+    container: AppContainer,
+    scope: CoroutineScope,
+    navigator: Navigator,
+) {
+    val store = container.onboardingStore
+    val reminders by store.ayahReminders.collectAsState(AyahReminderSettings())
+    val ayahFormat by store.ayahFormat.collectAsState(AyahFormat.ARABIC_TRANSLATION)
+    fun save(settings: AyahReminderSettings) {
+        scope.launch {
+            store.setAyahReminders(settings)
+            container.notificationCoordinator.reschedule(RescheduleTrigger.SETTINGS_CHANGED)
+        }
+    }
+    val requestPermission = rememberNotificationPermissionRequester { granted ->
+        scope.launch {
+            store.setAyahRemindersAllowed(granted)
+            container.notificationCoordinator.reschedule(RescheduleTrigger.SETTINGS_CHANGED)
+        }
+    }
+    DailyAyahsSettingsScreen(
+        settings = reminders,
+        format = ayahFormat,
+        onSettings = ::save,
+        onEnable = requestPermission,
+        onFormat = { chosen ->
+            scope.launch {
+                store.setAyahFormat(chosen)
+                container.notificationCoordinator.reschedule(RescheduleTrigger.SETTINGS_CHANGED)
+            }
+        },
         onBack = { navigator.pop() },
     )
 }

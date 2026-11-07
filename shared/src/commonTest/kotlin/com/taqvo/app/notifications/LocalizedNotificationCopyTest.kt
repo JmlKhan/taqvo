@@ -29,8 +29,9 @@ private class StubFormat(private val tag: String, private val arabicIndic: Boole
  */
 class LocalizedNotificationCopyTest {
 
-    /** Every kind but the iqama, whose body counts the minutes since the adhan and quotes no clock time. */
-    private val kindsQuotingATime = NotificationKind.entries - NotificationKind.IQAMA
+    /** Every kind but the iqama, whose body counts the minutes since the adhan and quotes no clock
+     * time, and the daily ayah, whose body is the ayah itself. */
+    private val kindsQuotingATime = NotificationKind.entries - NotificationKind.IQAMA - NotificationKind.AYAH
 
     @Test
     fun channelNamesAreLocalisedAndDistinctPerSound() {

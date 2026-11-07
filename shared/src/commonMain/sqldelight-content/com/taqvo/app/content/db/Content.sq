@@ -1,0 +1,41 @@
+-- Mirrors content.db (feed content spec §3). SQLDelight needs these CREATE statements to type the
+-- queries below; the driver (ContentDb.kt and its actuals) never executes them, because the
+-- bundled file already has this schema. Read-only: content.db is replaced on every update.
+
+CREATE TABLE items (
+  id TEXT PRIMARY KEY,            -- "q:2:153"; later "d:…", "h:muslim:2722"
+  type TEXT NOT NULL,             -- "ayah" (later "dua", "hadith")
+  surah INTEGER,
+  ayah INTEGER,
+  arabic TEXT NOT NULL,
+  length TEXT NOT NULL,           -- short | medium | long
+  primary_topic TEXT NOT NULL
+);
+
+CREATE TABLE item_topics (item_id TEXT, topic_id TEXT, PRIMARY KEY (item_id, topic_id));
+
+CREATE TABLE item_text (item_id TEXT, lang TEXT, text TEXT NOT NULL, PRIMARY KEY (item_id, lang));
+
+CREATE TABLE topics (id TEXT PRIMARY KEY, sort INTEGER);
+
+CREATE TABLE topic_label (topic_id TEXT, lang TEXT, label TEXT, PRIMARY KEY (topic_id, lang));
+
+CREATE TABLE sources (lang TEXT PRIMARY KEY, name TEXT, note TEXT);
+
+items:
+SELECT id, type, surah, ayah, arabic, length, primary_topic FROM items ORDER BY id;
+
+itemTopics:
+SELECT item_id, topic_id FROM item_topics;
+
+topics:
+SELECT id, sort FROM topics ORDER BY sort;
+
+textsFor:
+SELECT item_id, text FROM item_text WHERE lang = ?;
+
+topicLabels:
+SELECT topic_id, label FROM topic_label WHERE lang = ?;
+
+sources:
+SELECT lang, name, note FROM sources;

@@ -45,6 +45,7 @@ import com.taqvo.app.design.TaqvoText
 import com.taqvo.app.design.contentWidth
 import com.taqvo.app.nav.Tab
 import com.taqvo.app.resources.Res
+import com.taqvo.app.resources.tab_feed
 import com.taqvo.app.resources.tab_prayer
 import com.taqvo.app.resources.tab_quran
 import com.taqvo.app.resources.tab_settings
@@ -123,7 +124,7 @@ private val IconSize = 22.dp
 private val BarHeight = 60.dp
 
 /**
- * Prayer · Quran · Settings, as the mockup draws them: a hairline top border, the page background
+ * Feed · Prayer · Quran · Settings, as the mockup draws them: a hairline top border, the page background
  * beneath it (not a raised surface — the bar is the page's own edge, not a card), a 22 dp line
  * icon over a small semibold label, active in accent and inactive in secondary.
  *
@@ -178,6 +179,7 @@ private fun RowScope.TabItem(tab: Tab, selected: Boolean, onSelect: () -> Unit) 
     ) {
         Canvas(Modifier.size(IconSize)) {
             when (tab) {
+                Tab.FEED -> drawCards(tint)
                 Tab.PRAYER -> drawMihrab(tint)
                 Tab.QURAN -> drawBook(tint)
                 Tab.SETTINGS -> drawSliders(tint)
@@ -187,6 +189,7 @@ private fun RowScope.TabItem(tab: Tab, selected: Boolean, onSelect: () -> Unit) 
         Text(
             stringResource(
                 when (tab) {
+                    Tab.FEED -> Res.string.tab_feed
                     Tab.PRAYER -> Res.string.tab_prayer
                     Tab.QURAN -> Res.string.tab_quran
                     Tab.SETTINGS -> Res.string.tab_settings
@@ -203,7 +206,7 @@ private fun RowScope.TabItem(tab: Tab, selected: Boolean, onSelect: () -> Unit) 
  * the dot near its crown. The same 1024-unit geometry as `MihrabMark`, scaled to 16. The dot
  * takes the tint too — an amber dot on a grey arch would keep the inactive tab lit.
  */
-private fun DrawScope.drawMihrab(tint: Color) {
+internal fun DrawScope.drawMihrab(tint: Color) {
     val u = size.width / 16f
     val arch = Path().apply {
         moveTo(4.56f * u, 12.6f * u)
@@ -229,7 +232,7 @@ private fun DrawScope.drawMihrab(tint: Color) {
  * 1.5 u is also what brings its ink close to the book's, which is the denser of the other two.
  * With the knobs it spans y 2.5–13.5, near enough the book's 1.9–13.7 to sit level with it.
  */
-private fun DrawScope.drawSliders(tint: Color) {
+internal fun DrawScope.drawSliders(tint: Color) {
     val u = size.width / 16f
     val stroke = size.width * 0.0875f
     listOf(4f to 10.5f, 8f to 5.5f, 12f to 9f).forEach { (y, knobX) ->

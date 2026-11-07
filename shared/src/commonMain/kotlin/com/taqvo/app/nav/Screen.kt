@@ -4,6 +4,28 @@ import com.taqvo.app.adhkar.AdhkarSet
 
 sealed interface Screen {
     data object Onboarding : Screen
+
+    /** The Tasma tab (feed spec §2): the vertical feed of ayah cards, and where the app opens. */
+    data object Feed : Screen
+
+    /** Mavzular: the themes the feed's cards sit on. */
+    data object Themes : Screen
+
+    /** Ilovalar: every part of the app other than the feed. */
+    data object Tools : Screen
+
+    /** The cards the reader has liked (feed spec §5). */
+    data object Favorites : Screen
+
+    /** The reader's collections (feed spec §5). */
+    data object Collections : Screen
+
+    /** One collection's cards. */
+    data class Collection(val id: String) : Screen
+
+    /** One card on its own, opened from favorites or a collection. */
+    data class FeedItem(val itemId: String) : Screen
+
     data object Prayer : Screen
     data object Quran : Screen
     /**
@@ -68,6 +90,8 @@ sealed interface Screen {
 
     /** Settings › Wallpapers: an ayah or a supplication drawn as the phone's wallpaper. */
     data object Wallpapers : Screen
+    /** Settings › Daily ayahs: the reminders onboarding set up, and how an ayah reads. */
+    data object DailyAyahs : Screen
 
     /** Settings › Quran › Recitation (spec 3a §5.6): the voice, mobile data, and what is stored. */
     data object RecitationSettings : Screen

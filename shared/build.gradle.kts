@@ -115,6 +115,20 @@ sqldelight {
             // The database ships prebuilt; the schema below exists for code generation only.
             deriveSchemaFromMigrations.set(false)
         }
+        // The feed's bundled content (feed content spec): read-only, like quran.db, and replaced on
+        // every update. Its own source folder, so its tables are not generated into the others.
+        create("ContentDatabase") {
+            packageName.set("com.taqvo.app.content.db")
+            dialect("app.cash.sqldelight:sqlite-3-38-dialect:2.2.1")
+            srcDirs.setFrom("src/commonMain/sqldelight-content")
+            deriveSchemaFromMigrations.set(false)
+        }
+        // The feed's user data (feed spec §11): app.db, created on the phone and never replaced.
+        create("FeedDatabase") {
+            packageName.set("com.taqvo.app.feed.db")
+            dialect("app.cash.sqldelight:sqlite-3-38-dialect:2.2.1")
+            srcDirs.setFrom("src/commonMain/sqldelight-feed")
+        }
     }
 }
 

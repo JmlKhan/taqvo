@@ -366,10 +366,12 @@ class DuhaIqamaPlanTest {
     }
 
     @Test
-    fun `Duha comes after the adhkar reminder and the iqama last in the fill order`() {
+    fun `Duha comes after the adhkar reminder then the iqama and the daily ayahs last in the fill order`() {
         val order = NotificationPlanner.FILL_ORDER
-        assertEquals(setOf(NotificationKind.ADHKAR_MORNING, NotificationKind.ADHKAR_EVENING), order[order.size - 3])
-        assertEquals(setOf(NotificationKind.DUHA_BEST, NotificationKind.DUHA_START), order[order.size - 2])
-        assertEquals(setOf(NotificationKind.IQAMA), order.last())
+        assertEquals(setOf(NotificationKind.ADHKAR_MORNING, NotificationKind.ADHKAR_EVENING), order[order.size - 4])
+        assertEquals(setOf(NotificationKind.DUHA_BEST, NotificationKind.DUHA_START), order[order.size - 3])
+        assertEquals(setOf(NotificationKind.IQAMA), order[order.size - 2])
+        // The daily ayahs (onboarding spec, screen 09) after everything that belongs to a prayer.
+        assertEquals(setOf(NotificationKind.AYAH), order.last())
     }
 }

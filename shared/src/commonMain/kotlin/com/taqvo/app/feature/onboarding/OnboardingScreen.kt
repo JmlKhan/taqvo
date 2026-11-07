@@ -1,29 +1,10 @@
 package com.taqvo.app.feature.onboarding
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,277 +13,317 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import kotlinx.datetime.DayOfWeek
 import org.jetbrains.compose.resources.stringResource
-import com.taqvo.app.design.LocalTaqvoColors
-import com.taqvo.app.design.TaqvoText
-import com.taqvo.app.design.contentWidth
+import com.taqvo.app.ayah.AyahFormat
+import com.taqvo.app.ayah.AyahReminderSettings
 import com.taqvo.app.design.components.TaqvoPrimaryButton
 import com.taqvo.app.design.components.TaqvoTextLink
 import com.taqvo.app.domain.WidgetBackground
 import com.taqvo.app.feature.settings.WidgetPreview
+import com.taqvo.app.i18n.LocalPlatformFormat
 import com.taqvo.app.location.LocationPermission
 import com.taqvo.app.location.LocationRepository
 import com.taqvo.app.location.rememberLocationPermissionRequester
 import com.taqvo.app.notifications.rememberNotificationPermissionRequester
 import com.taqvo.app.resources.Res
-import com.taqvo.app.resources.notifications_allow_exact_alarms
-import com.taqvo.app.resources.onboarding_exact_body
-import com.taqvo.app.resources.onboarding_exact_title
-import com.taqvo.app.resources.onboarding_location_body
-import com.taqvo.app.resources.onboarding_continue
-import com.taqvo.app.resources.onboarding_location_title
-import com.taqvo.app.resources.onboarding_notifications_body
-import com.taqvo.app.resources.onboarding_notifications_secondary
-import com.taqvo.app.resources.onboarding_notifications_title
-import com.taqvo.app.resources.onboarding_welcome_body
-import com.taqvo.app.resources.onboarding_welcome_cta
-import com.taqvo.app.resources.onboarding_welcome_title
+import com.taqvo.app.resources.onb_content_comfort
+import com.taqvo.app.resources.onb_content_gratitude
+import com.taqvo.app.resources.onb_content_mix
+import com.taqvo.app.resources.onb_content_patience
+import com.taqvo.app.resources.onb_content_reflection
+import com.taqvo.app.resources.onb_content_short
+import com.taqvo.app.resources.onb_content_title
+import com.taqvo.app.resources.onb_goal_habit
+import com.taqvo.app.resources.onb_goal_hardship
+import com.taqvo.app.resources.onb_goal_iman
+import com.taqvo.app.resources.onb_goal_peace
+import com.taqvo.app.resources.onb_goal_remember
+import com.taqvo.app.resources.onb_goals_title
+import com.taqvo.app.resources.onb_use_daily_ayahs
+import com.taqvo.app.resources.onb_use_daily_habit
+import com.taqvo.app.resources.onb_use_prayer_times
+import com.taqvo.app.resources.onb_use_quran_reading
+import com.taqvo.app.resources.onb_use_tasbeh
+import com.taqvo.app.resources.onb_use_title
+import com.taqvo.app.resources.onb_use_wallpapers
+import com.taqvo.app.resources.onb_use_widgets
 import com.taqvo.app.resources.onboarding_widget_cta_add
 import com.taqvo.app.resources.onboarding_widget_cta_done
 import com.taqvo.app.resources.onboarding_widget_secondary
 import com.taqvo.app.resources.onboarding_widget_steps_android
 import com.taqvo.app.resources.onboarding_widget_title
+import com.taqvo.app.wallpaper.WallpaperStyle
 import com.taqvo.app.widget.PinnableWidget
 import com.taqvo.app.widget.WidgetAddPath
 import com.taqvo.app.widget.WidgetPinRequester
 import com.taqvo.app.widget.askToPin
-import com.taqvo.app.widget.widgetAddPath
+
+/** What onboarding shows: the answers so far and the settings they have made. */
+data class OnboardingModel(
+    val answers: OnboardingAnswers,
+    val reminders: AyahReminderSettings,
+    val ayahFormat: AyahFormat,
+    val style: WallpaperStyle,
+    /** The ayah the wallpaper screens draw; null until the Quran database has answered. */
+    val wallpaperSample: WallpaperSample?,
+    /** The sample ayah as a reminder would show it in each format. */
+    val previewFor: (AyahFormat) -> AyahPreviewText?,
+    val exactAlarmsNeeded: Boolean,
+    val ios: Boolean,
+    val today: DayOfWeek,
+    /** Screen 15's prices, from the store; null keeps the paywall away whatever the flag says. */
+    val offer: PaywallOffer? = null,
+)
+
+/** Everything onboarding writes or asks for. Each answer is saved the moment it is given. */
+class OnboardingActions(
+    val setName: (String?) -> Unit,
+    val setGoals: (List<String>) -> Unit,
+    val setContentTypes: (List<String>) -> Unit,
+    val setUseCases: (List<String>) -> Unit,
+    val setReminders: (AyahReminderSettings) -> Unit,
+    /** The notification prompt's answer: turns the reminders on or off, leaving their times be. */
+    val setRemindersAllowed: (Boolean) -> Unit,
+    val setAyahFormat: (AyahFormat) -> Unit,
+    val setStyle: (WallpaperStyle) -> Unit,
+    val startStreak: () -> Unit,
+    /** The system's answer to the notification prompt: prayer notifications follow it too. */
+    val onNotificationPermission: (Boolean) -> Unit,
+    val onLocationPermission: (LocationPermission) -> Unit,
+    val onChooseCity: () -> Unit,
+    val onRequestExactAlarms: () -> Unit,
+    /** Plans and arms the notifications; screen 10 runs while it does. */
+    val prepare: suspend () -> Unit,
+    val track: (String, Map<String, Any?>) -> Unit,
+    val onComplete: () -> Unit,
+)
 
 /**
- * Hoisted out of this composable because a declined location navigates away to the city search:
- * the step must survive the round trip, or the user comes back to the welcome screen having
- * already answered its question.
- */
-enum class OnboardingStep { WELCOME, LOCATION, NOTIFICATIONS, EXACT_ALARMS, WIDGET }
-
-/**
- * Four screens, each asking for exactly one thing and saying why *before* the system dialog
- * appears. Unexplained prompts get denied, and a denied location permission is the difference
- * between a working app and a dead one. Declining is a first-class path, never a dead end.
+ * Onboarding (spec §1): splash, five questions, the reminders, the reader's wallpaper, the
+ * showcase, the welcome, the ayah format, the place for the prayer times and the widget guide.
  *
- * A screen that comes before a system prompt has one button, Continue, and it always opens the
- * prompt. That is App Review's rule (guideline 5.1.1(iv), and the pre-alert screens of the Human
- * Interface Guidelines: one button, titled like Continue or Next, and no way to leave without
- * seeing the prompt). 1.0.0 (34) was rejected for "Use my location" beside "Choose a city
- * instead". The alternative comes after the prompt instead: a refused location opens the city
- * search ([locationAnswer]), and a refused notification prompt moves on.
- *
- * The last screen asks for nothing from the system. It exists because the widget is the surface
- * most people will read most often and the one nobody finds on their own; on Android it can place
- * the widget from here, on iOS it can only say how.
- *
- * Between notifications and the widget, Android 14+ gets one more: "Alarms & reminders". Play does
- * not let a prayer app hold the auto-granted exact-alarm permission, and the user-granted one is
- * off by default, so without this step most people would get an adhan up to an hour late and
- * never be told why. iOS, and an Android that already allows it, skip the step entirely.
+ * A screen that comes before a system prompt has one button and it always opens the prompt (App
+ * Review guideline 5.1.1(iv)): the reminders screen and the location screen. The alternative to a
+ * refusal comes after the prompt, never beside it.
  */
 @Composable
 fun OnboardingScreen(
     step: OnboardingStep,
     onStep: (OnboardingStep) -> Unit,
+    model: OnboardingModel,
+    actions: OnboardingActions,
     locationRepository: LocationRepository,
     widgetPinRequester: WidgetPinRequester,
-    onLocationPermission: (LocationPermission) -> Unit,
-    onChooseCity: () -> Unit,
-    onNotificationPermission: (Boolean) -> Unit,
-    onComplete: () -> Unit,
-    /** True on an Android that has not granted "Alarms & reminders"; always false on iOS. Re-read
-     * by the caller each time the app comes to the front, which is how a grant made in system
-     * settings ends the step. */
-    exactAlarmsNeeded: Boolean = false,
-    /** Opens the system's "Alarms & reminders" page for this app. */
-    onRequestExactAlarms: () -> Unit = {},
+    addPath: WidgetAddPath,
 ) {
+    val context = OnboardingContext(
+        exactAlarmsNeeded = model.exactAlarmsNeeded,
+        notificationsGranted = model.reminders.enabled,
+        paywallEnabled = OnboardingFeatures.PAYWALL_ENABLED && model.offer != null,
+        wantsWidgets = model.answers.wantsWidgets,
+    )
+    val progress = OnboardingFlow.progress(step, context)
+    fun advance(from: OnboardingStep = step, ctx: OnboardingContext = context) {
+        val next = OnboardingFlow.next(from, ctx)
+        if (next == null) actions.onComplete() else onStep(next)
+    }
+    fun skip(clear: () -> Unit) {
+        clear()
+        actions.track(com.taqvo.app.analytics.OnboardingEvents.SKIP, mapOf("step_id" to step.name))
+        advance()
+    }
+
+    LaunchedEffect(step) {
+        actions.track(
+            com.taqvo.app.analytics.OnboardingEvents.STEP_VIEW,
+            mapOf("step_id" to step.name, "index" to OnboardingFlow.steps(context).indexOf(step)),
+        )
+    }
+
     val requestLocation = rememberLocationPermissionRequester(locationRepository) { permission ->
-        onLocationPermission(permission)
+        actions.onLocationPermission(permission)
         when (locationAnswer(permission)) {
-            LocationAnswer.CONTINUE -> onStep(OnboardingStep.NOTIFICATIONS)
-            // The city search moves the step on itself once a city is picked, and backing out
-            // of it lands here again, where Continue leads straight back to it: the system asks
-            // only once, so a second tap answers DENIED at once.
-            LocationAnswer.CHOOSE_CITY -> onChooseCity()
+            LocationAnswer.CONTINUE -> advance(OnboardingStep.LOCATION)
+            // The city search moves the step on itself once a city is picked.
+            LocationAnswer.CHOOSE_CITY -> actions.onChooseCity()
             LocationAnswer.STAY -> Unit
         }
     }
-
-    // Granted or denied, the flow moves on here too: the sound sheet and the master toggle in
-    // Settings remain available afterwards.
+    var asking by remember { mutableStateOf(false) }
     val requestNotifications = rememberNotificationPermissionRequester { granted ->
-        onNotificationPermission(granted)
-        // Exact alarms are only worth asking for once there are notifications to be exact about.
-        onStep(if (granted && exactAlarmsNeeded) OnboardingStep.EXACT_ALARMS else OnboardingStep.WIDGET)
+        asking = false
+        actions.setRemindersAllowed(granted)
+        actions.onNotificationPermission(granted)
+        // Granted, Android 14+ asks for exact alarms next; the context is the one the answer makes.
+        advance(OnboardingStep.REMINDERS, context.copy(notificationsGranted = granted))
+    }
+    // A step this reader does not see (the widget guide after the city search, for one who asked
+    // for no widgets; a resumed step the answers have since ruled out) moves straight on.
+    LaunchedEffect(step, context) {
+        if (step != OnboardingStep.EXACT_ALARMS && step != OnboardingStep.PAYWALL && step !in OnboardingFlow.steps(context)) advance()
+    }
+    // The exact-alarm grant happens in system settings; back in front holding it, the step is done.
+    LaunchedEffect(step, model.exactAlarmsNeeded) {
+        if (step == OnboardingStep.EXACT_ALARMS && !model.exactAlarmsNeeded) advance()
     }
 
-    // The grant happens in system settings, out of the app's sight. The moment the app is back in
-    // front holding the permission, this step has nothing left to ask and moves on by itself.
-    LaunchedEffect(step, exactAlarmsNeeded) {
-        if (step == OnboardingStep.EXACT_ALARMS && !exactAlarmsNeeded) onStep(OnboardingStep.WIDGET)
-    }
-    val steps = OnboardingStep.entries.filter { it != OnboardingStep.EXACT_ALARMS || exactAlarmsNeeded }
-
-    val dots: @Composable () -> Unit = { StepDots(step, steps) }
     when (step) {
-        OnboardingStep.WELCOME -> OnboardingPage(
-            dots,
-            copy = {
-                MihrabMark()
-                Spacer(Modifier.height(28.dp))
-                Headline(stringResource(Res.string.onboarding_welcome_title))
-                Spacer(Modifier.height(12.dp))
-                Body(stringResource(Res.string.onboarding_welcome_body))
-            },
-        ) {
-            TaqvoPrimaryButton(
-                stringResource(Res.string.onboarding_welcome_cta),
-                onClick = { onStep(OnboardingStep.LOCATION) },
-            )
-            Spacer(Modifier.height(44.dp))
-        }
-        // The two screens before a system prompt: Continue, and nothing beside it (see the class
-        // comment). The spacer stands where a second link would be, so the button sits at the
-        // same height on every screen.
-        OnboardingStep.LOCATION -> OnboardingPage(
-            dots,
-            copy = {
-                PinMark()
-                Spacer(Modifier.height(28.dp))
-                Headline(stringResource(Res.string.onboarding_location_title))
-                Spacer(Modifier.height(12.dp))
-                Body(stringResource(Res.string.onboarding_location_body))
-            },
-        ) {
-            TaqvoPrimaryButton(stringResource(Res.string.onboarding_continue), requestLocation)
-            Spacer(Modifier.height(44.dp))
-        }
-        OnboardingStep.NOTIFICATIONS -> OnboardingPage(
-            dots,
-            copy = {
-                BellMark()
-                Spacer(Modifier.height(28.dp))
-                Headline(stringResource(Res.string.onboarding_notifications_title))
-                Spacer(Modifier.height(12.dp))
-                Body(stringResource(Res.string.onboarding_notifications_body))
-            },
-        ) {
-            TaqvoPrimaryButton(stringResource(Res.string.onboarding_continue), requestNotifications)
-            Spacer(Modifier.height(44.dp))
-        }
-        OnboardingStep.EXACT_ALARMS -> OnboardingPage(
-            dots,
-            copy = {
-                ClockMark()
-                Spacer(Modifier.height(28.dp))
-                Headline(stringResource(Res.string.onboarding_exact_title))
-                Spacer(Modifier.height(12.dp))
-                Body(stringResource(Res.string.onboarding_exact_body))
-            },
-        ) {
-            // The system page opens over the app; coming back with the grant advances the step
-            // (the LaunchedEffect above), coming back without it leaves the choice here.
-            TaqvoPrimaryButton(stringResource(Res.string.notifications_allow_exact_alarms), onRequestExactAlarms)
-            TaqvoTextLink(
-                stringResource(Res.string.onboarding_notifications_secondary),
-                onClick = { onStep(OnboardingStep.WIDGET) },
+        OnboardingStep.SPLASH -> SplashScreen(onStart = { advance() })
+        OnboardingStep.INTRO -> IntroScreen(progress, onContinue = { advance() })
+        OnboardingStep.NAME -> {
+            var name by rememberSaveable { mutableStateOf(model.answers.name.orEmpty()) }
+            NameScreen(
+                progress,
+                name,
+                onName = { name = it },
+                onContinue = { actions.setName(cleanName(name)); advance() },
+                onSkip = { skip { actions.setName(null) } },
             )
         }
-        OnboardingStep.WIDGET -> OnboardingWidgetPage(widgetPinRequester, widgetAddPath, onComplete, dots)
-    }
-}
-
-/**
- * One onboarding screen: the copy and the step dots in the middle, the buttons at the foot.
- *
- * The background is full-bleed; the copy and the buttons sit in a capped, centred column inside
- * it, so a sideways screen does not stretch a single sentence across 900 dp. safeDrawing, not
- * systemBars: sideways the navigation bar and the cutout are on the sides.
- *
- * The copy scrolls and the buttons do not, so the way on is always on screen. With the largest
- * text on a short phone the words can be taller than the screen: the widget steps by hand at
- * 200 % on a 408 x 760 dp phone pushed Done off the bottom, which left no way out. When the copy
- * fits, as it does at every default setting, the two weighted spacers centre it exactly as they
- * always did, and there is nothing to scroll.
- */
-@Composable
-private fun OnboardingPage(
-    dots: @Composable () -> Unit,
-    copy: @Composable ColumnScope.() -> Unit,
-    /** Under the dots, where the button sits on the other screens; it scrolls with the copy. */
-    belowDots: @Composable ColumnScope.() -> Unit = {},
-    actions: @Composable ColumnScope.() -> Unit,
-) {
-    val colors = LocalTaqvoColors.current
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(colors.background)
-            .windowInsetsPadding(WindowInsets.safeDrawing),
-    ) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .contentWidth()
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
-                val scroll = rememberScrollState()
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        // Draggable only when there is something to scroll, so a page that fits
-                        // does not stretch under a finger.
-                        .verticalScroll(scroll, enabled = scroll.canScrollForward || scroll.canScrollBackward)
-                        // At least the height it is given, so the spacers have room to centre.
-                        .heightIn(min = maxHeight),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Spacer(Modifier.weight(1f))
-                    copy()
-                    Spacer(Modifier.weight(1f))
-                    Spacer(Modifier.height(24.dp))
-                    dots()
-                    Spacer(Modifier.height(20.dp))
-                    belowDots()
-                }
+        OnboardingStep.GOALS -> QuestionScreen(
+            progress,
+            stringResource(Res.string.onb_goals_title),
+            listOf(
+                Goal.REMEMBER to stringResource(Res.string.onb_goal_remember),
+                Goal.PEACE to stringResource(Res.string.onb_goal_peace),
+                Goal.HARDSHIP to stringResource(Res.string.onb_goal_hardship),
+                Goal.IMAN to stringResource(Res.string.onb_goal_iman),
+                Goal.HABIT to stringResource(Res.string.onb_goal_habit),
+            ),
+            model.answers.goals.toSet(),
+            onToggle = { actions.setGoals(model.answers.goals.toggled(it)) },
+            onContinue = { advance() },
+            onSkip = { skip { actions.setGoals(emptyList()) } },
+        )
+        OnboardingStep.CONTENT -> QuestionScreen(
+            progress,
+            stringResource(Res.string.onb_content_title),
+            ContentType.ALL.zip(
+                listOf(
+                    stringResource(Res.string.onb_content_short),
+                    stringResource(Res.string.onb_content_comfort),
+                    stringResource(Res.string.onb_content_gratitude),
+                    stringResource(Res.string.onb_content_patience),
+                    stringResource(Res.string.onb_content_reflection),
+                    stringResource(Res.string.onb_content_mix),
+                ),
+            ),
+            model.answers.contentTypes.toSet(),
+            onToggle = { actions.setContentTypes(model.answers.contentTypes.toggled(it)) },
+            onContinue = { advance() },
+            onSkip = { skip { actions.setContentTypes(emptyList()) } },
+        )
+        OnboardingStep.JOURNEY -> JourneyScreen(progress, onContinue = { advance() })
+        OnboardingStep.STREAK -> {
+            LaunchedEffect(Unit) { actions.startStreak() }
+            StreakScreen(progress, model.today, LocalPlatformFormat.current.localizedDigits(1), onContinue = { advance() })
+        }
+        OnboardingStep.USE_CASES -> QuestionScreen(
+            progress,
+            stringResource(Res.string.onb_use_title),
+            UseCase.ALL.zip(
+                listOf(
+                    stringResource(Res.string.onb_use_widgets),
+                    stringResource(Res.string.onb_use_wallpapers),
+                    stringResource(Res.string.onb_use_daily_ayahs),
+                    stringResource(Res.string.onb_use_prayer_times),
+                    stringResource(Res.string.onb_use_tasbeh),
+                    stringResource(Res.string.onb_use_quran_reading),
+                    stringResource(Res.string.onb_use_daily_habit),
+                ),
+            ),
+            model.answers.useCases.toSet(),
+            onToggle = { actions.setUseCases(model.answers.useCases.toggled(it)) },
+            onContinue = { advance() },
+            onSkip = { skip { actions.setUseCases(emptyList()) } },
+        )
+        OnboardingStep.REMINDERS -> RemindersScreen(
+            progress,
+            model.reminders,
+            onSettings = actions.setReminders,
+            preview = model.previewFor(model.ayahFormat),
+            asking = asking,
+            onSave = {
+                actions.track(
+                    com.taqvo.app.analytics.OnboardingEvents.NOTIF_CONFIG,
+                    mapOf("count" to model.reminders.count, "start" to model.reminders.startMinute, "end" to model.reminders.endMinute),
+                )
+                asking = true
+                requestNotifications()
+            },
+        )
+        OnboardingStep.EXACT_ALARMS -> ExactAlarmsScreen(progress, onAllow = actions.onRequestExactAlarms, onLater = { advance() })
+        OnboardingStep.LOADING -> LoadingScreen(progress, work = actions.prepare, onDone = { advance(OnboardingStep.LOADING) })
+        OnboardingStep.THEME -> ThemeScreen(progress, model.wallpaperSample, model.style, onSelect = actions.setStyle, onContinue = { advance() })
+        OnboardingStep.PREVIEW -> PreviewScreen(progress, model.wallpaperSample, model.style, onContinue = { advance() })
+        OnboardingStep.SHOWCASE_LOCK ->
+            ShowcaseLockScreen(progress, model.style, model.ios, model.previewFor(model.ayahFormat), onContinue = { advance() })
+        OnboardingStep.SHOWCASE_HOME ->
+            ShowcaseHomeScreen(progress, model.style, prayerFirst = model.answers.wantsPrayerTimes, onContinue = { advance() })
+        OnboardingStep.PAYWALL -> {
+            val offer = model.offer
+            if (offer == null) {
+                LaunchedEffect(Unit) { advance() }
+            } else {
+                var plan by rememberSaveable { mutableStateOf(Plan.MONTHLY) }
+                PaywallScreen(
+                    offer, plan,
+                    onPlan = { plan = it },
+                    // No billing yet (OnboardingFeatures.PAYWALL_ENABLED): nothing to buy.
+                    onPurchase = { advance() },
+                    onClose = { advance() },
+                    onRestore = {},
+                    onPrivacy = {},
+                    onTerms = {},
+                )
             }
-            actions()
-            Spacer(Modifier.height(12.dp))
+        }
+        OnboardingStep.WELCOME -> WelcomeScreen(model.style, model.answers.name, onDone = { advance(OnboardingStep.WELCOME) })
+        OnboardingStep.AYAH_FORMAT -> AyahFormatScreen(
+            progress,
+            model.ayahFormat,
+            onFormat = actions.setAyahFormat,
+            preview = model.previewFor,
+            onContinue = { advance() },
+        )
+        OnboardingStep.LOCATION -> LocationScreen(progress, onContinue = requestLocation)
+        OnboardingStep.WIDGET_GUIDE -> if (addPath == WidgetAddPath.ANDROID_PIN) {
+            OnboardingWidgetPage(widgetPinRequester, addPath, onComplete = { advance(OnboardingStep.WIDGET_GUIDE) }, progress = progress)
+        } else {
+            IosWidgetGuideScreen(progress, addPath, onDone = { advance(OnboardingStep.WIDGET_GUIDE) })
         }
     }
 }
 
+private fun List<String>.toggled(id: String): List<String> = if (id in this) this - id else this + id
+
 /**
- * The widget screen, and the launcher's answer to "Add widget". A launcher that takes the request
- * shows its own sheet over the app, and onboarding finishes underneath it, because the user's
- * answer never comes back reliably. One that refuses (no pin support, a work profile that forbids
- * it, or one that simply declines, as some vivo, OPPO and Xiaomi home screens do) would leave the
- * tap doing nothing, so the steps by hand replace the button. [addPath] is a parameter so a test
- * on either platform can drive the Android screen.
+ * The widget guide on Android, and the launcher's answer to "Add widget". A launcher that takes the
+ * request shows its own sheet over the app, and onboarding finishes underneath it, because the
+ * user's answer never comes back reliably. One that refuses (no pin support, a work profile that
+ * forbids it, or one that simply declines, as some vivo, OPPO and Xiaomi home screens do) would
+ * leave the tap doing nothing, so the steps by hand replace the button. [addPath] is a parameter so
+ * a test on either platform can drive the Android screen.
  */
 @Composable
 internal fun OnboardingWidgetPage(
     widgetPinRequester: WidgetPinRequester,
     addPath: WidgetAddPath,
     onComplete: () -> Unit,
-    dots: @Composable () -> Unit = {},
+    progress: Float? = null,
 ) {
     val canPin = widgetPinRequester.isSupported(PinnableWidget.PRAYER)
-    // Set only when the launcher turns "Add widget" down; a launcher that takes the request never
-    // sets it, so for that phone the screen is what it always was.
+    // Set only when the launcher turns "Add widget" down.
     var pinRefused by rememberSaveable { mutableStateOf(false) }
     val offer = widgetStepOffer(canPin, pinRefused, addPath)
-    // The steps sit under the dots, in the part that scrolls. When the copy above is too tall to
-    // leave them room (the largest text on a short phone), they are scrolled up into view the
-    // moment they replace the button, rather than appearing out of sight below it.
+    // The steps sit in the part that scrolls; when they replace the button they are scrolled into
+    // view rather than appearing out of sight below it.
     val stepsInView = remember { BringIntoViewRequester() }
     LaunchedEffect(pinRefused) {
         if (pinRefused) {
@@ -310,96 +331,50 @@ internal fun OnboardingWidgetPage(
             stepsInView.bringIntoView()
         }
     }
-    OnboardingPage(
-        dots,
-        copy = {
-            // The widgets themselves stand in for a mark: the point of the screen is what they
-            // look like. Drawn for the system appearance, since the widget will be.
+    OnbPage(
+        progress = progress,
+        onSkip = null,
+        content = {
             WidgetPreview(
                 background = WidgetBackground.FOLLOW_THEME,
                 systemIsDark = isSystemInDarkTheme(),
                 content = null,
             )
             Spacer(Modifier.height(28.dp))
-            Headline(stringResource(Res.string.onboarding_widget_title))
+            OnbTitle(stringResource(Res.string.onboarding_widget_title))
             Spacer(Modifier.height(12.dp))
-            Body(stringResource(widgetStepBodyKey(addPath)))
-        },
-        belowDots = {
+            OnbBody(stringResource(widgetStepBodyKey(addPath)))
             if (offer == WidgetStepOffer.ANDROID_STEPS) {
-                // A polite live region only after a refused tap: the button TalkBack was on has
-                // just gone, and this is what took its place. On a phone that cannot pin at all
-                // the steps are there from the first frame and are read like the rest.
-                Body(
+                Spacer(Modifier.height(20.dp))
+                // A polite live region only after a refused tap: the button TalkBack was on has just
+                // gone, and this is what took its place.
+                OnbBody(
                     stringResource(Res.string.onboarding_widget_steps_android),
                     Modifier
                         .bringIntoViewRequester(stepsInView)
                         .then(if (pinRefused) Modifier.semantics { liveRegion = LiveRegionMode.Polite } else Modifier),
                 )
-                Spacer(Modifier.height(20.dp))
             }
         },
-    ) {
-        when (offer) {
-            WidgetStepOffer.PIN -> {
-                TaqvoPrimaryButton(
-                    stringResource(Res.string.onboarding_widget_cta_add),
-                    onClick = {
-                        widgetPinRequester.askToPin(
-                            PinnableWidget.PRAYER,
-                            onTaken = onComplete,
-                            onRefused = { pinRefused = true },
-                        )
-                    },
-                )
-                TaqvoTextLink(stringResource(Res.string.onboarding_widget_secondary), onClick = onComplete)
+        footer = {
+            when (offer) {
+                WidgetStepOffer.PIN -> {
+                    TaqvoPrimaryButton(
+                        stringResource(Res.string.onboarding_widget_cta_add),
+                        onClick = {
+                            widgetPinRequester.askToPin(
+                                PinnableWidget.PRAYER,
+                                onTaken = onComplete,
+                                onRefused = { pinRefused = true },
+                            )
+                        },
+                    )
+                    TaqvoTextLink(stringResource(Res.string.onboarding_widget_secondary), onClick = onComplete)
+                }
+                WidgetStepOffer.ANDROID_STEPS, WidgetStepOffer.DONE ->
+                    TaqvoPrimaryButton(stringResource(Res.string.onboarding_widget_cta_done), onClick = onComplete)
             }
-            WidgetStepOffer.ANDROID_STEPS, WidgetStepOffer.DONE -> {
-                TaqvoPrimaryButton(stringResource(Res.string.onboarding_widget_cta_done), onClick = onComplete)
-                Spacer(Modifier.height(44.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun Headline(text: String) {
-    Text(
-        text,
-        style = TaqvoText.screenTitle.copy(fontSize = 30.sp),
-        color = LocalTaqvoColors.current.textPrimary,
-        textAlign = TextAlign.Center,
+        },
     )
 }
 
-@Composable
-private fun Body(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text,
-        modifier = modifier,
-        style = TaqvoText.caption.copy(fontSize = 16.sp),
-        color = LocalTaqvoColors.current.textSecondary,
-        textAlign = TextAlign.Center,
-    )
-}
-
-@Composable
-private fun StepDots(step: OnboardingStep, steps: List<OnboardingStep>) {
-    val colors = LocalTaqvoColors.current
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        steps.forEach { entry ->
-            Box(
-                Modifier
-                    .padding(horizontal = 4.dp)
-                    .width(if (entry == step) 20.dp else 6.dp)
-                    .height(6.dp)
-                    .clip(CircleShape)
-                    .background(if (entry == step) colors.accent else colors.hairline),
-            )
-        }
-    }
-}

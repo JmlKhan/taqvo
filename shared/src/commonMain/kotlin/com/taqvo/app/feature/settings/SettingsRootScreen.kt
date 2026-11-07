@@ -54,9 +54,13 @@ import com.taqvo.app.resources.settings_appearance
 import com.taqvo.app.resources.settings_appearance_value
 import com.taqvo.app.resources.settings_group_about
 import com.taqvo.app.resources.settings_group_app
+import com.taqvo.app.resources.settings_group_feed
+import com.taqvo.app.resources.feed_favorites_title
+import com.taqvo.app.resources.feed_collections_title
 import com.taqvo.app.resources.settings_group_prayer
 import com.taqvo.app.resources.settings_group_quran
 import com.taqvo.app.resources.settings_recitation
+import com.taqvo.app.resources.settings_daily_ayahs
 import com.taqvo.app.resources.settings_location
 import com.taqvo.app.resources.settings_not_set
 import com.taqvo.app.resources.settings_notifications
@@ -244,6 +248,12 @@ fun SettingsRootScreen(
      * catalogue has loaded, which is a frame. */
     reciterName: String,
     onOpenRecitation: () -> Unit,
+    /** The Daily ayahs row's value ("5 a day", "Off"); null hides the row. */
+    dailyAyahsValue: String? = null,
+    onOpenDailyAyahs: () -> Unit = {},
+    /** The feed's saved cards (feed spec §5); null hides the rows, as in the previews. */
+    onOpenFavorites: (() -> Unit)? = null,
+    onOpenCollections: (() -> Unit)? = null,
 ) {
     // "Off" once the master toggle is off; otherwise how many of the five obligatory prayers
     // still carry a sound, so the row means something before the screen behind it is even open.
@@ -288,6 +298,24 @@ fun SettingsRootScreen(
                 value = reciterName,
                 onClick = onOpenRecitation,
             )
+            if (dailyAyahsValue != null) {
+                CardDivider()
+                TaqvoRow(
+                    stringResource(Res.string.settings_daily_ayahs),
+                    value = dailyAyahsValue,
+                    onClick = onOpenDailyAyahs,
+                )
+            }
+        }
+
+        if (onOpenFavorites != null && onOpenCollections != null) {
+            GroupGap()
+            SectionLabel(stringResource(Res.string.settings_group_feed))
+            SettingsCard {
+                TaqvoRow(stringResource(Res.string.feed_favorites_title), onClick = onOpenFavorites)
+                CardDivider()
+                TaqvoRow(stringResource(Res.string.feed_collections_title), onClick = onOpenCollections)
+            }
         }
 
         GroupGap()

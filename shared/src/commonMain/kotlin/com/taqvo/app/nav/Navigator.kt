@@ -42,14 +42,18 @@ class Navigator(start: Screen) {
     }
 
     /**
-     * The tab currently showing, read from the bottom of the stack so a pushed sub-screen still
-     * reports the tab it was opened from. Null during onboarding, which has no tab bar.
+     * The part of the app showing: the nearest tab root at or below the top of the stack, so a
+     * pushed sub-screen still reports the part it was opened from. The feed (always at the bottom
+     * once onboarding is done) is the answer when nothing else is open. Null during onboarding.
      */
-    val currentTab: Tab? get() = tabOf(_backStack.value.first())
+    val currentTab: Tab? get() = _backStack.value.lastOrNull { tabOf(it) != null }?.let(::tabOf)
 
     /**
-     * Switches tabs by replacing the stack with [tab]'s root. See [Tab] for why there is no
-     * per-tab history to restore.
+     * Opens [tab]'s root over the feed (the owner's structure: the feed is home, everything else
+     * opens from it and goes back to it), with nothing else between: a widget or notification
+     * request lands on its screen with Back leading home. [Tab.FEED] is home alone.
      */
-    fun selectTab(tab: Tab) = replaceAll(tab.root)
+    fun selectTab(tab: Tab) {
+        _backStack.value = if (tab == Tab.FEED) listOf(Screen.Feed) else listOf(Screen.Feed, tab.root)
+    }
 }

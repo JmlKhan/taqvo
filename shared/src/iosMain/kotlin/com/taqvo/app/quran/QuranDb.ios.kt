@@ -24,12 +24,18 @@ import platform.posix.remove
 import platform.posix.rename
 import com.taqvo.app.resources.Res
 
+actual fun createQuranDriver(): SqlDriver = openBundledDatabase(QuranDb.FILE, QuranDb.RESOURCE, QuranDb.VERSION)
+
+/**
+ * Opens a database that ships prebuilt in the app's resources — quran.db, and the feed's
+ * content.db — copying it out first if it is missing or carries a different `user_version`.
+ */
 @OptIn(ExperimentalForeignApi::class)
-actual fun createQuranDriver(): SqlDriver {
+internal fun openBundledDatabase(fileName: String, resource: String, version: Int): SqlDriver {
     val directoryPath = quranDatabaseDirectory()
-    val filePath = "$directoryPath/${QuranDb.FILE}"
-    if (!NSFileManager.defaultManager.fileExistsAtPath(filePath) || userVersion(filePath) != QuranDb.VERSION) {
-        val bytes = runBlocking { Res.readBytes(QuranDb.RESOURCE) }
+    val filePath = "$directoryPath/$fileName"
+    if (!NSFileManager.defaultManager.fileExistsAtPath(filePath) || userVersion(filePath) != version) {
+        val bytes = runBlocking { Res.readBytes(resource) }
         // A stale -wal/-shm/-journal beside the old file would otherwise be replayed against the
         // freshly installed one on next open, applying leftover journalled changes from a
         // database that no longer exists.
@@ -38,8 +44,8 @@ actual fun createQuranDriver(): SqlDriver {
     }
     return NativeSqliteDriver(
         DatabaseConfiguration(
-            name = QuranDb.FILE,
-            version = QuranDb.VERSION,
+            name = fileName,
+            version = version,
             // The bundled file already has the schema; the framework must never create or
             // migrate it itself.
             create = { },

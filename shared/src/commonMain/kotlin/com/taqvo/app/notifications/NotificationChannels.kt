@@ -113,14 +113,20 @@ object NotificationChannels {
     fun allIqamaChannelIds(): List<String> =
         everyId(Prayer.FAJR, NotificationKind.IQAMA)
 
+    /** Every channel the daily ayah reminders could ever have had: one, so they can be silenced
+     * in the system's list without silencing any prayer. */
+    fun allAyahChannelIds(): List<String> =
+        everyId(Prayer.SUNRISE, NotificationKind.AYAH)
+
     // A reminder rides its prayer's own Notification channel, as it always has; Tahajjud, the
-    // adhkar reminder, Duha and the iqama leave the prayer's namespace.
+    // adhkar reminder, Duha, the iqama and the daily ayahs leave the prayer's namespace.
     private fun base(prayer: Prayer, sound: PrayerSound, kind: NotificationKind = NotificationKind.PRAYER): String =
         when (kind) {
             NotificationKind.TAHAJJUD -> "tahajjud_${sound.name.lowercase()}"
             NotificationKind.ADHKAR_MORNING, NotificationKind.ADHKAR_EVENING -> "adhkar_${sound.name.lowercase()}"
             NotificationKind.DUHA_BEST, NotificationKind.DUHA_START -> "duha_${sound.name.lowercase()}"
             NotificationKind.IQAMA -> "iqama_${sound.name.lowercase()}"
+            NotificationKind.AYAH -> "ayah_${sound.name.lowercase()}"
             NotificationKind.PRAYER, NotificationKind.REMINDER -> "prayer_${prayer.name.lowercase()}_${sound.name.lowercase()}"
         }
 }

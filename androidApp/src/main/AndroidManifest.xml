@@ -113,6 +113,17 @@
             android:authorities="${applicationId}.adhan"
             android:exported="true"
             tools:ignore="ExportedContentProvider" />
+        <!-- The feed's card image for the share sheet (feed spec §9): read-only, granted per share
+             to the app chosen, and limited to the cache's shared/ folder by share_paths.xml. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.share"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/share_paths" />
+        </provider>
         <receiver android:name="com.taqvo.app.notifications.PrayerAlarmReceiver" android:exported="false" />
         <receiver android:name="com.taqvo.app.notifications.SystemEventReceiver" android:exported="true">
             <intent-filter>

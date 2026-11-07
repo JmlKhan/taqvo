@@ -2,6 +2,100 @@ package com.taqvo.app.feature.onboarding
 
 import com.taqvo.app.location.LocationPermission
 
+/**
+ * Onboarding's screens, in order (onboarding spec §1). Hoisted out of the screen because a
+ * declined location navigates away to the city search: the step must survive the round trip.
+ * Stored by name to resume a killed onboarding, so a rename needs a migration; appending is fine.
+ */
+enum class OnboardingStep {
+    SPLASH,
+    INTRO,
+    NAME,
+    GOALS,
+    CONTENT,
+    JOURNEY,
+    STREAK,
+    USE_CASES,
+    REMINDERS,
+    /** Android 14+ without "Alarms & reminders": asked right after notifications are allowed. */
+    EXACT_ALARMS,
+    LOADING,
+    THEME,
+    PREVIEW,
+    SHOWCASE_LOCK,
+    SHOWCASE_HOME,
+    PAYWALL,
+    WELCOME,
+    AYAH_FORMAT,
+    LOCATION,
+    WIDGET_GUIDE,
+}
+
+/** What decides which optional screens a reader sees. */
+data class OnboardingContext(
+    /** True on an Android that has not granted "Alarms & reminders"; always false on iOS. */
+    val exactAlarmsNeeded: Boolean = false,
+    /** The answer the notification prompt gave on screen 09; false until it has been asked. */
+    val notificationsGranted: Boolean = false,
+    val paywallEnabled: Boolean = OnboardingFeatures.PAYWALL_ENABLED,
+    val wantsWidgets: Boolean = false,
+)
+
+/** Switches for parts of the flow that are built but not live. */
+object OnboardingFeatures {
+    /**
+     * Screen 15. Off until the app may charge: the bundled translations (Tanzil) and recitations
+     * (Islamic Network) are licensed for non-commercial use only (docs/ATTRIBUTION.md), and there
+     * is no billing behind the screen yet.
+     */
+    const val PAYWALL_ENABLED = false
+}
+
+object OnboardingFlow {
+
+    /** The screens this reader will see, in order. */
+    fun steps(context: OnboardingContext): List<OnboardingStep> = OnboardingStep.entries.filter { step ->
+        when (step) {
+            OnboardingStep.EXACT_ALARMS -> context.exactAlarmsNeeded && context.notificationsGranted
+            OnboardingStep.PAYWALL -> context.paywallEnabled
+            // The guide follows the reader's own pick (spec, screen 08); Settings › Widgets keeps it.
+            OnboardingStep.WIDGET_GUIDE -> context.wantsWidgets
+            // Always asked, unlike the spec's screen 17b: the app opens on the Prayer screen, which
+            // has nothing to show without a place.
+            else -> true
+        }
+    }
+
+    /** The screen after [step], or null when onboarding is done. */
+    fun next(step: OnboardingStep, context: OnboardingContext): OnboardingStep? =
+        OnboardingStep.entries.drop(step.ordinal + 1).firstOrNull { it in steps(context) }
+
+    /** The questions that can be skipped (spec §0): their answer is stored as none. */
+    fun skippable(step: OnboardingStep): Boolean = step in SKIPPABLE
+
+    /** How full the progress bar is on [step], or null where the spec hides it. */
+    fun progress(step: OnboardingStep, context: OnboardingContext): Float? {
+        if (step in NO_PROGRESS) return null
+        val shown = steps(context).filterNot { it in NO_PROGRESS }
+        val index = shown.indexOf(step).takeIf { it >= 0 } ?: return null
+        return (index + 1f) / shown.size
+    }
+
+    private val SKIPPABLE = setOf(
+        OnboardingStep.NAME,
+        OnboardingStep.GOALS,
+        OnboardingStep.CONTENT,
+        OnboardingStep.USE_CASES,
+    )
+
+    /** Splash, paywall and the full-screen welcome have no progress bar (spec §0). */
+    private val NO_PROGRESS = setOf(OnboardingStep.SPLASH, OnboardingStep.PAYWALL, OnboardingStep.WELCOME)
+
+    /** A stored step's name back to the step; anything unknown starts over. */
+    fun stepOf(name: String?): OnboardingStep =
+        OnboardingStep.entries.firstOrNull { it.name == name } ?: OnboardingStep.SPLASH
+}
+
 /** What onboarding's location screen does once the system prompt has been answered. */
 enum class LocationAnswer {
     /** Allowed: the phone's location is used and onboarding moves on. */

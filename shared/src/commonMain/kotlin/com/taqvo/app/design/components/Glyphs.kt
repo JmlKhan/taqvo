@@ -409,7 +409,7 @@ internal fun DrawScope.drawCloudDown(tint: Color) {
     drawPath(head, tint, style = stroke)
 }
 
-/** A circle with a slash across it: the third promise, no account, no ads, no analytics. */
+/** A circle with a slash across it: the third promise, no account and no analytics. */
 internal fun DrawScope.drawNoEntry(tint: Color) {
     val u = size.width / 16f
     val stroke = glyphStroke()

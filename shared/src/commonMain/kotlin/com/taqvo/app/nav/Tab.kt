@@ -4,7 +4,7 @@ package com.taqvo.app.nav
  * The destinations the bottom bar switches between. Each owns exactly one root [Screen];
  * everything else in [Screen] is a child pushed on top of whichever root is showing.
  *
- * Three tabs now. Qibla was a tab for one iteration and is now a card on the Prayer screen
+ * Four tabs now: the feed (feed spec §2) arrived first in the row and is where the app opens. Qibla was a tab for one iteration and is now a card on the Prayer screen
  * (iteration 8), with the compass itself pushed from there; the Quran tab arrived with slice 2,
  * sitting between Prayer and Settings. [PRAYER]'s root is [Screen.Prayer]. The build log and the
  * older plans call it Today, its name in code until the code took the name the tab shows.
@@ -15,6 +15,8 @@ package com.taqvo.app.nav
  * [Navigator.selectTab] therefore replaces the stack outright.
  */
 enum class Tab(val root: Screen) {
+    /** The feed (feed spec §2), first and the one the app opens on; Back from any other tab returns here. */
+    FEED(Screen.Feed),
     PRAYER(Screen.Prayer),
     QURAN(Screen.Quran),
     SETTINGS(Screen.Settings),

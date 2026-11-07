@@ -22,7 +22,8 @@ object AlarmPrecision {
 
     fun wantsExact(entry: ScheduledNotification): Boolean = when (entry.kind) {
         NotificationKind.PRAYER, NotificationKind.REMINDER, NotificationKind.TAHAJJUD, NotificationKind.IQAMA -> true
-        NotificationKind.ADHKAR_MORNING, NotificationKind.ADHKAR_EVENING -> false
+        // A daily ayah has no moment it must keep: within the hour is on time.
+        NotificationKind.ADHKAR_MORNING, NotificationKind.ADHKAR_EVENING, NotificationKind.AYAH -> false
         NotificationKind.DUHA_BEST, NotificationKind.DUHA_START -> {
             val end = entry.windowEnd
             end == null || end - entry.instant < DUHA_INEXACT_WINDOW

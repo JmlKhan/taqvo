@@ -13,6 +13,14 @@ import com.taqvo.app.feature.recitation.asPort
 import com.taqvo.app.feature.recitation.asRecitationPort
 import com.taqvo.app.feature.recitation.readAloudPort
 import com.taqvo.app.city.CityRepository
+import com.taqvo.app.content.ContentRepository
+import com.taqvo.app.feed.FeedLibrary
+import com.taqvo.app.feed.FeedOnboarding
+import com.taqvo.app.feed.FeedStore
+import com.taqvo.app.feed.FeedViewModel
+import com.taqvo.app.feed.SqlFeedStore
+import com.taqvo.app.feed.asFeedPrefs
+import com.taqvo.app.settings.FeedPrefsStore
 import com.taqvo.app.location.LocationRefresher
 import com.taqvo.app.location.LocationRepository
 import com.taqvo.app.location.createLocationProvider
@@ -38,6 +46,16 @@ import com.taqvo.app.settings.BookmarkStore
 import com.taqvo.app.settings.DataStoreAdhkarStore
 import com.taqvo.app.settings.SettingsRepository
 import com.taqvo.app.settings.TasbeehStore
+import com.taqvo.app.settings.OnboardingStore
+import com.taqvo.app.analytics.Analytics
+import com.taqvo.app.analytics.NoAnalytics
+import com.taqvo.app.ayah.AyahReminderSource
+import com.taqvo.app.notifications.AyahReminderPlanner
+import com.taqvo.app.notifications.RescheduleTrigger
+import com.taqvo.app.notifications.StreakReminderPlanner
+import com.taqvo.app.feed.StreakTracker
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import com.taqvo.app.settings.createDataStore
 import com.taqvo.app.widget.createWidgetPinRequester
 import com.taqvo.app.widget.createWidgetPlacementSource
@@ -51,6 +69,13 @@ class AppContainer {
     val settingsRepository = SettingsRepository(dataStore)
     val bookmarkStore = BookmarkStore(dataStore)
     val tasbeehStore = TasbeehStore(dataStore)
+    val onboardingStore = OnboardingStore(dataStore)
+
+    /**
+     * The onboarding funnel's events. [NoAnalytics] sends nothing, as PRIVACY.md promises; a real
+     * provider goes here only after the privacy policy and both stores' labels say so.
+     */
+    val analytics: Analytics = NoAnalytics
     val adhkarStore: AdhkarStore by lazy { DataStoreAdhkarStore(dataStore) }
     val cityRepository = CityRepository(
         loadCsv = { Res.readBytes("files/cities.csv").decodeToString() },
@@ -67,6 +92,36 @@ class AppContainer {
         },
     )
     val quranRepository by lazy { QuranRepository() }
+
+    // ── The feed (feed spec). content.db is read-only and bundled; app.db holds the reader's own. ──
+    val contentRepository by lazy { ContentRepository() }
+    val feedStore: FeedStore by lazy { SqlFeedStore() }
+    val feedPrefsStore = FeedPrefsStore(dataStore)
+
+    /** The surah's Latin name for a card's reference, until content.db carries its own names. */
+    private val feedSurahName: suspend (Int) -> String? = { surah -> runCatching { quranRepository.surah(surah).nameLatin }.getOrNull() }
+    val feedLibrary by lazy { FeedLibrary(contentRepository, feedSurahName) }
+
+    /**
+     * One for the process, so the queue and the place in it survive a walk to another tab and back
+     * without a reload; app.db keeps them across a restart as well.
+     */
+    val feedViewModel by lazy {
+        FeedViewModel(
+            content = contentRepository,
+            store = feedStore,
+            prefs = feedPrefsStore.asFeedPrefs(),
+            onboarding = {
+                val answers = onboardingStore.answers.first()
+                FeedOnboarding(answers.goals, answers.contentTypes, onboardingStore.streakStart.first())
+            },
+            surahName = feedSurahName,
+            widgetPlaced = { widgetPlacementSource.current()?.let { it.ayah || it.dua || it.prayer || it.lockScreen } },
+            analytics = analytics,
+            // A day that has just counted takes back its 20:00 streak reminder.
+            onDayCounted = { notificationCoordinator.reschedule(RescheduleTrigger.SETTINGS_CHANGED) },
+        )
+    }
 
     /**
      * Recitation (spec 3a). The paths are shared by both so the library and the manifest cache
@@ -172,6 +227,41 @@ class AppContainer {
         // the date the set was last finished. An old date names a day the plan no longer reaches.
         doneAdhkar = {
             AdhkarSet.entries.mapNotNull { set -> adhkarStore.done(set).first()?.let { adhkarNotificationId(set, it) } }.toSet()
+        },
+        ayahPerDay = {
+            onboardingStore.ayahReminders.first().let { if (it.enabled) it.minutesOfDay().size else 0 }
+        },
+        // The daily ayahs (onboarding spec, screen 09): the reader's themes, format and
+        // translation, read now, at schedule time, as every other notification's words are.
+        ayahReminders = { from, timeZoneId, days, format ->
+            val candidates = AyahReminderSource(quranRepository).candidates(
+                themeIds = onboardingStore.answers.first().contentTypes,
+                format = onboardingStore.ayahFormat.first(),
+                reading = settingsRepository.readingSettings(format.languageTag()).first(),
+                platformFormat = format,
+            )
+            val ayahs = AyahReminderPlanner.plan(
+                settings = onboardingStore.ayahReminders.first(),
+                candidates = candidates,
+                from = from,
+                timeZoneId = timeZoneId,
+                days = days,
+                seed = onboardingStore.reminderSeed(),
+            )
+            // The feed's streak reminder (feed spec §8) takes one of each day's ayah slots at 20:00.
+            val today = from.toLocalDateTime(TimeZone.of(timeZoneId)).date
+            val streak = StreakTracker.seeded(feedPrefsStore.streak(), onboardingStore.streakStart.first())
+            val counted = runCatching { feedStore.activitySince(today)[today] }.getOrNull()
+                ?.let(StreakTracker::dayCounts) ?: false
+            StreakReminderPlanner.plan(
+                ayahReminders = ayahs,
+                from = from,
+                timeZoneId = timeZoneId,
+                days = days,
+                todayCounted = counted || streak.lastActive == today,
+                streakAlive = StreakTracker.current(streak, today) > 0,
+                uiLanguageTag = format.languageTag(),
+            )
         },
     )
 }

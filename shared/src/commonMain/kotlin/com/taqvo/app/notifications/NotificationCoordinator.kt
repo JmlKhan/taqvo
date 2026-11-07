@@ -48,6 +48,15 @@ class NotificationCoordinator(
      * spec §5). None for callers with no adhkar store to hand.
      */
     private val doneAdhkar: suspend () -> Set<String> = { emptySet() },
+    /** How many daily ayah reminders a day are on (0 when they are off), to size the window. */
+    private val ayahPerDay: suspend () -> Int = { 0 },
+    /**
+     * The daily ayah reminders from an instant, in a zone, for a number of days, in the reader's
+     * language: planned by the caller ([AyahReminderPlanner]), since they need the Quran and
+     * onboarding's answers, which this class does not otherwise touch. None by default.
+     */
+    private val ayahReminders: suspend (from: Instant, timeZoneId: String, days: Int, format: PlatformFormat) -> List<ScheduledNotification> =
+        { _, _, _, _ -> emptyList() },
 ) {
     private val rescheduling = Mutex()
 
@@ -74,7 +83,8 @@ class NotificationCoordinator(
     private suspend fun plan(location: GeoLocation): List<ScheduledNotification> {
         val prayerSettings = settingsRepository.prayerSettings.first()
         val notificationSettings = settingsRepository.notificationSettings.first()
-        val windowDays = NotificationPlanner.windowDaysFor(capacity, notificationSettings)
+        val perDay = if (notificationSettings.enabled) ayahPerDay() else 0
+        val windowDays = NotificationPlanner.windowDaysFor(capacity, notificationSettings, perDay)
         // Resolved here, at schedule time, rather than injected: a reschedule can be triggered
         // from a boot receiver or a background task, where there is no composition to read a
         // locale from and the device's own default is the only truth available. The clock format
@@ -82,17 +92,20 @@ class NotificationCoordinator(
         // text are written now, days before they fire, in the format the reader has chosen.
         val format = createPlatformFormat(settingsRepository.clockFormat.first())
         val done = if (notificationSettings.adhkar) doneAdhkar() else emptySet()
+        val from = now()
+        val ayahs = if (perDay > 0) ayahReminders(from, location.timeZoneId, windowDays + 1, format) else emptyList()
         return NotificationPlanner.plan(
             location = location,
             settings = prayerSettings,
             notifications = notificationSettings,
             engine = engine,
-            from = now(),
+            from = from,
             windowDays = windowDays,
             capacity = capacity,
             copy = LocalizedNotificationCopy(format),
             formatClockTime = { instant, tz -> localizedClockTime(instant, tz, format) },
             doneAdhkar = done,
+            ayahReminders = ayahs,
         )
     }
 

@@ -26,6 +26,7 @@ import com.taqvo.app.di.appContainer
 import com.taqvo.app.i18n.createPlatformFormat
 import com.taqvo.app.domain.WidgetBackground
 import com.taqvo.app.quran.ReadingSettings
+import com.taqvo.app.ayah.forAyahFormat
 import java.time.LocalDate
 import java.util.Locale
 import com.taqvo.app.i18n.UiLanguage
@@ -141,6 +142,7 @@ private suspend fun ensureMirror(context: Context) {
     // throws falls back to the language's own defaults, so the widget still draws something.
     val readingSettings = runCatching {
         appContainer.settingsRepository.readingSettings(deviceTag).first()
+            .forAyahFormat(appContainer.onboardingStore.ayahFormat.first())
     }.getOrElse { ReadingSettings.defaultsFor(deviceTag) }
     runCatching {
         AyahPoolMirrorWriter.write(

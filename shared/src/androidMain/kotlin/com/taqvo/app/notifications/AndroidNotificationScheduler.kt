@@ -223,8 +223,10 @@ class AndroidNotificationScheduler(private val context: Context) : NotificationS
             // The channel name says which sound it carries, not which voice: a user switching
             // voices is not meant to accumulate a list of channels they have to read carefully,
             // and the old voice's channel is deleted by the sweep below the moment it goes idle.
-            val channel =
-                NotificationChannel(id, copy.channelName(prayer, sound, kind), NotificationManager.IMPORTANCE_HIGH)
+            // A daily ayah is several a day and asks for no action: it lands in the shade without
+            // dropping over whatever is on screen, which every prayer's channel does.
+            val importance = if (kind == NotificationKind.AYAH) NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(id, copy.channelName(prayer, sound, kind), importance)
             if (existing == null) configureSound(channel, sound, voice)
             notificationManager.createNotificationChannel(channel)
         }
@@ -248,7 +250,8 @@ class AndroidNotificationScheduler(private val context: Context) : NotificationS
         val candidates = live.filter { it.kind == NotificationKind.PRAYER }
             .flatMap { NotificationChannels.allChannelIdsFor(it.prayer) }
             .toSet() + NotificationChannels.allTahajjudChannelIds() + NotificationChannels.allAdhkarChannelIds() +
-            NotificationChannels.allDuhaChannelIds() + NotificationChannels.allIqamaChannelIds()
+            NotificationChannels.allDuhaChannelIds() + NotificationChannels.allIqamaChannelIds() +
+            NotificationChannels.allAyahChannelIds()
         candidates.filterNot { it in liveIds }
             .forEach { runCatching { notificationManager.deleteNotificationChannel(it) } }
     }
@@ -274,6 +277,7 @@ class AndroidNotificationScheduler(private val context: Context) : NotificationS
         NotificationKind.DUHA_BEST, NotificationKind.DUHA_START ->
             ChannelKey(Prayer.SUNRISE, entry.sound, entry.voice, NotificationKind.DUHA_BEST)
         NotificationKind.IQAMA -> ChannelKey(Prayer.FAJR, entry.sound, entry.voice, NotificationKind.IQAMA)
+        NotificationKind.AYAH -> ChannelKey(Prayer.SUNRISE, entry.sound, entry.voice, NotificationKind.AYAH)
         NotificationKind.PRAYER, NotificationKind.REMINDER ->
             ChannelKey(entry.prayer, entry.sound, entry.voice, NotificationKind.PRAYER)
     }

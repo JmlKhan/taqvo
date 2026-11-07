@@ -21,8 +21,12 @@ import kotlin.time.Instant
  * They carry [com.taqvo.app.domain.Prayer.SUNRISE], which is never notified and so can never be
  * taken for an adhan, and their bodies quote the time Duha ends. [IQAMA] carries its own prayer
  * and rings some minutes after that prayer's adhan.
+ *
+ * [AYAH] is a daily ayah reminder (onboarding spec, screen 09): an ayah from the pool at a time
+ * in the reader's chosen window, tied to no prayer. It carries [com.taqvo.app.domain.Prayer.SUNRISE],
+ * which is never notified, and its title and body are the ayah's reference and text.
  */
-enum class NotificationKind { PRAYER, REMINDER, TAHAJJUD, ADHKAR_MORNING, ADHKAR_EVENING, DUHA_BEST, DUHA_START, IQAMA }
+enum class NotificationKind { PRAYER, REMINDER, TAHAJJUD, ADHKAR_MORNING, ADHKAR_EVENING, DUHA_BEST, DUHA_START, IQAMA, AYAH }
 
 /** The set an adhkar reminder is for, which a tap on it opens; null for every other kind. */
 val NotificationKind.adhkarSet: AdhkarSet?
@@ -30,7 +34,8 @@ val NotificationKind.adhkarSet: AdhkarSet?
         NotificationKind.ADHKAR_MORNING -> AdhkarSet.MORNING
         NotificationKind.ADHKAR_EVENING -> AdhkarSet.EVENING
         NotificationKind.PRAYER, NotificationKind.REMINDER, NotificationKind.TAHAJJUD,
-        NotificationKind.DUHA_BEST, NotificationKind.DUHA_START, NotificationKind.IQAMA -> null
+        NotificationKind.DUHA_BEST, NotificationKind.DUHA_START, NotificationKind.IQAMA,
+        NotificationKind.AYAH -> null
     }
 
 /** Either half of the adhkar reminder: one setting, one channel, one tier of the plan. */

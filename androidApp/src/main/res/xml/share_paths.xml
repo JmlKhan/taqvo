@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The feed's shared card image (feed spec §9): one file in the cache's shared/ folder, and
+     nothing else the FileProvider could hand out. -->
+<paths>
+    <cache-path name="shared" path="shared/" />
+</paths>

@@ -40,6 +40,7 @@ object EnglishNotificationCopy : NotificationCopy {
         NotificationKind.ADHKAR_MORNING -> "Morning adhkar"
         NotificationKind.ADHKAR_EVENING -> "Evening adhkar"
         NotificationKind.DUHA_BEST, NotificationKind.DUHA_START -> "Duha"
+        NotificationKind.AYAH -> "Daily ayah"
         NotificationKind.PRAYER, NotificationKind.REMINDER, NotificationKind.IQAMA -> name(prayer)
     }
 
@@ -59,6 +60,8 @@ object EnglishNotificationCopy : NotificationCopy {
         NotificationKind.DUHA_START -> "Duha time is in · until $clockTime"
         NotificationKind.IQAMA ->
             "Iqama reminder · $minutesBefore ${if (minutesBefore == 1) "minute" else "minutes"} after the adhan"
+        // The ayah's own words are the body; the planner never asks for this one.
+        NotificationKind.AYAH -> ""
     }
 
     override fun channelName(prayer: Prayer, sound: PrayerSound, kind: NotificationKind): String {
@@ -73,6 +76,7 @@ object EnglishNotificationCopy : NotificationCopy {
         val channel = when {
             kind.isAdhkar -> "Morning and evening adhkar"
             kind == NotificationKind.IQAMA -> "Iqama reminder"
+            kind == NotificationKind.AYAH -> "Daily ayahs"
             else -> title(prayer, kind)
         }
         return "$channel · $soundName"

@@ -53,6 +53,8 @@ import com.taqvo.app.resources.credit_typeface
 import com.taqvo.app.resources.credit_typeface_detail
 import com.taqvo.app.resources.quran_sheet_transliteration
 import com.taqvo.app.resources.settings_attribution
+import com.taqvo.app.resources.feed_sources_fonts
+import com.taqvo.app.resources.feed_sources_title
 
 private data class Credit(
     val what: String,
@@ -154,6 +156,8 @@ fun AttributionScreen(
     translations: List<TranslationInfo>,
     reciters: List<Reciter>,
     onBack: () -> Unit,
+    /** The feed's own sources (content spec §6, the "Manbalar" list), read from content.db. */
+    feedSources: List<com.taqvo.app.content.ContentSourceInfo> = emptyList(),
 ) {
     val colors = LocalTaqvoColors.current
     val uriHandler = LocalUriHandler.current
@@ -194,6 +198,26 @@ fun AttributionScreen(
                     }
                 }
             }
+        }
+        if (feedSources.isNotEmpty()) {
+            Spacer(Modifier.height(24.dp))
+            SectionLabel(stringResource(Res.string.feed_sources_title))
+            SettingsCard {
+                feedSources.forEachIndexed { i, src ->
+                    if (i > 0) CardDivider()
+                    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
+                        Text(src.name, style = TaqvoText.rowLabel, color = colors.textPrimary)
+                        Spacer(Modifier.height(2.dp))
+                        Text(src.lang, style = TaqvoText.caption, color = colors.textSecondary)
+                        src.note?.let {
+                            Spacer(Modifier.height(4.dp))
+                            Text(it, style = TaqvoText.caption, color = colors.textTertiary)
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            SettingsNote(stringResource(Res.string.feed_sources_fonts))
         }
     }
 }

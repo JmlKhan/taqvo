@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import com.taqvo.app.di.AppContainer
@@ -30,6 +31,7 @@ import com.taqvo.app.notifications.returnToFrontReschedules
 import com.taqvo.app.recitation.foregroundReturnsToRecitation
 import com.taqvo.app.settings.SettingsRepository
 import com.taqvo.app.widget.AyahPoolMirrorWriter
+import com.taqvo.app.ayah.forAyahFormat
 import com.taqvo.app.widget.DuaPoolMirrorWriter
 import com.taqvo.app.widget.createWidgetKeyValueStore
 import com.taqvo.app.widget.refreshWidgets
@@ -224,7 +226,9 @@ internal fun AyahPoolMirror(
         val store = createWidgetKeyValueStore()
         suspend fun writeMirror() {
             runCatching {
+                // The reader's display format (onboarding screen 17) shapes the card too.
                 val reading = settings.readingSettings(languageTag).first()
+                    .forAyahFormat(container.onboardingStore.ayahFormat.first())
                 val result = withContext(Dispatchers.Default) {
                     // The dua card's pool rides on the same write: it follows the interface
                     // language too, and one refresh below redraws both daily cards.
@@ -242,8 +246,10 @@ internal fun AyahPoolMirror(
         }
         writeMirror()
         runCatching {
-            settings.readingSettings(languageTag)
-                .map { it.translationId }
+            combine(
+                settings.readingSettings(languageTag).map { it.translationId },
+                container.onboardingStore.ayahFormat,
+            ) { translationId, ayahFormat -> translationId to ayahFormat }
                 .distinctUntilChanged()
                 .drop(1)
                 .collect { writeMirror() }

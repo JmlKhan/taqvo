@@ -13,30 +13,42 @@ import com.taqvo.app.quran.db.QuranDatabase
 import com.taqvo.app.resources.Res
 import com.taqvo.app.settings.appContext
 
-actual fun createQuranDriver(): SqlDriver {
-    val file = appContext.getDatabasePath(QuranDb.FILE)
-    if (!file.exists() || userVersion(file) != QuranDb.VERSION) {
+actual fun createQuranDriver(): SqlDriver =
+    openBundledDatabase(QuranDb.FILE, QuranDb.RESOURCE, QuranDb.VERSION, QuranDatabase.Schema)
+
+/**
+ * Opens a database that ships prebuilt in the app's resources — quran.db, and the feed's
+ * content.db — copying it out first if it is missing or carries a different `user_version`.
+ */
+internal fun openBundledDatabase(
+    fileName: String,
+    resource: String,
+    version: Int,
+    schema: app.cash.sqldelight.db.SqlSchema<app.cash.sqldelight.db.QueryResult.Value<Unit>>,
+): SqlDriver {
+    val file = appContext.getDatabasePath(fileName)
+    if (!file.exists() || userVersion(file) != version) {
         file.parentFile?.mkdirs()
-        val bytes = runBlocking { Res.readBytes(QuranDb.RESOURCE) }
-        val temp = File(file.parentFile, "${QuranDb.FILE}.tmp")
+        val bytes = runBlocking { Res.readBytes(resource) }
+        val temp = File(file.parentFile, "$fileName.tmp")
         temp.writeBytes(bytes)
         // A stale -wal/-shm/-journal beside the old file would otherwise be replayed against the
         // freshly installed one on next open, applying leftover journalled changes from a
         // database that no longer exists.
-        listOf("-wal", "-shm", "-journal").forEach { suffix -> File(file.parentFile, "${QuranDb.FILE}$suffix").delete() }
+        listOf("-wal", "-shm", "-journal").forEach { suffix -> File(file.parentFile, "$fileName$suffix").delete() }
         // File.renameTo is atomic when the source and destination are on the same filesystem,
         // which they are here (both under the app's private databases directory).
         check(temp.renameTo(file)) { "Failed to install $file from $temp" }
     }
     return AndroidSqliteDriver(
-        schema = QuranDatabase.Schema,
+        schema = schema,
         context = appContext,
-        name = QuranDb.FILE,
+        name = fileName,
         // Opened at the bundled file's own user_version, not SQLDelight's schema version (which
         // stays 1: the schema never changes, only the text inside it): the framework compares the
         // two and, with the file ahead, would call onDowngrade and throw. The bundled file already
         // has the schema, so create, upgrade and downgrade are all deliberately nothing.
-        callback = object : SupportSQLiteOpenHelper.Callback(QuranDb.VERSION) {
+        callback = object : SupportSQLiteOpenHelper.Callback(version) {
             override fun onCreate(db: SupportSQLiteDatabase) = Unit
             override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
             override fun onDowngrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit

@@ -48,6 +48,8 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
         val iqamaBodyOne: String = iqamaBody,
         /** The one channel all five iqamas post into. */
         val iqamaChannel: String,
+        /** The daily ayah reminders' title, and the name of the one channel they post into. */
+        val ayah: String,
         val silent: String,
         val notification: String,
         val takbir: String,
@@ -66,6 +68,7 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
         NotificationKind.ADHKAR_MORNING -> words.adhkarMorning
         NotificationKind.ADHKAR_EVENING -> words.adhkarEvening
         NotificationKind.DUHA_BEST, NotificationKind.DUHA_START -> words.duha
+        NotificationKind.AYAH -> words.ayah
         // The prayer's name with its usual pairing, as the adhan's own title is.
         NotificationKind.PRAYER, NotificationKind.REMINDER, NotificationKind.IQAMA -> name(prayer)
     }
@@ -92,6 +95,8 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
             NotificationKind.DUHA_BEST -> words.duhaBestBody.replace("{time}", isolatedClock(clockTime))
             NotificationKind.DUHA_START -> words.duhaStartBody.replace("{time}", isolatedClock(clockTime))
             NotificationKind.IQAMA -> iqama(minutesBefore)
+            // The ayah's own words are the body; the planner never asks for this one.
+            NotificationKind.AYAH -> ""
         }
     }
 
@@ -147,6 +152,7 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
         val channel = when {
             kind.isAdhkar -> words.adhkarChannel
             kind == NotificationKind.IQAMA -> words.iqamaChannel
+            kind == NotificationKind.AYAH -> words.ayah
             else -> title(prayer, kind)
         }
         return "$channel · $soundName"
@@ -172,6 +178,7 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
                 iqamaBody = "Iqama reminder · {minutes} minutes after the adhan",
                 iqamaBodyOne = "Iqama reminder · {minutes} minute after the adhan",
                 iqamaChannel = "Iqama reminder",
+                ayah = "Daily ayah",
                 silent = "Silent", notification = "Notification", takbir = "Takbir", adhan = "Adhan",
             ),
             UiLanguage.ARABIC to Words(
@@ -190,6 +197,7 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
                 // Counted in code (iqama), as the reminder is: this is the 3–10 form.
                 iqamaBody = "تذكير الإقامة · مضت {minutes} دقائق على الأذان",
                 iqamaChannel = "تذكير الإقامة",
+                ayah = "آية اليوم",
                 silent = "صامت", notification = "نغمة التنبيه", takbir = "تكبير", adhan = "أذان",
             ),
             UiLanguage.FRENCH to Words(
@@ -209,6 +217,7 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
                 iqamaBody = "Rappel de l’iqama · {minutes} minutes après l’adhan",
                 iqamaBodyOne = "Rappel de l’iqama · {minutes} minute après l’adhan",
                 iqamaChannel = "Rappel de l’iqama",
+                ayah = "Verset du jour",
                 silent = "Silencieux", notification = "Tonalité", takbir = "Takbir", adhan = "Adhan",
             ),
             UiLanguage.UZBEK to Words(
@@ -226,6 +235,7 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
                 duhaStartBody = "Zuho vaqti kirdi · {time} gacha",
                 iqamaBody = "Iqomat eslatmasi · azondan {minutes} daqiqa keyin",
                 iqamaChannel = "Iqomat eslatmasi",
+                ayah = "Kunlik oyat",
                 silent = "Ovozsiz", notification = "Bildirishnoma", takbir = "Takbir", adhan = "Azon",
             ),
             UiLanguage.TURKISH to Words(
@@ -243,6 +253,7 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
                 duhaStartBody = "Kuşluk vakti girdi · bitiş {time}",
                 iqamaBody = "Kamet hatırlatması · ezandan {minutes} dakika sonra",
                 iqamaChannel = "Kamet hatırlatması",
+                ayah = "Günün ayeti",
                 silent = "Sessiz", notification = "Bildirim", takbir = "Tekbir", adhan = "Ezan",
             ),
             UiLanguage.INDONESIAN to Words(
@@ -260,6 +271,7 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
                 duhaStartBody = "Telah masuk waktu Dhuha · hingga pukul {time}",
                 iqamaBody = "Pengingat iqamah · {minutes} menit setelah azan",
                 iqamaChannel = "Pengingat iqamah",
+                ayah = "Ayat harian",
                 silent = "Senyap", notification = "Nada notifikasi", takbir = "Takbir", adhan = "Azan",
             ),
             UiLanguage.URDU to Words(
@@ -277,6 +289,7 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
                 duhaStartBody = "چاشت کا وقت شروع ہو گیا · {time} تک",
                 iqamaBody = "اقامت کی یاد دہانی · اذان کے {minutes} منٹ بعد",
                 iqamaChannel = "اقامت کی یاد دہانی",
+                ayah = "آج کی آیت",
                 silent = "خاموش", notification = "اطلاعی ٹون", takbir = "تکبیر", adhan = "اذان",
             ),
             UiLanguage.BENGALI to Words(
@@ -294,6 +307,7 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
                 duhaStartBody = "চাশতের সময় শুরু হয়েছে · {time} পর্যন্ত",
                 iqamaBody = "ইকামতের রিমাইন্ডার · আযানের {minutes} মিনিট পর",
                 iqamaChannel = "ইকামতের রিমাইন্ডার",
+                ayah = "দৈনিক আয়াত",
                 silent = "নীরব", notification = "নোটিফিকেশন সুর", takbir = "তাকবীর", adhan = "আযান",
             ),
         )

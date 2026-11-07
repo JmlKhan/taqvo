@@ -31,7 +31,7 @@ class AlarmPrecisionTest {
     )
 
     private val exact = listOf(NotificationKind.PRAYER, NotificationKind.REMINDER, NotificationKind.TAHAJJUD, NotificationKind.IQAMA)
-    private val windowed = listOf(NotificationKind.ADHKAR_MORNING, NotificationKind.ADHKAR_EVENING, NotificationKind.DUHA_BEST, NotificationKind.DUHA_START)
+    private val windowed = listOf(NotificationKind.ADHKAR_MORNING, NotificationKind.ADHKAR_EVENING, NotificationKind.DUHA_BEST, NotificationKind.DUHA_START, NotificationKind.AYAH)
 
     @Test
     fun `every kind is in one of the two lists`() {

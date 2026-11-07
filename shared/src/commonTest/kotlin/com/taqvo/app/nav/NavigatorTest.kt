@@ -31,13 +31,28 @@ class NavigatorTest {
     }
 
     @Test
-    fun selectingATabLandsOnItsRootWithNothingBehindIt() {
-        val n = Navigator(Screen.Prayer)
+    fun selectingATabLandsOnItsRootWithOnlyTheFeedBehindIt() {
+        val n = Navigator(Screen.Feed)
         n.selectTab(Tab.SETTINGS)
         assertEquals(Screen.Settings, n.current)
         assertEquals(Tab.SETTINGS, n.currentTab)
-        assertEquals(1, n.backStack.value.size)
+        assertEquals(listOf(Screen.Feed, Screen.Settings), n.backStack.value)
+        assertTrue(n.pop())
+        assertEquals(Tab.FEED, n.currentTab)
         assertFalse(n.pop())
+    }
+
+    @Test
+    fun aTabOpenedFromIlovalarReportsItselfAndBackReturnsThere() {
+        val n = Navigator(Screen.Feed)
+        n.push(Screen.Tools)
+        n.push(Screen.Prayer)
+        n.push(Screen.Qibla)
+        assertEquals(Tab.PRAYER, n.currentTab)
+        n.pop()
+        n.pop()
+        assertEquals(Screen.Tools, n.current)
+        assertEquals(Tab.FEED, n.currentTab)
     }
 
     @Test
@@ -62,12 +77,12 @@ class NavigatorTest {
         n.push(Screen.CitySearch)
         n.selectTab(Tab.PRAYER)
         assertEquals(Screen.Prayer, n.current)
-        assertEquals(listOf<Screen>(Screen.Prayer), n.backStack.value)
+        assertEquals(listOf(Screen.Feed, Screen.Prayer), n.backStack.value)
     }
 
     @Test
-    fun exactlyThreeScreensAreTabRoots() {
-        val roots = listOf(Screen.Prayer, Screen.Quran, Screen.Settings)
+    fun exactlyFourScreensAreTabRoots() {
+        val roots = listOf(Screen.Feed, Screen.Prayer, Screen.Quran, Screen.Settings)
         roots.forEach { assertTrue(isTabRoot(it), "$it should be a tab root") }
         listOf(
             Screen.Onboarding,
@@ -125,7 +140,7 @@ class NavigatorTest {
         n.push(Screen.Reader(2, 1))
         n.replace(Screen.Mushaf(2))
         assertEquals(Screen.Mushaf(2), n.current)
-        assertEquals(listOf(Screen.Quran, Screen.Mushaf(2)), n.backStack.value)
+        assertEquals(listOf(Screen.Feed, Screen.Quran, Screen.Mushaf(2)), n.backStack.value)
         assertTrue(n.pop())
         assertEquals(Screen.Quran, n.current)
     }

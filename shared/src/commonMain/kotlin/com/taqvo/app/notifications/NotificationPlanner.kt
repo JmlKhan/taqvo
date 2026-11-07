@@ -38,22 +38,26 @@ object NotificationPlanner {
      * one more a day when Tahajjud is on, two more when the adhkar reminder is, and one more when
      * Duha is. The iqama adds one a day for each prayer whose gap is not Off, but never cuts the
      * window below [MIN_WINDOW_DAYS] (or below what fits without it, where that is fewer): there
-     * the iqama is the one left out, the furthest days first.
+     * the iqama is the one left out, the furthest days first. The daily ayah reminders
+     * ([ayahPerDay] a day) are counted the same way as the iqama: room is made for them, but never
+     * at the cost of the floor, and they are the first to go when it is reached.
      */
-    fun windowDaysFor(capacity: Int, notifications: NotificationSettings): Int {
+    fun windowDaysFor(capacity: Int, notifications: NotificationSettings, ayahPerDay: Int = 0): Int {
         val base = ObligatoryPrayers.size * (if (notifications.remindBeforeMinutes > 0) 2 else 1) +
             (if (notifications.tahajjud) 1 else 0) +
             (if (notifications.adhkar) 2 else 0) +
             (if (notifications.duha) 1 else 0)
         val iqama = if (notifications.iqama) ObligatoryPrayers.count { notifications.iqamaMinutesFor(it) > 0 } else 0
-        return maxOf(capacity / (base + iqama), minOf(MIN_WINDOW_DAYS, capacity / base)).coerceAtLeast(1)
+        val extra = iqama + ayahPerDay.coerceAtLeast(0)
+        return maxOf(capacity / (base + extra), minOf(MIN_WINDOW_DAYS, capacity / base)).coerceAtLeast(1)
     }
 
     /**
      * The order the plan is filled in when [plan]'s capacity runs out (adhkar spec §5): every
      * prayer first, then the before-prayer reminders, then Tahajjud, then the adhkar reminder —
      * morning and evening as one tier, since they are one setting — then Duha, both timings as one
-     * tier, and the iqama last (Duha and Iqama spec §3.3). Within a tier the soonest win.
+     * tier, then the iqama (Duha and Iqama spec §3.3), and the daily ayahs last of all, since
+     * nothing is late if one of them is not armed. Within a tier the soonest win.
      * A voluntary nudge therefore never takes the slot of an obligatory prayer's adhan on iOS's 64.
      * Every kind must have a tier, or it is never armed at all; a test holds it to that.
      */
@@ -64,6 +68,7 @@ object NotificationPlanner {
         setOf(NotificationKind.ADHKAR_MORNING, NotificationKind.ADHKAR_EVENING),
         setOf(NotificationKind.DUHA_BEST, NotificationKind.DUHA_START),
         setOf(NotificationKind.IQAMA),
+        setOf(NotificationKind.AYAH),
     )
 
     /** Half an hour after Fajr and after Asr is when the adhkar reminder is meant to land. */
@@ -90,6 +95,11 @@ object NotificationPlanner {
          * planned, so a reschedule after a set is finished does not bring its reminder back.
          */
         doneAdhkar: Set<String> = emptySet(),
+        /**
+         * The daily ayah reminders, already planned ([AyahReminderPlanner]): they depend on no
+         * prayer, so they are only merged in here, to share the capacity and its order.
+         */
+        ayahReminders: List<ScheduledNotification> = emptyList(),
     ): List<ScheduledNotification> {
         if (!notifications.enabled) return emptyList()
 
@@ -315,6 +325,7 @@ object NotificationPlanner {
         // order. Where everything fits — the usual case, since windowDaysFor sizes the window to
         // the capacity — this is exactly the plan sorted by time; it only differs when something
         // has to go, and then what goes is the least important and the furthest away.
+        out += ayahReminders.filter { it.instant > from }
         val byTime = out.sortedBy { it.instant }
         val kept = mutableListOf<ScheduledNotification>()
         for (tier in FILL_ORDER) {

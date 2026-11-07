@@ -34,6 +34,7 @@ import com.taqvo.app.domain.GeoLocation
 import com.taqvo.app.domain.LocationSource
 import com.taqvo.app.domain.NotificationSettings
 import com.taqvo.app.domain.PrayerSettings
+import com.taqvo.app.feature.onboarding.OnboardingFlow
 import com.taqvo.app.feature.onboarding.OnboardingStep
 import com.taqvo.app.i18n.ClockFormat
 import com.taqvo.app.i18n.LocalPlatformFormat
@@ -51,7 +52,6 @@ import com.taqvo.app.nav.Navigator
 import com.taqvo.app.nav.Screen
 import com.taqvo.app.nav.SystemBackHandler
 import com.taqvo.app.nav.Tab
-import com.taqvo.app.nav.tabOf
 import com.taqvo.app.notifications.NotificationOnboarding
 import com.taqvo.app.notifications.canScheduleExactAlarms
 import com.taqvo.app.notifications.isNotificationPermissionGranted
@@ -88,7 +88,8 @@ fun App(container: AppContainer) {
     val locationState = settings.location.collectAsState(initial = null)
     val location by locationState
     val locationSourceState = settings.locationSource.collectAsState(initial = LocationSource.MANUAL)
-    val navigator = remember { Navigator(Screen.Prayer) }
+    // The feed is where the app opens (feed spec §2).
+    val navigator = remember { Navigator(Screen.Feed) }
     val backStackState = navigator.backStack.collectAsState()
     val backStack by backStackState
     val scope = rememberCoroutineScope()
@@ -215,13 +216,15 @@ fun App(container: AppContainer) {
 
     // Onboarding's step lives here rather than inside the screen: "choose a city instead"
     // navigates away to the city search, which would otherwise reset the flow to its first page.
-    val onboardingStepState = remember { mutableStateOf(OnboardingStep.WELCOME) }
+    val onboardingStepState = remember { mutableStateOf(OnboardingStep.SPLASH) }
 
     // Resolved before anything renders, so a returning user never sees the Prayer screen flash
     // behind onboarding on launch.
     var startResolved by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         if (!settings.onboardingComplete.first()) {
+            // Back at the screen a killed onboarding was on (spec §0), not at the splash again.
+            onboardingStepState.value = OnboardingFlow.stepOf(container.onboardingStore.step.first())
             navigator.replaceAll(Screen.Onboarding)
         }
         startResolved = true
@@ -320,14 +323,11 @@ fun App(container: AppContainer) {
                 LaunchedEffect(screen) { readerSheet.onTop(screen) }
                 // The bar belongs to the three tab roots. A pushed sub-screen keeps the whole
                 // screen and the back link it already had; onboarding has neither.
-                val tab = tabOf(screen)
 
-                // Android's back button walks the same stack as the on-screen chevron, and then
-                // — the platform convention — falls back from any other tab root to Prayer. Only
-                // the Prayer screen itself lets the gesture through to leave the app.
-                SystemBackHandler(enabled = backStack.size > 1 || (tab != null && tab != Tab.PRAYER)) {
-                    if (!navigator.pop()) navigator.selectTab(Tab.PRAYER)
-                }
+                // Android's back button walks the same stack as the on-screen chevron. The feed is
+                // always at the bottom of it, so Back ends there, and only the feed lets the gesture
+                // through to leave the app.
+                SystemBackHandler(enabled = backStack.size > 1) { navigator.pop() }
 
                 // The Quran field's text lives out here, not in QuranRootScreen: opening a hit
                 // pushes the reader, which disposes the root and its view model both, and spec 2b
@@ -368,8 +368,10 @@ fun App(container: AppContainer) {
                     if (before == null || before == playingSurah) return@LaunchedEffect
                     navigator.followSurahSkip(before, playingSurah)
                 }
+                // No tab bar (the owner's structure): the feed is home, and every other part of the
+                // app opens from its Ilovalar screen with a way back.
                 TaqvoTabScaffold(
-                    tab,
+                    null,
                     navigator::selectTab,
                     bar = {
                         PlayerBarHost(visible = barShown) {
@@ -404,7 +406,25 @@ fun App(container: AppContainer) {
                             exactAlarmsAllowedState = exactAlarmsAllowedState,
                         )
 
-                        Screen.Prayer -> {
+                        Screen.Feed -> FeedRoute(container = container, navigator = navigator)
+
+                        Screen.Themes -> ThemesRoute(container = container, navigator = navigator)
+
+                        Screen.Tools -> ToolsRoute(navigator = navigator)
+
+                        Screen.Favorites -> FavoritesRoute(container = container, navigator = navigator)
+
+                        Screen.Collections -> CollectionsRoute(container = container, navigator = navigator)
+
+                        is Screen.Collection -> key(screen) {
+                            CollectionRoute(screen = screen, container = container, navigator = navigator)
+                        }
+
+                        is Screen.FeedItem -> key(screen) {
+                            FeedItemRoute(screen = screen, container = container, navigator = navigator)
+                        }
+
+                        Screen.Prayer -> RootWithBack(navigator) {
                             PrayerRoute(
                                 languageTag = languageTag,
                                 container = container,
@@ -417,7 +437,7 @@ fun App(container: AppContainer) {
                             )
                         }
 
-                        Screen.Quran -> {
+                        Screen.Quran -> RootWithBack(navigator) {
                             QuranRootRoute(
                                 container = container,
                                 settings = settings,
@@ -470,7 +490,7 @@ fun App(container: AppContainer) {
                             )
                         }
 
-                        Screen.Settings -> SettingsRootRoute(
+                        Screen.Settings -> RootWithBack(navigator) { SettingsRootRoute(
                             locationState = locationState,
                             cityDisplayNameState = cityDisplayNameState,
                             prayerSettingsState = prayerSettingsState,
@@ -479,7 +499,7 @@ fun App(container: AppContainer) {
                             container = container,
                             navigator = navigator,
                             recitationStateState = recitationStateState,
-                        )
+                        ) }
 
                         Screen.RecitationSettings -> {
                             RecitationSettingsRoute(
@@ -622,6 +642,12 @@ fun App(container: AppContainer) {
                             container = container,
                             settings = settings,
                             languageTag = languageTag,
+                            navigator = navigator,
+                        )
+
+                        Screen.DailyAyahs -> DailyAyahsRoute(
+                            container = container,
+                            scope = scope,
                             navigator = navigator,
                         )
 

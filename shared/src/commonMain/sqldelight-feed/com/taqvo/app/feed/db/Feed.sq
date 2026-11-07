@@ -1,0 +1,136 @@
+-- The feed's user data (feed spec §11): app.db, read-write, created on the phone and never
+-- overwritten. Separate from the bundled content.db, which every update replaces. A later
+-- version changes this schema through numbered .sqm migrations beside this file.
+
+-- One row per view (feed spec §4): an item counts as seen after 1.5 s on screen, or a like or a
+-- share. `day` is the local date the view happened on, so a day's views count without a time zone.
+CREATE TABLE seen (
+  item_id TEXT NOT NULL,
+  seen_at INTEGER NOT NULL,       -- epoch millis
+  day TEXT NOT NULL               -- ISO local date
+);
+CREATE INDEX seen_item ON seen(item_id);
+CREATE INDEX seen_day ON seen(day);
+
+CREATE TABLE favorites (
+  item_id TEXT NOT NULL PRIMARY KEY,
+  created_at INTEGER NOT NULL
+);
+
+-- The daily goal counts each item once per day, and an un-like keeps the count (feed spec §5).
+CREATE TABLE day_like (
+  day TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  PRIMARY KEY (day, item_id)
+);
+
+CREATE TABLE collections (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE collection_items (
+  collection_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  added_at INTEGER NOT NULL,
+  PRIMARY KEY (collection_id, item_id)
+);
+
+CREATE TABLE topic_weights (
+  topic_id TEXT NOT NULL PRIMARY KEY,
+  weight REAL NOT NULL
+);
+
+-- Where the reader was (feed spec §4): today's queue and position, so a restart the same day
+-- resumes on the same card. One row; a new day replaces it.
+CREATE TABLE feed_state (
+  id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
+  day TEXT NOT NULL,
+  queue TEXT NOT NULL,            -- item ids, '|'-separated
+  position INTEGER NOT NULL,
+  card_of_day TEXT
+);
+
+-- seen ----------------------------------------------------------------------------------------
+
+insertSeen:
+INSERT INTO seen(item_id, seen_at, day) VALUES (?, ?, ?);
+
+lastSeen:
+SELECT item_id, MAX(seen_at) AS last FROM seen WHERE seen_at >= ? GROUP BY item_id;
+
+viewsOn:
+SELECT COUNT(DISTINCT item_id) FROM seen WHERE day = ?;
+
+pruneSeen:
+DELETE FROM seen WHERE seen_at < ?;
+
+-- favorites -----------------------------------------------------------------------------------
+
+addFavorite:
+INSERT OR IGNORE INTO favorites(item_id, created_at) VALUES (?, ?);
+
+removeFavorite:
+DELETE FROM favorites WHERE item_id = ?;
+
+favorites:
+SELECT item_id FROM favorites ORDER BY created_at DESC;
+
+-- daily likes ---------------------------------------------------------------------------------
+
+addDayLike:
+INSERT OR IGNORE INTO day_like(day, item_id) VALUES (?, ?);
+
+likesOn:
+SELECT COUNT(*) FROM day_like WHERE day = ?;
+
+likeDaysSince:
+SELECT day, COUNT(*) AS likes FROM day_like WHERE day >= ? GROUP BY day;
+
+viewDaysSince:
+SELECT day, COUNT(DISTINCT item_id) AS views FROM seen WHERE day >= ? GROUP BY day;
+
+-- collections ---------------------------------------------------------------------------------
+
+insertCollection:
+INSERT INTO collections(id, name, created_at) VALUES (?, ?, ?);
+
+renameCollection:
+UPDATE collections SET name = ? WHERE id = ?;
+
+deleteCollection:
+DELETE FROM collections WHERE id = ?;
+
+deleteCollectionItems:
+DELETE FROM collection_items WHERE collection_id = ?;
+
+collections:
+SELECT c.id, c.name, c.created_at, COUNT(i.item_id) AS size
+FROM collections c LEFT JOIN collection_items i ON i.collection_id = c.id
+GROUP BY c.id ORDER BY c.created_at;
+
+addToCollection:
+INSERT OR IGNORE INTO collection_items(collection_id, item_id, added_at) VALUES (?, ?, ?);
+
+removeFromCollection:
+DELETE FROM collection_items WHERE collection_id = ? AND item_id = ?;
+
+collectionItems:
+SELECT item_id FROM collection_items WHERE collection_id = ? ORDER BY added_at DESC;
+
+-- topic weights -------------------------------------------------------------------------------
+
+weights:
+SELECT topic_id, weight FROM topic_weights;
+
+upsertWeight:
+INSERT OR REPLACE INTO topic_weights(topic_id, weight) VALUES (?, ?);
+
+-- feed state ----------------------------------------------------------------------------------
+
+feedState:
+SELECT day, queue, position, card_of_day FROM feed_state WHERE id = 1;
+
+saveFeedState:
+INSERT OR REPLACE INTO feed_state(id, day, queue, position, card_of_day) VALUES (1, ?, ?, ?, ?);
