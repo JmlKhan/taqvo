@@ -50,7 +50,12 @@ jobs:
         env:
           BUILD_NUMBER: ${{ inputs.build_number }}
         run: |
-          [[ $BUILD_NUMBER =~ ^[0-9]+$ ]] || { echo "build_number must be a whole number" >&2; exit 1; }
+          # Spaces pasted around the number are not part of it.
+          BUILD_NUMBER="$(printf '%s' "$BUILD_NUMBER" | tr -d '[:space:]')"
+          [[ $BUILD_NUMBER =~ ^[0-9]+$ ]] || {
+            echo "build_number must be a whole number such as 42 (got '$BUILD_NUMBER'). It is the build (CFBundleVersion), not the version (1.5.0); leave it blank to keep the one in Info.plist." >&2
+            exit 1
+          }
           for plist in iosApp/iosApp/Info.plist iosApp/TaqvoWidget/Info.plist; do
             /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$plist"
           done
