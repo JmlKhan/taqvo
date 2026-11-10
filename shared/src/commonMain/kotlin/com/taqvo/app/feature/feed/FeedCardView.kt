@@ -79,7 +79,9 @@ fun FeedCardView(
             },
     ) {
         BoxWithConstraints(
-            Modifier.fillMaxSize().padding(start = 28.dp, end = 28.dp, top = topSpace, bottom = bottomSpace),
+            // The same room above and below, so the words sit in the middle of the photo, not of
+            // the gap the buttons leave.
+            Modifier.fillMaxSize().padding(horizontal = 28.dp, vertical = maxOf(topSpace, bottomSpace)),
         ) {
             val ink = style.color.ink()
             val align = style.textAlign()

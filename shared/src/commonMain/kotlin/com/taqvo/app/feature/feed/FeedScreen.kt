@@ -113,7 +113,7 @@ fun FeedScreen(
                             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             actions.onDoubleTap(card)
                         },
-                        modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
+                        modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
                     )
                 }
             }
