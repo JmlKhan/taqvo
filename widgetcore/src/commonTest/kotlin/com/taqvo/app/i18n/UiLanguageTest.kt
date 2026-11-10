@@ -20,6 +20,17 @@ class UiLanguageTest {
     }
 
     @Test
+    fun uzbekIsCyrillicOnlyWhenTheTagSaysSo() {
+        assertEquals(UiLanguage.UZBEK_CYRILLIC, UiLanguage.of("uz-Cyrl"))
+        assertEquals(UiLanguage.UZBEK_CYRILLIC, UiLanguage.of("uz-Cyrl-UZ"))
+        assertEquals(UiLanguage.UZBEK_CYRILLIC, UiLanguage.of("uz_cyrl_UZ"))
+        assertEquals(UiLanguage.UZBEK, UiLanguage.of("uz"))
+        assertEquals(UiLanguage.UZBEK, UiLanguage.of("uz-Latn-UZ"))
+        assertFalse(UiLanguage.UZBEK_CYRILLIC.latinScript)
+        assertFalse(UiLanguage.UZBEK_CYRILLIC.rtl)
+    }
+
+    @Test
     fun javasLegacyIndonesianCodeIsIndonesian() {
         // Locale.getLanguage() still answers "in" on Android; the tag form answers "id".
         assertEquals(UiLanguage.INDONESIAN, UiLanguage.of("in-ID"))
@@ -36,7 +47,7 @@ class UiLanguageTest {
         assertFalse(UiLanguage.BENGALI.arabicScript)
         assertTrue(UiLanguage.TURKISH.latinScript)
         assertFalse(UiLanguage.TURKISH.rtl)
-        assertEquals(listOf("en", "ar", "fr", "tr", "id", "ur", "bn", "uz"), UiLanguage.codes)
+        assertEquals(listOf("en", "ar", "fr", "tr", "id", "ur", "bn", "uz", "uz-Cyrl"), UiLanguage.codes)
         assertTrue(UiLanguage.UZBEK.latinScript)
         assertFalse(UiLanguage.UZBEK.rtl)
     }

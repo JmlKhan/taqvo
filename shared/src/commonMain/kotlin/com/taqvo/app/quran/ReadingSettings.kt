@@ -38,6 +38,7 @@ data class ReadingSettings(
             "tr" to "tr.diyanet",
             "fr" to "fr.hamidullah",
             "uz" to "uz.sodik",
+            "uz-Cyrl" to "uz.sodik",
         )
 
         fun defaultsFor(languageTag: String): ReadingSettings {

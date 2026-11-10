@@ -5,6 +5,7 @@ import com.taqvo.app.domain.PrayerSound
 import com.taqvo.app.i18n.PlatformFormat
 import com.taqvo.app.i18n.PrayerNaming
 import com.taqvo.app.i18n.UiLanguage
+import com.taqvo.app.i18n.UzbekCyrillic
 import com.taqvo.app.i18n.isolatedClock
 
 /**
@@ -159,8 +160,37 @@ class LocalizedNotificationCopy(private val format: PlatformFormat) : Notificati
     }
 
     private companion object {
+
+        private fun cyrillicWords(uz: Words) = Words(
+            prayerBody = UzbekCyrillic.fromLatin(uz.prayerBody),
+            reminderBody = UzbekCyrillic.fromLatin(uz.reminderBody),
+            reminderBodyOne = UzbekCyrillic.fromLatin(uz.reminderBodyOne),
+            tahajjud = UzbekCyrillic.fromLatin(uz.tahajjud),
+            tahajjudBody = UzbekCyrillic.fromLatin(uz.tahajjudBody),
+            adhkarMorning = UzbekCyrillic.fromLatin(uz.adhkarMorning),
+            adhkarEvening = UzbekCyrillic.fromLatin(uz.adhkarEvening),
+            adhkarMorningBody = UzbekCyrillic.fromLatin(uz.adhkarMorningBody),
+            adhkarEveningBody = UzbekCyrillic.fromLatin(uz.adhkarEveningBody),
+            adhkarChannel = UzbekCyrillic.fromLatin(uz.adhkarChannel),
+            duha = UzbekCyrillic.fromLatin(uz.duha),
+            duhaBestBody = UzbekCyrillic.fromLatin(uz.duhaBestBody),
+            duhaStartBody = UzbekCyrillic.fromLatin(uz.duhaStartBody),
+            iqamaBody = UzbekCyrillic.fromLatin(uz.iqamaBody),
+            iqamaBodyOne = UzbekCyrillic.fromLatin(uz.iqamaBodyOne),
+            iqamaChannel = UzbekCyrillic.fromLatin(uz.iqamaChannel),
+            ayah = UzbekCyrillic.fromLatin(uz.ayah),
+            silent = UzbekCyrillic.fromLatin(uz.silent),
+            notification = UzbekCyrillic.fromLatin(uz.notification),
+            takbir = UzbekCyrillic.fromLatin(uz.takbir),
+            adhan = UzbekCyrillic.fromLatin(uz.adhan),
+        )
+
+        val WORDS: Map<UiLanguage, Words> by lazy {
+            BASE_WORDS + (UiLanguage.UZBEK_CYRILLIC to cyrillicWords(BASE_WORDS.getValue(UiLanguage.UZBEK)))
+        }
+
         /** Kept in step with each language's `sound_*` strings by hand. */
-        val WORDS: Map<UiLanguage, Words> = mapOf(
+        val BASE_WORDS: Map<UiLanguage, Words> = mapOf(
             UiLanguage.ENGLISH to Words(
                 prayerBody = "It is time for {prayer} · {time}",
                 reminderBody = "{prayer} in {minutes} minutes · {time}",

@@ -1,7 +1,7 @@
 package com.taqvo.app.i18n
 
 /**
- * The eight languages the interface is written in, and the two facts that follow from the
+ * The nine interface languages (eight, Uzbek in two scripts) the interface is written in, and the two facts that follow from the
  * language alone: which way the layout runs, and whether the script is Latin — which decides the
  * typeface (Manrope has Latin glyphs only) and whether letter-spacing is applied at all.
  *
@@ -20,6 +20,12 @@ enum class UiLanguage(val code: String, val rtl: Boolean, val latinScript: Boole
     BENGALI("bn", rtl = false, latinScript = false),
     /** Uzbek in the Latin script, the official one; written with ‘ for the letters oʻ and gʻ, which Manrope carries. */
     UZBEK("uz", rtl = false, latinScript = true),
+    /**
+     * Uzbek in Cyrillic, the app's default. Its words are the Latin ones run through
+     * [UzbekCyrillic], and its names for things (prayers, months) likewise. Manrope has no
+     * Cyrillic, so like Bengali it takes the system face and is set without letter-spacing.
+     */
+    UZBEK_CYRILLIC("uz-Cyrl", rtl = false, latinScript = false),
     ;
 
     /**
@@ -37,6 +43,7 @@ enum class UiLanguage(val code: String, val rtl: Boolean, val latinScript: Boole
          */
         fun of(tag: String?): UiLanguage {
             val code = tag.orEmpty().substringBefore('-').substringBefore('_').lowercase()
+            if (code == "uz" && tag.orEmpty().contains("cyrl", ignoreCase = true)) return UZBEK_CYRILLIC
             val iso = when (code) {
                 "in" -> "id"
                 else -> code

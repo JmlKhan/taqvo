@@ -46,7 +46,7 @@ android {
     // keeps every language on every phone because the app can be switched to any of them on any
     // phone (locales_config.xml) and the widget labels must follow.
     androidResources {
-        localeFilters += listOf("en", "ar", "fr", "tr", "in", "ur", "bn")
+        localeFilters += listOf("en", "ar", "fr", "tr", "in", "ur", "bn", "uz")
     }
     bundle {
         language {

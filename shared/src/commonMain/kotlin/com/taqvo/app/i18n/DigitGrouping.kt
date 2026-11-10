@@ -57,7 +57,7 @@ object DigitGrouping {
                 UiLanguage.FRENCH -> NARROW_NO_BREAK_SPACE
                 UiLanguage.TURKISH, UiLanguage.INDONESIAN -> '.'
                 // CLDR's group separator for uz is a no-break space.
-                UiLanguage.UZBEK -> ' '
+                UiLanguage.UZBEK, UiLanguage.UZBEK_CYRILLIC -> ' '
                 UiLanguage.ENGLISH, UiLanguage.ARABIC, UiLanguage.URDU, UiLanguage.BENGALI -> ','
             }
         }

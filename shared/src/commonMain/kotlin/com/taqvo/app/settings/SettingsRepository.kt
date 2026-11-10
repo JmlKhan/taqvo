@@ -20,6 +20,7 @@ import com.taqvo.app.domain.Prayer
 import com.taqvo.app.domain.PrayerSettings
 import com.taqvo.app.domain.PrayerSound
 import com.taqvo.app.domain.WidgetBackground
+import com.taqvo.app.i18n.AppLanguage
 import com.taqvo.app.i18n.ClockFormat
 import com.taqvo.app.quran.ReadingMode
 import com.taqvo.app.quran.ReadingPosition
@@ -121,6 +122,10 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     val clockFormat: Flow<ClockFormat> =
         store.data.map { it[SettingsKeys.CLOCK_FORMAT].toEnumOr(ClockFormat.TWENTY_FOUR_HOUR) }
+
+    /** The interface language: the reader's choice, or Uzbek in Cyrillic until they make one. */
+    val appLanguage: Flow<AppLanguage> =
+        store.data.map { AppLanguage.of(it[SettingsKeys.APP_LANGUAGE]) }
 
     val onboardingComplete: Flow<Boolean> =
         store.data.map { it[SettingsKeys.ONBOARDED] ?: false }
@@ -346,6 +351,10 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setThemeMode(mode: ThemeMode) {
         store.edit { it[SettingsKeys.THEME] = mode.name }
+    }
+
+    suspend fun setAppLanguage(language: AppLanguage) {
+        store.edit { it[SettingsKeys.APP_LANGUAGE] = language.tag }
     }
 
     suspend fun setClockFormat(format: ClockFormat) {

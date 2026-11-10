@@ -39,6 +39,8 @@ import com.taqvo.app.feature.onboarding.OnboardingStep
 import com.taqvo.app.i18n.ClockFormat
 import com.taqvo.app.i18n.LocalPlatformFormat
 import com.taqvo.app.i18n.createPlatformFormat
+import com.taqvo.app.i18n.AppLanguage
+import com.taqvo.app.i18n.ProvideAppLanguage
 import com.taqvo.app.i18n.isRtlLocale
 import com.taqvo.app.i18n.uiLanguage
 import com.taqvo.app.design.components.TaqvoTabScaffold
@@ -70,8 +72,20 @@ import com.taqvo.app.feature.recitation.rememberSurahName
 import com.taqvo.app.quran.displayName
 import kotlin.time.Clock
 
+/**
+ * The app, in the language the reader chose (Uzbek in Cyrillic until they do). Nothing is drawn
+ * for the instant it takes to read that choice, so no screen ever flashes up in another language.
+ */
 @Composable
 fun App(container: AppContainer) {
+    val language: AppLanguage? by container.settingsRepository.appLanguage.collectAsState(initial = null)
+    // Held out here so a change of language, which rebuilds everything below, keeps the reader's place.
+    val navigator = remember { Navigator(Screen.Feed) }
+    language?.let { ProvideAppLanguage(it) { AppContent(container, navigator) } }
+}
+
+@Composable
+private fun AppContent(container: AppContainer, navigator: Navigator) {
     val settings = container.settingsRepository
     val themeModeState = settings.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
     val themeMode by themeModeState
@@ -88,8 +102,7 @@ fun App(container: AppContainer) {
     val locationState = settings.location.collectAsState(initial = null)
     val location by locationState
     val locationSourceState = settings.locationSource.collectAsState(initial = LocationSource.MANUAL)
-    // The feed is where the app opens (feed spec §2).
-    val navigator = remember { Navigator(Screen.Feed) }
+    // The feed is where the app opens (feed spec §2): the navigator, made in App, starts there.
     val backStackState = navigator.backStack.collectAsState()
     val backStack by backStackState
     val scope = rememberCoroutineScope()
@@ -111,7 +124,7 @@ fun App(container: AppContainer) {
         notificationsGranted = runCatching { isNotificationPermissionGranted() }.getOrDefault(true)
     }
 
-    // The device locale decides both halves of localisation: which `values-*` strings Compose
+    // The chosen language decides both halves of localisation: which `values-*` strings Compose
     // resolves, and — through this — whether the whole tree is laid out right-to-left. Compose's
     // Row, Arrangement and padding(start=/end=) all consult LocalLayoutDirection, which is what
     // moves the timeline's pip gutter and the header's icon buttons across with no bespoke

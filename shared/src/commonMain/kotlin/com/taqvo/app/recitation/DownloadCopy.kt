@@ -38,7 +38,7 @@ enum class NumberStyle(private val zero: Char, private val decimal: Char) {
             else -> WESTERN
         }
 
-        private val COMMA_LANGUAGES = setOf(UiLanguage.FRENCH, UiLanguage.TURKISH, UiLanguage.INDONESIAN, UiLanguage.UZBEK)
+        private val COMMA_LANGUAGES = setOf(UiLanguage.FRENCH, UiLanguage.TURKISH, UiLanguage.INDONESIAN, UiLanguage.UZBEK, UiLanguage.UZBEK_CYRILLIC)
     }
 }
 
@@ -69,6 +69,7 @@ object DownloadCopy {
         UiLanguage.INDONESIAN to Words("Unduhan", "{name} · {done} dari {total} {unit}", "{name} · {done} dari {total} surah", "MB"),
         UiLanguage.URDU to Words("ڈاؤن لوڈز", "{name} · {total} {unit} میں سے {done}", "{name} · {total} میں سے {done} سورتیں", "ایم بی"),
         UiLanguage.UZBEK to Words("Yuklab olinganlar", "{name} · {done} / {total} {unit}", "{name} · {total} ta suradan {done} tasi", "MB"),
+        UiLanguage.UZBEK_CYRILLIC to Words("Юклаб олинганлар", "{name} · {done} / {total} {unit}", "{name} · {total} та сурадан {done} таси", "МБ"),
         UiLanguage.BENGALI to Words("ডাউনলোড", "{name} · {total} {unit}-এর মধ্যে {done}", "{name} · {total}টির মধ্যে {done}টি সূরা", "এমবি"),
     )
 

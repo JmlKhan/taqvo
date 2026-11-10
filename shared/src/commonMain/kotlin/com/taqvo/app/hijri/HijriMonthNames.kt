@@ -43,6 +43,11 @@ private val MONTHS: Map<UiLanguage, List<String>> = mapOf(
         "Jumodul avval", "Jumodul oxir", "Rajab", "Sha’bon",
         "Ramazon", "Shavvol", "Zulqa’da", "Zulhijja",
     ),
+    UiLanguage.UZBEK_CYRILLIC to listOf(
+        "Муҳаррам", "Сафар", "Рабиул аввал", "Рабиул охир",
+        "Жумодул аввал", "Жумодул охир", "Ражаб", "Шаъбон",
+        "Рамазон", "Шаввол", "Зулқаъда", "Зулҳижжа",
+    ),
     UiLanguage.BENGALI to listOf(
         "মহররম", "সফর", "রবিউল আউয়াল", "রবিউস সানি",
         "জমাদিউল আউয়াল", "জমাদিউস সানি", "রজব", "শাবান",

@@ -25,6 +25,7 @@ class PrayerShortNamesTest {
         "ur" to listOf("فجر", "طلوعِ آفتاب", "ظہر", "عصر", "مغرب", "عشاء"),
         "bn" to listOf("ফজর", "সূর্যোদয়", "যোহর", "আসর", "মাগরিব", "এশা"),
         "uz" to listOf("Bomdod", "Quyosh", "Peshin", "Asr", "Shom", "Xufton"),
+        "uz-Cyrl" to listOf("Бомдод", "Қуёш", "Пешин", "Аср", "Шом", "Хуфтон"),
     )
 
     @Test

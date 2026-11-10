@@ -25,7 +25,7 @@ ANDROID = os.path.join(ROOT, "androidApp/src/main/res")
 
 # Folder name -> language code the file must declare in ui_language. Android's resource system
 # still spells Indonesian "in", the Compose resources and every other system say "id".
-COMPOSE_LANGS = {"ar": "ar", "fr": "fr", "tr": "tr", "id": "id", "in": "id", "ur": "ur", "bn": "bn", "uz": "uz"}
+COMPOSE_LANGS = {"ar": "ar", "fr": "fr", "tr": "tr", "id": "id", "in": "id", "ur": "ur", "bn": "bn", "uz": "uz", "b+uz+Cyrl": "uz-Cyrl"}
 ANDROID_LANGS = {"ar": "ar", "fr": "fr", "tr": "tr", "in": "id", "ur": "ur", "bn": "bn", "uz": "uz"}
 
 # CLDR plural categories per language (cardinal).
@@ -38,6 +38,7 @@ PLURAL_CATEGORIES = {
     "ur": {"one", "other"},
     "bn": {"one", "other"},
     "uz": {"one", "other"},
+    "uz-Cyrl": {"one", "other"},
 }
 
 # Values allowed to be identical to English.
@@ -199,8 +200,8 @@ def lproj_strings(lang):
 def check_widget_names(only):
     problems = 0
     for lang in ["en"] + sorted(set(COMPOSE_LANGS.values())):
-        if only and lang not in only:
-            continue
+        if (only and lang not in only) or lang == "uz-Cyrl":
+            continue  # generated from Uzbek (Latin) by uz_cyrillic.py; the system's lists stay Latin
         compose_folder = "values" if lang == "en" else f"values-{lang}"
         android_folder = "values" if lang == "en" else "values-" + next(f for f, l in ANDROID_LANGS.items() if l == lang)
         compose, _ = load(os.path.join(COMPOSE, compose_folder, "strings.xml"))
@@ -248,7 +249,7 @@ def check_ios_buttons(only):
     there. Every language says the same thing this way, each in its own iPhone's words."""
     problems = 0
     for lang in ["en"] + sorted(set(COMPOSE_LANGS.values())):
-        if only and lang not in only:
+        if (only and lang not in only) or lang == "uz-Cyrl":
             continue
         folder = "values" if lang == "en" else f"values-{lang}"
         compose, _ = load(os.path.join(COMPOSE, folder, "strings.xml"))

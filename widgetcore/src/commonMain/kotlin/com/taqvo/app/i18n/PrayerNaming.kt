@@ -22,6 +22,7 @@ private val NAMES: Map<UiLanguage, Map<Prayer, String>> = mapOf(
     UiLanguage.URDU to names("فجر", "طلوعِ آفتاب", "ظہر", "عصر", "مغرب", "عشاء"),
     UiLanguage.BENGALI to names("ফজর", "সূর্যোদয়", "যোহর", "আসর", "মাগরিব", "এশা"),
     UiLanguage.UZBEK to names("Bomdod", "Quyosh", "Peshin", "Asr", "Shom", "Xufton"),
+    UiLanguage.UZBEK_CYRILLIC to names("Бомдод", "Қуёш", "Пешин", "Аср", "Шом", "Хуфтон"),
 )
 
 /**
@@ -37,6 +38,7 @@ private val COUNTDOWN: Map<UiLanguage, String> = mapOf(
     UiLanguage.URDU to "{prayer} میں باقی",
     UiLanguage.BENGALI to "{prayer} পর্যন্ত বাকি",
     UiLanguage.UZBEK to "{prayer}gacha",
+    UiLanguage.UZBEK_CYRILLIC to "{prayer}гача",
 )
 
 /**

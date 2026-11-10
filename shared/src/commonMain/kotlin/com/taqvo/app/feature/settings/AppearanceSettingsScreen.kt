@@ -11,12 +11,10 @@ import com.taqvo.app.design.ThemeMode
 import com.taqvo.app.design.components.CardDivider
 import com.taqvo.app.design.components.CheckMark
 import com.taqvo.app.design.components.TaqvoRow
-import com.taqvo.app.notifications.canOpenAppLanguageSettings
-import com.taqvo.app.notifications.openAppLanguageSettings
+import com.taqvo.app.i18n.AppLanguage
 import com.taqvo.app.resources.Res
 import com.taqvo.app.resources.appearance_language_label
 import com.taqvo.app.resources.appearance_note
-import com.taqvo.app.resources.language_name
 import com.taqvo.app.resources.appearance_theme_label
 import com.taqvo.app.resources.settings_appearance
 import com.taqvo.app.resources.theme_dark
@@ -33,7 +31,7 @@ internal fun themeDisplayName(mode: ThemeMode): String = stringResource(
 )
 
 /**
- * The app's theme and its language: the widgets, their background and the ways to add them have
+ * The app's theme and its language (chosen here, not taken from the phone): the widgets, their background and the ways to add them have
  * their own screen, Settings › Widgets, where a reader who skipped onboarding's widget step can
  * find them again.
  */
@@ -42,6 +40,8 @@ fun AppearanceSettingsScreen(
     current: ThemeMode,
     onPick: (ThemeMode) -> Unit,
     onBack: () -> Unit,
+    currentLanguage: AppLanguage = AppLanguage.DEFAULT,
+    onPickLanguage: (AppLanguage) -> Unit = {},
 ) {
     SettingsScaffold(stringResource(Res.string.settings_appearance), onBack) {
         SectionLabel(stringResource(Res.string.appearance_theme_label))
@@ -60,17 +60,21 @@ fun AppearanceSettingsScreen(
         Spacer(Modifier.height(14.dp))
         SettingsNote(stringResource(Res.string.appearance_note))
 
-        // The language is the device's, not a setting of ours — `language_name` is each
-        // translation naming itself. Where the system has a per-app language page (Android 13
-        // and later, iOS) the row opens it, so a reader on an English phone can put Taqvo in Urdu
-        // without knowing where that page lives; older Android only states it.
+        // The language is the app's own choice, kept in Settings and applied at once. Each is
+        // named in itself, so a reader who cannot read the current one can still find theirs.
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(Res.string.appearance_language_label))
-        SettingsCard {
-            TaqvoRow(
-                label = stringResource(Res.string.language_name),
-                onClick = if (canOpenAppLanguageSettings()) ({ openAppLanguageSettings() }) else null,
-            )
+        SettingsCard(Modifier.selectableGroup()) {
+            AppLanguage.entries.forEachIndexed { i, language ->
+                if (i > 0) CardDivider()
+                TaqvoRow(
+                    label = language.endonym,
+                    onClick = { onPickLanguage(language) },
+                    selectable = true,
+                    selected = language == currentLanguage,
+                    trailing = { if (language == currentLanguage) CheckMark() },
+                )
+            }
         }
     }
 }

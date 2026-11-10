@@ -77,6 +77,7 @@ object StreakReminderPlanner {
         UiLanguage.URDU -> "اپنا تسلسل برقرار رکھیں" to "اپنا تسلسل جاری رکھیں — آج کی آیت آپ کی منتظر ہے"
         UiLanguage.BENGALI -> "ধারাবাহিকতা ধরে রাখুন" to "ধারাবাহিকতা বজায় রাখুন — আজকের আয়াত আপনার অপেক্ষায়"
         UiLanguage.UZBEK -> "Seriyangizni saqlang" to "Seriyangizni saqlab qoling — bugungi oyatingiz sizni kutmoqda"
+        UiLanguage.UZBEK_CYRILLIC -> "Серияларингизни сақланг" to "Серияларингизни сақлаб қолинг — бугунги оятингиз сизни кутмоқда"
         else -> "Keep your streak" to "Keep your streak going — today’s ayah is waiting for you"
     }
 }

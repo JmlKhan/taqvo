@@ -13,6 +13,7 @@ import com.taqvo.app.design.LightColors
 import com.taqvo.app.design.LocalTaqvoColors
 import com.taqvo.app.design.ThemeMode
 import com.taqvo.app.domain.NotificationSettings
+import com.taqvo.app.i18n.AppLanguage
 import com.taqvo.app.resources.Res
 import com.taqvo.app.resources.appearance_language_label
 import com.taqvo.app.resources.language_name
@@ -69,6 +70,6 @@ class LanguageInAppearanceTest {
         setContent { Colours { AppearanceSettingsScreen(current = ThemeMode.SYSTEM, onPick = {}, onBack = {}) } }
         waitForIdle()
         onNodeWithText(getString(Res.string.appearance_language_label)).assertIsDisplayed()
-        onNodeWithText(getString(Res.string.language_name)).assertIsDisplayed()
+        onNodeWithText(AppLanguage.DEFAULT.endonym).assertIsDisplayed()
     }
 }

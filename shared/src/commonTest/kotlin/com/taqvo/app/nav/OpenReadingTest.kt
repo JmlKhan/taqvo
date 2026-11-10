@@ -4,11 +4,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * `openReading` is how anything outside the Quran tab — the ayah widget, the media notification —
- * lands the reader on a reading screen. The one rule that matters: the Quran root ends up at the
- * **bottom** of the stack, because [Navigator.currentTab] is read from the bottom and the player
- * bar is shown only while that tab is current. A widget tap that merely pushed the Quran root on
- * top of the Prayer tab played the surah with no bar at all until the tab was left and re-entered.
+ * `openReading` is how anything outside the Quran — the ayah widget, the media notification —
+ * lands the reader on a reading screen. The rule that matters: the Quran root is the nearest tab
+ * root under the reader, because [Navigator.currentTab] is that root and the player bar is shown
+ * only while it is the Quran. The feed is home and always at the bottom, so Back ends there.
  */
 class OpenReadingTest {
 
@@ -18,7 +17,7 @@ class OpenReadingTest {
 
         n.openReading(Screen.Reader(2, 255, selectAyah = true))
 
-        assertEquals(listOf(Screen.Quran, Screen.Reader(2, 255, selectAyah = true)), n.backStack.value)
+        assertEquals(listOf(Screen.Feed, Screen.Quran, Screen.Reader(2, 255, selectAyah = true)), n.backStack.value)
         assertEquals(Tab.QURAN, n.currentTab)
     }
 
@@ -30,7 +29,7 @@ class OpenReadingTest {
 
         n.openReading(Screen.Mushaf(42, 2, 255))
 
-        assertEquals(listOf(Screen.Quran, Screen.Mushaf(42, 2, 255)), n.backStack.value)
+        assertEquals(listOf(Screen.Feed, Screen.Quran, Screen.Mushaf(42, 2, 255)), n.backStack.value)
     }
 
     @Test
@@ -53,16 +52,17 @@ class OpenReadingTest {
     }
 
     @Test
-    fun aReadingScreenLeftOnTopOfAnotherTabIsStraightenedOut() {
-        // The stack shape the old widget path produced: the reader on a Quran root pushed over
-        // Prayer. A second tap must not preserve it by replacing in place.
-        val n = Navigator(Screen.Prayer)
+    fun aReaderOpenedFromIlovalarIsReplacedInPlace() {
+        // The Quran opened over the feed's Ilovalar screen: the Quran root is the current tab, so a
+        // second tap replaces the reader and Back still walks to the surah list, Ilovalar, home.
+        val n = Navigator(Screen.Feed)
+        n.push(Screen.Tools)
         n.push(Screen.Quran)
         n.push(Screen.Reader(2, 1))
 
         n.openReading(Screen.Reader(3, 7, selectAyah = true))
 
-        assertEquals(listOf(Screen.Quran, Screen.Reader(3, 7, selectAyah = true)), n.backStack.value)
+        assertEquals(listOf(Screen.Feed, Screen.Tools, Screen.Quran, Screen.Reader(3, 7, selectAyah = true)), n.backStack.value)
         assertEquals(Tab.QURAN, n.currentTab)
     }
 

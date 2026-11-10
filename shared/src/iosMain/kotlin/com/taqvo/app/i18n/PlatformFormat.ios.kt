@@ -22,8 +22,8 @@ import platform.Foundation.preferredLanguages
  */
 internal class IosPlatformFormat(
     private val clockFormat: ClockFormat,
-    private val currentLocale: NSLocale = NSLocale.currentLocale,
-    preferredLanguage: String = (NSLocale.preferredLanguages.firstOrNull() as? String) ?: "en",
+    private val currentLocale: NSLocale = appLanguageTag?.let { NSLocale(localeIdentifier = it) } ?: NSLocale.currentLocale,
+    preferredLanguage: String = appLanguageTag ?: (NSLocale.preferredLanguages.firstOrNull() as? String) ?: "en",
 ) : PlatformFormat {
 
     private val plainFormatter = NSNumberFormatter().apply {

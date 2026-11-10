@@ -82,6 +82,7 @@ import com.taqvo.app.resources.settings_widgets_all
 import com.taqvo.app.resources.settings_widgets_count
 import com.taqvo.app.resources.settings_widgets_none
 import com.taqvo.app.settings.ResolvedCityName
+import com.taqvo.app.i18n.AppLanguage
 import com.taqvo.app.settings.SettingsRepository
 import com.taqvo.app.widget.WidgetMirrorRefresher
 import com.taqvo.app.widget.WidgetPlacement
@@ -615,8 +616,11 @@ internal fun AppearanceRoute(
     navigator: Navigator,
 ) {
     val themeMode by themeModeState
+    val language by settings.appLanguage.collectAsState(initial = AppLanguage.DEFAULT)
     AppearanceSettingsScreen(
         current = themeMode,
+        currentLanguage = language,
+        onPickLanguage = { scope.launch { settings.setAppLanguage(it) } },
         // No pop: the whole app repaints behind this screen, and seeing that happen
         // is the confirmation the choice took effect.
         onPick = { scope.launch { settings.setThemeMode(it) } },
