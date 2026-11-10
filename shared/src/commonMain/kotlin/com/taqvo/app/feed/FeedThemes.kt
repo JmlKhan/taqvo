@@ -107,7 +107,7 @@ object FeedThemes {
     )
 
     /** The mosque under a crescent: what a reader sees before choosing. */
-    const val DEFAULT_ID = "theme_06"
+    const val DEFAULT_ID = "theme_05"
 
     fun of(id: String?): FeedTheme = ALL.firstOrNull { it.id == id } ?: ALL.first { it.id == DEFAULT_ID }
 }
