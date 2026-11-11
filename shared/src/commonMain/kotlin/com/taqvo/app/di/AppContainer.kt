@@ -98,9 +98,7 @@ class AppContainer {
     val feedStore: FeedStore by lazy { SqlFeedStore() }
     val feedPrefsStore = FeedPrefsStore(dataStore)
 
-    /** The surah's Latin name for a card's reference, until content.db carries its own names. */
-    private val feedSurahName: suspend (Int) -> String? = { surah -> runCatching { quranRepository.surah(surah).nameLatin }.getOrNull() }
-    val feedLibrary by lazy { FeedLibrary(contentRepository, feedSurahName) }
+    val feedLibrary by lazy { FeedLibrary(contentRepository) }
 
     /**
      * One for the process, so the queue and the place in it survive a walk to another tab and back
@@ -115,7 +113,6 @@ class AppContainer {
                 val answers = onboardingStore.answers.first()
                 FeedOnboarding(answers.goals, answers.contentTypes, onboardingStore.streakStart.first())
             },
-            surahName = feedSurahName,
             widgetPlaced = { widgetPlacementSource.current()?.let { it.ayah || it.dua || it.prayer || it.lockScreen } },
             analytics = analytics,
             // A day that has just counted takes back its 20:00 streak reminder.

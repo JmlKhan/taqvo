@@ -7,13 +7,15 @@ package com.taqvo.app.content
 enum class ContentLang(val tag: String) {
     UZ_LATN("uz-Latn"),
     UZ_CYRL("uz-Cyrl"),
-    RU("ru"),
-    EN("en"),
     ;
 
     companion object {
-        /** The language a missing translation falls back to (feed spec §10). */
-        val FALLBACK = EN
+        /**
+         * The language a missing translation falls back to (feed spec §10): Uzbek in Cyrillic, the
+         * app's own default. content.db carries Sodiq's translation in the two Uzbek scripts only
+         * (no English or Russian rows since 2026-11-11), so a reader of any other language gets it.
+         */
+        val FALLBACK = UZ_CYRL
     }
 }
 
@@ -68,4 +70,6 @@ data class FeedCard(
     val reference: String,
     /** The language [translation] is in, which is the reader's or the fallback's. */
     val lang: ContentLang,
+    /** The translator's commentary in [lang] (izoh), shown on tap only; null when the ayah has none. */
+    val note: String? = null,
 )

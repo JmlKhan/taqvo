@@ -72,18 +72,3 @@ enum class TextAlignment(val id: String) {
         fun of(id: String?): TextAlignment = entries.firstOrNull { it.id == id } ?: CENTER
     }
 }
-
-/**
- * The paywall seam (feed spec, global rules): every [PREMIUM?] choice asks this, and today it
- * answers yes for everything, so nothing is locked. The licences of the translations the feed shows
- * are non-commercial (docs/ATTRIBUTION.md), which is why none of it is paid yet.
- */
-object FeedPremium {
-    var isPremium: Boolean = true
-
-    /** The free choices if [isPremium] were ever false (feed spec §7): two of each. */
-    fun allowed(font: TranslationFont): Boolean = isPremium || font == TranslationFont.LORA || font == TranslationFont.SYSTEM
-    fun allowed(color: TextColor): Boolean = isPremium || color == TextColor.AUTO || color == TextColor.WHITE
-    fun canHideWatermark(): Boolean = isPremium
-    fun collectionLimit(): Int = if (isPremium) Int.MAX_VALUE else 1
-}

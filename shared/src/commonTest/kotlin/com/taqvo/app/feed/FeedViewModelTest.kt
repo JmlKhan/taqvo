@@ -33,7 +33,6 @@ class FeedViewModelTest {
         store = store,
         prefs = prefs,
         onboarding = { answers },
-        surahName = { "Surah$it" },
         analytics = analytics,
         engine = FeedEngine(Random(42)),
         clock = { now },
@@ -56,7 +55,7 @@ class FeedViewModelTest {
         assertEquals(1 + FeedRules.BATCH, s.cards.size)
         assertEquals(store.state?.cardOfDay, s.cards.first().item.id)
         assertEquals("uz-Latn ${s.cards.first().item.id}", s.cards.first().translation)
-        assertEquals("Surah${s.cards.first().item.surah} surasi, ${s.cards.first().item.surah}:${s.cards.first().item.ayah}", s.cards.first().reference)
+        assertEquals("${s.cards.first().item.surah}:${s.cards.first().item.ayah}", s.cards.first().reference)
     }
 
     @Test fun onboardingAnswersBecomeTheStartingWeights() = runTest {
@@ -66,11 +65,10 @@ class FeedViewModelTest {
         assertEquals(1.0, store.weights["sabr"])
     }
 
-    @Test fun aMissingTranslationFallsBackToEnglishForThatCard() = runTest {
-        val card = started(ContentLang.RU).state.value.cards.first()
-        assertEquals(ContentLang.EN, card.lang)
+    @Test fun aMissingTranslationFallsBackToUzbekCyrillicForThatCard() = runTest {
+        val card = started(ContentLang.UZ_LATN).state.value.cards.first()
+        assertEquals(ContentLang.UZ_CYRL, card.lang)
         assertTrue(card.reference.endsWith("${card.item.surah}:${card.item.ayah}"))
-        assertFalse(card.reference.startsWith("Сура"))
     }
 
     @Test fun theSameDayResumesWhereTheReaderWas() = runTest {

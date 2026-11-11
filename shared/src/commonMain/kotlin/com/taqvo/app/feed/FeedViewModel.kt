@@ -23,6 +23,7 @@ import com.taqvo.app.content.ContentItem
 import com.taqvo.app.content.ContentLang
 import com.taqvo.app.content.ContentSource
 import com.taqvo.app.content.FeedCard
+import com.taqvo.app.content.noteOf
 import com.taqvo.app.content.translationOf
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
@@ -68,7 +69,6 @@ class FeedViewModel(
     private val store: FeedStore,
     private val prefs: FeedPrefs,
     private val onboarding: suspend () -> FeedOnboarding,
-    private val surahName: suspend (Int) -> String?,
     private val widgetPlaced: suspend () -> Boolean? = { null },
     private val analytics: Analytics,
     /** Called once a day counts for the streak, so the day's streak reminder can be taken back. */
@@ -368,13 +368,8 @@ class FeedViewModel(
 
     private suspend fun resolve(item: ContentItem): FeedCard {
         val (text, textLang) = content.translationOf(item, lang) ?: (null to lang)
-        val name = item.surah?.let { surahNameCached(it) }
-        return FeedCard(item, text, CardReference.of(item, textLang) { name }, textLang)
+        return FeedCard(item, text, CardReference.of(item), textLang, content.noteOf(item, textLang))
     }
-
-    private val surahNames = mutableMapOf<Int, String?>()
-    private suspend fun surahNameCached(surah: Int): String? =
-        if (surah in surahNames) surahNames[surah] else surahName(surah).also { surahNames[surah] = it }
 
     private fun LocalDate.plusDays(days: Int): LocalDate = this.minus(DatePeriod(days = -days))
 

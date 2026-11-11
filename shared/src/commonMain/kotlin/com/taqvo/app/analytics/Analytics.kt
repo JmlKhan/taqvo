@@ -33,9 +33,4 @@ object OnboardingEvents {
     const val THEME = "onb_theme"
     const val AYAH_FORMAT = "onb_ayah_format"
     const val COMPLETE = "onb_complete"
-    const val PAYWALL_VIEW = "paywall_view"
-    const val PAYWALL_PLAN_SELECT = "paywall_plan_select"
-    const val PAYWALL_PURCHASE_START = "paywall_purchase_start"
-    const val PAYWALL_CLOSE = "paywall_close"
-    const val PAYWALL_RESTORE = "paywall_restore"
 }

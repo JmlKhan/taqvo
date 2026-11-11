@@ -49,7 +49,6 @@ import com.taqvo.app.design.TaqvoText
 import com.taqvo.app.design.components.TaqvoBottomSheet
 import com.taqvo.app.design.components.TaqvoSegmented
 import com.taqvo.app.feature.settings.SectionLabel
-import com.taqvo.app.feed.FeedPremium
 import com.taqvo.app.feed.FeedTextStyle
 import com.taqvo.app.feed.TextAlignment
 import com.taqvo.app.feed.TextColor
@@ -124,7 +123,7 @@ internal fun Controls(format: AyahFormat, style: FeedTextStyle, onFormat: (AyahF
 
         Spacer(Modifier.height(8.dp))
         SectionLabel(stringResource(Res.string.feed_style_font), gutter = 0.dp)
-        val fonts = TranslationFont.entries.filter(FeedPremium::allowed)
+        val fonts = TranslationFont.entries
         TaqvoSegmented(
             fonts.map { if (it == TranslationFont.SYSTEM) stringResource(Res.string.feed_style_font_system) else fontName(it) },
             fonts.indexOf(style.translationFont).coerceAtLeast(0),
@@ -203,7 +202,7 @@ private fun SizeSlider(style: FeedTextStyle, onStyle: (FeedTextStyle) -> Unit) {
 private fun ColorSwatches(style: FeedTextStyle, onStyle: (FeedTextStyle) -> Unit) {
     val colors = LocalTaqvoColors.current
     Row(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.SpaceBetween) {
-        TextColor.entries.filter(FeedPremium::allowed).forEach { color ->
+        TextColor.entries.forEach { color ->
             val selected = style.color == color
             val name = colorName(color)
             // "Auto" is white over the theme's shade; drawn half white, half shade.

@@ -17,7 +17,6 @@ import com.taqvo.app.ayah.AyahFormat
 import com.taqvo.app.content.FeedCard
 import com.taqvo.app.feed.FeedCollection
 import com.taqvo.app.feed.FeedEvents
-import com.taqvo.app.feed.FeedPremium
 import com.taqvo.app.feed.FeedStore
 import com.taqvo.app.feed.FeedTextStyle
 import com.taqvo.app.feed.ShareAction
@@ -43,6 +42,7 @@ class CardSheets {
     var share by mutableStateOf<FeedCard?>(null)
     var style by mutableStateOf(false)
     var collectionFor by mutableStateOf<FeedCard?>(null)
+    var note by mutableStateOf<FeedCard?>(null)
     var message by mutableStateOf<String?>(null)
 }
 
@@ -62,7 +62,6 @@ class CardSheetDeps(
     val onWatermark: (Boolean) -> Unit,
     /** A save or a share counts the card as seen (feed spec §9). */
     val onShared: (FeedCard) -> Unit,
-    val onPaywall: () -> Unit = {},
 )
 
 /**
@@ -117,9 +116,7 @@ fun CardSheetsHost(sheets: CardSheets, styleCard: FeedCard?, deps: CardSheetDeps
                         }
                     }
                 },
-                onToggleWatermark = {
-                    if (FeedPremium.canHideWatermark()) deps.onWatermark(!deps.watermark) else deps.onPaywall()
-                },
+                onToggleWatermark = { deps.onWatermark(!deps.watermark) },
                 onCollection = {
                     track(card, ShareAction.COLLECTION)
                     scope.launch {
@@ -157,6 +154,8 @@ fun CardSheetsHost(sheets: CardSheets, styleCard: FeedCard?, deps: CardSheetDeps
             onDismiss = { sheets.style = false },
         )
     }
+
+    sheets.note?.let { card -> NoteSheet(card, onDismiss = { sheets.note = null }) }
 
     sheets.collectionFor?.let { card ->
         CollectionPickerSheet(

@@ -26,6 +26,7 @@ import com.taqvo.app.design.components.TaqvoPrimaryButton
 import com.taqvo.app.design.components.TaqvoTextLink
 import com.taqvo.app.domain.WidgetBackground
 import com.taqvo.app.feature.settings.WidgetPreview
+import com.taqvo.app.i18n.AppLanguage
 import com.taqvo.app.i18n.LocalPlatformFormat
 import com.taqvo.app.location.LocationPermission
 import com.taqvo.app.location.LocationRepository
@@ -67,6 +68,7 @@ import com.taqvo.app.widget.askToPin
 /** What onboarding shows: the answers so far and the settings they have made. */
 data class OnboardingModel(
     val answers: OnboardingAnswers,
+    val language: AppLanguage,
     val reminders: AyahReminderSettings,
     val ayahFormat: AyahFormat,
     val style: WallpaperStyle,
@@ -77,12 +79,11 @@ data class OnboardingModel(
     val exactAlarmsNeeded: Boolean,
     val ios: Boolean,
     val today: DayOfWeek,
-    /** Screen 15's prices, from the store; null keeps the paywall away whatever the flag says. */
-    val offer: PaywallOffer? = null,
 )
 
 /** Everything onboarding writes or asks for. Each answer is saved the moment it is given. */
 class OnboardingActions(
+    val setLanguage: (AppLanguage) -> Unit,
     val setName: (String?) -> Unit,
     val setGoals: (List<String>) -> Unit,
     val setContentTypes: (List<String>) -> Unit,
@@ -125,7 +126,6 @@ fun OnboardingScreen(
     val context = OnboardingContext(
         exactAlarmsNeeded = model.exactAlarmsNeeded,
         notificationsGranted = model.reminders.enabled,
-        paywallEnabled = OnboardingFeatures.PAYWALL_ENABLED && model.offer != null,
         wantsWidgets = model.answers.wantsWidgets,
     )
     val progress = OnboardingFlow.progress(step, context)
@@ -166,7 +166,7 @@ fun OnboardingScreen(
     // A step this reader does not see (the widget guide after the city search, for one who asked
     // for no widgets; a resumed step the answers have since ruled out) moves straight on.
     LaunchedEffect(step, context) {
-        if (step != OnboardingStep.EXACT_ALARMS && step != OnboardingStep.PAYWALL && step !in OnboardingFlow.steps(context)) advance()
+        if (step != OnboardingStep.EXACT_ALARMS && step !in OnboardingFlow.steps(context)) advance()
     }
     // The exact-alarm grant happens in system settings; back in front holding it, the step is done.
     LaunchedEffect(step, model.exactAlarmsNeeded) {
@@ -175,6 +175,7 @@ fun OnboardingScreen(
 
     when (step) {
         OnboardingStep.SPLASH -> SplashScreen(onStart = { advance() })
+        OnboardingStep.LANGUAGE -> LanguageScreen(progress, model.language, onPick = actions.setLanguage, onContinue = { advance() })
         OnboardingStep.INTRO -> IntroScreen(progress, onContinue = { advance() })
         OnboardingStep.NAME -> {
             var name by rememberSaveable { mutableStateOf(model.answers.name.orEmpty()) }
@@ -266,24 +267,6 @@ fun OnboardingScreen(
             ShowcaseLockScreen(progress, model.style, model.ios, model.previewFor(model.ayahFormat), onContinue = { advance() })
         OnboardingStep.SHOWCASE_HOME ->
             ShowcaseHomeScreen(progress, model.style, prayerFirst = model.answers.wantsPrayerTimes, onContinue = { advance() })
-        OnboardingStep.PAYWALL -> {
-            val offer = model.offer
-            if (offer == null) {
-                LaunchedEffect(Unit) { advance() }
-            } else {
-                var plan by rememberSaveable { mutableStateOf(Plan.MONTHLY) }
-                PaywallScreen(
-                    offer, plan,
-                    onPlan = { plan = it },
-                    // No billing yet (OnboardingFeatures.PAYWALL_ENABLED): nothing to buy.
-                    onPurchase = { advance() },
-                    onClose = { advance() },
-                    onRestore = {},
-                    onPrivacy = {},
-                    onTerms = {},
-                )
-            }
-        }
         OnboardingStep.WELCOME -> WelcomeScreen(model.style, model.answers.name, onDone = { advance(OnboardingStep.WELCOME) })
         OnboardingStep.AYAH_FORMAT -> AyahFormatScreen(
             progress,

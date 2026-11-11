@@ -23,6 +23,7 @@ import com.taqvo.app.feature.onboarding.OnboardingModel
 import com.taqvo.app.feature.onboarding.OnboardingScreen
 import com.taqvo.app.feature.onboarding.OnboardingStep
 import com.taqvo.app.feature.onboarding.WallpaperSample
+import com.taqvo.app.i18n.AppLanguage
 import com.taqvo.app.i18n.LocalPlatformFormat
 import com.taqvo.app.i18n.UiLanguage
 import com.taqvo.app.location.LocationPermission
@@ -116,6 +117,7 @@ internal fun OnboardingRoute(
 
     fun track(event: String, properties: Map<String, Any?>) = analytics.track(event, properties)
 
+    val language by settings.appLanguage.collectAsState(AppLanguage.DEFAULT)
     val answers = storedAnswers ?: return
     val reminders = storedReminders ?: return
 
@@ -124,6 +126,7 @@ internal fun OnboardingRoute(
         onStep = { step = it },
         model = OnboardingModel(
             answers = answers,
+            language = language,
             reminders = reminders,
             ayahFormat = ayahFormat,
             style = style,
@@ -134,6 +137,10 @@ internal fun OnboardingRoute(
             today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.dayOfWeek,
         ),
         actions = OnboardingActions(
+            setLanguage = { chosen ->
+                scope.launch { settings.setAppLanguage(chosen) }
+                track(OnboardingEvents.ANSWER, mapOf("question" to "language", "ids" to listOf(chosen.tag)))
+            },
             setName = { scope.launch { store.setName(it) } },
             setGoals = { ids -> scope.launch { store.setGoals(ids) }; track(OnboardingEvents.ANSWER, mapOf("question" to "goals", "ids" to ids)) },
             setContentTypes = { ids -> scope.launch { store.setContentTypes(ids) }; track(OnboardingEvents.ANSWER, mapOf("question" to "content", "ids" to ids)) },

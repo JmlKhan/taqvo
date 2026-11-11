@@ -55,8 +55,12 @@ fun TaqvoSegmented(options: List<String>, selectedIndex: Int, onSelect: (Int) ->
             val selected = index == selectedIndex
             // The selectable takes the full 44 dp; only the drawn pill is inset by 3 dp. Putting
             // the inset on the Row instead would leave each option a 38 dp target.
+            // weight(fill = false): each option may take at most an equal share of the width, so on
+            // a narrow screen (iPhone SE) a long label wraps inside its own pill instead of
+            // squeezing the last option off the edge; on a wide one the pill stays compact.
             Box(
                 Modifier
+                    .weight(1f, fill = false)
                     .fillMaxHeight()
                     .selectable(
                         selected = selected,
@@ -68,7 +72,7 @@ fun TaqvoSegmented(options: List<String>, selectedIndex: Int, onSelect: (Int) ->
                     .padding(3.dp)
                     .clip(RoundedCornerShape(percent = 50))
                     .background(if (selected) colors.accent else colors.surface)
-                    .padding(horizontal = 14.dp),
+                    .padding(horizontal = 10.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(

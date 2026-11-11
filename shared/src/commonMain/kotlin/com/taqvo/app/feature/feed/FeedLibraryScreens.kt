@@ -172,6 +172,7 @@ fun SingleCardScreen(
     onLike: () -> Unit,
     onShare: () -> Unit,
     onStyle: () -> Unit,
+    onNote: () -> Unit,
     onBack: () -> Unit,
 ) {
     val fonts = rememberFeedFonts(style)
@@ -186,6 +187,7 @@ fun SingleCardScreen(
             bottomSpace = FeedChromeSizes.BOTTOM_SPACE,
             onDoubleTap = { if (!liked) onLike() },
             modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
+            onNote = onNote,
         )
         Box(Modifier.windowInsetsPadding(WindowInsets.safeDrawing)) { BackChevron(onBack) }
         FeedActionRow(

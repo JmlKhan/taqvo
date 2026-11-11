@@ -50,6 +50,7 @@ class FeedActions(
     val onDoubleTap: (FeedCard) -> Unit,
     val onShare: (FeedCard) -> Unit,
     val onStyle: () -> Unit,
+    val onNote: (FeedCard) -> Unit,
     val top: FeedTopActions,
     val onThemes: () -> Unit,
     val onTools: () -> Unit,
@@ -114,6 +115,7 @@ fun FeedScreen(
                             actions.onDoubleTap(card)
                         },
                         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
+                        onNote = { actions.onNote(card) },
                     )
                 }
             }

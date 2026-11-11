@@ -52,6 +52,8 @@ import com.taqvo.app.design.components.TaqvoPrimaryButton
 import com.taqvo.app.resources.Res
 import com.taqvo.app.resources.app_name
 import com.taqvo.app.resources.onb_continue
+import com.taqvo.app.resources.onb_language_title
+import com.taqvo.app.i18n.AppLanguage
 import com.taqvo.app.resources.onb_intro_body
 import com.taqvo.app.resources.onb_intro_title
 import com.taqvo.app.resources.onb_journey_body
@@ -328,3 +330,28 @@ private fun weekdayInitials(): Map<DayOfWeek, String> = mapOf(
     DayOfWeek.SATURDAY to Res.string.onb_weekday_sat,
     DayOfWeek.SUNDAY to Res.string.onb_weekday_sun,
 ).mapValues { (_, key: StringResource) -> stringResource(key) }
+
+/**
+ * The first question: the app's language. Each language is named in itself so a reader who cannot
+ * read the current one still finds theirs, and a pick applies at once (the screen is redrawn in it).
+ * Uzbek Cyrillic is preselected, the app's default; there is nothing to skip.
+ */
+@Composable
+internal fun LanguageScreen(progress: Float?, current: AppLanguage, onPick: (AppLanguage) -> Unit, onContinue: () -> Unit) {
+    OnbPage(
+        progress = progress,
+        onSkip = null,
+        centred = false,
+        content = {
+            Spacer(Modifier.height(16.dp))
+            OnbTitle(stringResource(Res.string.onb_language_title))
+            Spacer(Modifier.height(28.dp))
+            OptionList(
+                AppLanguage.entries.map { it.tag to it.endonym },
+                setOf(current.tag),
+                onToggle = { tag -> onPick(AppLanguage.of(tag)) },
+            )
+        },
+        footer = { TaqvoPrimaryButton(stringResource(Res.string.onb_continue), onContinue) },
+    )
+}

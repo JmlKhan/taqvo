@@ -5,49 +5,28 @@ import com.taqvo.app.content.CardReference
 import com.taqvo.app.content.ContentLang
 import com.taqvo.app.content.LanguageResolver
 import com.taqvo.app.feature.onboarding.Goal
+import com.taqvo.app.i18n.AppLanguage
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class LanguageResolverTest {
-    @Test fun theFourLanguagesResolveToThemselves() {
-        assertEquals(ContentLang.UZ_LATN, LanguageResolver.resolve("uz-Latn"))
-        assertEquals(ContentLang.UZ_CYRL, LanguageResolver.resolve("uz-Cyrl"))
-        assertEquals(ContentLang.RU, LanguageResolver.resolve("ru"))
-        assertEquals(ContentLang.EN, LanguageResolver.resolve("en"))
+    @Test fun theTwoUzbekScriptsResolveToThemselves() {
+        assertEquals(ContentLang.UZ_CYRL, LanguageResolver.forApp(AppLanguage.UZBEK_CYRILLIC))
+        assertEquals(ContentLang.UZ_LATN, LanguageResolver.forApp(AppLanguage.UZBEK_LATIN))
     }
 
-    @Test fun uzbekWithNoScriptIsLatin() {
-        assertEquals(ContentLang.UZ_LATN, LanguageResolver.resolve("uz"))
-        assertEquals(ContentLang.UZ_LATN, LanguageResolver.resolve("uz-UZ"))
-    }
-
-    @Test fun regionsAndUnderscoresAreIgnored() {
-        assertEquals(ContentLang.UZ_CYRL, LanguageResolver.resolve("uz-Cyrl-UZ"))
-        assertEquals(ContentLang.UZ_CYRL, LanguageResolver.resolve("uz_Cyrl_UZ"))
-        assertEquals(ContentLang.UZ_LATN, LanguageResolver.resolve("uz-Latn-UZ"))
-        assertEquals(ContentLang.RU, LanguageResolver.resolve("ru-RU"))
-        assertEquals(ContentLang.EN, LanguageResolver.resolve("en-GB"))
-    }
-
-    @Test fun everyOtherLanguageFallsBackToEnglish() {
-        listOf("tr", "tr-TR", "ar", "fr-FR", "id", "", "x").forEach {
-            assertEquals(ContentLang.EN, LanguageResolver.resolve(it), it)
+    @Test fun everyOtherAppLanguageReadsUzbekCyrillic() {
+        AppLanguage.entries.filter { it != AppLanguage.UZBEK_CYRILLIC && it != AppLanguage.UZBEK_LATIN }.forEach {
+            assertEquals(ContentLang.UZ_CYRL, LanguageResolver.forApp(it), it.name)
         }
     }
 }
 
 class CardReferenceTest {
-    @Test fun eachLanguageWritesTheReferenceItsOwnWay() {
-        assertEquals("Ar-Ra'd surasi, 13:28", CardReference.format(ContentLang.UZ_LATN, "Ar-Ra'd", 13, 28))
-        assertEquals("Ar-Ra'd сураси, 13:28", CardReference.format(ContentLang.UZ_CYRL, "Ar-Ra'd", 13, 28))
-        assertEquals("Сура «Ar-Ra'd», 13:28", CardReference.format(ContentLang.RU, "Ar-Ra'd", 13, 28))
-        assertEquals("Ar-Ra'd 13:28", CardReference.format(ContentLang.EN, "Ar-Ra'd", 13, 28))
-    }
-
-    @Test fun aMissingNameLeavesTheNumbers() {
-        assertEquals("13:28", CardReference.format(ContentLang.EN, null, 13, 28))
+    @Test fun theReferenceIsTheChapterAndVerse() {
+        assertEquals("13:28", CardReference.format(13, 28))
     }
 }
 

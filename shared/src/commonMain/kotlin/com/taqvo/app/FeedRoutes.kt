@@ -20,6 +20,7 @@ import com.taqvo.app.ayah.AyahFormat
 import com.taqvo.app.content.ContentLang
 import com.taqvo.app.content.FeedCard
 import com.taqvo.app.content.LanguageResolver
+import com.taqvo.app.i18n.AppLanguage
 import com.taqvo.app.di.AppContainer
 import com.taqvo.app.feature.feed.CardSheetDeps
 import com.taqvo.app.feature.feed.CardSheetsHost
@@ -37,7 +38,6 @@ import com.taqvo.app.feed.FeedCollection
 import com.taqvo.app.feed.FeedEvents
 import com.taqvo.app.feed.FeedTextStyle
 import com.taqvo.app.feed.LikeVia
-import com.taqvo.app.i18n.LocalPlatformFormat
 import com.taqvo.app.nav.Navigator
 import com.taqvo.app.nav.Screen
 import com.taqvo.app.notifications.RescheduleTrigger
@@ -76,13 +76,11 @@ import com.taqvo.app.feature.settings.BackChevron
 import com.taqvo.app.feed.FeedTheme
 import com.taqvo.app.feed.FeedThemes
 import com.taqvo.app.resources.Res
-import com.taqvo.app.resources.feed_collections_title
 import com.taqvo.app.resources.feed_favorites_title
 import com.taqvo.app.resources.feed_tools_duas
 import com.taqvo.app.resources.qibla_title
 import com.taqvo.app.resources.settings_daily_ayahs
 import com.taqvo.app.resources.settings_notifications
-import com.taqvo.app.resources.settings_wallpapers
 import com.taqvo.app.resources.settings_widgets
 import com.taqvo.app.resources.tab_prayer
 import com.taqvo.app.resources.tab_quran
@@ -90,9 +88,12 @@ import com.taqvo.app.resources.tab_settings
 import com.taqvo.app.resources.tasbeeh_title
 import kotlin.time.Clock
 
-/** The phone's locale as the feed's translation language (content spec §2). */
+/** The app's language setting as the feed's translation language (content spec §2). */
 @Composable
-private fun feedLanguage(): ContentLang = LanguageResolver.resolve(LocalPlatformFormat.current.languageTag())
+private fun feedLanguage(container: AppContainer): ContentLang {
+    val language by container.settingsRepository.appLanguage.collectAsState(AppLanguage.DEFAULT)
+    return LanguageResolver.forApp(language)
+}
 
 /** The reader's look for every feed surface: the ayah format, the text style, the theme, the watermark. */
 private class FeedLook(val format: AyahFormat, val style: FeedTextStyle, val theme: FeedTheme, val watermark: Boolean)
@@ -143,7 +144,7 @@ private fun trackStyleChange(container: AppContainer, before: FeedTextStyle, aft
 internal fun FeedRoute(container: AppContainer, navigator: Navigator) {
     val vm = container.feedViewModel
     val state by vm.state.collectAsState()
-    val lang = feedLanguage()
+    val lang = feedLanguage(container)
     val look = rememberFeedLook(container)
     val scope = rememberCoroutineScope()
     val sheets = rememberCardSheets()
@@ -181,6 +182,7 @@ internal fun FeedRoute(container: AppContainer, navigator: Navigator) {
                 sheets.share = card
             },
             onStyle = { sheets.style = true },
+            onNote = { sheets.note = it },
             top = FeedTopActions(
                 onReminders = { navigator.push(Screen.DailyAyahs) },
                 onGuide = { navigator.push(Screen.Widgets) },
@@ -208,7 +210,7 @@ internal fun FeedRoute(container: AppContainer, navigator: Navigator) {
 
 @Composable
 internal fun FavoritesRoute(container: AppContainer, navigator: Navigator) {
-    val lang = feedLanguage()
+    val lang = feedLanguage(container)
     val look = rememberFeedLook(container)
     val revision by container.feedStore.revision.collectAsState()
     val cards by produceState<List<FeedCard>?>(null, revision, lang) {
@@ -241,7 +243,7 @@ internal fun CollectionsRoute(container: AppContainer, navigator: Navigator) {
 
 @Composable
 internal fun CollectionRoute(screen: Screen.Collection, container: AppContainer, navigator: Navigator) {
-    val lang = feedLanguage()
+    val lang = feedLanguage(container)
     val look = rememberFeedLook(container)
     val revision by container.feedStore.revision.collectAsState()
     val collection by produceState<FeedCollection?>(null, revision) {
@@ -255,7 +257,7 @@ internal fun CollectionRoute(screen: Screen.Collection, container: AppContainer,
 
 @Composable
 internal fun FeedItemRoute(screen: Screen.FeedItem, container: AppContainer, navigator: Navigator) {
-    val lang = feedLanguage()
+    val lang = feedLanguage(container)
     val look = rememberFeedLook(container)
     val scope = rememberCoroutineScope()
     val sheets = rememberCardSheets()
@@ -277,6 +279,7 @@ internal fun FeedItemRoute(screen: Screen.FeedItem, container: AppContainer, nav
             sheets.share = current
         },
         onStyle = { sheets.style = true },
+        onNote = { sheets.note = current },
         onBack = { navigator.pop() },
     )
     CardSheetsHost(sheets, styleCard = current, deps = sheetDeps(container, scope, look) { vm.onShared(it.item.id) })
@@ -325,9 +328,7 @@ internal fun ToolsRoute(navigator: Navigator) {
         ToolTile(stringResource(Res.string.feed_tools_duas), { drawHorizon(it) }, open(Screen.Adhkar())),
         ToolTile(stringResource(Res.string.qibla_title), { drawKaaba(it) }, open(Screen.Qibla)),
         ToolTile(stringResource(Res.string.tasbeeh_title), { drawMisbaha(it) }, open(Screen.Tasbeeh)),
-        ToolTile(stringResource(Res.string.settings_wallpapers), { drawPicture(it) }, open(Screen.Wallpapers)),
         ToolTile(stringResource(Res.string.feed_favorites_title), { drawHeart(it, false) }, open(Screen.Favorites)),
-        ToolTile(stringResource(Res.string.feed_collections_title), { drawBookmark(it, false) }, open(Screen.Collections)),
         ToolTile(stringResource(Res.string.settings_notifications), { drawBell(it) }, open(Screen.NotificationSettings)),
         ToolTile(stringResource(Res.string.tab_settings), { drawSliders(it) }, open(Screen.Settings)),
     )

@@ -14,7 +14,7 @@ CREATE TABLE items (
 
 CREATE TABLE item_topics (item_id TEXT, topic_id TEXT, PRIMARY KEY (item_id, topic_id));
 
-CREATE TABLE item_text (item_id TEXT, lang TEXT, text TEXT NOT NULL, PRIMARY KEY (item_id, lang));
+CREATE TABLE item_text (item_id TEXT, lang TEXT, text TEXT NOT NULL, note TEXT, PRIMARY KEY (item_id, lang));
 
 CREATE TABLE topics (id TEXT PRIMARY KEY, sort INTEGER);
 
@@ -33,6 +33,9 @@ SELECT id, sort FROM topics ORDER BY sort;
 
 textsFor:
 SELECT item_id, text FROM item_text WHERE lang = ?;
+
+notesFor:
+SELECT item_id, note FROM item_text WHERE lang = ? AND note IS NOT NULL;
 
 topicLabels:
 SELECT topic_id, label FROM topic_label WHERE lang = ?;

@@ -13,7 +13,7 @@ object ContentDb {
      * Must equal content.db's `user_version`; a mismatch on disk triggers a fresh copy. Raise it
      * with every rebuilt content.db (build_db.py sets the pragma), or phones keep the old file.
      */
-    const val VERSION = 1
+    const val VERSION = 2
     const val FILE = "content.db"
     const val RESOURCE = "files/content.db"
 }
@@ -31,6 +31,12 @@ interface ContentSource {
     /** Each topic's label in [lang], by topic id. */
     suspend fun topicLabels(lang: ContentLang): Map<String, String>
 
+    /**
+     * The translator's commentary (izoh) in [lang], by item id; items without one are absent. It is
+     * opened on tap and never drawn on a card, a share image or a widget (content spec §1).
+     */
+    suspend fun notes(lang: ContentLang): Map<String, String> = emptyMap()
+
     suspend fun sources(): List<ContentSourceInfo>
 }
 
@@ -47,6 +53,7 @@ class ContentRepository(
     private val lock = Mutex()
     private var catalog: ContentCatalog? = null
     private val texts = mutableMapOf<ContentLang, Map<String, String>>()
+    private val notes = mutableMapOf<ContentLang, Map<String, String>>()
 
     override suspend fun catalog(): ContentCatalog = lock.withLock {
         catalog ?: withContext(io) {
@@ -76,6 +83,14 @@ class ContentRepository(
         }.also { texts[lang] = it }
     }
 
+    override suspend fun notes(lang: ContentLang): Map<String, String> = lock.withLock {
+        notes[lang] ?: withContext(io) {
+            q.notesFor(lang.tag).executeAsList()
+                .mapNotNull { row -> row.note?.takeIf { it.isNotBlank() }?.let { row.item_id.orEmpty() to it } }
+                .toMap()
+        }.also { notes[lang] = it }
+    }
+
     override suspend fun topicLabels(lang: ContentLang): Map<String, String> = withContext(io) {
         q.topicLabels(lang.tag).executeAsList().associate { it.topic_id.orEmpty() to it.label.orEmpty() }
     }
@@ -94,3 +109,6 @@ suspend fun ContentSource.translationOf(item: ContentItem, lang: ContentLang): P
     if (lang == ContentLang.FALLBACK) return null
     return texts(ContentLang.FALLBACK)[item.id]?.let { it to ContentLang.FALLBACK }
 }
+
+/** The commentary for [item] in [lang], the language its translation is shown in; null when it has none. */
+suspend fun ContentSource.noteOf(item: ContentItem, lang: ContentLang): String? = notes(lang)[item.id]

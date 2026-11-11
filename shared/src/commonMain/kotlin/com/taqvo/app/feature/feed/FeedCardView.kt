@@ -3,6 +3,7 @@ package com.taqvo.app.feature.feed
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,11 +32,13 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -44,6 +47,9 @@ import com.taqvo.app.content.FeedCard
 import com.taqvo.app.design.FeedInk
 import com.taqvo.app.design.components.drawHeart
 import com.taqvo.app.feed.FeedTextStyle
+import com.taqvo.app.resources.Res
+import com.taqvo.app.resources.feed_note_chip
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * One card's words, centred in the space between the top bar and the action row (feed spec §3).
@@ -66,6 +72,8 @@ fun FeedCardView(
     bottomSpace: Dp,
     onDoubleTap: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Opens the translator's commentary; the Izoh chip shows only when the card has one. */
+    onNote: (() -> Unit)? = null,
 ) {
     var bloom by remember { mutableIntStateOf(0) }
     Box(
@@ -142,6 +150,16 @@ fun FeedCardView(
                     modifier = Modifier.fillMaxWidth(),
                     style = referenceTextStyle(fonts, FeedTypeScale.REFERENCE_SP, ink, align).withShadow(shadow),
                 )
+                if (card.note != null && onNote != null) {
+                    Text(
+                        stringResource(Res.string.feed_note_chip),
+                        modifier = Modifier
+                            .heightIn(min = 48.dp)
+                            .clickable(role = Role.Button, onClick = onNote)
+                            .padding(horizontal = 4.dp, vertical = 12.dp),
+                        style = referenceTextStyle(fonts, FeedTypeScale.REFERENCE_SP, ink, align).withShadow(shadow).copy(textDecoration = TextDecoration.Underline),
+                    )
+                }
             }
         }
         HeartBloom(bloom, Modifier.align(Alignment.Center))

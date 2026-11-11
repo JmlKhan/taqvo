@@ -4,22 +4,19 @@ import com.taqvo.app.content.CardReference
 import com.taqvo.app.content.ContentLang
 import com.taqvo.app.content.ContentSource
 import com.taqvo.app.content.FeedCard
+import com.taqvo.app.content.noteOf
 import com.taqvo.app.content.translationOf
 
 /**
  * Cards by id for the screens outside the feed — favorites, a collection, a single card — in the
  * reader's language. An id that a newer content.db no longer carries is skipped, not shown blank.
  */
-class FeedLibrary(
-    private val content: ContentSource,
-    private val surahName: suspend (Int) -> String?,
-) {
+class FeedLibrary(private val content: ContentSource) {
     suspend fun cards(ids: List<String>, lang: ContentLang): List<FeedCard> {
         val catalog = content.catalog()
         return ids.mapNotNull { catalog.byId[it] }.map { item ->
             val (text, textLang) = content.translationOf(item, lang) ?: (null to lang)
-            val name = item.surah?.let { surahName(it) }
-            FeedCard(item, text, CardReference.of(item, textLang) { name }, textLang)
+            FeedCard(item, text, CardReference.of(item), textLang, content.noteOf(item, textLang))
         }
     }
 

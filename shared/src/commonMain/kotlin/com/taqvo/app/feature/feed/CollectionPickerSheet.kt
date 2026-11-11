@@ -43,7 +43,6 @@ import com.taqvo.app.design.components.TaqvoCard
 import com.taqvo.app.design.components.TaqvoPrimaryButton
 import com.taqvo.app.design.components.TaqvoRow
 import com.taqvo.app.feed.FeedCollection
-import com.taqvo.app.feed.FeedPremium
 import com.taqvo.app.i18n.LocalPlatformFormat
 import com.taqvo.app.resources.Res
 import com.taqvo.app.resources.feed_collection_create
@@ -82,10 +81,9 @@ fun CollectionPickerSheet(
                 }
                 Spacer(Modifier.height(16.dp))
             }
-            val canCreate = collections.size < FeedPremium.collectionLimit()
-            if (naming && canCreate) {
+            if (naming) {
                 NameField(initial = "", onDone = onCreate)
-            } else if (canCreate) {
+            } else {
                 TaqvoCard { TaqvoRow(label = stringResource(Res.string.feed_collection_new), onClick = { naming = true }) }
             }
         }

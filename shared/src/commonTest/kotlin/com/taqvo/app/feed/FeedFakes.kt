@@ -36,7 +36,7 @@ class FakeContent(private val catalog: ContentCatalog = fakeCatalog()) : Content
     var fail = false
     override suspend fun catalog(): ContentCatalog = if (fail) error("unreadable") else catalog
     override suspend fun texts(lang: ContentLang): Map<String, String> =
-        if (lang == ContentLang.RU) emptyMap() else catalog.items.associate { it.id to "${lang.tag} ${it.id}" }
+        if (lang == ContentLang.UZ_LATN) emptyMap() else catalog.items.associate { it.id to "${lang.tag} ${it.id}" }
     override suspend fun topicLabels(lang: ContentLang): Map<String, String> = catalog.topics.associateWith { it }
     override suspend fun sources(): List<ContentSourceInfo> = emptyList()
 }

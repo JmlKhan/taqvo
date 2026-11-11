@@ -9,6 +9,8 @@ import com.taqvo.app.location.LocationPermission
  */
 enum class OnboardingStep {
     SPLASH,
+    /** The reader picks the app's language; Uzbek Cyrillic is preselected. */
+    LANGUAGE,
     INTRO,
     NAME,
     GOALS,
@@ -24,7 +26,6 @@ enum class OnboardingStep {
     PREVIEW,
     SHOWCASE_LOCK,
     SHOWCASE_HOME,
-    PAYWALL,
     WELCOME,
     AYAH_FORMAT,
     LOCATION,
@@ -37,19 +38,8 @@ data class OnboardingContext(
     val exactAlarmsNeeded: Boolean = false,
     /** The answer the notification prompt gave on screen 09; false until it has been asked. */
     val notificationsGranted: Boolean = false,
-    val paywallEnabled: Boolean = OnboardingFeatures.PAYWALL_ENABLED,
     val wantsWidgets: Boolean = false,
 )
-
-/** Switches for parts of the flow that are built but not live. */
-object OnboardingFeatures {
-    /**
-     * Screen 15. Off until the app may charge: the bundled translations (Tanzil) and recitations
-     * (Islamic Network) are licensed for non-commercial use only (docs/ATTRIBUTION.md), and there
-     * is no billing behind the screen yet.
-     */
-    const val PAYWALL_ENABLED = false
-}
 
 object OnboardingFlow {
 
@@ -57,7 +47,6 @@ object OnboardingFlow {
     fun steps(context: OnboardingContext): List<OnboardingStep> = OnboardingStep.entries.filter { step ->
         when (step) {
             OnboardingStep.EXACT_ALARMS -> context.exactAlarmsNeeded && context.notificationsGranted
-            OnboardingStep.PAYWALL -> context.paywallEnabled
             // The guide follows the reader's own pick (spec, screen 08); Settings › Widgets keeps it.
             OnboardingStep.WIDGET_GUIDE -> context.wantsWidgets
             // Always asked, unlike the spec's screen 17b: the app opens on the Prayer screen, which
@@ -88,8 +77,8 @@ object OnboardingFlow {
         OnboardingStep.USE_CASES,
     )
 
-    /** Splash, paywall and the full-screen welcome have no progress bar (spec §0). */
-    private val NO_PROGRESS = setOf(OnboardingStep.SPLASH, OnboardingStep.PAYWALL, OnboardingStep.WELCOME)
+    /** The splash and the full-screen welcome have no progress bar (spec §0). The app is free: no paywall. */
+    private val NO_PROGRESS = setOf(OnboardingStep.SPLASH, OnboardingStep.WELCOME)
 
     /** A stored step's name back to the step; anything unknown starts over. */
     fun stepOf(name: String?): OnboardingStep =
