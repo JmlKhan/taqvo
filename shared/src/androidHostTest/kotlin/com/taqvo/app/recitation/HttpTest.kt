@@ -94,7 +94,7 @@ class HttpTest {
         // address. The platform's own agent names the phone's model and build.
         val local = serve { _, out -> out.respond("{}".encodeToByteArray(), declared = true) }
         httpGet(local.url("/manifest.json"))
-        assertEquals("Taqvo", headerOf(local.heads.single(), "User-Agent"))
+        assertEquals("Tazkir", headerOf(local.heads.single(), "User-Agent"))
     }
 
     @Test
@@ -110,7 +110,7 @@ class HttpTest {
         val response = HttpByteSource().open(local.url("/release/ar.alafasy-112.taqa"), fromByte = 5)
         assertIs<ByteResponse.Body>(response).body.close()
         assertEquals(listOf("/release/ar.alafasy-112.taqa", "/cdn/ar.alafasy-112.taqa"), local.heads.map { pathOf(it) })
-        for (head in local.heads) assertEquals("Taqvo", headerOf(head, "User-Agent"), head)
+        for (head in local.heads) assertEquals("Tazkir", headerOf(head, "User-Agent"), head)
     }
 
     private fun pathOf(head: String): String = head.lineSequence().first().split(" ")[1]

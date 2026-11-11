@@ -72,12 +72,12 @@ sealed interface Screen {
     /** Settings › Prayer times › Timetable › Other methods: the eleven that apply anywhere. */
     data object OtherMethods : Screen
 
-    /** Match my mosque (spec §2.2): the board's Fajr and Isha against the timetables Taqvo knows. */
+    /** Match my mosque (spec §2.2): the board's Fajr and Isha against the timetables Tazkir knows. */
     data object MatchMyMosque : Screen
     data object HighLatitudePicker : Screen
     data object ManualAdjustments : Screen
 
-    /** "About these times" (spec §2.3, task 11): whose times these are, and how sure Taqvo is of
+    /** "About these times" (spec §2.3, task 11): whose times these are, and how sure Tazkir is of
      * them. Reached from Settings › Prayer times, and — once Task 10 wires it — from the Prayer
      * screen's ⓘ card and "Cautious times" line. */
     data object AboutTimes : Screen
@@ -98,7 +98,7 @@ sealed interface Screen {
 
     /** The surahs of one reciter on this phone, with the deletes (spec 3a §5.6). */
     data class RecitationDownloads(val reciterId: String) : Screen
-    /** Settings › About Taqvo (privacy spec §6): the promise, and where to check it. */
+    /** Settings › About Tazkir (privacy spec §6): the promise, and where to check it. */
     data object About : Screen
     data object Attribution : Screen
     data object Qibla : Screen

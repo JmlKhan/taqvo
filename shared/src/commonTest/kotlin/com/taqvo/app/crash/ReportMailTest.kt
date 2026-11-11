@@ -11,7 +11,7 @@ class ReportMailTest {
 
     @Test
     fun theSubjectNamesTheVersionAndThePlatform() {
-        assertEquals("Taqvo report · 1.0.0 (20) · Android 16 (SDK 36)", ReportMail.subject(info))
+        assertEquals("Tazkir report · 1.0.0 (20) · Android 16 (SDK 36)", ReportMail.subject(info))
     }
 
     @Test
@@ -32,7 +32,7 @@ class ReportMailTest {
     fun aShortReportIsTheBodyUntouched() {
         // Hand-written rather than rendered: a real trace under the test runner is longer than
         // the cap, which is exactly what the next test is for.
-        val text = "Taqvo crash report\nsaved: 2026-09-13T21:05:12Z\napp: 1.0.0 (20)\nplatform: Android 16 (SDK 36)\n" +
+        val text = "Tazkir crash report\nsaved: 2026-09-13T21:05:12Z\napp: 1.0.0 (20)\nplatform: Android 16 (SDK 36)\n" +
             "device: samsung SM-S918B\nlanguage: en\nthread: main\n\njava.lang.RuntimeException: boom\n\tat a.b.C.d(C.kt:1)\n"
         val body = ReportMail.body(info, CrashReport(at, text), "No crash report is saved on this phone.")
         assertEquals(text, body)
@@ -43,7 +43,7 @@ class ReportMailTest {
         val text = CrashReportFormat.render(RuntimeException("x".repeat(5_000)), "main", info, at)
         val body = ReportMail.body(info, CrashReport(at, text), "none")
         assertTrue(body.length <= ReportMail.BODY_MAX + CrashReportFormat.TRIMMED.length + 1, "${body.length}")
-        assertTrue(body.startsWith("Taqvo crash report\nsaved: 2026-09-13T21:05:12Z\napp: 1.0.0 (20)\n"), body)
+        assertTrue(body.startsWith("Tazkir crash report\nsaved: 2026-09-13T21:05:12Z\napp: 1.0.0 (20)\n"), body)
         assertTrue(body.endsWith("\n" + CrashReportFormat.TRIMMED), body)
     }
 

@@ -1,6 +1,6 @@
-# Contributing to Taqvo
+# Contributing to Tazkir
 
-Contributions are welcome, from a typo in the Arabic strings to an authority's timetable. Taqvo
+Contributions are welcome, from a typo in the Arabic strings to an authority's timetable. Tazkir
 is maintained by one person, so agreeing on the approach before you spend time on it saves
 everyone work.
 
@@ -14,7 +14,7 @@ everyone work.
 - **Wording or a translation is wrong.** Use the
   [wording form](https://github.com/MohamedAbulgasem/Taqwa/issues/new?template=wording.yml), or
   send a pull request for the app's own strings ([Translations](#translations) below).
-- **An authority's timetable Taqvo doesn't follow yet.** Open an issue with where it is published.
+- **An authority's timetable Tazkir doesn't follow yet.** Open an issue with where it is published.
 - **A security problem.** Report it privately, as [SECURITY.md](SECURITY.md) describes, never in a
   public issue.
 - **Questions and help.** See [taqwa.world/support](https://taqwa.world/support/), or email
@@ -31,13 +31,13 @@ phone home, no new colour outside the palette in `Palette.kt`, and every languag
 as carefully as English, the right-to-left ones (Arabic, Urdu) especially. If a change touches the
 UI, include screenshots of English and Arabic in both themes.
 
-These are what Taqvo is, so a change that breaks one is not merged, however good it is
+These are what Tazkir is, so a change that breaks one is not merged, however good it is
 otherwise. In more detail:
 
 - **Nothing leaves the phone.** No analytics, no crash-reporting SDKs, no account. There is no
-  server behind Taqvo and there will not be one. Exodus Privacy's report finds no trackers in the
+  server behind Tazkir and there will not be one. Exodus Privacy's report finds no trackers in the
   app, and it has to stay that way.
-- **Never early.** Where Taqvo holds the timetable a place follows, no prayer may start before
+- **Never early.** Where Tazkir holds the timetable a place follows, no prayer may start before
   the published time on any day checked. Engine changes are held to the gate, under
   [How to contribute](#how-to-contribute).
 - **The Quran is recited, never synthesised.** The Quran is only ever heard in a reciter's voice.
@@ -93,14 +93,14 @@ Some wording rules apply in every language:
 
 - Prayer times are never called "accurate" or "exact". Say where they come from instead.
 - No text promises that a notification arrives at a set moment, because phones can delay them.
-- Where an authority's timetable is named, the text says Taqvo is not affiliated with it.
+- Where an authority's timetable is named, the text says Tazkir is not affiliated with it.
 - English is British English.
 
 ## Licence
 
-Taqvo is free software under the [GPL-3.0](LICENSE). By opening a pull request, you agree that
+Tazkir is free software under the [GPL-3.0](LICENSE). By opening a pull request, you agree that
 your contribution is licensed under the same terms.
 
-Third-party material (text, audio, fonts, data) needs a licence that lets Taqvo bundle and
+Third-party material (text, audio, fonts, data) needs a licence that lets Tazkir bundle and
 redistribute it. It must be credited in [docs/ATTRIBUTION.md](docs/ATTRIBUTION.md), in
-[NOTICE](NOTICE) and in the app under Settings › About Taqvo › Attribution & licences.
+[NOTICE](NOTICE) and in the app under Settings › About Tazkir › Attribution & licences.

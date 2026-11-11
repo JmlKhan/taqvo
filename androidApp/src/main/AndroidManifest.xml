@@ -18,7 +18,7 @@
          permission: granted at install, never asked for. -->
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <!-- Slice 3a. The app's first network access: recitation downloads and the daily manifest
-         refresh, both to the public Taqvo-data repository (spec 3a §4, §7). -->
+         refresh, both to the public Tazkir-data repository (spec 3a §4, §7). -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- A 58 MB surah has to keep downloading while the reader is elsewhere, which means
          WorkManager's foreground service and, from API 34, its declared type. -->
@@ -63,12 +63,12 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Taqvo">
+        android:theme="@style/Theme.Tazkir">
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
-            android:theme="@style/Theme.Taqvo">
+            android:theme="@style/Theme.Tazkir">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -151,7 +151,7 @@
             </intent-filter>
         </receiver>
         <!-- android:label is what the widget picker titles each provider with; without it every
-             provider takes the application label and all three read "Taqvo" (N5). -->
+             provider takes the application label and all three read "Tazkir" (N5). -->
         <receiver
             android:name=".widget.TaqvoSmallWidgetReceiver"
             android:exported="false"

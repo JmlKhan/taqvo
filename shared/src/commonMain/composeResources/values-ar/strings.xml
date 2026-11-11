@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">تقفو</string>
+    <string name="app_name">Tazkir</string>
     <string name="ui_language">ar</string>
 
     <string name="language_name">العربية</string>
@@ -11,7 +11,7 @@
     <string name="sheet_a11y_drag_handle">مقبض السحب</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_welcome_title">تقفو</string>
+    <string name="onboarding_welcome_title">Tazkir</string>
     <string name="onboarding_welcome_body">مواقيت الصلاة والقبلة والقرآن. بلا حساب، ويعمل دون اتصال.</string>
     <string name="onboarding_welcome_cta">ابدأ</string>
     <string name="onboarding_location_title">أين أنت؟</string>
@@ -21,15 +21,15 @@
     <string name="onboarding_notifications_body">إشعار لكل صلاة. تختار الصوت لكل صلاة على حدة، ويمكنك تغييره متى شئت.</string>
     <string name="onboarding_notifications_secondary">ليس الآن</string>
     <string name="onboarding_exact_title">المنبهات والتذكيرات</string>
-    <string name="onboarding_exact_body">لا يمكن أن يرنّ أندرويد في وقت الصلاة بالضبط إلا إذا سُمح لتقفو بـ«المنبهات والتذكيرات». بدونها قد يتأخر الإشعار حتى ساعة.</string>
+    <string name="onboarding_exact_body">لا يمكن أن يرنّ أندرويد في وقت الصلاة بالضبط إلا إذا سُمح لTazkir بـ«المنبهات والتذكيرات». بدونها قد يتأخر الإشعار حتى ساعة.</string>
     <string name="onboarding_widget_title">على شاشتك الرئيسية</string>
-    <string name="onboarding_widget_body">تعرض أداة تقفو الصلاة القادمة وعدًّا تنازليًا مباشرًا من دون فتح التطبيق.</string>
-    <string name="onboarding_widget_body_ios">تعرض أداة تقفو الصلاة القادمة وعدًّا تنازليًا مباشرًا من دون فتح التطبيق. لإضافتها، اضغط مطولًا على أيقونة تقفو في الشاشة الرئيسية واختر حجم الأداة.</string>
-    <string name="onboarding_widget_body_ios_legacy">تعرض أداة تقفو الصلاة القادمة وعدًّا تنازليًا مباشرًا من دون فتح التطبيق. لإضافتها، اضغط مطولًا على الشاشة الرئيسية، ثم اضغط علامة الزائد في الزاوية العلوية وابحث عن تقفو.</string>
+    <string name="onboarding_widget_body">تعرض أداة Tazkir الصلاة القادمة وعدًّا تنازليًا مباشرًا من دون فتح التطبيق.</string>
+    <string name="onboarding_widget_body_ios">تعرض أداة Tazkir الصلاة القادمة وعدًّا تنازليًا مباشرًا من دون فتح التطبيق. لإضافتها، اضغط مطولًا على أيقونة Tazkir في الشاشة الرئيسية واختر حجم الأداة.</string>
+    <string name="onboarding_widget_body_ios_legacy">تعرض أداة Tazkir الصلاة القادمة وعدًّا تنازليًا مباشرًا من دون فتح التطبيق. لإضافتها، اضغط مطولًا على الشاشة الرئيسية، ثم اضغط علامة الزائد في الزاوية العلوية وابحث عن Tazkir.</string>
     <string name="onboarding_widget_cta_add">إضافة الأداة</string>
     <string name="onboarding_widget_cta_done">تم</string>
     <string name="onboarding_widget_secondary">لاحقًا</string>
-    <string name="onboarding_widget_steps_android">شاشتك الرئيسية لا تسمح للتطبيقات بإضافة الأدوات، فأضفها بنفسك: اضغط مطولًا على مكان فارغ في الشاشة الرئيسية (أو اضمم إصبعيك عليها)، ثم اضغط «الأدوات» أو «التطبيقات المصغّرة»، وابحث عن تقفو واسحب الأداة إلى مكانها.</string>
+    <string name="onboarding_widget_steps_android">شاشتك الرئيسية لا تسمح للتطبيقات بإضافة الأدوات، فأضفها بنفسك: اضغط مطولًا على مكان فارغ في الشاشة الرئيسية (أو اضمم إصبعيك عليها)، ثم اضغط «الأدوات» أو «التطبيقات المصغّرة»، وابحث عن Tazkir واسحب الأداة إلى مكانها.</string>
 
     <!-- Prayer names -->
     <string name="prayer_fajr">الفجر</string>
@@ -65,7 +65,7 @@
         <item quantity="other">%1$s دقيقة</item>
     </plurals>
     <string name="prayer_exact_alarms_label">المنبهات الدقيقة معطّلة</string>
-    <string name="prayer_exact_alarms_body">قد يتأخر التنبيه حتى ساعة ما لم يُسمح لتقفو بـ«المنبهات والتذكيرات».</string>
+    <string name="prayer_exact_alarms_body">قد يتأخر التنبيه حتى ساعة ما لم يُسمح لTazkir بـ«المنبهات والتذكيرات».</string>
     <string name="prayer_no_location_title">لا يوجد موقع بعد</string>
     <string name="prayer_choose_city">اختر مدينة</string>
     <string name="prayer_location_settings">تفعيل الموقع من الإعدادات</string>
@@ -73,11 +73,11 @@
 
     <!-- Prayer engine: the Prayer screen (Task 10) -->
     <string name="prayer_whose_checked_title">جدول %1$s</string>
-    <string name="prayer_whose_checked_body">مواقيت %1$s في %2$s، أعاد تقفو حسابها وتحقّق منها مقارنةً بالجدول المنشور.</string>
+    <string name="prayer_whose_checked_body">مواقيت %1$s في %2$s، أعاد Tazkir حسابها وتحقّق منها مقارنةً بالجدول المنشور.</string>
     <string name="prayer_whose_unchecked_title">طريقة %1$s، لم يُتحقَّق منها كاملًا بعد</string>
-    <string name="prayer_whose_unchecked_body">يحسب تقفو مواقيت %2$s بطريقة %1$s، مع هامش احتياط.</string>
-    <string name="prayer_whose_cautious_body">تتبع المساجد هنا جداول مختلفة، لذا يعرض تقفو كل صلاة بعد دخول وقتها فيها جميعًا.</string>
-    <string name="prayer_whose_calculated_body">لا يُعرف هنا جدول محلي، لذا يحسب تقفو هذه المواقيت احتياطًا.</string>
+    <string name="prayer_whose_unchecked_body">يحسب Tazkir مواقيت %2$s بطريقة %1$s، مع هامش احتياط.</string>
+    <string name="prayer_whose_cautious_body">تتبع المساجد هنا جداول مختلفة، لذا يعرض Tazkir كل صلاة بعد دخول وقتها فيها جميعًا.</string>
+    <string name="prayer_whose_calculated_body">لا يُعرف هنا جدول محلي، لذا يحسب Tazkir هذه المواقيت احتياطًا.</string>
     <string name="prayer_about_these_times">عن هذه المواقيت</string>
     <string name="prayer_times_by">مواقيت %1$s</string>
     <string name="prayer_whose_a11y">%1$s، %2$s. يفتح مصدر هذه المواقيت</string>
@@ -86,7 +86,7 @@
     <string name="prayer_source_published_method">الطريقة المعتمدة</string>
     <string name="prayer_polar_line">لا تشرق الشمس ولا تغرب هنا اليوم، لذا تتبع بعض المواقيت أقرب خط عرض تشرق فيه وتغرب.</string>
     <string name="prayer_card_cautious_title">تتبع المساجد هنا جداول مختلفة</string>
-    <string name="prayer_card_cautious_body">يعرض تقفو كل صلاة بعد دخول وقتها فيها جميعًا.</string>
+    <string name="prayer_card_cautious_body">يعرض Tazkir كل صلاة بعد دخول وقتها فيها جميعًا.</string>
     <string name="prayer_card_sunni_title">هذه مواقيت الصلاة عند أهل السنة</string>
     <string name="prayer_card_sunni_body">عند الشيعة (الجعفرية) يتأخر المغرب والإفطار.</string>
     <string name="prayer_match_my_mosque">مطابقة مواقيت مسجدي</string>
@@ -111,7 +111,7 @@
     <string name="prayer_clock_region_chihuahua">تشيواوا</string>
     <string name="prayer_clock_region_paraguay">باراغواي</string>
     <string name="prayer_differ_before">يبدأ %2$s حسب %1$s الساعة %3$s</string>
-    <string name="prayer_differ_after">دخل %2$s حسب %1$s · يعرضه تقفو من الساعة %3$s</string>
+    <string name="prayer_differ_after">دخل %2$s حسب %1$s · يعرضه Tazkir من الساعة %3$s</string>
     <string name="prayer_other_asr">عصر %1$s %2$s</string>
 
     <!-- Settings root -->
@@ -125,23 +125,23 @@
     <string name="settings_appearance">المظهر</string>
     <string name="settings_appearance_value">%1$s · %2$s</string>
     <string name="settings_language">اللغة</string>
-    <string name="settings_about">عن تقفو</string>
+    <string name="settings_about">عن Tazkir</string>
     <string name="settings_attribution">الإسناد والتراخيص</string>
-    <string name="settings_rate">قيّم تقفو</string>
-    <string name="settings_share">شارك تقفو</string>
-    <string name="settings_share_message">تقفو: مواقيت الصلاة والقرآن والقبلة. بلا حساب.</string>
+    <string name="settings_rate">قيّم Tazkir</string>
+    <string name="settings_share">شارك Tazkir</string>
+    <string name="settings_share_message">Tazkir: مواقيت الصلاة والقرآن والقبلة. بلا حساب.</string>
     <string name="settings_not_set">غير محدد</string>
     <string name="settings_notifications_off">معطّلة</string>
     <string name="settings_notifications_on_count">%1$s مُفعّلة</string>
     <string name="settings_version_value">1.5.0</string>
 
-    <!-- شاشة «عن تقفو». الاسم «Taqvo» يبقى بالحروف اللاتينية كما على الأيقونة. -->
+    <!-- شاشة «عن Tazkir». الاسم «Tazkir» يبقى بالحروف اللاتينية كما على الأيقونة. -->
     <string name="about_tagline">مجاني، للجميع، دائمًا.</string>
     <string name="about_privacy_label">الخصوصية</string>
     <string name="about_stays_title">يبقى على هاتفك</string>
     <string name="about_stays_body">الموقع والإعدادات والعلامات والعدّاد لا تغادره.</string>
     <string name="about_online_title">متصل فقط عندما تطلب</string>
-    <string name="about_online_body">يُستخدم الإنترنت لشيء واحد: التلاوات التي تختار تنزيلها، من مستودع تقفو العام على GitHub.</string>
+    <string name="about_online_body">يُستخدم الإنترنت لشيء واحد: التلاوات التي تختار تنزيلها، من مستودع Tazkir العام على GitHub.</string>
     <string name="about_nothing_title">بلا حساب، بلا تحليلات</string>
     <string name="about_nothing_body">لا شيء لتسجيل الدخول إليه.</string>
     <string name="about_privacy_policy">سياسة الخصوصية</string>
@@ -154,7 +154,7 @@
     <string name="about_icon_open_website">افتح taqwa.world</string>
     <string name="about_report_problem">الإبلاغ عن مشكلة</string>
 
-    <!-- الإعدادات › الأدوات، وصفحة «عن تقفو» (مواصفة إعادة تصميم الإعدادات، 30 أكتوبر 2026). قيمة صف
+    <!-- الإعدادات › الأدوات، وصفحة «عن Tazkir» (مواصفة إعادة تصميم الإعدادات، 30 أكتوبر 2026). قيمة صف
          الأدوات تعدّ ما على الشاشة الرئيسية منها: %1$s عدد المضاف، و%2$s عددها كله. -->
     <string name="settings_widgets">الأدوات</string>
     <string name="settings_widgets_all">كلها مضافة</string>
@@ -165,9 +165,9 @@
          الأداة كما تذكره بطاقتها (widgets_prayer_name، widgets_ayah_name)، وهو اسمها نفسه في قائمة أدوات Android
          وفي معرض أدوات iPhone (home_widget_name وayah_widget_name في iosApp/TaqvoWidget).
          والكلمات بين ** و** هي ما سيبحث عنه القارئ على هاتفه، فتظهر بخط عريض بلا النجمتين. -->
-    <string name="widgets_intro">الصلاة القادمة وآية اليوم على شاشتك الرئيسية، من دون فتح تقفو.</string>
-    <string name="widgets_intro_ios">الصلاة القادمة وآية اليوم على شاشتك الرئيسية وشاشة القفل، من دون فتح تقفو.</string>
-    <string name="widgets_background_note">لكل أدوات تقفو. يتبع خيار «حسب النظام» إعداد الوضع الفاتح والداكن في هاتفك.</string>
+    <string name="widgets_intro">الصلاة القادمة وآية اليوم على شاشتك الرئيسية، من دون فتح Tazkir.</string>
+    <string name="widgets_intro_ios">الصلاة القادمة وآية اليوم على شاشتك الرئيسية وشاشة القفل، من دون فتح Tazkir.</string>
+    <string name="widgets_background_note">لكل أدوات Tazkir. يتبع خيار «حسب النظام» إعداد الوضع الفاتح والداكن في هاتفك.</string>
     <string name="widgets_prayer_label">مواقيت الصلاة</string>
     <string name="widgets_prayer_name">مواقيت الصلاة</string>
     <string name="widgets_prayer_body">الصلاة القادمة مع عدّ تنازلي مباشر، ومواقيت اليوم. بحجم صغير أو عريض.</string>
@@ -187,15 +187,15 @@
     <string name="widgets_refused_body">إضافتها يدويًا لا تستغرق سوى لحظة:</string>
     <string name="widgets_step_android_1">اضغط مطولًا على مكان فارغ في الشاشة الرئيسية (أو اضمم إصبعيك عليها).</string>
     <string name="widgets_step_android_2">اضغط «**الأدوات**» أو «**التطبيقات المصغّرة**».</string>
-    <string name="widgets_step_android_3">ابحث عن **تقفو**، ثم اسحب أداة %1$s إلى مكانها.</string>
+    <string name="widgets_step_android_3">ابحث عن **Tazkir**، ثم اسحب أداة %1$s إلى مكانها.</string>
     <string name="widgets_how_label">طريقة الإضافة</string>
-    <string name="widgets_step_ios_hold_1">اضغط مطولًا على أيقونة **تقفو** في الشاشة الرئيسية.</string>
+    <string name="widgets_step_ios_hold_1">اضغط مطولًا على أيقونة **Tazkir** في الشاشة الرئيسية.</string>
     <string name="widgets_step_ios_hold_2">اختر %1$s والحجم الذي تريده.</string>
     <string name="widgets_step_ios_hold_3">تظهر على شاشتك الرئيسية. اسحبها إلى حيث تشاء.</string>
-    <string name="widgets_ios_fallback">لا تظهر الأدوات حين تضغط على الأيقونة؟ اضغط مطولًا على جزء فارغ من الشاشة الرئيسية، ثم اضغط «**تعديل**» في الأعلى (وهو فرشاة في iOS 27 وما بعده) ثم «**إضافة أداة**»، وابحث عن تقفو.</string>
+    <string name="widgets_ios_fallback">لا تظهر الأدوات حين تضغط على الأيقونة؟ اضغط مطولًا على جزء فارغ من الشاشة الرئيسية، ثم اضغط «**تعديل**» في الأعلى (وهو فرشاة في iOS 27 وما بعده) ثم «**إضافة أداة**»، وابحث عن Tazkir.</string>
     <string name="widgets_step_ios_plus_1">اضغط مطولًا على جزء فارغ من شاشتك الرئيسية.</string>
     <string name="widgets_step_ios_plus_2">اضغط علامة **+** في الزاوية العلوية.</string>
-    <string name="widgets_step_ios_plus_3">ابحث عن تقفو واختر %1$s.</string>
+    <string name="widgets_step_ios_plus_3">ابحث عن Tazkir واختر %1$s.</string>
     <string name="widgets_show_how">أرني الطريقة</string>
     <string name="widgets_lock_label">شاشة القفل</string>
     <string name="widgets_lock_name">الصلاة التالية في لمحة</string>
@@ -203,15 +203,15 @@
     <string name="widgets_lock_then">ثم %1$s</string>
     <string name="widgets_step_lock_1">اضغط مطولًا على شاشة القفل، ثم اضغط «**تخصيص**».</string>
     <string name="widgets_step_lock_2">اختر «شاشة القفل»، ثم اضغط المساحة التي تحت الساعة.</string>
-    <string name="widgets_step_lock_3">اختر **تقفو**، ثم الأداة الدائرية أو العريضة.</string>
-    <!-- صفحة «عن تقفو»: الشريحة تحت الشعار (%1$s رقم الإصدار، settings_version_value) وعنوانا آخر بطاقتين
+    <string name="widgets_step_lock_3">اختر **Tazkir**، ثم الأداة الدائرية أو العريضة.</string>
+    <!-- صفحة «عن Tazkir»: الشريحة تحت الشعار (%1$s رقم الإصدار، settings_version_value) وعنوانا آخر بطاقتين
          فيها. التقييم والمشاركة هناك يستعملان settings_rate وsettings_share وsettings_share_message. -->
     <string name="about_version_chip">الإصدار %1$s</string>
     <string name="about_open_source_label">مفتوح المصدر</string>
     <string name="about_help_label">المساعدة</string>
 
     <!-- تقرير الأعطال: الورقة التي تظهر عند التشغيل بعد عطل، وسطر البريد حين لا يوجد تقرير. -->
-    <string name="crash_sheet_title">أُغلق تقفو بشكل غير متوقع</string>
+    <string name="crash_sheet_title">أُغلق Tazkir بشكل غير متوقع</string>
     <string name="crash_sheet_body">حُفظ تقرير تقني على هاتفك. إرساله إلى jmlkhon17@gmail.com يساعد على إصلاح المشكلة. يحتوي على إصدار التطبيق وطراز هاتفك والخطأ، لا غير.</string>
     <string name="crash_send">إرسال التقرير</string>
     <string name="crash_not_now">ليس الآن</string>
@@ -285,7 +285,7 @@
     <string name="adhan_voice_madinah">المدينة</string>
     <string name="adhan_voice_makkah_detail">المسجد الحرام، %1$s</string>
     <string name="adhan_voice_madinah_detail">المسجد النبوي، %1$s</string>
-    <string name="adhan_voice_taqvo_label">أذانات تقفو</string>
+    <string name="adhan_voice_taqvo_label">أذانات Tazkir</string>
     <string name="adhan_voice_phone_label">من هاتفك</string>
     <string name="adhan_voice_choose">اختر تسجيلًا</string>
     <string name="adhan_voice_choose_detail">أذان محفوظ على هذا الهاتف، ويبقى عليه.</string>
@@ -323,7 +323,7 @@
     <string name="timetable_auto_authority">الجدول الصادر عن %1$s لهذا المكان</string>
     <string name="timetable_auto_majority">%1$s، وتتبعه أغلب المساجد هنا</string>
     <string name="timetable_auto_cautious">الأوقات الأحوط: كل صلاة بعد أن تبدأها جداول المكان كلها</string>
-    <string name="timetable_auto_calculated">حساب تقفو: لا يُعرف جدول لهذا المكان</string>
+    <string name="timetable_auto_calculated">حساب Tazkir: لا يُعرف جدول لهذا المكان</string>
     <string name="timetable_times_today">اليوم: الفجر %1$s، المغرب %2$s، العشاء %3$s</string>
     <string name="timetable_nearby_label">مستخدمة أيضًا في المنطقة</string>
     <string name="timetable_other_methods">طرق أخرى</string>
@@ -337,7 +337,7 @@
     <string name="timetable_later_fast">يتأخر الإمساك فيه عن %2$s بـ%1$s في بعض الأيام. لا تتبعه إلا إذا كان مسجدك يتبعه.</string>
     <string name="timetable_of_authority">وقت %1$s</string>
     <string name="timetable_of_cautious">الأوقات الأحوط</string>
-    <string name="timetable_of_taqvo">وقت تقفو</string>
+    <string name="timetable_of_taqvo">وقت Tazkir</string>
     <plurals name="timetable_minutes">
         <item quantity="zero">%1$s دقيقة</item>
         <item quantity="one">%1$s دقيقة</item>
@@ -356,21 +356,21 @@
     <string name="match_hour_apart">الوقتان يختلفان بساعة تمامًا: ربما تتبع لوحتك التوقيت الصيفي أو الشتوي. يبدأ الفجر فيه الساعة %1$s والعشاء الساعة %2$s.</string>
     <string name="match_one_fajr">فجره مطابق، لكن عشاءه يبدأ الساعة %1$s.</string>
     <string name="match_one_isha">عشاؤه مطابق، لكن فجره يبدأ الساعة %1$s.</string>
-    <string name="match_none">لا يطابق الوقتين أيُّ جدول يعرفه تقفو.</string>
+    <string name="match_none">لا يطابق الوقتين أيُّ جدول يعرفه Tazkir.</string>
     <string name="match_fajr_isha">الفجر %1$s، العشاء %2$s</string>
     <string name="match_use">استخدام هذا الجدول</string>
-    <string name="match_in_use">يتّبع تقفو هذا الجدول بالفعل.</string>
+    <string name="match_in_use">يتّبع Tazkir هذا الجدول بالفعل.</string>
     <string name="timetable_source_authority">وقت %1$s</string>
     <string name="timetable_source_cautious">الوقت الأحوط</string>
-    <string name="timetable_source_taqvo">وقت تقفو</string>
+    <string name="timetable_source_taqvo">وقت Tazkir</string>
     <string name="timetable_source_latest">آخر الجداول المحلية وقتًا</string>
     <string name="adjust_paused_for">%1$s · موقوف (ضُبط على جدول %2$s)</string>
     <string name="adjust_timetable_paused_note">تنتظر التعديلات التي تقدّم الوقت حتى يُؤكَّد جدول %1$s في «جدول المواقيت».</string>
     <string name="adjust_confirm_title">إظهار %1$s قبل %2$s؟</string>
     <string name="adjust_confirm_body">الصلاة قبل وقتها تجب إعادتها. لا تفعل هذا إلا إذا كان جدول مسجدك أبكر.</string>
     <string name="adjust_confirm_body_maghrib">الصلاة قبل وقتها تجب إعادتها، ومن أفطر قبل الوقت وجب عليه القضاء. لا تفعل هذا إلا إذا كان جدول مسجدك أبكر.</string>
-    <string name="adjust_strong_body">%1$s في تقفو لا يتأخر عن %3$s بأكثر من %2$s، فتعديل %4$s يجعله قبل ذلك الوقت. الصلاة قبل وقتها تجب إعادتها. لا تفعل هذا إلا إذا كان جدول مسجدك أبكر بهذا القدر.</string>
-    <string name="adjust_strong_body_maghrib">%1$s في تقفو لا يتأخر عن %3$s بأكثر من %2$s، فتعديل %4$s يجعله قبل ذلك الوقت. الصلاة قبل وقتها تجب إعادتها، ومن أفطر قبل الوقت وجب عليه القضاء. لا تفعل هذا إلا إذا كان جدول مسجدك أبكر بهذا القدر.</string>
+    <string name="adjust_strong_body">%1$s في Tazkir لا يتأخر عن %3$s بأكثر من %2$s، فتعديل %4$s يجعله قبل ذلك الوقت. الصلاة قبل وقتها تجب إعادتها. لا تفعل هذا إلا إذا كان جدول مسجدك أبكر بهذا القدر.</string>
+    <string name="adjust_strong_body_maghrib">%1$s في Tazkir لا يتأخر عن %3$s بأكثر من %2$s، فتعديل %4$s يجعله قبل ذلك الوقت. الصلاة قبل وقتها تجب إعادتها، ومن أفطر قبل الوقت وجب عليه القضاء. لا تفعل هذا إلا إذا كان جدول مسجدك أبكر بهذا القدر.</string>
     <string name="adjust_keep">إبقاء %1$s</string>
     <string name="adjust_use">استخدام %1$s</string>
     <string name="adjust_note">يُقدّم الوقت أو يؤخّره حتى ساعة عن وقت الجدول. استخدمه فقط إذا اختلفت لوحة مسجدك.</string>
@@ -411,11 +411,11 @@
     <string name="about_times_title">عن هذه المواقيت</string>
     <string name="about_prayer_times_settings">إعدادات مواقيت الصلاة</string>
     <string name="timetable_cautious">الأوقات الأحوط</string>
-    <string name="timetable_calculated">حساب تقفو</string>
+    <string name="timetable_calculated">حساب Tazkir</string>
     <string name="about_who_publishes">من يصدرها</string>
     <string name="about_who_publishes_body">مواقيت الصلاة المعتمدة في %2$s تصدر عن %1$s.</string>
-    <string name="about_not_affiliated">لا علاقة رسمية بين تقفو و%1$s.</string>
-    <string name="about_how_reproduces">كيف يعيد تقفو حسابها</string>
+    <string name="about_not_affiliated">لا علاقة رسمية بين Tazkir و%1$s.</string>
+    <string name="about_how_reproduces">كيف يعيد Tazkir حسابها</string>
     <string name="about_method_intro">طريقة حساب %1$s: %2$s.</string>
     <string name="about_method_fajr_angle">الفجر عند %1$s° تحت الأفق</string>
     <string name="about_method_isha_angle">العشاء عند %1$s° تحت الأفق</string>
@@ -434,19 +434,19 @@
     <string name="about_checked_through">قورنت بجدول %1$s المنشور حتى %2$s.</string>
     <string name="about_not_measured_unit">لم يُقَس الفرق بعد في %1$s.</string>
     <string name="about_checked_so_far_with_data">عدد الأيام المفحوصة حتى الآن: %1$s. لم تسبق وقت %2$s قط، وأقصى تأخر عنه بالدقائق: %3$s.</string>
-    <string name="about_checked_so_far_without_data">لم يقارن تقفو هذه المواقيت بعد بجدول %1$s نفسه.</string>
-    <string name="about_not_followed_irn_tromso">لا يتّبع تقفو فجرَ %1$s بتوقيت مكة من أواخر أبريل إلى منتصف مايو ومن أواخر يوليو إلى منتصف أغسطس، إذ يقع بعد الشروق، ولا شروقَه في أيام شمس منتصف الليل؛ ولا يحين المغرب أبدًا قبل الغروب الحقيقي.</string>
+    <string name="about_checked_so_far_without_data">لم يقارن Tazkir هذه المواقيت بعد بجدول %1$s نفسه.</string>
+    <string name="about_not_followed_irn_tromso">لا يتّبع Tazkir فجرَ %1$s بتوقيت مكة من أواخر أبريل إلى منتصف مايو ومن أواخر يوليو إلى منتصف أغسطس، إذ يقع بعد الشروق، ولا شروقَه في أيام شمس منتصف الليل؛ ولا يحين المغرب أبدًا قبل الغروب الحقيقي.</string>
     <string name="about_authority_method_title">طريقة %1$s</string>
-    <string name="about_authority_unchecked_body">مواقيت الصلاة في %2$s تصدر عن %1$s. ويحسبها تقفو بطريقة %1$s نفسها، مع هامش احتياط.</string>
-    <string name="about_majority_unchecked_body">تتبع أغلب المساجد في %2$s طريقة %1$s، ويحسب تقفو المواقيت بها مع هامش احتياط.</string>
+    <string name="about_authority_unchecked_body">مواقيت الصلاة في %2$s تصدر عن %1$s. ويحسبها Tazkir بطريقة %1$s نفسها، مع هامش احتياط.</string>
+    <string name="about_majority_unchecked_body">تتبع أغلب المساجد في %2$s طريقة %1$s، ويحسب Tazkir المواقيت بها مع هامش احتياط.</string>
     <string name="about_nearby_heading">جداول تتبعها بعض المساجد المحلية بدلًا منه</string>
-    <string name="about_cautious_body">تتبع المساجد في %1$s جداول مختلفة بحسن نية، ولا يتبع أغلبُها جدولًا واحدًا. يجمع تقفو بين %2$s: فيعرض كل صلاة بعد دخول وقتها فيها جميعًا.</string>
-    <string name="about_cautious_maghrib_guard">المغرب استثناء اليوم: يتبع فيه تقفو مغربَ %1$s المحسوبَ من غروب الشمس، لا مغربَ %2$s الأكثرَ تأخرًا، الذي تحدّده قاعدةٌ لخطوط العرض العليا.</string>
-    <string name="about_cautious_maghrib_no_sunset">المغرب استثناء اليوم لأنه لا غروب هنا: يتبع فيه تقفو مغربَ %1$s، الجدول الأكثر اتباعًا، لا مغربَ %2$s الأكثرَ تأخرًا.</string>
+    <string name="about_cautious_body">تتبع المساجد في %1$s جداول مختلفة بحسن نية، ولا يتبع أغلبُها جدولًا واحدًا. يجمع Tazkir بين %2$s: فيعرض كل صلاة بعد دخول وقتها فيها جميعًا.</string>
+    <string name="about_cautious_maghrib_guard">المغرب استثناء اليوم: يتبع فيه Tazkir مغربَ %1$s المحسوبَ من غروب الشمس، لا مغربَ %2$s الأكثرَ تأخرًا، الذي تحدّده قاعدةٌ لخطوط العرض العليا.</string>
+    <string name="about_cautious_maghrib_no_sunset">المغرب استثناء اليوم لأنه لا غروب هنا: يتبع فيه Tazkir مغربَ %1$s، الجدول الأكثر اتباعًا، لا مغربَ %2$s الأكثرَ تأخرًا.</string>
     <string name="about_which_decides">أي جدول يحدّد كل وقت اليوم</string>
     <string name="about_stat_never_before_decider">بداية قبل وقت الجدول الذي يحدّده</string>
     <string name="about_cautious_checked">قورنت بالجداول المتّبعة هنا.</string>
-    <string name="about_calculated_body">لم يجد تقفو جدولًا سنيًا رسميًا في %1$s، لذا يحسب مواقيته احتياطًا: %2$s.</string>
+    <string name="about_calculated_body">لم يجد Tazkir جدولًا سنيًا رسميًا في %1$s، لذا يحسب مواقيته احتياطًا: %2$s.</string>
     <string name="about_asr_heading">العصر</string>
     <string name="about_asr_known">%1$s: %3$s، لأن أغلب المساجد في %2$s تعمل به.</string>
     <string name="about_asr_unknown">%1$s: %3$s، وهو الأخير من الوقتين، لأن مذهب الأغلبية في %2$s غير معروف. يمكنك تغييره من الإعدادات.</string>
@@ -458,9 +458,9 @@
     <string name="about_stop_eating">أمسِك عن الطعام اليوم في موعد أقصاه %1$s.</string>
 
     <!-- Attribution -->
-    <string name="attribution_intro">بُني تقفو على عمل تبرّع به آخرون. تراخيصهم توجب ذكرهم، وهو حقّهم على أي حال.</string>
+    <string name="attribution_intro">بُني Tazkir على عمل تبرّع به آخرون. تراخيصهم توجب ذكرهم، وهو حقّهم على أي حال.</string>
     <string name="credit_calculation">حساب مواقيت الصلاة</string>
-    <string name="credit_calculation_detail">محرّك تقفو الخاص. ويُحسب اتجاه القبلة بمكتبة Adhan من Batoul Apps، رخصة MIT.</string>
+    <string name="credit_calculation_detail">محرّك Tazkir الخاص. ويُحسب اتجاه القبلة بمكتبة Adhan من Batoul Apps، رخصة MIT.</string>
     <string name="credit_cities">قاعدة بيانات المدن</string>
     <string name="credit_cities_detail">GeoNames cities15000، رخصة CC BY 4.0.</string>
     <string name="credit_typeface">خط Manrope</string>
@@ -582,9 +582,9 @@
     <string name="qibla_cardinal_east">ق</string>
     <string name="qibla_cardinal_south">ج</string>
     <string name="qibla_cardinal_west">غ</string>
-    <string name="notifications_exact_alarms_off">المنبهات الدقيقة معطّلة لتطبيق تقفو، لذا قد يتأخر الإشعار حتى ساعة. اسمح بـ«المنبهات والتذكيرات» ليتمكّن من الرنين في وقته بالضبط.</string>
+    <string name="notifications_exact_alarms_off">المنبهات الدقيقة معطّلة لتطبيق Tazkir، لذا قد يتأخر الإشعار حتى ساعة. اسمح بـ«المنبهات والتذكيرات» ليتمكّن من الرنين في وقته بالضبط.</string>
     <string name="notifications_allow_exact_alarms">السماح بالمنبهات الدقيقة</string>
-    <string name="notifications_blocked">الإشعارات معطّلة لتطبيق تقفو في إعدادات النظام، لذا لن يظهر أي تنبيه للصلاة حتى يُسمح بها من جديد.</string>
+    <string name="notifications_blocked">الإشعارات معطّلة لتطبيق Tazkir في إعدادات النظام، لذا لن يظهر أي تنبيه للصلاة حتى يُسمح بها من جديد.</string>
     <string name="notifications_open_settings">فتح إعدادات الإشعارات</string>
     <string name="hijri_tabular">حسابي</string>
     <!-- Bottom tab bar (iteration 1; iteration 8: two tabs; slice 2: the Quran tab arrives) -->
@@ -839,7 +839,7 @@
     <string name="wallpapers_done_set">تم تعيين الخلفية.</string>
     <string name="wallpapers_done_saved">حُفظت في الصور.</string>
     <string name="wallpapers_refused_android">لا يسمح هذا الهاتف للتطبيقات بتغيير الخلفية.</string>
-    <string name="wallpapers_refused_ios">لا يُسمح لتقفو بإضافة الصور. اسمح له من الإعدادات › تقفو › الصور.</string>
+    <string name="wallpapers_refused_ios">لا يُسمح لTazkir بإضافة الصور. اسمح له من الإعدادات › Tazkir › الصور.</string>
     <string name="wallpapers_failed">تعذّر حفظ الخلفية. حاول مرة أخرى.</string>
     <string name="wallpapers_dua_reference">حصن المسلم %1$s</string>
     <string name="wallpapers_a11y_preview">معاينة الخلفية: %1$s</string>
@@ -926,14 +926,14 @@
     <string name="onb_guide_lock_2">المس مكانًا فارغًا من الشاشة مطوّلًا حتى تظهر الأزرار في الأسفل.</string>
     <string name="onb_guide_lock_3">اضغط على **تخصيص**، ثم اختر شاشة القفل.</string>
     <string name="onb_guide_lock_4">اضغط على المربع أسفل الساعة.</string>
-    <string name="onb_guide_lock_5">ابحث عن **تقفو** في القائمة واضغط عليه.</string>
+    <string name="onb_guide_lock_5">ابحث عن **Tazkir** في القائمة واضغط عليه.</string>
     <string name="onb_guide_lock_6">اختر الأداة التي تريدها — تمّ!</string>
     <string name="onb_guide_done">فهمت!</string>
     <string name="settings_daily_ayahs">آيات يومية</string>
     <string name="settings_daily_ayahs_value">%1$s في اليوم</string>
     <string name="daily_ayahs_toggle">تذكير بآية يوميًا</string>
     <string name="daily_ayahs_note">تصل الآيات موزّعة بالتساوي بين البداية والنهاية، من الموضوعات التي اخترتها. وتبقى إشعارات الصلاة دائمًا أولًا.</string>
-    <string name="daily_ayahs_denied">الإشعارات متوقفة لتطبيق تقفو، فلا يمكن أن تصل الآيات اليومية. فعّلها من إعدادات الهاتف.</string>
+    <string name="daily_ayahs_denied">الإشعارات متوقفة لتطبيق Tazkir، فلا يمكن أن تصل الآيات اليومية. فعّلها من إعدادات الهاتف.</string>
     <string name="daily_ayahs_open_system">فتح إعدادات الإشعارات</string>
     <string name="daily_ayahs_format_label">طريقة عرض الآية</string>
     <string name="tab_feed">الموجز</string>

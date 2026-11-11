@@ -1,9 +1,9 @@
 /* Same sentence as the onboarding body in values-bn/strings.xml: the calculation happens on the
    phone, and the location never leaves it. */
-"NSLocationWhenInUseUsageDescription" = "তাকভো আপনার ডিভাইসেই নামাজের সময় হিসাব করতে আপনার অবস্থান ব্যবহার করে। আপনার অবস্থান কখনো কোথাও পাঠানো হয় না।";
+"NSLocationWhenInUseUsageDescription" = "Tazkir আপনার ডিভাইসেই নামাজের সময় হিসাব করতে আপনার অবস্থান ব্যবহার করে। আপনার অবস্থান কখনো কোথাও পাঠানো হয় না।";
 
 /* The name under the home screen icon, in the reader's own script. */
-"CFBundleDisplayName" = "তাকভো";
+"CFBundleDisplayName" = "Tazkir";
 
 /* Settings › Wallpapers, on saving the first wallpaper: add-only access to Photos. */
-"NSPhotoLibraryAddUsageDescription" = "তাকভো আপনার তৈরি ওয়ালপেপারটি আপনার ছবিতে সংরক্ষণ করে। এটি কেবল ছবিটি যোগ করে, আপনার লাইব্রেরি কখনো দেখে না।";
+"NSPhotoLibraryAddUsageDescription" = "Tazkir আপনার তৈরি ওয়ালপেপারটি আপনার ছবিতে সংরক্ষণ করে। এটি কেবল ছবিটি যোগ করে, আপনার লাইব্রেরি কখনো দেখে না।";

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Taqvo</string>
+    <string name="app_name">Tazkir</string>
     <string name="widget_small_label">Keyingi namoz</string>
     <string name="widget_medium_label">Namoz vaqtlari</string>
     <string name="widget_ayah_label">Kun oyati</string>

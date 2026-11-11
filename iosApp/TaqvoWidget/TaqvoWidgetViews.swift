@@ -34,14 +34,14 @@ let taqvoBackgroundKey = "widget_background"
 private enum TaqvoWidgetStrings {
 
     static var placeholderTitle: String {
-        localized("prayer_widget_placeholder_title", en: "Taqvo", ar: "تقفو")
+        localized("prayer_widget_placeholder_title", en: "Tazkir", ar: "Tazkir")
     }
 
     static var placeholderBody: String {
         localized(
             "prayer_widget_placeholder_body",
-            en: "Open Taqvo to load your prayer times.",
-            ar: "افتح تقفو لتحميل مواقيت الصلاة."
+            en: "Open Tazkir to load your prayer times.",
+            ar: "افتح Tazkir لتحميل مواقيت الصلاة."
         )
     }
 
@@ -143,7 +143,7 @@ struct TaqvoTimelineProvider: TimelineProvider {
     func getSnapshot(in context: Context, completion: @escaping (TaqvoEntry) -> Void) {
         let entry = Self.entries(from: Date()).first!
         // The widget gallery asks for a snapshot before the app has necessarily written a mirror.
-        // A gallery card reading "open Taqvo to load your prayer times" sells nothing, so the
+        // A gallery card reading "open Tazkir to load your prayer times" sells nothing, so the
         // preview shows a representative day instead; a real home-screen render never takes
         // this branch because it is not a preview.
         if context.isPreview && entry.content == nil {

@@ -7,9 +7,9 @@ import com.taqvo.app.prayer.engine.method.GeoPoint
 import com.taqvo.app.prayer.engine.method.TimetableMethod
 
 /**
- * How sure Taqvo is of an entry's times (spec §5 and §6.1). A and B reproduce an authority's
+ * How sure Tazkir is of an entry's times (spec §5 and §6.1). A and B reproduce an authority's
  * published method, C combines the timetables local mosques follow, D_AUTHORITY is an authority's
- * method with safety minutes before a full proof, D_NONE is calculated by Taqvo where nothing is
+ * method with safety minutes before a full proof, D_NONE is calculated by Tazkir where nothing is
  * known. The gate (Task 6 and 7) moves entries between classes.
  */
 enum class EntryClass { A, B, C, D_AUTHORITY, D_NONE }
@@ -69,7 +69,7 @@ data class Member(
 )
 
 /**
- * One timetable Taqvo can follow.
+ * One timetable Tazkir can follow.
  *
  * - [id]: a stable lowercase dotted key, country first ("sa.ummalqura", "gb.london.lupt"); Other
  *   methods are "other.*".

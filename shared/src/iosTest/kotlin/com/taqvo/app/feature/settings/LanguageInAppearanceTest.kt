@@ -23,7 +23,7 @@ import com.taqvo.app.resources.theme_system
 import kotlin.test.Test
 
 /**
- * The language is set once, if ever (Taqvo follows the phone's), so it lives inside Appearance
+ * The language is set once, if ever (Tazkir follows the phone's), so it lives inside Appearance
  * with the theme, and the root's Appearance row names both: a reader who picked a language they
  * cannot read still finds their own language's name on the first screen.
  */

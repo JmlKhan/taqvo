@@ -82,7 +82,7 @@ PRAYER_TIMES_LIVE = True
 STORES_MARKER = "<!-- stores -->"
 EXODUS_MARKER = "<!-- exodus -->"
 
-# A home page's link to the "How Taqvo checks" page (the credits row). That page is built only while
+# A home page's link to the "How Tazkir checks" page (the credits row). That page is built only while
 # a city has a page (timetables.Timetables.build), so with every city held the link keeps its words
 # and loses its address rather than point at nothing.
 CHECKS_LINK = re.compile(r'<a href="\{prayer_times\}' + re.escape(timetables.CHECKS_PAGE_SLUG) + r'/">(.*?)</a>')
@@ -219,20 +219,20 @@ def json_ld(data: dict) -> str:
 
 def structured_data(langs: dict, lang: str, page: str, raw_body: str) -> str:
     """JSON-LD for a language's home page: the app, and on the root page the site as well, so a
-    search result can name the site "Taqvo" and tell it apart from the other apps of that name."""
+    search result can name the site "Tazkir" and tell it apart from the other apps of that name."""
     if page != "home":
         return ""
     cfg = langs[lang]
     app = {
         "@type": "MobileApplication",
         "@id": f"{ORIGIN}/#app",
-        "name": "Taqvo",
+        "name": "Tazkir",
         "description": cfg["pages"]["home"]["description"],
         "url": f"{ORIGIN}/{cfg['prefix']}",
         "inLanguage": list(langs),
         **APP,
     }
-    if cfg["brand"] != "Taqvo":
+    if cfg["brand"] != "Tazkir":
         app["alternateName"] = cfg["brand"]
     # Each store the app is live in (site/stores.json): where to get it, and the same app's listing.
     live = [address for address in (STORES["app_store"], STORES["google_play"]) if address]
@@ -247,8 +247,8 @@ def structured_data(langs: dict, lang: str, page: str, raw_body: str) -> str:
         graph.insert(0, {
             "@type": "WebSite",
             "@id": f"{ORIGIN}/#website",
-            "name": "Taqvo",
-            "alternateName": ["taqwa.world", "Taqvo app"],
+            "name": "Tazkir",
+            "alternateName": ["taqwa.world", "Tazkir app"],
             "url": f"{ORIGIN}/",
             "inLanguage": list(langs),
         })
@@ -401,8 +401,8 @@ def build_404(langs: dict, template: str) -> None:
     values = {
         "lang": "en",
         "dir": "ltr",
-        "title": "Page not found · Taqvo",
-        "og_title": "Taqvo",
+        "title": "Page not found · Tazkir",
+        "og_title": "Tazkir",
         "description": "There is no page at this address on taqwa.world.",
         "og_locale": cfg["og_locale"],
         "og_image": f"{ORIGIN}/assets/og/en.jpg",
@@ -431,7 +431,7 @@ def build_404(langs: dict, template: str) -> None:
 GET_DIR = "get/"
 GET_BODY = """<main class="wrap get">
   <div class="icon-tile" aria-hidden="true">{mark}</div>
-  <h1>Taqvo</h1>
+  <h1>Tazkir</h1>
   <p class="lede">Prayer times, Qibla and the Quran. <span>Free forever, with no ads and no account.</span></p>
   {stores}
   <a class="more" href="{home}">More on taqwa.world</a>
@@ -455,7 +455,7 @@ def build_get_pages(langs: dict) -> None:
     Each page is small: its head, that script and the badges, on the site's own stylesheet; no
     header, footer or language row, no analytics, no cookie, nothing stored. It asks not to be indexed and stays out
     of the sitemap and the hreflang sets: it is a way in, not a page to find. Its share card is the
-    home page's, so a link pasted into a chat previews as Taqvo."""
+    home page's, so a link pasted into a chat previews as Tazkir."""
     cfg = langs["en"]
     home = cfg["pages"]["home"]
     with open(os.path.join(SITE, "templates", "get.html"), encoding="utf-8") as f:
@@ -464,7 +464,7 @@ def build_get_pages(langs: dict) -> None:
         out_dir = get_dir(channel)
         links = page_links(cfg, out_dir)
         values = {
-            "title": "Get Taqvo",
+            "title": "Get Tazkir",
             "description": html.escape(home["description"]),
             "og_title": html.escape(home["og_title"]),
             "url": f"{ORIGIN}/{out_dir}",

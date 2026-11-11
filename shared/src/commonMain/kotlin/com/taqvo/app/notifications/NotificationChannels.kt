@@ -13,7 +13,7 @@ import com.taqvo.app.domain.PrayerSound
  */
 object NotificationChannels {
     /**
-     * The Notification level's sound has changed twice: the phone's default tone, then Taqvo's
+     * The Notification level's sound has changed twice: the phone's default tone, then Tazkir's
      * own 2.4 s chime, and now a longer and brighter six-second one that carries in an office.
      * Each change needs an id Android has never seen, so the suffix names the generation of the
      * chime rather than just saying "chime"; the ids left behind are in [staleNotificationIds].

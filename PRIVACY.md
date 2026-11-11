@@ -1,8 +1,8 @@
-# Taqvo privacy policy
+# Tazkir privacy policy
 
-_Last updated 29 September 2026. Applies to Taqvo 1.0.0 and later on Android and iOS._
+_Last updated 29 September 2026. Applies to Tazkir 1.0.0 and later on Android and iOS._
 
-Taqvo is a free Islamic app with no account, no ads and no analytics. It works offline.
+Tazkir is a free Islamic app with no account, no ads and no analytics. It works offline.
 The one thing it uses the internet for is downloading Quran recitations, and only when you
 ask it to.
 
@@ -16,10 +16,10 @@ Everything the app knows is stored on your device and nowhere else:
 - your Tasbeeh counts;
 - any recitations you have downloaded.
 
-None of this is sent to us or to anyone. There is no server behind Taqvo and no account to
+None of this is sent to us or to anyone. There is no server behind Tazkir and no account to
 create. Deleting the app deletes all of it.
 
-If Taqvo crashes, it saves a technical report on your phone (the app version, your phone model
+If Tazkir crashes, it saves a technical report on your phone (the app version, your phone model
 and the error, nothing else). It never leaves the phone unless you choose to email it to us.
 
 ## Location
@@ -30,7 +30,7 @@ permission. Your location is used on the device and never transmitted.
 
 ## Recitation downloads
 
-Recitations are fetched one surah at a time from Taqvo's public data repository on GitHub
+Recitations are fetched one surah at a time from Tazkir's public data repository on GitHub
 (github.com/MohamedAbulgasem/Taqwa-data), and only when you tap Download, tap Play on a
 surah you have not downloaded, or choose "Download the whole Quran". By default this
 happens over Wi-Fi only; you can allow mobile data in Settings › Quran › Recitation.
@@ -54,19 +54,19 @@ Downloads.
 If you choose to have the translation or tafsir read aloud after each ayah, your phone's own
 text-to-speech voice reads it: one of Apple's voices on iPhone; on Android, a voice from the
 phone's speech engine, a separate app (usually Google's or Samsung's) with its own settings and
-privacy terms. Taqvo picks only voices that work offline and sends the text nowhere itself. If
+privacy terms. Tazkir picks only voices that work offline and sends the text nowhere itself. If
 an Android phone lacks the voice, "Get the voice" opens the speech engine's own download for it;
 on iPhone, voices are added in the Settings app.
 
 ## Backups
 
-Taqvo opts out of Android's app backup, so your location and settings are not copied to
+Tazkir opts out of Android's app backup, so your location and settings are not copied to
 Google. On iOS, your settings, bookmarks, counts and downloaded recitations are excluded
-from iCloud backup; the only things of Taqvo's that are backed up are the widgets' small caches,
+from iCloud backup; the only things of Tazkir's that are backed up are the widgets' small caches,
 the upcoming prayer times and the hundred ayahs the daily-ayah widget rotates through, neither of
 which contains your location, and that backup is encrypted by Apple and never visible to us.
 
-## What Taqvo never does
+## What Tazkir never does
 
 - No account, sign-in or profile.
 - No ads and no advertising identifier.
@@ -75,12 +75,12 @@ which contains your location, and that backup is encrypted by Apple and never vi
 - No sale or sharing of data, because there is none to sell or share.
 
 Your phone may send crash reports to Google or Apple under its own settings; those come from
-the phone, not from Taqvo, and contain nothing of yours beyond the technical details of the
+the phone, not from Tazkir, and contain nothing of yours beyond the technical details of the
 crash.
 
 ## Children
 
-Taqvo collects no data from anyone, of any age.
+Tazkir collects no data from anyone, of any age.
 
 ## Changes
 

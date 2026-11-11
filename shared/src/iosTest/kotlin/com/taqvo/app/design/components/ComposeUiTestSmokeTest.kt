@@ -17,8 +17,8 @@ class ComposeUiTestSmokeTest {
 
     @Test
     fun aComposedTextIsFoundByItsText() = runComposeUiTest {
-        setContent { Text("Taqvo") }
-        onNodeWithText("Taqvo").assertIsDisplayed()
+        setContent { Text("Tazkir") }
+        onNodeWithText("Tazkir").assertIsDisplayed()
     }
 
     @Test

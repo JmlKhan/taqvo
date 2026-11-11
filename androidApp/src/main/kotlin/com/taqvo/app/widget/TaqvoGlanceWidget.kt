@@ -339,14 +339,14 @@ private fun TinyCard(render: WidgetRender, size: DpSize) {
 // -- Shared pieces ------------------------------------------------------------------------------
 
 /** The already-localised "next prayer in" phrase, or the plain name when no honest countdown
- * exists so that "in" never dangles; "Taqvo" before the app has ever written a snapshot. The rule
+ * exists so that "in" never dangles; "Tazkir" before the app has ever written a snapshot. The rule
  * is [WidgetCountdown.headline], shared with the iOS widget. */
 private fun labelText(render: WidgetRender): String =
-    render.content?.let { WidgetCountdown.headline(it, render.remainingMinutes) } ?: "Taqvo"
+    render.content?.let { WidgetCountdown.headline(it, render.remainingMinutes) } ?: "Tazkir"
 
 /** "Maghrib · المغرب" -> "Maghrib": the bilingual name is two words too many for one cell. */
 private fun shortName(render: WidgetRender): String =
-    render.content?.nextPrayerDisplayName?.substringBefore(" · ")?.trim() ?: "Taqvo"
+    render.content?.nextPrayerDisplayName?.substringBefore(" · ")?.trim() ?: "Tazkir"
 
 /** Built here by interpolation, so it needs its own pass through [WidgetDigits.localize] to match
  * the pre-formatted clock times beside it (I9) — against the mirror's recorded digit choice, so
@@ -396,7 +396,7 @@ private fun NextPrayerBlock(
 }
 
 /**
- * "Open Taqvo", spelled out.
+ * "Open Tazkir", spelled out.
  *
  * `actionStartActivity<MainActivity>()` was the shorter form, and it builds an explicit intent
  * with `FLAG_ACTIVITY_NEW_TASK` and no action at all. From Android 16 an intent with no action
@@ -411,7 +411,7 @@ private fun launchIntent(context: Context) = Intent(context, MainActivity::class
     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
 /**
- * Rounded card, no border, shared by every Taqvo widget. The in-app cards carry a hairline, but on a home screen the launcher
+ * Rounded card, no border, shared by every Tazkir widget. The in-app cards carry a hairline, but on a home screen the launcher
  * clips the widget to its own corner radius and the stretched 1dp stroke image showed up as a
  * bright rim around the dark card; iOS never had one, and the card reads as a card without it.
  */

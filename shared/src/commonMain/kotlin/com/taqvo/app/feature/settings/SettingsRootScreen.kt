@@ -321,7 +321,7 @@ fun SettingsRootScreen(
         GroupGap()
         SectionLabel(stringResource(Res.string.settings_group_app))
         SettingsCard {
-            // The language lives inside Appearance (it is set once, if ever: Taqvo follows the
+            // The language lives inside Appearance (it is set once, if ever: Tazkir follows the
             // phone's), and this row names it beside the theme, so a reader who picked a language
             // they cannot read still finds their own language's name on the first screen.
             TaqvoRow(
@@ -346,7 +346,7 @@ fun SettingsRootScreen(
 
         GroupGap()
         SectionLabel(stringResource(Res.string.settings_group_about))
-        // One row: Rate, Share and Attribution & licences live on About Taqvo, the app's profile
+        // One row: Rate, Share and Attribution & licences live on About Tazkir, the app's profile
         // page, so the root stays a list of settings with one way in to everything about the app.
         SettingsCard {
             TaqvoRow(

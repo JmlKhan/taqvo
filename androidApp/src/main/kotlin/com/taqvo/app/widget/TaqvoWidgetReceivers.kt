@@ -15,7 +15,7 @@ import kotlinx.coroutines.withTimeout
 
 /**
  * Both providers share one rolling refresh alarm, so each has to hand the scheduler the same
- * answer to "is any Taqvo widget still on a home screen?" — `onDisabled` fires per provider, and
+ * answer to "is any Tazkir widget still on a home screen?" — `onDisabled` fires per provider, and
  * removing the small widget must not stop the medium one from ticking.
  *
  * `internal` rather than private because `TaqvoApplication` feeds the same answer to

@@ -242,7 +242,7 @@ object Generic {
     )
 
     /**
-     * Iran: Sunni times calculated by Taqvo (no Sunni authority found; spec §6.2 c) and the
+     * Iran: Sunni times calculated by Tazkir (no Sunni authority found; spec §6.2 c) and the
      * Sunni-times card everywhere. The school per spec §3.7: Hanafi in Sistan-Baluchestan, Golestan
      * and Khorasan, Shafi'i (Standard) in Kurdistan and Hormozgan, otherwise not known, so the later.
      */

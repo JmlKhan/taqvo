@@ -95,7 +95,7 @@ data class OtherAsr(val school: AsrSchool, val instant: Instant)
 /**
  * Where timetables differ (spec §2.1): the earliest listed timetable's start of the next prayer,
  * shown under the [under] row. Before it: "{member}'s {prayer} begins at {memberStart}"; once it
- * has [begun]: "{member}'s {prayer} has begun · Taqvo shows it from {shownStart}".
+ * has [begun]: "{member}'s {prayer} has begun · Tazkir shows it from {shownStart}".
  */
 data class DifferLine(
     val under: Prayer,

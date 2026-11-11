@@ -27,7 +27,7 @@ actual fun createWallpaperSetter(): WallpaperSetter = IosWallpaperSetter
 
 /**
  * iOS gives no app the wallpaper, so the picture goes to the photo library and the reader sets it
- * from Photos (the screen says how). Add-only access: Taqvo can put a picture in and never sees
+ * from Photos (the screen says how). Add-only access: Tazkir can put a picture in and never sees
  * the library, which is the whole of what the Info.plist line asks for.
  */
 @OptIn(ExperimentalForeignApi::class)

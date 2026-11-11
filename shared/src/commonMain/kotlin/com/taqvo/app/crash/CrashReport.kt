@@ -12,7 +12,7 @@ data class CrashReport(val savedAt: Instant, val text: String)
  * filling the disk; what is cut is the bottom of the trace, which is the least useful part.
  */
 object CrashReportFormat {
-    const val TITLE = "Taqvo crash report"
+    const val TITLE = "Tazkir crash report"
     const val SAVED_PREFIX = "saved: "
     const val MAX_CHARS = 16_000
     const val TRIMMED = "… (trimmed)"

@@ -6,17 +6,17 @@ bunları denetler. Her bloğu konsola olduğu gibi kopyalayın.
 ## Google Play
 
 ### Title (30)
-Taqvo: Namaz, Kur’an ve Kıble
+Tazkir: Namaz, Kur’an ve Kıble
 
 ### Short description (80)
 Namaz vakitleri, ezan, tilavetli Kur’an, zikirler, Kıble. Çevrimdışı çalışır.
 
 ### Full description (4000)
-Taqvo, günün temel ihtiyaçlarını tek bir sakin yerde toplar: bulunduğunuz yerin namaz vakitleri, her vakitte bir tekbir ya da ezan, okumak ve dinlemek için Kur’an’ın tamamı, sabah ve akşam zikirleri ve Kıble. Çevrimdışı çalışır, hiçbir ücret istemez, reklam göstermez ve hesap açtırmaz.
+Tazkir, günün temel ihtiyaçlarını tek bir sakin yerde toplar: bulunduğunuz yerin namaz vakitleri, her vakitte bir tekbir ya da ezan, okumak ve dinlemek için Kur’an’ın tamamı, sabah ve akşam zikirleri ve Kıble. Çevrimdışı çalışır, hiçbir ücret istemez, reklam göstermez ve hesap açtırmaz.
 
 NAMAZ VAKİTLERİ
 • Telefonunuzun konumundan ya da 34.000’den fazla şehir arasından seçeceğiniz bir şehirden, bulunduğunuz yere göre vakitler.
-• Yakınınızdaki camilerin uyduğu takvime göre vakitler. Taqvo bu takvime sahipse onu yeniden hesaplar ve yayımlanan tablolarla gün gün karşılaştırır: karşılaştırılan her günde hiçbir namaz yayımlanan vakitten önce başlamaz. Takvim henüz tam doğrulanmadıysa Taqvo bir güvenlik payı ekler; camiler farklı takvimlere uyuyorsa ihtiyatlı vakitler gösterir, yani her namaz hepsinde vakit girdikten sonra görünür; hiçbir takvim bilinmiyorsa vakitleri ihtiyatlı biçimde hesaplar.
+• Yakınınızdaki camilerin uyduğu takvime göre vakitler. Tazkir bu takvime sahipse onu yeniden hesaplar ve yayımlanan tablolarla gün gün karşılaştırır: karşılaştırılan her günde hiçbir namaz yayımlanan vakitten önce başlamaz. Takvim henüz tam doğrulanmadıysa Tazkir bir güvenlik payı ekler; camiler farklı takvimlere uyuyorsa ihtiyatlı vakitler gösterir, yani her namaz hepsinde vakit girdikten sonra görünür; hiçbir takvim bilinmiyorsa vakitleri ihtiyatlı biçimde hesaplar.
 • Vakitlerin kime ait olduğunu görmek için Namaz ekranındaki (i) simgesine dokunun; nasıl hesaplanıp doğrulandıkları “Bu vakitler hakkında” ekranında anlatılır. “Camimle eşleştir”, caminizin panosundaki iki vakitten takvimini bulmaya çalışır; alışılmış hesaplama yöntemleri (Dünya İslam Birliği, Mısır, Karaçi, ISNA ve daha fazlası) ve her namaz için ayrı düzeltme de mevcuttur.
 • Gecenin alışılmış açılar için fazla kısa kaldığı yüksek enlemler için kurallar.
 • Her namaz için bir bildirim: net bir uyarı tonu, bir tekbir ya da aralarında Mekke ve Medine’nin de bulunduğu seslerden birinin okuduğu ezan veya telefonunuzdaki bir kayıt; dilerseniz öncesinde bir hatırlatma, ezandan belirlediğiniz dakika sonra bir kamet hatırlatması ve en faziletli vaktinde bir kuşluk namazı hatırlatmasıyla.
@@ -50,7 +50,7 @@ GÜVENİLMEK İÇİN YAPILDI
 
 Türkçe, Arapça, İngilizce, Fransızca, Endonezce, Urduca ve Bengalce olarak sunulur.
 
-Namaz vakitleri Taqvo’nın kendi motoruyla hesaplanır; Kıble yönü Adhan kütüphanesiyle. Kur’an metni Tanzil Projesi’nden. Zikir metinleri OpenDua’dan. Tilavetler, karilerin ücretsiz dağıtım için lisansladığı Islamic Network kayıtlarından. Taqvo’nın, takvimlerini izlediği dinî kurumlarla bir bağı yoktur.
+Namaz vakitleri Tazkir’nın kendi motoruyla hesaplanır; Kıble yönü Adhan kütüphanesiyle. Kur’an metni Tanzil Projesi’nden. Zikir metinleri OpenDua’dan. Tilavetler, karilerin ücretsiz dağıtım için lisansladığı Islamic Network kayıtlarından. Tazkir’nın, takvimlerini izlediği dinî kurumlarla bir bağı yoktur.
 
 Web sitesi: https://taqwa.world/tr/
 Destek: jmlkhon17@gmail.com
@@ -66,9 +66,9 @@ Destek: jmlkhon17@gmail.com
 ## App Store
 
 ### Name (30)
-Taqvo: Namaz, Kur’an ve Kıble
+Tazkir: Namaz, Kur’an ve Kıble
 
-(From the next version. 1.0.0 went out under the name App Store Connect accepted on 22 September 2026; the listing said "Taqvo", but plain "Taqvo" is taken on the store, so it is probably the English title. If this name is refused as taken, keep that one and the 1.0.0 subtitle, which then adds the local words the name lacks.)
+(From the next version. 1.0.0 went out under the name App Store Connect accepted on 22 September 2026; the listing said "Tazkir", but plain "Tazkir" is taken on the store, so it is probably the English title. If this name is refused as taken, keep that one and the 1.0.0 subtitle, which then adds the local words the name lacks.)
 
 ### Subtitle (30)
 Ezan ve zikirmatik, reklamsız
@@ -76,7 +76,7 @@ Ezan ve zikirmatik, reklamsız
 (From the next version. In 1.0.0: "Namaz vakitleri, Kur’an, Kıble". Names and subtitles change only with a new version.)
 
 ### Promotional text (170)
-Camilerinizin takvimine göre namaz vakitleri; Taqvo takvime sahipse gün gün karşılaştırılır. Ezan, tilavetli Kur’an, sabah ve akşam zikirleri ve Kıble.
+Camilerinizin takvimine göre namaz vakitleri; Tazkir takvime sahipse gün gün karşılaştırılır. Ezan, tilavetli Kur’an, sabah ve akşam zikirleri ve Kıble.
 
 (Proposal of 29 September, the owner's to take or leave; editable at any time. Until then: "Bulunduğunuz yerin namaz vakitleri, vakti gelince ezan, okumak ve dinlemek için Kur’an’ın tamamı ve Kıble. Ücretsiz, çevrimdışı, hesapsız ve reklamsız.")
 

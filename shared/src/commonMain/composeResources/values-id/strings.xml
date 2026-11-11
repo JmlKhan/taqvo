@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Taqvo</string>
+    <string name="app_name">Tazkir</string>
     <string name="ui_language">id</string>
 
     <string name="language_name">Bahasa Indonesia</string>
@@ -11,7 +11,7 @@
     <string name="sheet_a11y_drag_handle">Handel geser</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_welcome_title">Taqvo</string>
+    <string name="onboarding_welcome_title">Tazkir</string>
     <string name="onboarding_welcome_body">Waktu salat, kiblat, dan Al-Qur’an. Tanpa akun, berfungsi offline.</string>
     <string name="onboarding_welcome_cta">Mulai</string>
     <string name="onboarding_location_title">Di mana Anda berada?</string>
@@ -21,15 +21,15 @@
     <string name="onboarding_notifications_body">Notifikasi untuk setiap salat. Anda memilih suaranya untuk tiap salat secara terpisah, dan bisa menggantinya kapan saja.</string>
     <string name="onboarding_notifications_secondary">Nanti saja</string>
     <string name="onboarding_exact_title">Alarm &amp; pengingat</string>
-    <string name="onboarding_exact_body">Android hanya bisa berbunyi tepat pada waktu salat jika izin “Alarm &amp; pengingat” diberikan untuk Taqvo. Tanpa izin itu, notifikasi bisa terlambat sampai satu jam.</string>
+    <string name="onboarding_exact_body">Android hanya bisa berbunyi tepat pada waktu salat jika izin “Alarm &amp; pengingat” diberikan untuk Tazkir. Tanpa izin itu, notifikasi bisa terlambat sampai satu jam.</string>
     <string name="onboarding_widget_title">Di layar utama Anda</string>
-    <string name="onboarding_widget_body">Widget Taqvo menampilkan salat berikutnya dan hitung mundur yang terus berjalan, tanpa membuka aplikasi.</string>
-    <string name="onboarding_widget_body_ios">Widget Taqvo menampilkan salat berikutnya dan hitung mundur yang terus berjalan, tanpa membuka aplikasi. Untuk menambahkannya, sentuh dan tahan ikon Taqvo di layar utama, lalu pilih ukuran widget.</string>
-    <string name="onboarding_widget_body_ios_legacy">Widget Taqvo menampilkan salat berikutnya dan hitung mundur yang terus berjalan, tanpa membuka aplikasi. Untuk menambahkannya, sentuh dan tahan layar utama, ketuk tanda plus di sudut atas, lalu cari Taqvo.</string>
+    <string name="onboarding_widget_body">Widget Tazkir menampilkan salat berikutnya dan hitung mundur yang terus berjalan, tanpa membuka aplikasi.</string>
+    <string name="onboarding_widget_body_ios">Widget Tazkir menampilkan salat berikutnya dan hitung mundur yang terus berjalan, tanpa membuka aplikasi. Untuk menambahkannya, sentuh dan tahan ikon Tazkir di layar utama, lalu pilih ukuran widget.</string>
+    <string name="onboarding_widget_body_ios_legacy">Widget Tazkir menampilkan salat berikutnya dan hitung mundur yang terus berjalan, tanpa membuka aplikasi. Untuk menambahkannya, sentuh dan tahan layar utama, ketuk tanda plus di sudut atas, lalu cari Tazkir.</string>
     <string name="onboarding_widget_cta_add">Tambahkan widget</string>
     <string name="onboarding_widget_cta_done">Selesai</string>
     <string name="onboarding_widget_secondary">Mungkin nanti</string>
-    <string name="onboarding_widget_steps_android">Layar utama Anda tidak mengizinkan aplikasi menambahkan widget, jadi tambahkan sendiri: sentuh dan tahan area kosong di layar utama (atau cubit layar), ketuk Widget, cari Taqvo, lalu seret widget ke tempatnya.</string>
+    <string name="onboarding_widget_steps_android">Layar utama Anda tidak mengizinkan aplikasi menambahkan widget, jadi tambahkan sendiri: sentuh dan tahan area kosong di layar utama (atau cubit layar), ketuk Widget, cari Tazkir, lalu seret widget ke tempatnya.</string>
 
     <!-- Prayer names -->
     <string name="prayer_fajr">Subuh</string>
@@ -55,7 +55,7 @@
         <item quantity="other">%1$s menit</item>
     </plurals>
     <string name="prayer_exact_alarms_label">ALARM TEPAT WAKTU NONAKTIF</string>
-    <string name="prayer_exact_alarms_body">Android bisa terlambat sampai satu jam selama izin “Alarm &amp; pengingat” belum diberikan untuk Taqvo.</string>
+    <string name="prayer_exact_alarms_body">Android bisa terlambat sampai satu jam selama izin “Alarm &amp; pengingat” belum diberikan untuk Tazkir.</string>
     <string name="prayer_no_location_title">Belum ada lokasi</string>
     <string name="prayer_choose_city">Pilih kota</string>
     <string name="prayer_location_settings">Aktifkan lokasi di Pengaturan</string>
@@ -63,11 +63,11 @@
 
     <!-- Prayer engine: the Prayer screen (Task 10) -->
     <string name="prayer_whose_checked_title">Jadwal %1$s</string>
-    <string name="prayer_whose_checked_body">Waktu %1$s untuk %2$s, dihitung ulang oleh Taqvo dan dicocokkan dengan jadwal terbitannya.</string>
+    <string name="prayer_whose_checked_body">Waktu %1$s untuk %2$s, dihitung ulang oleh Tazkir dan dicocokkan dengan jadwal terbitannya.</string>
     <string name="prayer_whose_unchecked_title">Metode %1$s, belum diperiksa sepenuhnya</string>
-    <string name="prayer_whose_unchecked_body">Taqvo menghitung waktu untuk %2$s dengan metode %1$s, ditambah margin pengaman.</string>
-    <string name="prayer_whose_cautious_body">Masjid di sini mengikuti jadwal yang berbeda, jadi Taqvo menampilkan setiap salat setelah waktunya masuk di semua jadwal itu.</string>
-    <string name="prayer_whose_calculated_body">Belum ada jadwal setempat yang diketahui di sini, jadi Taqvo menghitung waktu ini dengan memilih yang lebih aman.</string>
+    <string name="prayer_whose_unchecked_body">Tazkir menghitung waktu untuk %2$s dengan metode %1$s, ditambah margin pengaman.</string>
+    <string name="prayer_whose_cautious_body">Masjid di sini mengikuti jadwal yang berbeda, jadi Tazkir menampilkan setiap salat setelah waktunya masuk di semua jadwal itu.</string>
+    <string name="prayer_whose_calculated_body">Belum ada jadwal setempat yang diketahui di sini, jadi Tazkir menghitung waktu ini dengan memilih yang lebih aman.</string>
     <string name="prayer_about_these_times">Tentang waktu ini</string>
     <string name="prayer_times_by">Waktu menurut %1$s</string>
     <string name="prayer_whose_a11y">%1$s, %2$s. Membuka sumber waktu ini</string>
@@ -76,7 +76,7 @@
     <string name="prayer_source_published_method">Metode yang diterbitkan</string>
     <string name="prayer_polar_line">Hari ini matahari tidak terbit maupun terbenam di sini, jadi sebagian waktu mengikuti lintang terdekat tempat matahari masih terbit dan terbenam.</string>
     <string name="prayer_card_cautious_title">Masjid di sini mengikuti jadwal yang berbeda</string>
-    <string name="prayer_card_cautious_body">Taqvo menampilkan setiap salat setelah waktunya masuk di semua jadwal itu.</string>
+    <string name="prayer_card_cautious_body">Tazkir menampilkan setiap salat setelah waktunya masuk di semua jadwal itu.</string>
     <string name="prayer_card_sunni_title">Ini waktu salat Sunni</string>
     <string name="prayer_card_sunni_body">Dalam praktik Syiah (Ja’fari), Maghrib dan waktu berbuka lebih lambat.</string>
     <string name="prayer_match_my_mosque">Cocokkan dengan masjid saya</string>
@@ -101,7 +101,7 @@
     <string name="prayer_clock_region_chihuahua">Chihuahua</string>
     <string name="prayer_clock_region_paraguay">Paraguay</string>
     <string name="prayer_differ_before">%2$s menurut %1$s mulai pukul %3$s</string>
-    <string name="prayer_differ_after">%2$s menurut %1$s sudah masuk · Taqvo menampilkannya mulai %3$s</string>
+    <string name="prayer_differ_after">%2$s menurut %1$s sudah masuk · Tazkir menampilkannya mulai %3$s</string>
     <string name="prayer_other_asr">%1$s %2$s</string>
 
     <!-- Settings root -->
@@ -115,23 +115,23 @@
     <string name="settings_appearance">Tampilan</string>
     <string name="settings_appearance_value">%1$s · %2$s</string>
     <string name="settings_language">Bahasa</string>
-    <string name="settings_about">Tentang Taqvo</string>
+    <string name="settings_about">Tentang Tazkir</string>
     <string name="settings_attribution">Atribusi &amp; lisensi</string>
-    <string name="settings_rate">Beri nilai Taqvo</string>
-    <string name="settings_share">Bagikan Taqvo</string>
-    <string name="settings_share_message">Taqvo: waktu salat, Al-Qur’an, dan kiblat. Tanpa akun.</string>
+    <string name="settings_rate">Beri nilai Tazkir</string>
+    <string name="settings_share">Bagikan Tazkir</string>
+    <string name="settings_share_message">Tazkir: waktu salat, Al-Qur’an, dan kiblat. Tanpa akun.</string>
     <string name="settings_not_set">Belum diatur</string>
     <string name="settings_notifications_off">Nonaktif</string>
     <string name="settings_notifications_on_count">%1$s aktif</string>
     <string name="settings_version_value">1.5.0</string>
 
-    <!-- Layar «Tentang Taqvo». Nama «Taqvo» tetap dalam huruf Latin, seperti pada ikonnya. -->
+    <!-- Layar «Tentang Tazkir». Nama «Tazkir» tetap dalam huruf Latin, seperti pada ikonnya. -->
     <string name="about_tagline">Gratis, untuk semua, selamanya.</string>
     <string name="about_privacy_label">PRIVASI</string>
     <string name="about_stays_title">Tetap di ponsel Anda</string>
     <string name="about_stays_body">Lokasi, pengaturan, penanda, dan hitungan tidak pernah keluar dari ponsel.</string>
     <string name="about_online_title">Online hanya bila Anda minta</string>
-    <string name="about_online_body">Internet dipakai untuk satu hal saja: tilawah yang Anda pilih untuk diunduh, dari repositori publik Taqvo di GitHub.</string>
+    <string name="about_online_body">Internet dipakai untuk satu hal saja: tilawah yang Anda pilih untuk diunduh, dari repositori publik Tazkir di GitHub.</string>
     <string name="about_nothing_title">Tanpa akun, tanpa analitik</string>
     <string name="about_nothing_body">Tidak ada akun untuk masuk.</string>
     <string name="about_privacy_policy">Kebijakan privasi</string>
@@ -144,7 +144,7 @@
     <string name="about_icon_open_website">Buka taqwa.world</string>
     <string name="about_report_problem">Laporkan masalah</string>
 
-    <!-- Pengaturan › Widget dan Tentang Taqvo (spesifikasi desain ulang pengaturan, 30 Oktober 2026). Nilai
+    <!-- Pengaturan › Widget dan Tentang Tazkir (spesifikasi desain ulang pengaturan, 30 Oktober 2026). Nilai
          baris Widget menghitung widget di layar utama: %1$s yang sudah terpasang, %2$s jumlah seluruhnya. -->
     <string name="settings_widgets">Widget</string>
     <string name="settings_widgets_all">Semua ditambahkan</string>
@@ -156,9 +156,9 @@
          namanya di daftar widget Android dan di galeri iPhone (home_widget_name dan ayah_widget_name di
          iosApp/TaqvoWidget). Kata di antara ** dan ** adalah yang akan dicari pembaca di
          ponselnya; kata itu tampil tebal tanpa bintang. -->
-    <string name="widgets_intro">Salat berikutnya dan ayat hari ini di layar utama Anda, tanpa membuka Taqvo.</string>
-    <string name="widgets_intro_ios">Salat berikutnya dan ayat hari ini di Layar Utama dan Layar Terkunci Anda, tanpa membuka Taqvo.</string>
-    <string name="widgets_background_note">Untuk semua widget Taqvo. Pilihan Sistem mengikuti pengaturan terang dan gelap di ponsel Anda.</string>
+    <string name="widgets_intro">Salat berikutnya dan ayat hari ini di layar utama Anda, tanpa membuka Tazkir.</string>
+    <string name="widgets_intro_ios">Salat berikutnya dan ayat hari ini di Layar Utama dan Layar Terkunci Anda, tanpa membuka Tazkir.</string>
+    <string name="widgets_background_note">Untuk semua widget Tazkir. Pilihan Sistem mengikuti pengaturan terang dan gelap di ponsel Anda.</string>
     <string name="widgets_prayer_label">WAKTU SALAT</string>
     <string name="widgets_prayer_name">Waktu salat</string>
     <string name="widgets_prayer_body">Salat berikutnya dengan hitung mundur yang terus berjalan, dan waktu salat hari ini. Kecil atau lebar.</string>
@@ -178,15 +178,15 @@
     <string name="widgets_refused_body">Menambahkannya sendiri hanya butuh sebentar:</string>
     <string name="widgets_step_android_1">Sentuh dan tahan area kosong di layar utama (atau cubit layar).</string>
     <string name="widgets_step_android_2">Ketuk **Widget**.</string>
-    <string name="widgets_step_android_3">Cari **Taqvo**, lalu seret widget %1$s ke tempatnya.</string>
+    <string name="widgets_step_android_3">Cari **Tazkir**, lalu seret widget %1$s ke tempatnya.</string>
     <string name="widgets_how_label">CARA MENAMBAHKANNYA</string>
-    <string name="widgets_step_ios_hold_1">Sentuh dan tahan ikon **Taqvo** di Layar Utama Anda.</string>
+    <string name="widgets_step_ios_hold_1">Sentuh dan tahan ikon **Tazkir** di Layar Utama Anda.</string>
     <string name="widgets_step_ios_hold_2">Pilih %1$s dan ukurannya.</string>
     <string name="widgets_step_ios_hold_3">Widget muncul di Layar Utama. Seret ke mana pun Anda mau.</string>
-    <string name="widgets_ios_fallback">Tidak ada widget saat Anda menahan ikon? Sentuh dan tahan area kosong di Layar Utama, ketuk **Edit** di bagian atas (berupa kuas di iOS 27 dan yang lebih baru), lalu **Tambah Widget**, dan cari Taqvo.</string>
+    <string name="widgets_ios_fallback">Tidak ada widget saat Anda menahan ikon? Sentuh dan tahan area kosong di Layar Utama, ketuk **Edit** di bagian atas (berupa kuas di iOS 27 dan yang lebih baru), lalu **Tambah Widget**, dan cari Tazkir.</string>
     <string name="widgets_step_ios_plus_1">Sentuh dan tahan area kosong di Layar Utama Anda.</string>
     <string name="widgets_step_ios_plus_2">Ketuk tanda **+** di sudut atas.</string>
-    <string name="widgets_step_ios_plus_3">Cari Taqvo, lalu pilih %1$s.</string>
+    <string name="widgets_step_ios_plus_3">Cari Tazkir, lalu pilih %1$s.</string>
     <string name="widgets_show_how">Tunjukkan caranya</string>
     <string name="widgets_lock_label">LAYAR TERKUNCI</string>
     <string name="widgets_lock_name">Salat berikutnya dalam sekilas pandang</string>
@@ -194,8 +194,8 @@
     <string name="widgets_lock_then">lalu %1$s</string>
     <string name="widgets_step_lock_1">Sentuh dan tahan Layar Terkunci, lalu ketuk **Sesuaikan**.</string>
     <string name="widgets_step_lock_2">Pilih Layar Terkunci, lalu ketuk ruang di bawah jam.</string>
-    <string name="widgets_step_lock_3">Pilih **Taqvo**, lalu widget bulat atau lebar.</string>
-    <!-- Tentang Taqvo: label versi di bawah slogan (%1$s adalah versinya, settings_version_value) dan judul
+    <string name="widgets_step_lock_3">Pilih **Tazkir**, lalu widget bulat atau lebar.</string>
+    <!-- Tentang Tazkir: label versi di bawah slogan (%1$s adalah versinya, settings_version_value) dan judul
          dua kartu terakhirnya. Beri nilai dan Bagikan di sana memakai settings_rate, settings_share, dan
          settings_share_message. -->
     <string name="about_version_chip">Versi %1$s</string>
@@ -203,7 +203,7 @@
     <string name="about_help_label">BANTUAN</string>
 
     <!-- Laporan kerusakan: lembar yang muncul saat aplikasi dibuka setelah rusak, dan baris email ketika tidak ada laporan untuk dikirim. -->
-    <string name="crash_sheet_title">Taqvo tertutup mendadak</string>
+    <string name="crash_sheet_title">Tazkir tertutup mendadak</string>
     <string name="crash_sheet_body">Laporan teknis telah disimpan di ponsel Anda. Mengirimnya ke jmlkhon17@gmail.com membantu memperbaiki masalah ini. Isinya hanya versi aplikasi, model ponsel Anda, dan kesalahannya.</string>
     <string name="crash_send">Kirim laporan</string>
     <string name="crash_not_now">Nanti saja</string>
@@ -310,7 +310,7 @@
     <string name="timetable_auto_authority">Jadwal yang diterbitkan %1$s untuk tempat ini</string>
     <string name="timetable_auto_majority">%1$s, diikuti kebanyakan masjid di sini</string>
     <string name="timetable_auto_cautious">Waktu ihtiyat: setiap salat setelah semua jadwal di tempat ini memulainya</string>
-    <string name="timetable_auto_calculated">Dihitung oleh Taqvo: tidak ada jadwal yang diketahui untuk tempat ini</string>
+    <string name="timetable_auto_calculated">Dihitung oleh Tazkir: tidak ada jadwal yang diketahui untuk tempat ini</string>
     <string name="timetable_times_today">Hari ini Subuh %1$s, Maghrib %2$s, Isya %3$s</string>
     <string name="timetable_nearby_label">JUGA DIPAKAI DI SEKITAR</string>
     <string name="timetable_other_methods">Metode lain</string>
@@ -324,7 +324,7 @@
     <string name="timetable_later_fast">Pada beberapa hari, imsak menurut jadwal ini %1$s lebih lambat dari %2$s. Ikuti hanya jika masjid Anda mengikutinya.</string>
     <string name="timetable_of_authority">waktu %1$s</string>
     <string name="timetable_of_cautious">waktu ihtiyat</string>
-    <string name="timetable_of_taqvo">waktu Taqvo</string>
+    <string name="timetable_of_taqvo">waktu Tazkir</string>
     <plurals name="timetable_minutes">
         <item quantity="other">%1$s menit</item>
     </plurals>
@@ -338,21 +338,21 @@
     <string name="match_hour_apart">Kedua waktu selisih tepat satu jam: papan Anda mungkin memakai waktu musim panas atau musim dingin. Subuhnya mulai pukul %1$s dan Isyanya pukul %2$s.</string>
     <string name="match_one_fajr">Subuhnya cocok, tetapi Isyanya mulai pukul %1$s.</string>
     <string name="match_one_isha">Isyanya cocok, tetapi Subuhnya mulai pukul %1$s.</string>
-    <string name="match_none">Tidak ada jadwal yang dikenal Taqvo yang cocok dengan kedua waktu.</string>
+    <string name="match_none">Tidak ada jadwal yang dikenal Tazkir yang cocok dengan kedua waktu.</string>
     <string name="match_fajr_isha">Subuh %1$s, Isya %2$s</string>
     <string name="match_use">Gunakan jadwal ini</string>
-    <string name="match_in_use">Taqvo sudah mengikuti jadwal ini.</string>
+    <string name="match_in_use">Tazkir sudah mengikuti jadwal ini.</string>
     <string name="timetable_source_authority">waktu %1$s</string>
     <string name="timetable_source_cautious">waktu ihtiyat</string>
-    <string name="timetable_source_taqvo">waktu Taqvo</string>
+    <string name="timetable_source_taqvo">waktu Tazkir</string>
     <string name="timetable_source_latest">jadwal setempat yang paling akhir</string>
     <string name="adjust_paused_for">%1$s · dijeda (diatur untuk %2$s)</string>
     <string name="adjust_timetable_paused_note">Penyesuaian yang memajukan waktu menunggu sampai %1$s dikonfirmasi di Jadwal salat.</string>
     <string name="adjust_confirm_title">Tampilkan %1$s sebelum %2$s?</string>
     <string name="adjust_confirm_body">Salat yang dikerjakan sebelum waktunya harus diulang. Lakukan ini hanya jika jadwal masjid Anda lebih awal.</string>
     <string name="adjust_confirm_body_maghrib">Salat yang dikerjakan sebelum waktunya harus diulang, dan puasa yang dibatalkan sebelum waktunya harus diganti. Lakukan ini hanya jika jadwal masjid Anda lebih awal.</string>
-    <string name="adjust_strong_body">%1$s di Taqvo paling lambat %2$s setelah %3$s, jadi %4$s memindahkannya sebelum waktu itu. Salat yang dikerjakan sebelum waktunya harus diulang. Lakukan ini hanya jika jadwal masjid Anda memang lebih awal sebanyak itu.</string>
-    <string name="adjust_strong_body_maghrib">%1$s di Taqvo paling lambat %2$s setelah %3$s, jadi %4$s memindahkannya sebelum waktu itu. Salat yang dikerjakan sebelum waktunya harus diulang, dan puasa yang dibatalkan sebelum waktunya harus diganti. Lakukan ini hanya jika jadwal masjid Anda memang lebih awal sebanyak itu.</string>
+    <string name="adjust_strong_body">%1$s di Tazkir paling lambat %2$s setelah %3$s, jadi %4$s memindahkannya sebelum waktu itu. Salat yang dikerjakan sebelum waktunya harus diulang. Lakukan ini hanya jika jadwal masjid Anda memang lebih awal sebanyak itu.</string>
+    <string name="adjust_strong_body_maghrib">%1$s di Tazkir paling lambat %2$s setelah %3$s, jadi %4$s memindahkannya sebelum waktu itu. Salat yang dikerjakan sebelum waktunya harus diulang, dan puasa yang dibatalkan sebelum waktunya harus diganti. Lakukan ini hanya jika jadwal masjid Anda memang lebih awal sebanyak itu.</string>
     <string name="adjust_keep">Tetap %1$s</string>
     <string name="adjust_use">Pakai %1$s</string>
     <string name="adjust_note">Menggeser waktu hingga satu jam dari waktu jadwal. Gunakan hanya jika papan masjid Anda berbeda.</string>
@@ -393,11 +393,11 @@
     <string name="about_times_title">Tentang waktu ini</string>
     <string name="about_prayer_times_settings">Pengaturan waktu salat</string>
     <string name="timetable_cautious">Waktu ihtiyat</string>
-    <string name="timetable_calculated">Dihitung oleh Taqvo</string>
+    <string name="timetable_calculated">Dihitung oleh Tazkir</string>
     <string name="about_who_publishes">Siapa yang menerbitkannya</string>
     <string name="about_who_publishes_body">%1$s menerbitkan waktu salat yang dipakai di %2$s.</string>
-    <string name="about_not_affiliated">Taqvo tidak berafiliasi dengan %1$s.</string>
-    <string name="about_how_reproduces">Cara Taqvo menghitungnya ulang</string>
+    <string name="about_not_affiliated">Tazkir tidak berafiliasi dengan %1$s.</string>
+    <string name="about_how_reproduces">Cara Tazkir menghitungnya ulang</string>
     <string name="about_method_intro">Cara %1$s menghitung: %2$s.</string>
     <string name="about_method_fajr_angle">Subuh pada %1$s° di bawah ufuk</string>
     <string name="about_method_isha_angle">Isya pada %1$s° di bawah ufuk</string>
@@ -416,19 +416,19 @@
     <string name="about_checked_through">Dicocokkan dengan jadwal terbitan %1$s hingga %2$s.</string>
     <string name="about_not_measured_unit">Belum diukur untuk %1$s.</string>
     <string name="about_checked_so_far_with_data">Sejauh ini diperiksa selama %1$s hari: tidak pernah lebih awal dari %2$s, paling lambat %3$s menit setelahnya.</string>
-    <string name="about_checked_so_far_without_data">Taqvo belum membandingkan waktu ini dengan jadwal %1$s sendiri.</string>
+    <string name="about_checked_so_far_without_data">Tazkir belum membandingkan waktu ini dengan jadwal %1$s sendiri.</string>
     <string name="about_not_followed_irn_tromso">Subuh %1$s menurut waktu Makkah tidak diikuti dari akhir April hingga pertengahan Mei dan dari akhir Juli hingga pertengahan Agustus, saat waktunya jatuh setelah matahari terbit, begitu pula waktu terbitnya pada hari-hari matahari tengah malam; Maghrib tidak pernah lebih awal dari terbenamnya matahari yang sebenarnya.</string>
     <string name="about_authority_method_title">Metode %1$s</string>
-    <string name="about_authority_unchecked_body">%1$s menerbitkan waktu salat untuk %2$s. Taqvo menghitungnya dengan cara yang sama seperti %1$s, ditambah margin pengaman.</string>
-    <string name="about_majority_unchecked_body">Kebanyakan masjid di %2$s mengikuti metode %1$s. Taqvo menghitung waktunya dengan metode itu, ditambah margin pengaman.</string>
+    <string name="about_authority_unchecked_body">%1$s menerbitkan waktu salat untuk %2$s. Tazkir menghitungnya dengan cara yang sama seperti %1$s, ditambah margin pengaman.</string>
+    <string name="about_majority_unchecked_body">Kebanyakan masjid di %2$s mengikuti metode %1$s. Tazkir menghitung waktunya dengan metode itu, ditambah margin pengaman.</string>
     <string name="about_nearby_heading">Jadwal yang diikuti sebagian masjid setempat sebagai gantinya</string>
-    <string name="about_cautious_body">Masjid-masjid di %1$s mengikuti jadwal yang berbeda dengan niat baik, dan tidak satu pun diikuti mayoritas. Taqvo menggabungkan %2$s: setiap salat ditampilkan setelah waktunya masuk di semua jadwal itu.</string>
+    <string name="about_cautious_body">Masjid-masjid di %1$s mengikuti jadwal yang berbeda dengan niat baik, dan tidak satu pun diikuti mayoritas. Tazkir menggabungkan %2$s: setiap salat ditampilkan setelah waktunya masuk di semua jadwal itu.</string>
     <string name="about_cautious_maghrib_guard">Maghrib hari ini menjadi pengecualian: mengikuti hitungan %1$s dari terbenamnya matahari, bukan Maghrib %2$s yang lebih lambat karena ditetapkan menurut aturan lintang tinggi.</string>
     <string name="about_cautious_maghrib_no_sunset">Maghrib hari ini menjadi pengecualian karena di sini tidak ada matahari terbenam: mengikuti %1$s, jadwal yang paling banyak diikuti, bukan Maghrib %2$s yang lebih lambat.</string>
     <string name="about_which_decides">Jadwal mana yang menentukan setiap waktu hari ini</string>
     <string name="about_stat_never_before_decider">awal waktu sebelum jadwal yang menentukannya</string>
     <string name="about_cautious_checked">Dicocokkan dengan jadwal-jadwal yang diikuti di sini.</string>
-    <string name="about_calculated_body">Taqvo tidak menemukan jadwal Sunni resmi untuk %1$s, jadi Taqvo menghitungnya dengan memilih yang lebih aman: %2$s.</string>
+    <string name="about_calculated_body">Tazkir tidak menemukan jadwal Sunni resmi untuk %1$s, jadi Tazkir menghitungnya dengan memilih yang lebih aman: %2$s.</string>
     <string name="about_asr_heading">Ashar</string>
     <string name="about_asr_known">%1$s: %3$s, karena kebanyakan masjid di %2$s mengikutinya.</string>
     <string name="about_asr_unknown">%1$s: %3$s, waktu yang lebih akhir, karena mazhab mayoritas di %2$s tidak diketahui. Anda dapat mengubahnya di Pengaturan.</string>
@@ -440,9 +440,9 @@
     <string name="about_stop_eating">Berhenti makan paling lambat pukul %1$s hari ini.</string>
 
     <!-- Attribution -->
-    <string name="attribution_intro">Taqvo dibangun di atas karya yang dibagikan cuma-cuma oleh orang lain. Lisensi mereka mewajibkan penyebutan, dan itu memang hak mereka.</string>
+    <string name="attribution_intro">Tazkir dibangun di atas karya yang dibagikan cuma-cuma oleh orang lain. Lisensi mereka mewajibkan penyebutan, dan itu memang hak mereka.</string>
     <string name="credit_calculation">Perhitungan waktu salat</string>
-    <string name="credit_calculation_detail">Mesin milik Taqvo sendiri. Arah kiblat dihitung dengan Adhan dari Batoul Apps, lisensi MIT.</string>
+    <string name="credit_calculation_detail">Mesin milik Tazkir sendiri. Arah kiblat dihitung dengan Adhan dari Batoul Apps, lisensi MIT.</string>
     <string name="credit_cities">Basis data kota</string>
     <string name="credit_cities_detail">GeoNames cities15000, lisensi CC BY 4.0.</string>
     <string name="credit_typeface">Huruf Manrope</string>
@@ -564,9 +564,9 @@
     <string name="qibla_cardinal_east">T</string>
     <string name="qibla_cardinal_south">S</string>
     <string name="qibla_cardinal_west">B</string>
-    <string name="notifications_exact_alarms_off">Alarm tepat waktu dimatikan untuk Taqvo, sehingga notifikasi bisa terlambat sampai satu jam. Izinkan “Alarm &amp; pengingat” agar notifikasi bisa berbunyi tepat pada menitnya.</string>
+    <string name="notifications_exact_alarms_off">Alarm tepat waktu dimatikan untuk Tazkir, sehingga notifikasi bisa terlambat sampai satu jam. Izinkan “Alarm &amp; pengingat” agar notifikasi bisa berbunyi tepat pada menitnya.</string>
     <string name="notifications_allow_exact_alarms">Izinkan alarm tepat waktu</string>
-    <string name="notifications_blocked">Notifikasi dimatikan untuk Taqvo di pengaturan sistem, sehingga tidak ada peringatan salat yang bisa muncul sampai notifikasi diizinkan lagi.</string>
+    <string name="notifications_blocked">Notifikasi dimatikan untuk Tazkir di pengaturan sistem, sehingga tidak ada peringatan salat yang bisa muncul sampai notifikasi diizinkan lagi.</string>
     <string name="notifications_open_settings">Buka pengaturan notifikasi</string>
     <string name="hijri_tabular">Hisab</string>
     <!-- Bottom tab bar (iteration 1; iteration 8: two tabs; slice 2: the Quran tab arrives) -->
@@ -806,7 +806,7 @@
     <string name="wallpapers_done_set">Wallpaper terpasang.</string>
     <string name="wallpapers_done_saved">Tersimpan di Foto.</string>
     <string name="wallpapers_refused_android">Ponsel ini tidak mengizinkan aplikasi mengganti wallpaper.</string>
-    <string name="wallpapers_refused_ios">Taqvo tidak diizinkan menambahkan foto. Izinkan di Pengaturan › Taqvo › Foto.</string>
+    <string name="wallpapers_refused_ios">Tazkir tidak diizinkan menambahkan foto. Izinkan di Pengaturan › Tazkir › Foto.</string>
     <string name="wallpapers_failed">Wallpaper tidak dapat disimpan. Silakan coba lagi.</string>
     <string name="wallpapers_dua_reference">Hisnul Muslim %1$s</string>
     <string name="wallpapers_a11y_preview">Pratinjau wallpaper: %1$s</string>
@@ -893,14 +893,14 @@
     <string name="onb_guide_lock_2">Sentuh dan tahan bagian kosong layar sampai tombol muncul di bawah.</string>
     <string name="onb_guide_lock_3">Ketuk **Sesuaikan**, lalu pilih Layar Kunci.</string>
     <string name="onb_guide_lock_4">Ketuk kotak di bawah jam.</string>
-    <string name="onb_guide_lock_5">Temukan **Taqvo** di daftar lalu ketuk.</string>
+    <string name="onb_guide_lock_5">Temukan **Tazkir** di daftar lalu ketuk.</string>
     <string name="onb_guide_lock_6">Pilih widget yang Anda mau — selesai!</string>
     <string name="onb_guide_done">Mengerti!</string>
     <string name="settings_daily_ayahs">Ayat harian</string>
     <string name="settings_daily_ayahs_value">%1$s per hari</string>
     <string name="daily_ayahs_toggle">Pengingat ayat harian</string>
     <string name="daily_ayahs_note">Ayat datang merata antara waktu mulai dan selesai, dari tema yang Anda pilih. Notifikasi salat selalu didahulukan.</string>
-    <string name="daily_ayahs_denied">Notifikasi Taqvo nonaktif, jadi ayat harian tidak bisa datang. Aktifkan di pengaturan ponsel.</string>
+    <string name="daily_ayahs_denied">Notifikasi Tazkir nonaktif, jadi ayat harian tidak bisa datang. Aktifkan di pengaturan ponsel.</string>
     <string name="daily_ayahs_open_system">Buka pengaturan notifikasi</string>
     <string name="daily_ayahs_format_label">TAMPILAN AYAT</string>
     <string name="tab_feed">Beranda</string>
@@ -978,7 +978,7 @@
     <string name="feed_theme_a11y">Tema %1$d</string>
     <string name="feed_theme_edit">Ubah</string>
     <string name="feed_tools_duas">Doa</string>
-    <string name="feed_help_about">Tentang Taqvo</string>
+    <string name="feed_help_about">Tentang Tazkir</string>
     <string name="feed_help_q1">Bagaimana beranda memilih ayat?</string>
     <string name="feed_help_a1">Dari topik yang Anda pilih di awal. Setiap ayat yang Anda sukai mendatangkan lebih banyak yang serupa; yang cepat Anda lewati sedikit mengurangi.</string>
     <string name="feed_help_q2">Apa itu target harian?</string>

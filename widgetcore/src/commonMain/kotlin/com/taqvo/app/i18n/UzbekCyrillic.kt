@@ -19,7 +19,7 @@ package com.taqvo.app.i18n
  */
 object UzbekCyrillic {
     private val KEEP_WORDS = setOf(
-        "Taqvo", "Android", "iPhone", "iOS", "iPad", "Google", "Apple", "Safari", "Chrome", "Samsung",
+        "Tazkir", "Android", "iPhone", "iOS", "iPad", "Google", "Apple", "Safari", "Chrome", "Samsung",
         "TestFlight", "App", "Store", "Play", "GitHub", "Wi", "Fi", "WiFi", "TTS", "MB", "GB", "KB",
         "Manrope", "Amiri", "Lora", "Nunito", "OFL", "CC", "BY", "SA", "PDF", "URL", "OK", "AM", "PM",
         "Tasma", "Hijri", "Quran", "Sahih", "Saheeh", "QuranEnc", "Kuliev", "Kulieva",

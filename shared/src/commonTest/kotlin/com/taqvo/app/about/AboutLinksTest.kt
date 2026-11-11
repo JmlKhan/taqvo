@@ -69,7 +69,7 @@ class AboutLinksTest {
 
     @Test
     fun theShareMessageIsTheLineThenTheSiteInTheAppsLanguage() {
-        val line = "Taqvo: prayer times, the Quran and the Qibla."
+        val line = "Tazkir: prayer times, the Quran and the Qibla."
         assertEquals("$line\nhttps://taqwa.world/", AboutLinks.shareMessage(line, "en"))
         assertEquals("$line\nhttps://taqwa.world/ar/", AboutLinks.shareMessage(line, "ar"))
         assertEquals(2, AboutLinks.shareMessage(line, "bn").lines().size)

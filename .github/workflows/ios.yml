@@ -78,7 +78,7 @@ jobs:
         run: |
           ./scripts/ios-build.sh build CODE_SIGNING_ALLOWED=NO
           # The script skips the size check when there is no extension to measure; here there must be one.
-          test -d build/ios-dd/Build/Products/Debug-iphonesimulator/Taqvo.app/PlugIns/TaqvoWidget.appex
+          test -d build/ios-dd/Build/Products/Debug-iphonesimulator/Tazkir.app/PlugIns/TaqvoWidget.appex
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: failure()
         with:

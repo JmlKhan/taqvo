@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">তাকভো</string>
+    <string name="app_name">Tazkir</string>
     <!-- Widget picker titles (android:label on each receiver). -->
     <string name="widget_small_label">পরবর্তী নামাজ</string>
     <string name="widget_medium_label">নামাজের সময়</string>

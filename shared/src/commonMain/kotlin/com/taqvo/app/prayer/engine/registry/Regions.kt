@@ -246,7 +246,7 @@ object Regions {
     val kazakhNorth = Where { it.lat >= 48.0 }
 
     /**
-     * Within the reach of IRN's Tromsø calendar (ruling R82), whose Makkah-time rule Taqvo follows
+     * Within the reach of IRN's Tromsø calendar (ruling R82), whose Makkah-time rule Tazkir follows
      * there: a sun-based takdir cannot be combined with it in order, and it is the only calendar
      * printed for Tromsø, so Automatic follows IRN alone. Read from the unit itself, so the two agree.
      * `no.cautious` resolved here by id still places its IRN member in this unit, rule and all, and

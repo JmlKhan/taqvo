@@ -170,17 +170,17 @@ class WidgetStepsTest {
 
     @Test
     fun `the name goes in bold where the placeholder is beside marked words`() {
-        val shown = markedText("Find **Taqvo**, then drag %1\$s into place.", name = "Prayer times")
-        assertEquals("Find Taqvo, then drag Prayer times into place.", shown.text)
-        assertEquals(listOf("Taqvo", "Prayer times"), bold(shown))
+        val shown = markedText("Find **Tazkir**, then drag %1\$s into place.", name = "Prayer times")
+        assertEquals("Find Tazkir, then drag Prayer times into place.", shown.text)
+        assertEquals(listOf("Tazkir", "Prayer times"), bold(shown))
     }
 
     @Test
     fun `the name elsewhere in the sentence stays plain`() {
-        val shown = markedText("Taqvo lists it: choose %1\$s.", name = "Taqvo")
-        assertEquals("Taqvo lists it: choose Taqvo.", shown.text)
-        assertEquals(listOf("Taqvo"), bold(shown))
-        assertEquals(23, shown.spanStyles.single { it.end > it.start }.start)
+        val shown = markedText("Tazkir lists it: choose %1\$s.", name = "Tazkir")
+        assertEquals("Tazkir lists it: choose Tazkir.", shown.text)
+        assertEquals(listOf("Tazkir"), bold(shown))
+        assertEquals(24, shown.spanStyles.single { it.end > it.start }.start)
     }
 
     @Test

@@ -17,7 +17,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Through MediaStore, which on Android 10 and later needs no permission at all. Older phones would
- * need WRITE_EXTERNAL_STORAGE, which Taqvo does not ask for: they are told [SaveOutcome.UNSUPPORTED]
+ * need WRITE_EXTERNAL_STORAGE, which Tazkir does not ask for: they are told [SaveOutcome.UNSUPPORTED]
  * and the screen offers the share sheet instead, whose "Save" targets do the same job.
  */
 actual suspend fun saveImageToGallery(image: ImageBitmap): SaveOutcome = withContext(Dispatchers.IO) {
@@ -26,7 +26,7 @@ actual suspend fun saveImageToGallery(image: ImageBitmap): SaveOutcome = withCon
     val values = ContentValues().apply {
         put(MediaStore.Images.Media.DISPLAY_NAME, "taqvo-${System.currentTimeMillis()}.jpg")
         put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Taqvo")
+        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Tazkir")
         put(MediaStore.Images.Media.IS_PENDING, 1)
     }
     try {

@@ -109,7 +109,7 @@ fun AdhanVoiceSheet(
             }
         }
         if (customAdhanSupported) {
-            // "From your phone", last (the owner's design of 3 Nov 2026): Taqvo's own adhans stay
+            // "From your phone", last (the owner's design of 3 Nov 2026): Tazkir's own adhans stay
             // the default, and a recording chosen here plays only on this phone.
             var custom by remember { mutableStateOf(currentCustomAdhan()) }
             var failed by remember { mutableStateOf(false) }

@@ -1,8 +1,8 @@
-# Taqvo gizlilik politikası
+# Tazkir gizlilik politikası
 
-_Son güncelleme 29 Eylül 2026. Android ve iOS'ta Taqvo 1.0.0 ve sonrası için geçerlidir._
+_Son güncelleme 29 Eylül 2026. Android ve iOS'ta Tazkir 1.0.0 ve sonrası için geçerlidir._
 
-Taqvo; hesabı, reklamı ve analizi olmayan ücretsiz bir İslami uygulamadır. Çevrimdışı çalışır.
+Tazkir; hesabı, reklamı ve analizi olmayan ücretsiz bir İslami uygulamadır. Çevrimdışı çalışır.
 İnterneti tek bir şey için kullanır: Kur'an tilavetlerini indirmek, o da yalnızca siz
 istediğinizde.
 
@@ -16,10 +16,10 @@ Uygulamanın bildiği her şey cihazınızda saklanır, başka hiçbir yerde de�
 - tesbih sayaçlarınız;
 - indirdiğiniz tilavetler.
 
-Bunların hiçbiri bize ya da bir başkasına gönderilmez. Taqvo'nın arkasında bir sunucu yok,
+Bunların hiçbiri bize ya da bir başkasına gönderilmez. Tazkir'nın arkasında bir sunucu yok,
 açılacak bir hesap da yok. Uygulamayı silmek bunların hepsini siler.
 
-Taqvo çökerse telefonunuza teknik bir rapor kaydeder (uygulama sürümü, telefonunuzun modeli ve hata;
+Tazkir çökerse telefonunuza teknik bir rapor kaydeder (uygulama sürümü, telefonunuzun modeli ve hata;
 başka bir şey yok). Siz bize e-postayla göndermeyi seçmedikçe bu rapor telefondan asla çıkmaz.
 
 ## Konum
@@ -30,7 +30,7 @@ izin gerektirmez. Konumunuz cihaz üzerinde kullanılır ve hiçbir zaman aktar�
 
 ## Tilavet indirmeleri
 
-Tilavetler, Taqvo'nın GitHub'daki herkese açık veri deposundan
+Tilavetler, Tazkir'nın GitHub'daki herkese açık veri deposundan
 (github.com/MohamedAbulgasem/Taqwa-data) her seferinde bir sure olarak alınır; bu da yalnızca
 İndir'e dokunduğunuzda, indirmediğiniz bir surede Dinle'ye dokunduğunuzda ya da "Kur'an'ın
 tamamını indir" seçeneğini seçtiğinizde olur. Varsayılan olarak bu yalnızca Wi-Fi üzerinden
@@ -54,20 +54,20 @@ ayrı silinebilir.
 Mealin ya da tefsirin her ayetten sonra sesli okunmasını seçerseniz, onu telefonunuzun kendi
 metin okuma sesi okur: iPhone'da Apple'ın seslerinden biri; Android'de ise telefonun konuşma
 motorundan bir ses. Bu motor, kendi ayarları ve gizlilik koşulları olan ayrı bir uygulamadır
-(çoğunlukla Google'ınki ya da Samsung'unki). Taqvo yalnızca çevrimdışı çalışan sesleri seçer ve
+(çoğunlukla Google'ınki ya da Samsung'unki). Tazkir yalnızca çevrimdışı çalışan sesleri seçer ve
 metni kendisi hiçbir yere göndermez. Android telefonda ses yoksa "Sesi indir", konuşma motorunun
 kendi indirme ekranını açar; iPhone'da sesler Ayarlar uygulamasından eklenir.
 
 ## Yedeklemeler
 
-Taqvo, Android'in uygulama yedeklemesinin dışında kalır; böylece konumunuz ve ayarlarınız
+Tazkir, Android'in uygulama yedeklemesinin dışında kalır; böylece konumunuz ve ayarlarınız
 Google'a kopyalanmaz. iOS'ta ayarlarınız, yer imleriniz, sayaçlarınız ve indirdiğiniz tilavetler
-iCloud yedeklemesinin dışında tutulur; Taqvo'ya ait olup yedeklenen tek şey widget'ların küçük
+iCloud yedeklemesinin dışında tutulur; Tazkir'ya ait olup yedeklenen tek şey widget'ların küçük
 önbellekleri, yani yaklaşan namaz vakitleri ile günün ayeti widget'ının sırayla gösterdiği yüz ayettir.
 Bunların hiçbiri konumunuzu içermez; o yedekleme de Apple tarafından şifrelenir ve bize hiçbir
 zaman görünmez.
 
-## Taqvo'nın asla yapmadıkları
+## Tazkir'nın asla yapmadıkları
 
 - Hesap, oturum açma ya da profil yok.
 - Reklam ve reklam tanımlayıcısı yok.
@@ -76,12 +76,12 @@ zaman görünmez.
 - Veri satışı ya da paylaşımı yok, çünkü satılacak veya paylaşılacak veri yok.
 
 Telefonunuz kendi ayarları uyarınca Google'a ya da Apple'a çökme raporu gönderebilir; bunlar
-telefondan gelir, Taqvo'dan değil ve çökmenin teknik ayrıntılarının ötesinde size ait hiçbir şey
+telefondan gelir, Tazkir'dan değil ve çökmenin teknik ayrıntılarının ötesinde size ait hiçbir şey
 içermez.
 
 ## Çocuklar
 
-Taqvo hiç kimseden, hiçbir yaşta veri toplamaz.
+Tazkir hiç kimseden, hiçbir yaşta veri toplamaz.
 
 ## Değişiklikler
 

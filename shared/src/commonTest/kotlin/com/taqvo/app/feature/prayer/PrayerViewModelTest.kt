@@ -365,7 +365,7 @@ class PrayerViewModelTest {
     @Test
     fun beforeTheEarliestIshaTheLineSaysWhenItBegins() = runTest {
         // 19:30 in Toronto on 1 October: Maghrib is current; the earliest listed timetable begins
-        // Isha before the Isha Taqvo shows.
+        // Isha before the Isha Tazkir shows.
         val ready = readyAt("differ-before", toronto, Instant.parse("2026-10-01T23:30:00Z")) { it.setShowWhereDiffer(true) }
         val line = ready.differ!!
         assertEquals(Prayer.MAGHRIB, line.under)
@@ -378,7 +378,7 @@ class PrayerViewModelTest {
 
     @Test
     fun afterTheEarliestIshaTheLineSaysItHasBegun() = runTest {
-        // 20:20: the earliest member's Isha has begun, Taqvo's has not.
+        // 20:20: the earliest member's Isha has begun, Tazkir's has not.
         val ready = readyAt("differ-after", toronto, Instant.parse("2026-10-02T00:20:00Z")) { it.setShowWhereDiffer(true) }
         val line = ready.differ!!
         assertEquals(Prayer.ISHA, line.prayer)

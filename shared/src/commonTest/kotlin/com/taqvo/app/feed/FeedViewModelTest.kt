@@ -24,7 +24,7 @@ class FeedViewModelTest {
 
     private val store = FakeFeedStore()
     private val prefs = FakeFeedPrefs()
-    private val content = FakeContent()
+    private var content = FakeContent()
     private val analytics = RecordingAnalytics()
     private var answers = FeedOnboarding()
 
@@ -66,6 +66,7 @@ class FeedViewModelTest {
     }
 
     @Test fun aMissingTranslationFallsBackToUzbekCyrillicForThatCard() = runTest {
+        content = FakeContent(emptyLang = ContentLang.UZ_LATN)
         val card = started(ContentLang.UZ_LATN).state.value.cards.first()
         assertEquals(ContentLang.UZ_CYRL, card.lang)
         assertTrue(card.reference.endsWith("${card.item.surah}:${card.item.ayah}"))

@@ -23,7 +23,7 @@ class NotificationTapFlagsTest {
         // instance and starts a new one: the reader's place lost, an adhkar tap on Prayer instead.
         assertTrue(has(Intent.FLAG_ACTIVITY_SINGLE_TOP), "no SINGLE_TOP: the tap recreates MainActivity")
         assertTrue(has(Intent.FLAG_ACTIVITY_CLEAR_TOP), "no CLEAR_TOP: whatever sits above MainActivity stays")
-        assertTrue(has(Intent.FLAG_ACTIVITY_NEW_TASK), "no NEW_TASK: a tap with Taqvo closed has no task")
+        assertTrue(has(Intent.FLAG_ACTIVITY_NEW_TASK), "no NEW_TASK: a tap with Tazkir closed has no task")
     }
 
     @Test

@@ -6,17 +6,17 @@ les vérifie. Copiez chaque bloc tel quel dans la console.
 ## Google Play
 
 ### Title (30)
-Taqvo : Prière, Coran & Qibla
+Tazkir : Prière, Coran & Qibla
 
 ### Short description (80)
 Horaires de prière, adhan, Coran récité, adhkar et qibla. Fonctionne hors ligne.
 
 ### Full description (4000)
-Taqvo réunit l’essentiel de la journée en un seul endroit paisible : des horaires de prière là où vous êtes, un takbir ou l’adhan à chaque prière, le Coran entier à lire et à écouter, les adhkar du matin et du soir, et la qibla. Elle fonctionne hors ligne, ne coûte rien, n’affiche aucune publicité et ne demande aucun compte.
+Tazkir réunit l’essentiel de la journée en un seul endroit paisible : des horaires de prière là où vous êtes, un takbir ou l’adhan à chaque prière, le Coran entier à lire et à écouter, les adhkar du matin et du soir, et la qibla. Elle fonctionne hors ligne, ne coûte rien, n’affiche aucune publicité et ne demande aucun compte.
 
 HORAIRES DE PRIÈRE
 • Les horaires là où vous êtes, par la localisation du téléphone ou une ville parmi plus de 34 000.
-• Les horaires du calendrier que suivent les mosquées proches de chez vous. Là où Taqvo le détient, elle le reproduit et le vérifie jour après jour d’après les tableaux publiés : pour chaque jour vérifié, aucune prière ne commence avant l’heure publiée. Là où un calendrier n’est pas encore entièrement vérifié, Taqvo ajoute une marge de sécurité ; là où les mosquées suivent des calendriers différents, elle affiche des horaires par précaution, chaque prière une fois que tous l’ont commencée ; et là où aucun calendrier n’est connu, elle calcule avec prudence.
+• Les horaires du calendrier que suivent les mosquées proches de chez vous. Là où Tazkir le détient, elle le reproduit et le vérifie jour après jour d’après les tableaux publiés : pour chaque jour vérifié, aucune prière ne commence avant l’heure publiée. Là où un calendrier n’est pas encore entièrement vérifié, Tazkir ajoute une marge de sécurité ; là où les mosquées suivent des calendriers différents, elle affiche des horaires par précaution, chaque prière une fois que tous l’ont commencée ; et là où aucun calendrier n’est connu, elle calcule avec prudence.
 • Le (i) de l’écran Prière indique de qui viennent ces horaires, et « À propos de ces horaires », comment ils sont établis et vérifiés. « Aligner sur ma mosquée » cherche le calendrier de votre mosquée d’après deux horaires de son tableau ; les méthodes de calcul habituelles (Ligue islamique mondiale, égyptienne, Karachi, ISNA…) et un ajustement par prière sont aussi proposés.
 • Des règles pour les hautes latitudes, où la nuit est trop courte pour les angles habituels.
 • Une notification par prière (tonalité claire, takbir ou adhan, voix au choix dont La Mecque et Médine) et des rappels facultatifs avant, à l’iqama (délai au choix) et à la Douha.
@@ -50,7 +50,7 @@ CONÇUE POUR ÊTRE DIGNE DE CONFIANCE
 
 Disponible en anglais, arabe, français, turc, indonésien, ourdou et bengali.
 
-Horaires calculés par le moteur propre à Taqvo ; direction de la qibla par la bibliothèque Adhan. Texte du Coran du Projet Tanzil. Textes des adhkar d’OpenDua. Récitations de l’Islamic Network, concédées par les récitateurs pour une diffusion gratuite. Taqvo n’est pas affiliée aux autorités religieuses dont elle suit les calendriers.
+Horaires calculés par le moteur propre à Tazkir ; direction de la qibla par la bibliothèque Adhan. Texte du Coran du Projet Tanzil. Textes des adhkar d’OpenDua. Récitations de l’Islamic Network, concédées par les récitateurs pour une diffusion gratuite. Tazkir n’est pas affiliée aux autorités religieuses dont elle suit les calendriers.
 
 Site web : https://taqwa.world/fr/
 Assistance : jmlkhon17@gmail.com
@@ -66,9 +66,9 @@ Nouveautés de la 1.5.0 :
 ## App Store
 
 ### Name (30)
-Taqvo : Prière, Coran & Qibla
+Tazkir : Prière, Coran & Qibla
 
-(From the next version. 1.0.0 went out under the name App Store Connect accepted on 22 September 2026; the listing said "Taqvo", but plain "Taqvo" is taken on the store, so it is probably the English title. If this name is refused as taken, keep that one and the 1.0.0 subtitle, which then adds the local words the name lacks.)
+(From the next version. 1.0.0 went out under the name App Store Connect accepted on 22 September 2026; the listing said "Tazkir", but plain "Tazkir" is taken on the store, so it is probably the English title. If this name is refused as taken, keep that one and the 1.0.0 subtitle, which then adds the local words the name lacks.)
 
 ### Subtitle (30)
 Adhan & tasbih, sans publicité
@@ -76,7 +76,7 @@ Adhan & tasbih, sans publicité
 (From the next version. In 1.0.0: "Prière, Coran & Qibla". Names and subtitles change only with a new version.)
 
 ### Promotional text (170)
-Les horaires du calendrier de vos mosquées, vérifiés jour après jour là où Taqvo le détient. L’adhan, le Coran récité, les adhkar du matin et du soir, et la qibla.
+Les horaires du calendrier de vos mosquées, vérifiés jour après jour là où Tazkir le détient. L’adhan, le Coran récité, les adhkar du matin et du soir, et la qibla.
 
 (Proposal of 29 September, the owner's to take or leave; editable at any time. Until then: "Les horaires de prière là où vous êtes, l’adhan quand ils arrivent, le Coran entier à lire et à écouter, et la qibla. Gratuit, hors ligne, sans compte ni publicité.")
 

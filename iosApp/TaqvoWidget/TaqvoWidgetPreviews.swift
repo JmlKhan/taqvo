@@ -52,16 +52,16 @@ struct TaqvoWidgetPreviewScreen: View {
         let ayahMissing = showsAyah && ayahEntry.entry == nil
         switch (prayerMissing, ayahMissing) {
         case (false, false): return "Live App Group mirror data"
-        case (true, false): return "No prayer mirror data. Open Taqvo normally first."
-        case (false, true): return "No ayah mirror data. Open Taqvo normally first."
-        case (true, true): return "No mirror data. Open Taqvo normally first."
+        case (true, false): return "No prayer mirror data. Open Tazkir normally first."
+        case (false, true): return "No ayah mirror data. Open Tazkir normally first."
+        case (true, true): return "No mirror data. Open Tazkir normally first."
         }
     }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                Text("Taqvo widget preview")
+                Text("Tazkir widget preview")
                     .font(.headline)
                 Text(headerText)
                     .font(.caption)

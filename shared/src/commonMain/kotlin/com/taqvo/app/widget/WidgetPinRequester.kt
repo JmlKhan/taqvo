@@ -4,7 +4,7 @@ package com.taqvo.app.widget
 enum class PinnableWidget { PRAYER, AYAH, DUA }
 
 /**
- * Asks the launcher to place a Taqvo widget, where the platform allows asking.
+ * Asks the launcher to place a Tazkir widget, where the platform allows asking.
  *
  * Android launchers accept a pin request and show their own confirmation sheet; iOS has no such
  * call, so there [isSupported] is false for both widgets and the app shows the manual steps

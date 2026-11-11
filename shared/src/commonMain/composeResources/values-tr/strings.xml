@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Taqvo</string>
+    <string name="app_name">Tazkir</string>
     <!-- Bu dosyadaki metinlerin dili; “arayüz Arapça mı?” kararlarının okuduğu tek bilgi. -->
     <string name="ui_language">tr</string>
 
@@ -13,7 +13,7 @@
     <string name="sheet_a11y_drag_handle">Sürükleme tutamacı</string>
 
     <!-- Tanıtım -->
-    <string name="onboarding_welcome_title">Taqvo</string>
+    <string name="onboarding_welcome_title">Tazkir</string>
     <string name="onboarding_welcome_body">Namaz vakitleri, kıble ve Kur’an. Hesap yok, çevrimdışı çalışır.</string>
     <string name="onboarding_welcome_cta">Başlayalım</string>
     <string name="onboarding_location_title">Neredesiniz?</string>
@@ -23,15 +23,15 @@
     <string name="onboarding_notifications_body">Her namaz için bir bildirim. Sesi her vakit için ayrı seçersiniz, dilediğiniz zaman da değiştirebilirsiniz.</string>
     <string name="onboarding_notifications_secondary">Şimdi değil</string>
     <string name="onboarding_exact_title">Alarmlar ve hatırlatıcılar</string>
-    <string name="onboarding_exact_body">Android, tam namaz vaktinde ancak Taqvo için “Alarmlar ve hatırlatıcılar” izni verilmişse çalabilir. İzin olmadan bildirim bir saate kadar gecikebilir.</string>
+    <string name="onboarding_exact_body">Android, tam namaz vaktinde ancak Tazkir için “Alarmlar ve hatırlatıcılar” izni verilmişse çalabilir. İzin olmadan bildirim bir saate kadar gecikebilir.</string>
     <string name="onboarding_widget_title">Ana ekranınızda</string>
-    <string name="onboarding_widget_body">Taqvo widget’ı, uygulamayı açmadan sonraki vakti ve canlı geri sayımı gösterir.</string>
-    <string name="onboarding_widget_body_ios">Taqvo widget’ı, uygulamayı açmadan sonraki vakti ve canlı geri sayımı gösterir. Eklemek için ana ekrandaki Taqvo simgesine basılı tutun ve bir widget boyutu seçin.</string>
-    <string name="onboarding_widget_body_ios_legacy">Taqvo widget’ı, uygulamayı açmadan sonraki vakti ve canlı geri sayımı gösterir. Eklemek için ana ekrana basılı tutun, üst köşedeki artı işaretine dokunun, sonra Taqvo’yı aratın.</string>
+    <string name="onboarding_widget_body">Tazkir widget’ı, uygulamayı açmadan sonraki vakti ve canlı geri sayımı gösterir.</string>
+    <string name="onboarding_widget_body_ios">Tazkir widget’ı, uygulamayı açmadan sonraki vakti ve canlı geri sayımı gösterir. Eklemek için ana ekrandaki Tazkir simgesine basılı tutun ve bir widget boyutu seçin.</string>
+    <string name="onboarding_widget_body_ios_legacy">Tazkir widget’ı, uygulamayı açmadan sonraki vakti ve canlı geri sayımı gösterir. Eklemek için ana ekrana basılı tutun, üst köşedeki artı işaretine dokunun, sonra Tazkir’yı aratın.</string>
     <string name="onboarding_widget_cta_add">Widget ekle</string>
     <string name="onboarding_widget_cta_done">Tamam</string>
     <string name="onboarding_widget_secondary">Belki sonra</string>
-    <string name="onboarding_widget_steps_android">Ana ekranınız uygulamaların widget eklemesine izin vermiyor, bu yüzden kendiniz ekleyin: ana ekranda boş bir yere basılı tutun (veya iki parmağınızla sıkıştırın), Widget’lar bölümüne dokunun, Taqvo’yı bulun ve widget’ı yerine sürükleyin.</string>
+    <string name="onboarding_widget_steps_android">Ana ekranınız uygulamaların widget eklemesine izin vermiyor, bu yüzden kendiniz ekleyin: ana ekranda boş bir yere basılı tutun (veya iki parmağınızla sıkıştırın), Widget’lar bölümüne dokunun, Tazkir’yı bulun ve widget’ı yerine sürükleyin.</string>
 
     <!-- Vakit adları. Yanlarında duran Arapça ad hiçbir zaman bir kaynak dizesi değildir: her
          dilde aynı olduğu için PrayerNaming içinde yaşar. -->
@@ -62,7 +62,7 @@
         <item quantity="other">%1$s dakika</item>
     </plurals>
     <string name="prayer_exact_alarms_label">TAM ALARMLAR KAPALI</string>
-    <string name="prayer_exact_alarms_body">Taqvo için “Alarmlar ve hatırlatıcılar” izni verilmediği sürece Android bir saate kadar geç çalabilir.</string>
+    <string name="prayer_exact_alarms_body">Tazkir için “Alarmlar ve hatırlatıcılar” izni verilmediği sürece Android bir saate kadar geç çalabilir.</string>
     <string name="prayer_no_location_title">Henüz konum yok</string>
     <string name="prayer_choose_city">Şehir seç</string>
     <string name="prayer_location_settings">Konumu Ayarlar’dan aç</string>
@@ -70,11 +70,11 @@
 
     <!-- Prayer engine: the Prayer screen (Task 10) -->
     <string name="prayer_whose_checked_title">%1$s takvimi</string>
-    <string name="prayer_whose_checked_body">%2$s için %1$s vakitleri; Taqvo bunları yeniden hesaplayıp yayımlanan takvimle karşılaştırdı.</string>
+    <string name="prayer_whose_checked_body">%2$s için %1$s vakitleri; Tazkir bunları yeniden hesaplayıp yayımlanan takvimle karşılaştırdı.</string>
     <string name="prayer_whose_unchecked_title">%1$s yöntemi, henüz tam doğrulanmadı</string>
-    <string name="prayer_whose_unchecked_body">Taqvo, %2$s vakitlerini %1$s yöntemiyle, bir güvenlik payı ekleyerek hesaplar.</string>
-    <string name="prayer_whose_cautious_body">Buradaki camiler farklı takvimlere uyuyor; Taqvo her namazı, hepsinde vakit girdikten sonra gösterir.</string>
-    <string name="prayer_whose_calculated_body">Burada bilinen yerel bir takvim yok; Taqvo bu vakitleri ihtiyatlı biçimde hesaplar.</string>
+    <string name="prayer_whose_unchecked_body">Tazkir, %2$s vakitlerini %1$s yöntemiyle, bir güvenlik payı ekleyerek hesaplar.</string>
+    <string name="prayer_whose_cautious_body">Buradaki camiler farklı takvimlere uyuyor; Tazkir her namazı, hepsinde vakit girdikten sonra gösterir.</string>
+    <string name="prayer_whose_calculated_body">Burada bilinen yerel bir takvim yok; Tazkir bu vakitleri ihtiyatlı biçimde hesaplar.</string>
     <string name="prayer_about_these_times">Bu vakitler hakkında</string>
     <string name="prayer_times_by">%1$s vakitleri</string>
     <string name="prayer_whose_a11y">%1$s, %2$s. Vakitlerin kaynağını açar</string>
@@ -83,7 +83,7 @@
     <string name="prayer_source_published_method">Yayımlanan yöntem</string>
     <string name="prayer_polar_line">Güneş bugün burada ne doğuyor ne batıyor; bu yüzden bazı vakitler, güneşin doğup battığı en yakın enleme göre belirlenir.</string>
     <string name="prayer_card_cautious_title">Buradaki camiler farklı takvimlere uyuyor</string>
-    <string name="prayer_card_cautious_body">Taqvo her namazı, hepsinde vakit girdikten sonra gösterir.</string>
+    <string name="prayer_card_cautious_body">Tazkir her namazı, hepsinde vakit girdikten sonra gösterir.</string>
     <string name="prayer_card_sunni_title">Bunlar Sünni namaz vakitleridir</string>
     <string name="prayer_card_sunni_body">Şii (Caferî) uygulamasında akşam namazı ve iftar daha geçtir.</string>
     <string name="prayer_match_my_mosque">Camimle eşleştir</string>
@@ -108,7 +108,7 @@
     <string name="prayer_clock_region_chihuahua">Chihuahua</string>
     <string name="prayer_clock_region_paraguay">Paraguay</string>
     <string name="prayer_differ_before">%1$s takviminde %2$s %3$s itibarıyla başlıyor</string>
-    <string name="prayer_differ_after">%1$s takviminde %2$s başladı · Taqvo %3$s itibarıyla gösteriyor</string>
+    <string name="prayer_differ_after">%1$s takviminde %2$s başladı · Tazkir %3$s itibarıyla gösteriyor</string>
     <string name="prayer_other_asr">%1$s %2$s</string>
 
     <!-- Ayarlar kökü -->
@@ -122,23 +122,23 @@
     <string name="settings_appearance">Görünüm</string>
     <string name="settings_appearance_value">%1$s · %2$s</string>
     <string name="settings_language">Dil</string>
-    <string name="settings_about">Taqvo hakkında</string>
+    <string name="settings_about">Tazkir hakkında</string>
     <string name="settings_attribution">Kaynaklar ve lisanslar</string>
-    <string name="settings_rate">Taqvo’yı değerlendir</string>
-    <string name="settings_share">Taqvo’yı paylaş</string>
-    <string name="settings_share_message">Taqvo: namaz vakitleri, Kur’an ve kıble. Hesap gerekmez.</string>
+    <string name="settings_rate">Tazkir’yı değerlendir</string>
+    <string name="settings_share">Tazkir’yı paylaş</string>
+    <string name="settings_share_message">Tazkir: namaz vakitleri, Kur’an ve kıble. Hesap gerekmez.</string>
     <string name="settings_not_set">Belirlenmedi</string>
     <string name="settings_notifications_off">Kapalı</string>
     <string name="settings_notifications_on_count">%1$s açık</string>
     <string name="settings_version_value">1.5.0</string>
 
-    <!-- “Taqvo hakkında” ekranı. Ürün adı, simgede olduğu gibi Latin harfleriyle kalır. -->
+    <!-- “Tazkir hakkında” ekranı. Ürün adı, simgede olduğu gibi Latin harfleriyle kalır. -->
     <string name="about_tagline">Ücretsiz, herkes için, kalıcı olarak.</string>
     <string name="about_privacy_label">GİZLİLİK</string>
     <string name="about_stays_title">Telefonunuzda kalır</string>
     <string name="about_stays_body">Konum, ayarlar, yer imleri ve sayaçlar telefonunuzdan çıkmaz.</string>
     <string name="about_online_title">Yalnızca siz isteyince çevrimiçi</string>
-    <string name="about_online_body">İnternet tek bir şey için kullanılır: Taqvo’nın GitHub’daki herkese açık deposundan indirmeyi seçtiğiniz tilavetler.</string>
+    <string name="about_online_body">İnternet tek bir şey için kullanılır: Tazkir’nın GitHub’daki herkese açık deposundan indirmeyi seçtiğiniz tilavetler.</string>
     <string name="about_nothing_title">Hesap yok, analiz yok</string>
     <string name="about_nothing_body">Giriş yapılacak bir şey yok.</string>
     <string name="about_privacy_policy">Gizlilik politikası</string>
@@ -151,7 +151,7 @@
     <string name="about_icon_open_website">taqwa.world adresini aç</string>
     <string name="about_report_problem">Sorun bildir</string>
 
-    <!-- Ayarlar › Widget’lar ve Taqvo hakkında (ayarların yeniden tasarım belirtimi, 30 Ekim 2026). Widget’lar
+    <!-- Ayarlar › Widget’lar ve Tazkir hakkında (ayarların yeniden tasarım belirtimi, 30 Ekim 2026). Widget’lar
          satırının değeri ana ekrandaki widget’ları sayar: %1$s eklenenler, %2$s toplam. -->
     <string name="settings_widgets">Widget’lar</string>
     <string name="settings_widgets_all">Hepsi eklendi</string>
@@ -169,9 +169,9 @@
          galerisi de widget’ı bu adla gösterir (iosApp/TaqvoWidget’taki home_widget_name ve
          ayah_widget_name). ** ile ** arasındaki sözcükler okurun telefonda arayacağı sözcüklerdir; yıldızsız
          ve kalın gösterilir. -->
-    <string name="widgets_intro">Sonraki vakit ve günün ayeti, Taqvo’yı açmadan ana ekranınızda.</string>
-    <string name="widgets_intro_ios">Sonraki vakit ve günün ayeti, Taqvo’yı açmadan Ana Ekranınızda ve Kilitli Ekranınızda.</string>
-    <string name="widgets_background_note">Tüm Taqvo widget’ları için. Sistem seçeneği, telefonunuzun açık ve koyu tema ayarını izler.</string>
+    <string name="widgets_intro">Sonraki vakit ve günün ayeti, Tazkir’yı açmadan ana ekranınızda.</string>
+    <string name="widgets_intro_ios">Sonraki vakit ve günün ayeti, Tazkir’yı açmadan Ana Ekranınızda ve Kilitli Ekranınızda.</string>
+    <string name="widgets_background_note">Tüm Tazkir widget’ları için. Sistem seçeneği, telefonunuzun açık ve koyu tema ayarını izler.</string>
     <string name="widgets_prayer_label">NAMAZ VAKİTLERİ</string>
     <string name="widgets_prayer_name">Namaz vakitleri</string>
     <string name="widgets_prayer_body">Canlı geri sayımla sonraki vakit ve bugünün vakitleri. Küçük ya da geniş.</string>
@@ -191,15 +191,15 @@
     <string name="widgets_refused_body">Elle eklemek yalnızca birkaç saniye sürer:</string>
     <string name="widgets_step_android_1">Ana ekranınızda boş bir yere basılı tutun (veya iki parmağınızla sıkıştırın).</string>
     <string name="widgets_step_android_2">**Widget’lar** bölümüne dokunun.</string>
-    <string name="widgets_step_android_3">**Taqvo**’yı bulun, sonra %1$s widget’ını sürükleyip yerine bırakın.</string>
+    <string name="widgets_step_android_3">**Tazkir**’yı bulun, sonra %1$s widget’ını sürükleyip yerine bırakın.</string>
     <string name="widgets_how_label">NASIL EKLENİR</string>
-    <string name="widgets_step_ios_hold_1">Ana Ekranınızdaki **Taqvo** simgesine basılı tutun.</string>
+    <string name="widgets_step_ios_hold_1">Ana Ekranınızdaki **Tazkir** simgesine basılı tutun.</string>
     <string name="widgets_step_ios_hold_2">Önce %1$s, sonra bir boyut seçin.</string>
     <string name="widgets_step_ios_hold_3">Widget Ana Ekranınıza yerleşir. Dilediğiniz yere sürükleyin.</string>
-    <string name="widgets_ios_fallback">Simgeye basılı tutunca widget çıkmıyor mu? Ana Ekranda boş bir yere basılı tutun, üstteki **+** işaretine (iOS 27 ve sonrasında bir fırça), sonra **Araç Takımı Ekle**’ye dokunun ve Taqvo’yı aratın.</string>
+    <string name="widgets_ios_fallback">Simgeye basılı tutunca widget çıkmıyor mu? Ana Ekranda boş bir yere basılı tutun, üstteki **+** işaretine (iOS 27 ve sonrasında bir fırça), sonra **Araç Takımı Ekle**’ye dokunun ve Tazkir’yı aratın.</string>
     <string name="widgets_step_ios_plus_1">Ana Ekranınızda boş bir yere basılı tutun.</string>
     <string name="widgets_step_ios_plus_2">Üst köşedeki **+** işaretine dokunun.</string>
-    <string name="widgets_step_ios_plus_3">Taqvo’yı aratın ve %1$s widget’ını seçin.</string>
+    <string name="widgets_step_ios_plus_3">Tazkir’yı aratın ve %1$s widget’ını seçin.</string>
     <string name="widgets_show_how">Nasıl yapılacağını göster</string>
     <string name="widgets_lock_label">KİLİTLİ EKRAN</string>
     <string name="widgets_lock_name">Sonraki vakit bir bakışta</string>
@@ -207,8 +207,8 @@
     <string name="widgets_lock_then">sonra %1$s</string>
     <string name="widgets_step_lock_1">Kilitli Ekranınıza basılı tutun, sonra **Özelleştir**’e dokunun.</string>
     <string name="widgets_step_lock_2">Kilitli Ekran’ı seçin, sonra saatin altındaki boşluğa dokunun.</string>
-    <string name="widgets_step_lock_3">**Taqvo**’yı, sonra yuvarlak ya da geniş widget’ı seçin.</string>
-    <!-- Taqvo hakkında: sloganın altındaki etiket (%1$s sürüm, settings_version_value) ve son iki kartın
+    <string name="widgets_step_lock_3">**Tazkir**’yı, sonra yuvarlak ya da geniş widget’ı seçin.</string>
+    <!-- Tazkir hakkında: sloganın altındaki etiket (%1$s sürüm, settings_version_value) ve son iki kartın
          başlıkları. Değerlendir ve Paylaş orada settings_rate, settings_share ve settings_share_message’ı
          kullanır. -->
     <string name="about_version_chip">Sürüm %1$s</string>
@@ -216,7 +216,7 @@
     <string name="about_help_label">YARDIM</string>
 
     <!-- Çökme raporu: çökmeden sonraki açılışta gösterilen sayfa ve gönderilecek rapor olmadığında e-postadaki satır. -->
-    <string name="crash_sheet_title">Taqvo beklenmedik şekilde kapandı</string>
+    <string name="crash_sheet_title">Tazkir beklenmedik şekilde kapandı</string>
     <string name="crash_sheet_body">Telefonunuza teknik bir rapor kaydedildi. Bunu jmlkhon17@gmail.com adresine göndermeniz sorunun düzeltilmesine yardımcı olur. Raporda yalnızca uygulama sürümü, telefonunuzun modeli ve hata bilgisi bulunur.</string>
     <string name="crash_send">Raporu gönder</string>
     <string name="crash_not_now">Şimdi değil</string>
@@ -329,7 +329,7 @@
     <string name="timetable_auto_authority">%1$s tarafından bu yer için yayımlanan takvim</string>
     <string name="timetable_auto_majority">%1$s; buradaki camilerin çoğu buna uyuyor</string>
     <string name="timetable_auto_cautious">İhtiyatlı vakitler: her namaz, buradaki takvimlerin hepsinde başladıktan sonra</string>
-    <string name="timetable_auto_calculated">Taqvo hesabı: bu yer için bilinen bir takvim yok</string>
+    <string name="timetable_auto_calculated">Tazkir hesabı: bu yer için bilinen bir takvim yok</string>
     <string name="timetable_times_today">Bugün Sabah %1$s, Akşam %2$s, Yatsı %3$s</string>
     <string name="timetable_nearby_label">ÇEVREDE DE KULLANILANLAR</string>
     <string name="timetable_other_methods">Diğer yöntemler</string>
@@ -343,7 +343,7 @@
     <string name="timetable_later_fast">Bazı günlerde imsak %2$s %1$s sonra başlıyor. Yalnızca camiiniz bu takvime uyuyorsa izleyin.</string>
     <string name="timetable_of_authority">%1$s vaktinden</string>
     <string name="timetable_of_cautious">ihtiyatlı vakitlerden</string>
-    <string name="timetable_of_taqvo">Taqvo vaktinden</string>
+    <string name="timetable_of_taqvo">Tazkir vaktinden</string>
     <plurals name="timetable_minutes">
         <item quantity="one">%1$s dakika</item>
         <item quantity="other">%1$s dakika</item>
@@ -358,21 +358,21 @@
     <string name="match_hour_apart">İki vakit de tam bir saat farklı: panonuz yaz ya da kış saatine göre olabilir. Bu takvimde Sabah %1$s, Yatsı %2$s.</string>
     <string name="match_one_fajr">Sabah vakti tutuyor, ama Yatsı %1$s.</string>
     <string name="match_one_isha">Yatsı vakti tutuyor, ama Sabah %1$s.</string>
-    <string name="match_none">Taqvo’nın bildiği hiçbir takvim iki vakte de uymuyor.</string>
+    <string name="match_none">Tazkir’nın bildiği hiçbir takvim iki vakte de uymuyor.</string>
     <string name="match_fajr_isha">Sabah %1$s, Yatsı %2$s</string>
     <string name="match_use">Bu takvimi kullan</string>
-    <string name="match_in_use">Taqvo zaten bu takvime uyuyor.</string>
+    <string name="match_in_use">Tazkir zaten bu takvime uyuyor.</string>
     <string name="timetable_source_authority">%1$s vakti</string>
     <string name="timetable_source_cautious">ihtiyatlı vakit</string>
-    <string name="timetable_source_taqvo">Taqvo vakti</string>
+    <string name="timetable_source_taqvo">Tazkir vakti</string>
     <string name="timetable_source_latest">buradaki en geç takvim</string>
     <string name="adjust_paused_for">%1$s · beklemede (%2$s için ayarlandı)</string>
     <string name="adjust_timetable_paused_note">Vakti öne alan düzeltmeler, %1$s Vakit takvimi’nde onaylanana kadar bekler.</string>
     <string name="adjust_confirm_title">%1$s, %2$s öncesinde gösterilsin mi?</string>
     <string name="adjust_confirm_body">Vaktinden önce kılınan namaz yeniden kılınmalıdır. Bunu yalnızca camiinizin takvimi daha erkense yapın.</string>
     <string name="adjust_confirm_body_maghrib">Vaktinden önce kılınan namaz yeniden kılınmalı, vaktinden önce açılan oruç da kaza edilmelidir. Bunu yalnızca camiinizin takvimi daha erkense yapın.</string>
-    <string name="adjust_strong_body">Taqvo’daki %1$s vakti ile %3$s arasındaki fark en fazla %2$s; %4$s onu bu vaktin öncesine alır. Vaktinden önce kılınan namaz yeniden kılınmalıdır. Bunu yalnızca camiinizin takvimi bu kadar erkense yapın.</string>
-    <string name="adjust_strong_body_maghrib">Taqvo’daki %1$s vakti ile %3$s arasındaki fark en fazla %2$s; %4$s onu bu vaktin öncesine alır. Vaktinden önce kılınan namaz yeniden kılınmalı, vaktinden önce açılan oruç da kaza edilmelidir. Bunu yalnızca camiinizin takvimi bu kadar erkense yapın.</string>
+    <string name="adjust_strong_body">Tazkir’daki %1$s vakti ile %3$s arasındaki fark en fazla %2$s; %4$s onu bu vaktin öncesine alır. Vaktinden önce kılınan namaz yeniden kılınmalıdır. Bunu yalnızca camiinizin takvimi bu kadar erkense yapın.</string>
+    <string name="adjust_strong_body_maghrib">Tazkir’daki %1$s vakti ile %3$s arasındaki fark en fazla %2$s; %4$s onu bu vaktin öncesine alır. Vaktinden önce kılınan namaz yeniden kılınmalı, vaktinden önce açılan oruç da kaza edilmelidir. Bunu yalnızca camiinizin takvimi bu kadar erkense yapın.</string>
     <string name="adjust_keep">%1$s kalsın</string>
     <string name="adjust_use">%1$s uygula</string>
     <string name="adjust_note">Bir vakti, takvimdeki vakitten en fazla bir saat kaydırır. Yalnızca camiinizin panosu farklıysa kullanın.</string>
@@ -413,11 +413,11 @@
     <string name="about_times_title">Bu vakitler hakkında</string>
     <string name="about_prayer_times_settings">Namaz vakitleri ayarları</string>
     <string name="timetable_cautious">İhtiyatlı vakitler</string>
-    <string name="timetable_calculated">Taqvo hesabı</string>
+    <string name="timetable_calculated">Tazkir hesabı</string>
     <string name="about_who_publishes">Vakitleri kim yayımlıyor</string>
     <string name="about_who_publishes_body">%2$s için kullanılan namaz vakitlerini %1$s yayımlar.</string>
-    <string name="about_not_affiliated">Taqvo’nın %1$s ile bir bağı yoktur.</string>
-    <string name="about_how_reproduces">Taqvo bu vakitleri nasıl hesaplıyor</string>
+    <string name="about_not_affiliated">Tazkir’nın %1$s ile bir bağı yoktur.</string>
+    <string name="about_how_reproduces">Tazkir bu vakitleri nasıl hesaplıyor</string>
     <string name="about_method_intro">%1$s hesaplama yöntemi: %2$s.</string>
     <string name="about_method_fajr_angle">sabah (imsak) ufkun %1$s° altında</string>
     <string name="about_method_isha_angle">yatsı ufkun %1$s° altında</string>
@@ -436,19 +436,19 @@
     <string name="about_checked_through">%1$s tarafından yayımlanan takvimle %2$s tarihine kadar karşılaştırıldı.</string>
     <string name="about_not_measured_unit">%1$s için ölçülmedi.</string>
     <string name="about_checked_so_far_with_data">Şimdiye kadar %1$s gün kontrol edildi: hiçbir vakit %2$s vaktinden önce değil, en fazla %3$s dakika sonra.</string>
-    <string name="about_checked_so_far_without_data">Taqvo bu vakitleri henüz %1$s takvimiyle karşılaştırmadı.</string>
+    <string name="about_checked_so_far_without_data">Tazkir bu vakitleri henüz %1$s takvimiyle karşılaştırmadı.</string>
     <string name="about_not_followed_irn_tromso">%1$s takviminin Mekke saatine göre sabah vakti, güneş doğduktan sonraya düştüğü nisan sonundan mayıs ortasına kadar ve temmuz sonundan ağustos ortasına kadar izlenmez; gece yarısı güneşi günlerindeki güneş doğuşu da izlenmez ve akşam vakti hiçbir zaman gerçek gün batımından önce girmez.</string>
     <string name="about_authority_method_title">%1$s yöntemi</string>
-    <string name="about_authority_unchecked_body">%2$s için namaz vakitlerini %1$s yayımlar. Taqvo bunları %1$s yöntemiyle, bir güvenlik payı ekleyerek hesaplar.</string>
-    <string name="about_majority_unchecked_body">%2$s camilerinin çoğu %1$s yöntemine uyuyor. Taqvo vakitleri bu yöntemle, bir güvenlik payı ekleyerek hesaplar.</string>
+    <string name="about_authority_unchecked_body">%2$s için namaz vakitlerini %1$s yayımlar. Tazkir bunları %1$s yöntemiyle, bir güvenlik payı ekleyerek hesaplar.</string>
+    <string name="about_majority_unchecked_body">%2$s camilerinin çoğu %1$s yöntemine uyuyor. Tazkir vakitleri bu yöntemle, bir güvenlik payı ekleyerek hesaplar.</string>
     <string name="about_nearby_heading">Bazı yerel camilerin bunun yerine uyduğu takvimler</string>
-    <string name="about_cautious_body">%1$s camileri iyi niyetle farklı takvimlere uyuyor ve hiçbirine çoğunluk uymuyor. Taqvo %2$s takvimlerini birleştirir: her namaz, hepsinde vakit girdikten sonra gösterilir.</string>
+    <string name="about_cautious_body">%1$s camileri iyi niyetle farklı takvimlere uyuyor ve hiçbirine çoğunluk uymuyor. Tazkir %2$s takvimlerini birleştirir: her namaz, hepsinde vakit girdikten sonra gösterilir.</string>
     <string name="about_cautious_maghrib_guard">Akşam bugün istisnadır: vakti %1$s takviminin gün batımı hesabına göre girer, %2$s takviminin yüksek enlem kuralıyla belirlediği daha geç akşam vaktine göre değil.</string>
     <string name="about_cautious_maghrib_no_sunset">Akşam bugün istisnadır, çünkü burada gün batımı yok: en çok uyulan takvim olan %1$s takvimine uyar, %2$s takviminin daha geç akşam vaktine değil.</string>
     <string name="about_which_decides">Bugün her vakti hangi takvim belirliyor</string>
     <string name="about_stat_never_before_decider">onu belirleyen takvimin vaktinden önce başlangıç</string>
     <string name="about_cautious_checked">Burada uyulan takvimlerle karşılaştırıldı.</string>
-    <string name="about_calculated_body">Taqvo, %1$s için resmî bir Sünni takvim bulamadı; bu yüzden ihtiyatlı biçimde hesaplıyor: %2$s.</string>
+    <string name="about_calculated_body">Tazkir, %1$s için resmî bir Sünni takvim bulamadı; bu yüzden ihtiyatlı biçimde hesaplıyor: %2$s.</string>
     <string name="about_asr_heading">İkindi</string>
     <string name="about_asr_known">%1$s: %3$s; çünkü %2$s camilerinin çoğu buna uyuyor.</string>
     <string name="about_asr_unknown">%1$s: %3$s, yani daha geç vakit; çünkü %2$s için çoğunluğun mezhebi bilinmiyor. Bunu Ayarlar’dan değiştirebilirsiniz.</string>
@@ -460,9 +460,9 @@
     <string name="about_stop_eating">Bugün en geç %1$s itibarıyla yemeyi bırakın.</string>
 
     <!-- Kaynaklar -->
-    <string name="attribution_intro">Taqvo, başkalarının karşılıksız verdiği emeğin üzerine kuruldu. Lisansları anılmalarını gerektiriyor; zaten hakları da bu.</string>
+    <string name="attribution_intro">Tazkir, başkalarının karşılıksız verdiği emeğin üzerine kuruldu. Lisansları anılmalarını gerektiriyor; zaten hakları da bu.</string>
     <string name="credit_calculation">Namaz vakti hesaplaması</string>
-    <string name="credit_calculation_detail">Taqvo’nın kendi motoru. Kıble yönü, Batoul Apps’in Adhan kütüphanesiyle hesaplanır (MIT lisansı).</string>
+    <string name="credit_calculation_detail">Tazkir’nın kendi motoru. Kıble yönü, Batoul Apps’in Adhan kütüphanesiyle hesaplanır (MIT lisansı).</string>
     <string name="credit_cities">Şehir veritabanı</string>
     <string name="credit_cities_detail">GeoNames cities15000, CC BY 4.0 lisansı.</string>
     <string name="credit_typeface">Manrope yazı tipi</string>
@@ -588,9 +588,9 @@
     <string name="qibla_cardinal_east">D</string>
     <string name="qibla_cardinal_south">G</string>
     <string name="qibla_cardinal_west">B</string>
-    <string name="notifications_exact_alarms_off">Taqvo için tam alarmlar kapalı; bu yüzden bildirim bir saate kadar geç gelebilir. Tam dakikasında çalabilmesi için “Alarmlar ve hatırlatıcılar” iznini verin.</string>
+    <string name="notifications_exact_alarms_off">Tazkir için tam alarmlar kapalı; bu yüzden bildirim bir saate kadar geç gelebilir. Tam dakikasında çalabilmesi için “Alarmlar ve hatırlatıcılar” iznini verin.</string>
     <string name="notifications_allow_exact_alarms">Tam alarmlara izin ver</string>
-    <string name="notifications_blocked">Sistem ayarlarında Taqvo için bildirimler kapalı; yeniden izin verilene kadar hiçbir namaz uyarısı gösterilemez.</string>
+    <string name="notifications_blocked">Sistem ayarlarında Tazkir için bildirimler kapalı; yeniden izin verilene kadar hiçbir namaz uyarısı gösterilemez.</string>
     <string name="notifications_open_settings">Bildirim ayarlarını aç</string>
     <string name="hijri_tabular">Hesaplanan</string>
     <!-- Alt sekme çubuğu (yineleme 1; yineleme 8: Kıble Namaz ekranına katlandı; dilim 2: Kur’an
@@ -838,7 +838,7 @@
     <string name="wallpapers_done_set">Duvar kâğıdı ayarlandı.</string>
     <string name="wallpapers_done_saved">Fotoğraflar’a kaydedildi.</string>
     <string name="wallpapers_refused_android">Bu telefon, uygulamaların duvar kâğıdını değiştirmesine izin vermiyor.</string>
-    <string name="wallpapers_refused_ios">Taqvo’nın fotoğraf eklemesine izin verilmiyor. Ayarlar › Taqvo › Fotoğraflar’dan izin verin.</string>
+    <string name="wallpapers_refused_ios">Tazkir’nın fotoğraf eklemesine izin verilmiyor. Ayarlar › Tazkir › Fotoğraflar’dan izin verin.</string>
     <string name="wallpapers_failed">Duvar kâğıdı kaydedilemedi. Lütfen tekrar deneyin.</string>
     <string name="wallpapers_dua_reference">Hisnü’l-Müslim %1$s</string>
     <string name="wallpapers_a11y_preview">Duvar kâğıdı önizlemesi: %1$s</string>
@@ -925,14 +925,14 @@
     <string name="onb_guide_lock_2">Altta düğmeler çıkana kadar ekranın boş bir yerine basılı tut.</string>
     <string name="onb_guide_lock_3">**Özelleştir**’e dokun, sonra kilit ekranını seç.</string>
     <string name="onb_guide_lock_4">Saatin altındaki kutuya dokun.</string>
-    <string name="onb_guide_lock_5">Listede **Taqvo**’yu bul ve dokun.</string>
+    <string name="onb_guide_lock_5">Listede **Tazkir**’yu bul ve dokun.</string>
     <string name="onb_guide_lock_6">İstediğin araç takımını seç — hazır!</string>
     <string name="onb_guide_done">Anladım!</string>
     <string name="settings_daily_ayahs">Günlük ayetler</string>
     <string name="settings_daily_ayahs_value">Günde %1$s</string>
     <string name="daily_ayahs_toggle">Günlük ayet hatırlatmaları</string>
     <string name="daily_ayahs_note">Ayetler, seçtiğin konulardan, başlangıç ile bitiş arasında eşit aralıklarla gelir. Namaz bildirimleri her zaman önce gelir.</string>
-    <string name="daily_ayahs_denied">Taqvo için bildirimler kapalı, bu yüzden günlük ayetler gelemez. Telefon ayarlarından aç.</string>
+    <string name="daily_ayahs_denied">Tazkir için bildirimler kapalı, bu yüzden günlük ayetler gelemez. Telefon ayarlarından aç.</string>
     <string name="daily_ayahs_open_system">Bildirim ayarlarını aç</string>
     <string name="daily_ayahs_format_label">AYET GÖRÜNÜMÜ</string>
     <string name="tab_feed">Akış</string>
@@ -1010,7 +1010,7 @@
     <string name="feed_theme_a11y">Tema %1$d</string>
     <string name="feed_theme_edit">Düzenle</string>
     <string name="feed_tools_duas">Dualar</string>
-    <string name="feed_help_about">Taqvo hakkında</string>
+    <string name="feed_help_about">Tazkir hakkında</string>
     <string name="feed_help_q1">Akış ayetleri nasıl seçer?</string>
     <string name="feed_help_a1">Başta seçtiğiniz konulara göre. Beğendiğiniz her ayet benzerlerini artırır; hızla geçtiğiniz biraz azaltır.</string>
     <string name="feed_help_q2">Günlük hedef nedir?</string>

@@ -103,7 +103,7 @@ private fun openAyahAction(context: Context, entry: AyahPoolEntry?): Action = ac
         )
         .also { intent ->
             // No entry means the mirror has not been written yet: the card is empty, and the tap
-            // is just "open Taqvo" rather than a dead rectangle.
+            // is just "open Tazkir" rather than a dead rectangle.
             if (entry == null) return@also
             intent.setAction(ACTION_OPEN_AYAH)
                 .setData(Uri.parse("taqvo://ayah/${entry.surah}/${entry.ayah}"))

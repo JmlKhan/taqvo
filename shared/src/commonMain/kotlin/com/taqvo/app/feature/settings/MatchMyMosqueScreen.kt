@@ -63,7 +63,7 @@ import com.taqvo.app.resources.timetable_match_mosque
 
 /**
  * Where the check of the matched timetable [id] stands: running, done (with what it found, if
- * anything), or not needed because Taqvo already follows it. It names its timetable, so a check
+ * anything), or not needed because Tazkir already follows it. It names its timetable, so a check
  * left over from an earlier match is never taken for the one on screen.
  */
 sealed interface MatchCheck {

@@ -96,7 +96,7 @@ import com.taqvo.app.share.shareText
 import com.taqvo.app.widget.isIosPlatform
 
 /**
- * Settings › About Taqvo (privacy spec §6; settings redesign spec, approved 30 Oct 2026): the app's
+ * Settings › About Tazkir (privacy spec §6; settings redesign spec, approved 30 Oct 2026): the app's
  * profile page. The icon, the name and the version first; then the two things a reader can do for
  * the app, rate it and share it; then what it promises and where the promise can be checked, its
  * source and its credits, and how to reach a person. The credits stay on their own screen, one
@@ -127,7 +127,7 @@ fun AboutScreen(onBack: () -> Unit, onOpenAttribution: () -> Unit) {
         // API, no launch counter deciding when to ask, and nothing stored; until one of these two
         // buttons is tapped, nothing happens (privacy spec §6.5).
         ActionPills(Modifier.padding(start = SettingsGutter, end = SettingsGutter, top = 24.dp)) {
-            // The platform's own store, at its page for Taqvo: the first of the rate links that
+            // The platform's own store, at its page for Tazkir: the first of the rate links that
             // something on the phone answers, so a phone without the store app gets the web listing.
             ActionPill(
                 stringResource(Res.string.settings_rate),
@@ -167,7 +167,7 @@ fun AboutScreen(onBack: () -> Unit, onOpenAttribution: () -> Unit) {
                             }
                         // The one row here that stays in the app, so the disclosure chevron rather
                         // than the external-link glyph: the trailing glyphs tell the reader which
-                        // rows leave Taqvo before the tap.
+                        // rows leave Tazkir before the tap.
                         AboutRow.ATTRIBUTION -> TaqvoRow(
                             stringResource(Res.string.settings_attribution),
                             onClick = onOpenAttribution,
@@ -200,7 +200,7 @@ private val AboutGroupGap = 32.dp
  * heading: the same background, insets, width cap, scroll and back chevron, so About sits exactly
  * where every other settings screen does. Its own frame rather than an option on the scaffold,
  * whose signature other work builds on. With no visible title, the pane carries [title] for
- * TalkBack and VoiceOver, so the screen is still named "About Taqvo" when it opens.
+ * TalkBack and VoiceOver, so the screen is still named "About Tazkir" when it opens.
  */
 @Composable
 private fun AboutFrame(title: String, onBack: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
@@ -239,7 +239,7 @@ private fun AboutHero(onOpenWebsite: () -> Unit) {
         // The product name, in Latin script in every locale, as on the icon. A heading, and the
         // screen's first: with no title above it, heading navigation starts here.
         Text(
-            "Taqvo",
+            "Tazkir",
             style = TaqvoText.screenTitle.copy(fontSize = 30.sp),
             color = colors.textPrimary,
             modifier = Modifier.semantics { heading() },

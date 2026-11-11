@@ -380,7 +380,7 @@ object Levant {
     /**
      * Yemen: no Sunni authority's table found (Aden side not found); the Sana'a Awqaf's 31 points on one
      * date (LOW) are Fajr 18°, Isha ≈ 16°, Dhuhr ≈ + 10, Maghrib + 6 in the lowlands and ≈ + 9.5 in the
-     * highlands. Calculated by Taqvo (spec §6.2 c) with those published minutes as floors (§6.2 d):
+     * highlands. Calculated by Tazkir (spec §6.2 c) with those published minutes as floors (§6.2 d):
      * Isha 18° + 2, Dhuhr and Maghrib + 10, Asr + 2, sunrise − 2, the end of eating 2 min before 18°.
      */
     val yemenMethod = TimetableMethod(

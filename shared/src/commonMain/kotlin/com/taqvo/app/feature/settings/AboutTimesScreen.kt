@@ -336,12 +336,12 @@ private fun AuthorityUncheckedContent(
         SectionBody(stringResource(Res.string.about_checked_so_far_without_data, authority))
     }
     NotFollowedNote(resolution, authority)
-    // A convention is no one to be affiliated with ("Taqvo is not affiliated with Karachi").
+    // A convention is no one to be affiliated with ("Tazkir is not affiliated with Karachi").
     if (kind != TimetableKind.MAJORITY) SectionBody(stringResource(Res.string.about_not_affiliated, authority))
 }
 
 /**
- * What of the authority's calendar Taqvo does not follow here, where its clock rule says (ruling
+ * What of the authority's calendar Tazkir does not follow here, where its clock rule says (ruling
  * R82: IRN's Makkah-time Fajr after sunrise and its midnight-sun sunrise at Tromsø), so that "never
  * before" claims no more than is true; nothing elsewhere.
  */

@@ -254,7 +254,7 @@ sealed interface HighLatRule {
  *   town by a printed figure ([FixedPointMode.TABLE]), whose sunset is the table's.
  * - [fixedTableOwnDawn]: under [fixedTableYear], the dawn is also the date's own: Fajr never before,
  *   and the end of eating and imsak never after, what the method gives on the date's own sun (IZ
- *   BiH's edge, where no table is held and Taqvo keeps the real dawn, spec §10.8).
+ *   BiH's edge, where no table is held and Tazkir keeps the real dawn, spec §10.8).
  *
  * The arrays compare by reference in [equals]; methods are registry singletons.
  */

@@ -1,6 +1,6 @@
 # Store launch runbook
 
-Everything between the code on `main` and Taqvo being live on Google Play and the App Store, in
+Everything between the code on `main` and Tazkir being live on Google Play and the App Store, in
 the order to do it. Rewritten 14 September 2026 for the accounts Mohamed decided on: a new Google
 account **mohamed.abulgasem.ly@gmail.com** for Google Play and a new Apple Account with the same
 address for the App Store. LOOPDL LIMITED (team 5S5P2Q72MV) is his employer and is never used to
@@ -21,12 +21,12 @@ accounts on day one: the App Store can be live within about a week, Google Play 
   (already forwards to Gmail), website https://taqwa.world, privacy policy
   https://taqwa.world/privacy/ (App Store localisations may use https://taqwa.world/<lang>/privacy/).
   mohamed.abulgasem.ly@gmail.com is the login, not the public contact.
-- **Names in the stores:** Play title "Taqvo: Prayer, Quran & Qibla" (28 of 30 characters). App
-  Store name "Taqvo" if it is free (App Store names are unique across the whole store and a
+- **Names in the stores:** Play title "Tazkir: Prayer, Quran & Qibla" (28 of 30 characters). App
+  Store name "Tazkir" if it is free (App Store names are unique across the whole store and a
   five-letter Arabic word is probably taken), otherwise the same 28-character title; subtitle
-  "Prayer times, Quran & Qibla". Outcome, 22 September: the App Store record is named "Taqvo:
-  Prayer, Quran & Qibla", because plain "Taqvo" is taken (so are a dozen look-alikes such as
-  "Taqvo - Prayer Times & Quran", checked 24 September), and that subtitle repeats the name. From
+  "Prayer times, Quran & Qibla". Outcome, 22 September: the App Store record is named "Tazkir:
+  Prayer, Quran & Qibla", because plain "Tazkir" is taken (so are a dozen look-alikes such as
+  "Tazkir - Prayer Times & Quran", checked 24 September), and that subtitle repeats the name. From
   the next version each App Store language gets a translated name carrying prayer, Quran and
   Qibla, a subtitle carrying adhan, tasbeeh and no ads, and keywords with neither's words: the
   values sit in `docs/store/listing/<lang>.md` (App Information for name and subtitle, the
@@ -69,7 +69,7 @@ accounts on day one: the App Store can be live within about a week, Google Play 
   same for `capture-ios.sh`, then `tools/store/assemble.sh` — and commits the result.
   `git status docs/store/screenshots` (or the commit's file list) is what to upload to each
   store by hand. Play's release notes per build live in `docs/store/release-notes/`.
-  **Re-shoot only from the main checkout** (`~/Desktop/Workspace/apps/Taqvo`), never from a
+  **Re-shoot only from the main checkout** (`~/Desktop/Workspace/apps/Tazkir`), never from a
   worktree: `assemble.sh` starts with `rm -rf docs/store/screenshots/play docs/store/screenshots/appstore`
   and frames back only what `build/store-shots/{android,ios}/<lang>/` holds. `build/` is
   git-ignored, so the raw captures, all eight per language, exist only in the main checkout's
@@ -82,11 +82,11 @@ accounts on day one: the App Store can be live within about a week, Google Play 
   page. **At Android production**, not at the iOS release: `tools/site-beta.py remove && python3
   site/build.py`, and delete the README block between its `beta:start`/`beta:end` markers. The
   hero's "Join the Android beta" button goes with the section by itself. **At the iOS release**
-  the section stays, because the closed test is still running, but its heading "Help test Taqvo
+  the section stays, because the closed test is still running, but its heading "Help test Tazkir
   before it launches." stops being true: re-word it for Android in all seven languages in
-  `tools/site-beta.py` (en: "Help test Taqvo for Android before it reaches Google Play.") and
+  `tools/site-beta.py` (en: "Help test Tazkir for Android before it reaches Google Play.") and
   run `tools/site-beta.py add && python3 site/build.py` (`add` strips and re-inserts, so it can
-  run again). **Done 8 October 2026,** with Taqvo live on Google Play: the section is off all
+  run again). **Done 8 October 2026,** with Tazkir live on Google Play: the section is off all
   seven home pages and the README's block is gone. `tools/site-beta.py add` puts the section back
   for a future test.
 - **The site's store badges** come from `site/stores.json`, one address per store, `null` until
@@ -98,7 +98,7 @@ accounts on day one: the App Store can be live within about a week, Google Play 
   reports.exodus-privacy.eu.org and set `exodus` to its address: the privacy section links it.
   The city pages' two app places — the desktop pitch and the section `#app` at the foot of every
   city page (`site/timetables.py`, through `site/stores.py`, the same function as the hero) —
-  switch with the same edit; the Today card's foot keeps its "Get Taqvo" pill, which points to
+  switch with the same edit; the Today card's foot keeps its "Get Tazkir" pill, which points to
   `#app`. After the build open one city page and check the badge shows in the pitch and in `#app`.
   **Done 8 October 2026:** `google_play` is set, so every home page and city page carries both
   badges and no "coming" line. **Done 9 October 2026:** Exodus's report of the Play build 1.0.0
@@ -121,7 +121,7 @@ accounts on day one: the App Store can be live within about a week, Google Play 
   addresses, and so does Safari's Smart App Banner: Apple documents no syntax for campaign tokens
   there (see `app_banner` in `site/stores.py`). The pages count no one (no cookie, no analytics,
   nothing stored); the stores count, in aggregate, in their own consoles.
-  **The App Store provider token** (only Mohamed can do this): in App Store Connect open Taqvo in
+  **The App Store provider token** (only Mohamed can do this): in App Store Connect open Tazkir in
   Analytics → Acquisition → Campaigns → **+**, name a campaign `poster`, and copy the generated
   link. Its `pt=` number is the provider token, the same for every campaign of the account (Apple
   shows the button only once the app has analytics data). Set it in `site/stores.json` as a string
@@ -162,7 +162,7 @@ accounts on day one: the App Store can be live within about a week, Google Play 
    is taken) → password → phone number (SMS code) → recovery email algiriany93@gmail.com.
 2. Security → turn on **2-Step Verification** (Play Console requires it for the account owner;
    the Google prompt on the S23 or an authenticator app both work). Add a passkey if offered.
-3. Keep this account for Taqvo only; the S23 keeps its own main account. The new account's
+3. Keep this account for Tazkir only; the S23 keeps its own main account. The new account's
    YouTube channel is where the two foreground-service demo videos go later (unlisted).
 
 ### 2b. Google Play Console (25 USD once)
@@ -205,7 +205,7 @@ accounts on day one: the App Store can be live within about a week, Google Play 
    characters) and pass it on; it replaces `TEAM_ID` in `iosApp/Configuration/Config.xcconfig`
    and the widget target's team.
 6. On this Mac: Xcode → Settings → Accounts → **+** → Apple Account → sign in with the new account.
-   The account that carries LOOPDL may stay signed in, but that team is never selected for Taqvo
+   The account that carries LOOPDL may stay signed in, but that team is never selected for Tazkir
    again. From then on automatic signing also works from the command line
    (`-allowProvisioningUpdates`), and the first archive registers the bundle ids and the App Group
    under the new team.
@@ -241,8 +241,8 @@ costs days.
 - Screenshots per §1, plus the 512 icon (`androidApp/src/main/ic_launcher-playstore.png`)
   and the 1024 × 500 feature graphics already in `assets/store/`.
 - Two screen recordings for Play's foreground-service declarations, recorded on the emulator on
-  16 September: `~/Downloads/Taqvo-fgs-media-playback.mp4` (a surah playing, the app left, the
-  media notification with its controls, 29 s) and `~/Downloads/Taqvo-fgs-data-sync.mp4` ("Download
+  16 September: `~/Downloads/Tazkir-fgs-media-playback.mp4` (a surah playing, the app left, the
+  media notification with its controls, 29 s) and `~/Downloads/Tazkir-fgs-data-sync.mp4` ("Download
   the whole Quran", the app left, the download notification counting up, 44 s). Mohamed uploads
   them unlisted to the new account's YouTube channel and pastes the two links into the
   declaration form (mediaPlayback and dataSync).
@@ -257,7 +257,7 @@ costs days.
 
 ## 5. Google Play, in console order
 
-1. **Create app**: All apps → Create app → name "Taqvo: Prayer, Quran & Qibla", default language
+1. **Create app**: All apps → Create app → name "Tazkir: Prayer, Quran & Qibla", default language
    English (United Kingdom), App, Free (a free app can never become paid), tick the declarations
    → Create.
 2. **Dashboard → Set up your app**, every answer from `docs/STORE-PRIVACY.md`: privacy policy URL;

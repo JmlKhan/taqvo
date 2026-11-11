@@ -17,7 +17,7 @@ enum class AdhanVoice {
 
 /**
  * When the Duha reminder rings (Duha and Iqama spec §2): at its best time, midway between sunrise
- * and solar noon, or once its time is in, which is when every authority Taqvo knows agrees it has
+ * and solar noon, or once its time is in, which is when every authority Tazkir knows agrees it has
  * begun. [BEST] is the default.
  */
 enum class DuhaTiming { BEST, START }

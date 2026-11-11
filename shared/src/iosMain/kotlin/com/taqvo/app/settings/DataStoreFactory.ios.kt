@@ -10,7 +10,7 @@ import platform.Foundation.NSURLIsExcludedFromBackupKey
 import platform.Foundation.NSUserDomainMask
 
 /**
- * `Library/Application Support/Taqvo`, created on first use and marked excluded from iCloud
+ * `Library/Application Support/Tazkir`, created on first use and marked excluded from iCloud
  * backup. The settings file holds the reader's coordinates or chosen city, and "your location
  * never leaves your phone" has to include Apple's backup; Documents, where the file lived until
  * 0.11, is backed up by default and there is no per-file rule that survives DataStore rewriting
@@ -27,14 +27,14 @@ actual fun dataStoreDirectory(): String {
     val documents = requireNotNull(documentsUrl.path)
     // Every fallback below leaves the settings — and with them the reader's coordinates — in
     // Documents, which iCloud backs up. There is no per-file rule that survives DataStore
-    // rewriting the file, so the flag goes on the directory, as it does on `Taqvo` above. Best
-    // effort, and Taqvo is the only thing that has ever put a file there.
+    // rewriting the file, so the flag goes on the directory, as it does on `Tazkir` above. Best
+    // effort, and Tazkir is the only thing that has ever put a file there.
     fun documentsFallback(): String {
         documentsUrl.setResourceValue(true, forKey = NSURLIsExcludedFromBackupKey, error = null)
         return documents
     }
     val support = fm.directory(NSApplicationSupportDirectory)
-    val dir = support.URLByAppendingPathComponent("Taqvo", isDirectory = true) ?: return documentsFallback()
+    val dir = support.URLByAppendingPathComponent("Tazkir", isDirectory = true) ?: return documentsFallback()
     val dirPath = dir.path ?: return documentsFallback()
 
     if (!fm.fileExistsAtPath(dirPath)) {

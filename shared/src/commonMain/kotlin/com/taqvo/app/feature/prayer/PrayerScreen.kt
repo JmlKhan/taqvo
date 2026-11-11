@@ -466,7 +466,7 @@ internal val SourceLabelPad = 6.dp
 
 /**
  * What sits between the prayer list and the Qibla card, each only where it applies (spec §2.1):
- * the source line ("Cautious times ›", "Published method ›", "Calculated by Taqvo ›"), only when
+ * the source line ("Cautious times ›", "Published method ›", "Calculated by Tazkir ›"), only when
  * the source label could not fit the card's edge, and, on a polar day, the line that says some times
  * follow a nearby latitude (both open About these times), then the one-time card due this launch.
  * The exact-alarms card keeps its place under the Qibla card.
@@ -593,7 +593,7 @@ private fun Countdown(
 /**
  * The times card and the lines under it. Where the times are not an authority's own checked
  * timetable, a label set into the card's top hairline says where they come from (spec §2.1):
- * "Cautious times", "Published method" or "Calculated by Taqvo" ([sourceLabelRes]). It takes no
+ * "Cautious times", "Published method" or "Calculated by Tazkir" ([sourceLabelRes]). It takes no
  * line of its own, so the Qibla card keeps its place, lower than for any other city only by
  * [SourceLabelAir]. The label is measured first, as it will be drawn: when it cannot fit that edge
  * (a long language at a large text size on a narrow phone) it becomes a line under the list.
@@ -768,7 +768,7 @@ private fun subLines(state: PrayerUiState.Ready, zone: TimeZone, format: Platfor
 }
 
 /**
- * Shown while notifications are on but Android's "Alarms & reminders" is off for Taqvo, which is
+ * Shown while notifications are on but Android's "Alarms & reminders" is off for Tazkir, which is
  * the default from Android 14: without it a notification can be up to an hour late, and
  * Settings › Notifications is too far away for a promise this central. The whole card is the tap
  * target, like the Qibla card below it; it opens the system page, and the card leaves on the next

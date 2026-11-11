@@ -1,5 +1,5 @@
 """The prayer-time pages of taqwa.world: a page per city and language, an index per language, the
-"How Taqvo checks" page per language, and the section at the bottom of every home page.
+"How Tazkir checks" page per language, and the section at the bottom of every home page.
 
 They are rendered from the one document tools/timetables writes (_data/timetables.json) with the
 app's own prayer-time engine. Every time, date, number and name about a city in that document is
@@ -34,7 +34,7 @@ import campaigns
 from stores import block as store_block
 
 SECTION = "prayer-times/"
-CHECKS_PAGE_SLUG = "how-taqvo-checks"  # reserved for the "How Taqvo checks" page; no city may use it
+CHECKS_PAGE_SLUG = "how-taqvo-checks"  # reserved for the "How Tazkir checks" page; no city may use it
 # Where the checks page sends a reader who wants to see the proof for themselves (spec §5.6).
 STAMPS_URL = "https://github.com/MohamedAbulgasem/Taqwa/tree/main/tools/timetables/official/stamps"
 DESIGN_URL = "https://github.com/MohamedAbulgasem/Taqwa/blob/main/docs/superpowers/specs/2026-09-26-taqvo-prayer-times-engine-design.md"
@@ -57,7 +57,7 @@ CHEVRON = ('<svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentCol
            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5"/></svg>')
 CHECK = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" '
          'stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7"/></svg>')
-# The Taqvo mark (the arch and its amber dot, as on the home page) for the foot of a printed month.
+# The Tazkir mark (the arch and its amber dot, as on the home page) for the foot of a printed month.
 PRINT_MARK = ('<svg class="pf-mark" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.56 12.6V8.13c0-2.32 '
               '1.38-3.94 3.44-4.75 2.06.81 3.44 2.43 3.44 4.75v4.47" stroke="currentColor" stroke-width="1.4" '
               'stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="6.3" r="0.95" fill="#E3A21C"/></svg>')
@@ -450,7 +450,7 @@ class Timetables:
         return self.index_dir(lang) + CHECKS_PAGE_SLUG + "/"
 
     def build_checks(self, lang: str, template: str, write_page) -> None:
-        """The "How Taqvo checks" page (spec §5), one per language, with twins in every other."""
+        """The "How Tazkir checks" page (spec §5), one per language, with twins in every other."""
         t = self.langs[lang]["timetable"]
         twins = {other: self.checks_dir(other) for other in self.langs}
         meta = {"title": t["checks_title"], "og_title": t["checks_og_title"], "description": t["checks_description"]}
@@ -650,7 +650,7 @@ class Timetables:
 
     def source_line(self, city: dict, lang: str) -> str:
         """Whose times these are (spec §3.3): the authority line of the explainer's summary, which
-        the foot of a printed month repeats — the timetable, how Taqvo uses it, and that Taqvo is
+        the foot of a printed month repeats — the timetable, how Tazkir uses it, and that Tazkir is
         not affiliated with it (with any of them, for a cautious place)."""
         t = self.langs[lang]["timetable"]
         page = city["pages"][lang]
@@ -662,7 +662,7 @@ class Timetables:
         return f'<b>{esc(words["whoseTitle"])}</b> · {esc(t["reproduced"])} · {esc(words["notAffiliated"])}'
 
     def print_foot(self, city: dict, lang: str) -> str:
-        """The foot of every printed sheet, hidden on screen: the Taqvo mark and name, the page's
+        """The foot of every printed sheet, hidden on screen: the Tazkir mark and name, the page's
         address (where next month's times appear once they are checked), and whose times these
         are, so a sheet pinned up in a mosque still says where it came from. The print stylesheet
         fixes it to the bottom of each sheet."""
@@ -674,7 +674,7 @@ class Timetables:
 
     def cautious_steps(self, city: dict, lang: str, today: int, checks_link: str) -> list:
         """A cautious place's three steps (spec §3.3): the members the app names, with the most
-        followed tagged; how Taqvo combines them — the far-north guard's sentence on a day it set a
+        followed tagged; how Tazkir combines them — the far-north guard's sentence on a day it set a
         member's later Maghrib aside (ruling R155, as the app's About says it), the Fajr ruler (the
         built day's sentence; the script draws it for the reader's today), which timetable decides
         each time today, when to stop eating, and Match my mosque; and the proof — the two tiles of

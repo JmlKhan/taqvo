@@ -84,7 +84,7 @@ class WidgetsRefusalTest {
     }
 
     /** In front, so the screen's ON_RESUME read of placement runs; and sent away and brought back,
-     * as leaving Taqvo for the home screen and returning does, for the read that follows. */
+     * as leaving Tazkir for the home screen and returning does, for the read that follows. */
     private class InFront : LifecycleOwner {
         private val registry = LifecycleRegistry.createUnsafe(this)
         init { registry.currentState = Lifecycle.State.RESUMED }
@@ -342,7 +342,7 @@ class WidgetsRefusalTest {
 
     /**
      * Focus moves into steps once, as the tap that opened them is answered. Steps that go and come
-     * back later (the widget added by hand, then removed, each seen on returning to Taqvo) did not
+     * back later (the widget added by hand, then removed, each seen on returning to Tazkir) did not
      * come from a tap just made, so they take no focus, which would also scroll the screen to them.
      */
     @Test

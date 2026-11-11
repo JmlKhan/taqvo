@@ -3,17 +3,17 @@
 ## Google Play
 
 ### Title (30)
-Taqvo: Salat, Qur’an & Kiblat
+Tazkir: Salat, Qur’an & Kiblat
 
 ### Short description (80)
 Waktu salat, azan, Al-Qur’an dengan tilawah, zikir, dan kiblat. Tanpa internet.
 
 ### Full description (4000)
-Taqvo menghadirkan hal-hal pokok dalam hari Anda di satu tempat yang tenang: waktu salat di tempat Anda berada, takbir atau azan pada setiap salat, Al-Qur’an lengkap untuk dibaca dan didengarkan, zikir pagi dan petang, serta kiblat. Berfungsi offline, tidak berbayar, tanpa iklan, dan tidak meminta akun.
+Tazkir menghadirkan hal-hal pokok dalam hari Anda di satu tempat yang tenang: waktu salat di tempat Anda berada, takbir atau azan pada setiap salat, Al-Qur’an lengkap untuk dibaca dan didengarkan, zikir pagi dan petang, serta kiblat. Berfungsi offline, tidak berbayar, tanpa iklan, dan tidak meminta akun.
 
 WAKTU SALAT
 • Waktu untuk tempat Anda berada, dari lokasi ponsel Anda atau dari kota yang Anda pilih di antara lebih dari 34.000 kota.
-• Waktu menurut jadwal yang diikuti masjid di sekitar Anda. Jika Taqvo memiliki jadwal itu, Taqvo menghitungnya ulang dan mencocokkannya hari demi hari dengan jadwal terbitannya: pada setiap hari yang diperiksa, tidak ada salat yang dimulai sebelum waktu yang diterbitkan. Jika suatu jadwal belum diperiksa sepenuhnya, Taqvo menambahkan margin pengaman; jika masjid-masjid mengikuti jadwal yang berbeda, Taqvo menampilkan waktu ihtiyat, yaitu setiap salat setelah waktunya masuk di semua jadwal itu; dan jika tidak ada jadwal yang diketahui, Taqvo menghitung dengan memilih yang lebih aman.
+• Waktu menurut jadwal yang diikuti masjid di sekitar Anda. Jika Tazkir memiliki jadwal itu, Tazkir menghitungnya ulang dan mencocokkannya hari demi hari dengan jadwal terbitannya: pada setiap hari yang diperiksa, tidak ada salat yang dimulai sebelum waktu yang diterbitkan. Jika suatu jadwal belum diperiksa sepenuhnya, Tazkir menambahkan margin pengaman; jika masjid-masjid mengikuti jadwal yang berbeda, Tazkir menampilkan waktu ihtiyat, yaitu setiap salat setelah waktunya masuk di semua jadwal itu; dan jika tidak ada jadwal yang diketahui, Tazkir menghitung dengan memilih yang lebih aman.
 • Ketuk tombol (i) di layar Salat untuk melihat asal waktu ini, dan “Tentang waktu ini” untuk melihat cara waktu ini dihitung dan diperiksa. “Cocokkan dengan masjid saya” mencari jadwal masjid Anda dari dua waktu di papannya, dan metode perhitungan yang biasa (Liga Muslim Dunia, Mesir, Karachi, ISNA, dan lainnya) serta penyesuaian per salat juga tersedia.
 • Aturan untuk lintang tinggi, ketika malam terlalu pendek untuk sudut yang biasa.
 • Notifikasi tiap salat: nada jelas, takbir, atau azan Makkah, Madinah, dan lainnya, serta pengingat opsional sebelumnya, saat iqamah (menitnya Anda atur), dan saat Dhuha.
@@ -47,7 +47,7 @@ DIBUAT UNTUK DIPERCAYA
 
 Tersedia dalam bahasa Inggris, Arab, Prancis, Turki, Indonesia, Urdu, dan Bengali.
 
-Waktu salat dari mesin milik Taqvo sendiri; arah kiblat memakai pustaka Adhan. Teks Al-Qur’an dari Tanzil Project. Teks zikir dari OpenDua. Tilawah dari Islamic Network, dilisensikan oleh para qari untuk penyebaran gratis. Taqvo tidak berafiliasi dengan otoritas keagamaan yang jadwalnya diikutinya.
+Waktu salat dari mesin milik Tazkir sendiri; arah kiblat memakai pustaka Adhan. Teks Al-Qur’an dari Tanzil Project. Teks zikir dari OpenDua. Tilawah dari Islamic Network, dilisensikan oleh para qari untuk penyebaran gratis. Tazkir tidak berafiliasi dengan otoritas keagamaan yang jadwalnya diikutinya.
 
 Situs web: https://taqwa.world/id/
 Dukungan: jmlkhon17@gmail.com
@@ -63,9 +63,9 @@ Yang baru di versi 1.5.0:
 ## App Store
 
 ### Name (30)
-Taqvo: Salat, Quran & Kiblat
+Tazkir: Salat, Quran & Kiblat
 
-(From the next version. 1.0.0 went out under the name App Store Connect accepted on 22 September 2026; the listing said "Taqvo", but plain "Taqvo" is taken on the store, so it is probably the English title. If this name is refused as taken, keep that one and the 1.0.0 subtitle, which then adds the local words the name lacks.)
+(From the next version. 1.0.0 went out under the name App Store Connect accepted on 22 September 2026; the listing said "Tazkir", but plain "Tazkir" is taken on the store, so it is probably the English title. If this name is refused as taken, keep that one and the 1.0.0 subtitle, which then adds the local words the name lacks.)
 
 ### Subtitle (30)
 Azan & tasbih, tanpa iklan
@@ -73,7 +73,7 @@ Azan & tasbih, tanpa iklan
 (From the next version. In 1.0.0: "Waktu Salat, Al-Qur’an, Kiblat". Names and subtitles change only with a new version.)
 
 ### Promotional text (170)
-Waktu salat menurut jadwal masjid Anda, dicocokkan hari demi hari jika Taqvo memiliki jadwalnya. Azan, Al-Qur’an dengan tilawah, zikir pagi dan petang, serta kiblat.
+Waktu salat menurut jadwal masjid Anda, dicocokkan hari demi hari jika Tazkir memiliki jadwalnya. Azan, Al-Qur’an dengan tilawah, zikir pagi dan petang, serta kiblat.
 
 (Proposal of 29 September, the owner's to take or leave; editable at any time. Until then: "Waktu salat di tempat Anda berada, azan saat waktunya tiba, Al-Qur’an lengkap untuk dibaca dan didengarkan, serta kiblat. Gratis, offline, tanpa akun, dan tanpa iklan.")
 

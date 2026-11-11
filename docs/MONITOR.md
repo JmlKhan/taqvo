@@ -95,7 +95,7 @@ The monitor runs weekly as a GitHub Actions job in a **private** repository that
 restricted archive and the monitor's state. Setting it up, once:
 
 1. Create the private repository `MohamedAbulgasem/Taqwa-official` (empty, no README).
-2. In `~/Desktop/Workspace/apps/Taqvo-official` (the folder that holds `archive/` and `monitor/`):
+2. In `~/Desktop/Workspace/apps/Tazkir-official` (the folder that holds `archive/` and `monitor/`):
    `git init`, add a `.gitignore` with `monitor/lock/` (the run lock), `.*.tmp` (the atomic writers'
    temp files), `monitor/keys.env` and `.DS_Store`, commit `archive/` and `monitor/` (the state
    files hold paths relative to this folder, so the same state serves the Mac and the runner), and
@@ -106,7 +106,7 @@ restricted archive and the monitor's state. Setting it up, once:
 4. Add the repository secret `LPT_API_KEY` (Settings › Secrets and variables › Actions) with the
    key London Prayer Times issues by hand (done 10 October 2026); the fetcher reads it from the
    environment. Nothing else is secret.
-5. Run it once by hand: Actions › Taqvo monitor › Run workflow (the `options` field takes only
+5. Run it once by hand: Actions › Tazkir monitor › Run workflow (the `options` field takes only
    `--no-fetch`, `--check-all`, `--verbose` and `--only <a source id of sources.tsv>`; anything
    else stops the job). The first run exercises every fetcher from GitHub's addresses; a site that
    refuses them stays `manual` in `sources.tsv`. Remember that `--only` is a partial run.
@@ -153,7 +153,7 @@ issue, not silence. GitHub may start a scheduled run hours late; the new month i
 within about a day of its publication. The check costs about one billed runner-minute a day (each job
 is rounded up to a minute), and a full run follows on two to four days of each Hijri month.
 
-**The issue.** One issue titled "Taqvo monitor", labelled `monitor-attention`, is open while
+**The issue.** One issue titled "Tazkir monitor", labelled `monitor-attention`, is open while
 something needs attention. Its body (at most 60,000 characters, always ending with the pointer to
 the full report) is the report's summary, the never-early index and each attention item's title
 (dates, counts and minutes, never a printed time); the full report is `monitor/latest.md` in the
@@ -163,7 +163,7 @@ after a failure the body is rewritten from the report and a "Recovered" comment 
 run closes it with a one-line comment and never opens one; a partial run (`--only`), sound or
 failed, adds a comment at most; refused dispatch options stop the job before anything runs and
 touch nothing. The same body is the job's step summary. The report job names its repository to `gh`
-(`GH_REPO`), since its only checkout is Taqvo's monitor code under `taqvo/` and `gh` cannot infer one
+(`GH_REPO`), since its only checkout is Tazkir's monitor code under `taqvo/` and `gh` cannot infer one
 (the first live run's issue step failed on that). When the private repository's
 `.github/workflows/monitor-weekly.yml` differs from the public template, the report says so under
 Informational. A Claude routine fired by that issue prepares fixes as pull requests (not set up
@@ -174,7 +174,7 @@ yet).
 After a **full** run whose record is sound and green or attention (never a partial run, never when
 the monitor itself failed), the workflow runs `taqvo/scripts/prove.sh --date <run date>`, which runs
 the `prove` task (`tools/timetables/.../monitor/Prove.kt`) and then every check a release of the
-proof needs. The owner chose to push the result **directly to Taqvo's `main`** when everything is
+proof needs. The owner chose to push the result **directly to Tazkir's `main`** when everything is
 green.
 
 **Recipes.** `tools/timetables/official/monitor/recipes.tsv` (metadata only: source ids, capture
@@ -291,13 +291,13 @@ entry's own rows changed (watch the twelve curve entries: `be.emb`, `fr.gmp`, `i
 `kz.qmdb` and the cautious entries of Belgium, Canada, Germany, France, Ireland, Norway and Sweden).
 
 **Publishing.** Since 27 October 2026 (security review D1) the run is four jobs, so the token that
-pushes to Taqvo never sits on a runner that ran a fetcher, pip or Gradle (anything those run could plant
+pushes to Tazkir never sits on a runner that ran a fetcher, pip or Gradle (anything those run could plant
 a git hook or a background process and read it). `due` and `monitor` are read-only (D10): `monitor`
 fetches, checks and proves, commits nothing, and ends with `tools/timetables/monitor/ci/handoff.py pack`,
 which copies what the run changed under `archive/` and `monitor/`, and the gate files, stamps and
 `ProofStamps.kt` prove changed, each with its sha256 in a manifest, into the artifact
 `monitor-handoff-<run id>` (kept 90 days, so a run whose push fails loses nothing). `publish` runs on
-a clean runner and runs nothing but git and `handoff.py` from its own checkout of Taqvo (the Python
+a clean runner and runs nothing but git and `handoff.py` from its own checkout of Tazkir (the Python
 standard library alone: no pip, no Gradle, no fetcher, no other script). `handoff.py check` refuses a
 path that is not plain, a file the manifest does not list or whose hash differs, a symlink; on the
 archive side any path outside `archive/` and `monitor/`; on the public side any path that is not a
@@ -334,11 +334,11 @@ commit by `taqvo-monitor` since it and fails when one touched a path outside `bo
 publish job's own list) or is a merge.
 
 **A rehearsal.** After any change to the publish path, prove it end to end before it carries a real
-push: push the private workflow to a branch of `Taqvo-official` (never `main`) and the Taqvo code it
-runs to a branch of Taqvo, then `gh workflow run monitor-weekly.yml -R MohamedAbulgasem/Taqwa-official
---ref <that branch> -f rehearsal=true -f taqvo_ref=<the Taqvo branch>`. A rehearsal fetches nothing and
+push: push the private workflow to a branch of `Tazkir-official` (never `main`) and the Tazkir code it
+runs to a branch of Tazkir, then `gh workflow run monitor-weekly.yml -R MohamedAbulgasem/Taqwa-official
+--ref <that branch> -f rehearsal=true -f taqvo_ref=<the Tazkir branch>`. A rehearsal fetches nothing and
 does not prove: it adds one comment line to one gate file in prove's place, commits the archive's
-changes to its own branch, and pushes the proof to a new Taqvo branch `monitor-rehearsal-<run id>`
+changes to its own branch, and pushes the proof to a new Tazkir branch `monitor-rehearsal-<run id>`
 (never `main`); it never touches the issue. Check the run, then delete both branches.
 
 **The issue.** Its body gains a `## Proof` section (rows added, rows left out with the reason,
@@ -354,7 +354,7 @@ push skipped because `main` or the archive moved meanwhile does not fail it: the
 again).
 
 **The token (the owner, once).** On GitHub: Settings › Developer settings › Personal access tokens ›
-Fine-grained tokens › Generate new token. Name `Taqvo monitor push`; expiration 1 year (a calendar
+Fine-grained tokens › Generate new token. Name `Tazkir monitor push`; expiration 1 year (a calendar
 reminder to renew it); resource owner MohamedAbulgasem; Repository access › Only select repositories
 › `MohamedAbulgasem/Taqwa` (the public repository alone); Permissions › Repository permissions ›
 Contents: **Read and write** (Metadata: read-only is added by itself; nothing else). Generate, copy
@@ -383,7 +383,7 @@ token or deleted.
     python3 -m unittest tools/timetables/monitor/tests.py
     ./gradlew -p tools/timetables jvmTest --tests 'com.taqvo.timetables.monitor.*'
 
-`TAQVO_OFFICIAL` is the root (default `~/Desktop/Workspace/apps/Taqvo-official`, the folder that
+`TAQVO_OFFICIAL` is the root (default `~/Desktop/Workspace/apps/Tazkir-official`, the folder that
 holds `archive/` and `monitor/`; the `monitor` Gradle task refuses to run without it or
 `-Pofficial`, so that no state lands in the checkout); `TAQVO_OFFICIAL_BACKUP` an optional mirror
 folder; `TAQVO_PYTHON` the interpreter (else Homebrew's `python3`, else the first on `PATH`;
@@ -394,7 +394,7 @@ through `curl`. A notification is posted on macOS when the attention set changed
 the monitor itself failed; every early exit leaves `monitor/last-run.json` saying why (exit 2),
 a closed terminal or a `kill` included (the fetch or check still running is stopped with it),
 except a run refused by the lock. The Mac and the cloud share one state through the private
-repository: **pull it before a run by hand** (`git pull` in `~/Desktop/Workspace/apps/Taqvo-official`),
+repository: **pull it before a run by hand** (`git pull` in `~/Desktop/Workspace/apps/Tazkir-official`),
 and **commit and push `archive/` and `monitor/` after**, so that neither side overwrites the
 other's `state.json` and `hashes.json`. A London key in `keys.env` (or the cloud's secret) is
 stripped, URL-quoted, and masked wherever the run writes.

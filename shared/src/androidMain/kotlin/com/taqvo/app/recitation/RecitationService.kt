@@ -147,7 +147,7 @@ class RecitationService : MediaSessionService() {
             )
         }
         // Media3's own default small icon is a generic music note. The status bar should say
-        // Taqvo, and the mark the prayer notifications already use is the one it should say it
+        // Tazkir, and the mark the prayer notifications already use is the one it should say it
         // with; `:androidApp` puts the id there in `TaqvoApplication.onCreate`. And a notification
         // id of its own, since Media3's default is one the prayers reach (MEDIA_NOTIFICATION_ID).
         setMediaNotificationProvider(

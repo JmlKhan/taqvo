@@ -6,7 +6,7 @@ tekshiradi. Har bir blokni konsolga o‘z holicha ko‘chiring.
 ## App Store
 
 ### Name (30)
-Taqvo: Namoz vaqti, Qur’on
+Tazkir: Namoz vaqti, Qur’on
 
 (Taklif. Nom va subtitr faqat yangi versiya bilan o‘zgaradi.)
 
@@ -24,7 +24,7 @@ quron,quran,vaqtlari,ramazon,taqvimi,tasbeh,zikr,duo,islom,musulmon,vidjet,fon,�
 (Nom va subtitrdagi so‘zlar takrorlanmagan: taqvo, namoz, vaqti, oyat, azon, qibla. Chegara UTF-8 baytda sanaladi, kirill harfi ikki bayt.)
 
 ### Description (4000)
-Taqvo Qur’on va ibodatni har kuningizning tabiiy qismiga aylantirish uchun yaratilgan. Oyatlar tasmasi, vidjetlar va fon rasmlari, namoz vaqtlari va azon, to‘liq Qur’on, zikrlar va qibla: hammasi bir joyda, o‘zbek tilida. Reklama yo‘q, ro‘yxatdan o‘tish shart emas.
+Tazkir Qur’on va ibodatni har kuningizning tabiiy qismiga aylantirish uchun yaratilgan. Oyatlar tasmasi, vidjetlar va fon rasmlari, namoz vaqtlari va azon, to‘liq Qur’on, zikrlar va qibla: hammasi bir joyda, o‘zbek tilida. Reklama yo‘q, ro‘yxatdan o‘tish shart emas.
 
 TASMA: HAR KUNI ALLOH KALOMI BILAN
 • Tanlangan oyatlar tasmasi: arabcha matn va o‘zbekcha tarjima, chiroyli fonlarda. Yuqoriga suring va keyingi oyatni o‘qing.
@@ -78,7 +78,7 @@ ISHONCH UCHUN YARATILGAN
 
 Ilova tillari: o‘zbekcha (kirill va lotin), inglizcha, arabcha, turkcha, fransuzcha, indonezcha, urducha va bengalcha.
 
-Namoz vaqtlari Taqvo’ning o‘z hisoblash tizimida chiqariladi. Qur’on matni Tanzil loyihasidan, zikr matnlari OpenDua’dan, qiroatlar Islamic Network’dan. Taqvo vaqtlariga amal qilinadigan diniy idoralar bilan bog‘liq emas.
+Namoz vaqtlari Tazkir’ning o‘z hisoblash tizimida chiqariladi. Qur’on matni Tanzil loyihasidan, zikr matnlari OpenDua’dan, qiroatlar Islamic Network’dan. Tazkir vaqtlariga amal qilinadigan diniy idoralar bilan bog‘liq emas.
 
 Veb-sayt: https://taqwa.world
 Yordam: jmlkhon17@gmail.com

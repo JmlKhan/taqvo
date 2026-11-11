@@ -189,7 +189,7 @@ fun WidgetsSettingsScreen(
     // the widget was already there. Read again on every ON_RESUME, not just on entering
     // composition, because the whole point is that the user leaves to add the widget and comes
     // back — and ON_RESUME rather than ON_START because the launcher's sheet that confirms an "Add
-    // to home screen" (Pixel Launcher's AddItemActivity) is translucent: it only pauses Taqvo, so
+    // to home screen" (Pixel Launcher's AddItemActivity) is translucent: it only pauses Tazkir, so
     // no ON_START follows it, and the button would stay under the widget just added, ready to add
     // a second. A read that cannot tell is not an answer, so it leaves placement as it was
     // (reread): still null before any answer, and after one the last answer, which an iPhone's
@@ -218,7 +218,7 @@ fun WidgetsSettingsScreen(
     // into view, which a sighted reader, who never had focus there, must not meet. Not saved, so
     // a rotation, which loses a screen reader's place anyway, moves nothing again; and forgotten
     // once focus has moved, so steps that go and come back later (the widget added by hand and
-    // removed again, each seen on returning to Taqvo) do not take it a second time.
+    // removed again, each seen on returning to Tazkir) do not take it a second time.
     var openedByTap by remember { mutableStateOf<String?>(null) }
     val screenReader = screenReaderRunning()
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -382,7 +382,7 @@ private fun PinnableWidget.labelKey(): StringResource = when (this) {
 /**
  * The widget's name as its card gives it, which is also the name the steps tell the reader to look
  * for: the Android picker and the iPhone's widget gallery list each widget under it (the gallery's
- * prayer widget since the owner renamed it from "Taqvo", 31 Oct 2026). tools/i18n-check.py holds
+ * prayer widget since the owner renamed it from "Tazkir", 31 Oct 2026). tools/i18n-check.py holds
  * each name to what the two systems list.
  */
 private fun PinnableWidget.nameKey(): StringResource = when (this) {
@@ -589,7 +589,7 @@ internal fun WidgetOfferArea(
         // A request the launcher took: its confirmation sheet is system UI and its answer never
         // comes back, so the app does nothing further — the button simply is not there the next
         // time placement is read, on the ON_RESUME that follows the sheet (translucent, so it only
-        // pauses Taqvo). A request it refused would leave the tap doing nothing, so the steps
+        // pauses Tazkir). A request it refused would leave the tap doing nothing, so the steps
         // replace the button.
         is WidgetOffer.Pin -> TaqvoPrimaryButton(
             text = stringResource(Res.string.appearance_widget_add),

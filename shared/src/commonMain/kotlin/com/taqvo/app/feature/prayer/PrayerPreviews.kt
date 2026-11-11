@@ -236,7 +236,7 @@ private fun LongyearbyenPolarPreview() = ScreenPreview(
     ),
 )
 
-/** Where Shia are many: the Sunni card, calculated by Taqvo. */
+/** Where Shia are many: the Sunni card, calculated by Tazkir. */
 @Preview(widthDp = 411, heightDp = 891)
 @Composable
 private fun ZahedanSunniCardPreview() = ScreenPreview(

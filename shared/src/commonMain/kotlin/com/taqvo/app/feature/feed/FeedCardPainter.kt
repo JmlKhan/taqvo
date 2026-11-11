@@ -139,7 +139,7 @@ private fun DrawScope.drawCover(image: ImageBitmap) {
 
 /**
  * The app's mark and name, side by side at about 60% (feed spec §9), centred on [topCentre]: the
- * mihrab from the launcher icon, drawn small, then "Taqvo".
+ * mihrab from the launcher icon, drawn small, then "Tazkir".
  */
 private fun DrawScope.drawWatermark(
     topCentre: Offset,

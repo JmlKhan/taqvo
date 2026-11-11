@@ -3,7 +3,7 @@
 "ayah_widget_description" = "Bugungi oyat, tarjimasi bilan.";
 
 /* Shown on the card until the app has run once and written the pool mirror (design spec §2). */
-"ayah_widget_placeholder" = "Bugungi oyatni yuklash uchun Taqvo’ni bir marta oching";
+"ayah_widget_placeholder" = "Bugungi oyatni yuklash uchun Tazkir’ni bir marta oching";
 
 /* Spoken only: the ayah widget's reference for VoiceOver. %1$@ the surah, %2$@ the ayah number. */
 "ayah_widget_a11y_reference" = "%1$@, %2$@-oyat";
@@ -11,12 +11,12 @@
 /* The two prayer widgets as they appear in the widget gallery. */
 "home_widget_name" = "Namoz vaqtlari";
 "home_widget_description" = "Keyingi namoz, teskari sanoq va bugungi vaqtlar.";
-"lock_widget_name" = "Taqvo qulf ekrani";
+"lock_widget_name" = "Tazkir qulf ekrani";
 "lock_widget_description" = "Keyingi namoz bir qarashda.";
 
 /* Shown on the prayer cards until the app has run once and written the snapshot mirror. */
-"prayer_widget_placeholder_title" = "Taqvo";
-"prayer_widget_placeholder_body" = "Namoz vaqtlarini yuklash uchun Taqvo’ni oching.";
+"prayer_widget_placeholder_title" = "Tazkir";
+"prayer_widget_placeholder_body" = "Namoz vaqtlarini yuklash uchun Tazkir’ni oching.";
 
 /* The prayer after the next one on the rectangular complication; %@ is its display name. */
 "lock_widget_then" = "so‘ng %@";
@@ -24,5 +24,5 @@
 /* The daily-dua widget in the gallery, its placeholder until the app has run once, and its reference (%@ the number in Hisn al-Muslim). */
 "dua_widget_name" = "Kun duosi";
 "dua_widget_description" = "Bugungi duo, tarjimasi bilan.";
-"dua_widget_placeholder" = "Bugungi duoni yuklash uchun Taqvo’ni bir marta oching";
+"dua_widget_placeholder" = "Bugungi duoni yuklash uchun Tazkir’ni bir marta oching";
 "dua_widget_reference" = "Hisnul-muslim %@";

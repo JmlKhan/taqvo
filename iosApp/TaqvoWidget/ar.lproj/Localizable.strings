@@ -3,7 +3,7 @@
 "ayah_widget_description" = "آية اليوم مع ترجمتها.";
 
 /* Shown on the card until the app has run once and written the pool mirror (design spec §2). */
-"ayah_widget_placeholder" = "افتح تقفو مرة لتحميل آية اليوم";
+"ayah_widget_placeholder" = "افتح Tazkir مرة لتحميل آية اليوم";
 
 /* Spoken only: the ayah widget's reference for VoiceOver. %1$@ the surah, %2$@ the ayah number. */
 "ayah_widget_a11y_reference" = "%1$@، الآية %2$@";
@@ -13,12 +13,12 @@
    name what the gallery shows; tools/i18n-check.py holds the two together. */
 "home_widget_name" = "مواقيت الصلاة";
 "home_widget_description" = "الصلاة التالية والعد التنازلي ومواقيت اليوم.";
-"lock_widget_name" = "تقفو على شاشة القفل";
+"lock_widget_name" = "Tazkir على شاشة القفل";
 "lock_widget_description" = "الصلاة التالية في لمحة.";
 
 /* Shown on the prayer cards until the app has run once and written the snapshot mirror. */
-"prayer_widget_placeholder_title" = "تقفو";
-"prayer_widget_placeholder_body" = "افتح تقفو لتحميل مواقيت الصلاة.";
+"prayer_widget_placeholder_title" = "Tazkir";
+"prayer_widget_placeholder_body" = "افتح Tazkir لتحميل مواقيت الصلاة.";
 
 /* The prayer after the next one on the rectangular complication; %@ is its display name. */
 "lock_widget_then" = "ثم %@";
@@ -26,5 +26,5 @@
 /* The daily-dua widget in the gallery, its placeholder until the app has run once, and its reference (%@ the number in Hisn al-Muslim). */
 "dua_widget_name" = "دعاء اليوم";
 "dua_widget_description" = "دعاء اليوم من الأذكار.";
-"dua_widget_placeholder" = "افتح تقفو مرة لتحميل دعاء اليوم";
+"dua_widget_placeholder" = "افتح Tazkir مرة لتحميل دعاء اليوم";
 "dua_widget_reference" = "حصن المسلم %@";

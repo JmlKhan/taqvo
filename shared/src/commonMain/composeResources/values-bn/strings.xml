@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">তাকভো</string>
+    <string name="app_name">Tazkir</string>
     <string name="ui_language">bn</string>
 
     <string name="language_name">বাংলা</string>
@@ -11,7 +11,7 @@
     <string name="sheet_a11y_drag_handle">টেনে আনার হ্যান্ডেল</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_welcome_title">তাকভো</string>
+    <string name="onboarding_welcome_title">Tazkir</string>
     <string name="onboarding_welcome_body">নামাজের সময়, কিবলা ও কুরআন। অ্যাকাউন্ট নেই, ইন্টারনেট ছাড়াই চলে।</string>
     <string name="onboarding_welcome_cta">শুরু করুন</string>
     <string name="onboarding_location_title">আপনি কোথায় আছেন?</string>
@@ -21,15 +21,15 @@
     <string name="onboarding_notifications_body">প্রতিটি নামাজের জন্য একটি নোটিফিকেশন। প্রতিটি নামাজের শব্দ আলাদা করে বেছে নিতে পারেন, আর যখন খুশি বদলাতেও পারেন।</string>
     <string name="onboarding_notifications_secondary">এখন নয়</string>
     <string name="onboarding_exact_title">অ্যালার্ম ও রিমাইন্ডার</string>
-    <string name="onboarding_exact_body">তাকভোকে “অ্যালার্ম ও রিমাইন্ডার” অনুমতি দিলে তবেই অ্যান্ড্রয়েড ঠিক ওয়াক্তে বাজতে পারে। এটি ছাড়া নোটিফিকেশন এক ঘণ্টা পর্যন্ত দেরিতে আসতে পারে।</string>
+    <string name="onboarding_exact_body">Tazkirকে “অ্যালার্ম ও রিমাইন্ডার” অনুমতি দিলে তবেই অ্যান্ড্রয়েড ঠিক ওয়াক্তে বাজতে পারে। এটি ছাড়া নোটিফিকেশন এক ঘণ্টা পর্যন্ত দেরিতে আসতে পারে।</string>
     <string name="onboarding_widget_title">আপনার হোম স্ক্রিনে</string>
-    <string name="onboarding_widget_body">তাকভো উইজেট অ্যাপ না খুলেই পরবর্তী নামাজ ও চলমান কাউন্টডাউন দেখায়।</string>
-    <string name="onboarding_widget_body_ios">তাকভো উইজেট অ্যাপ না খুলেই পরবর্তী নামাজ ও চলমান কাউন্টডাউন দেখায়। যোগ করতে হোম স্ক্রিনে তাকভো আইকনটি চেপে ধরে রাখুন এবং উইজেটের আকার বেছে নিন।</string>
-    <string name="onboarding_widget_body_ios_legacy">তাকভো উইজেট অ্যাপ না খুলেই পরবর্তী নামাজ ও চলমান কাউন্টডাউন দেখায়। যোগ করতে হোম স্ক্রিন চেপে ধরে রাখুন, উপরের কোণের প্লাস চিহ্নে চাপ দিন, তারপর তাকভো খুঁজুন।</string>
+    <string name="onboarding_widget_body">Tazkir উইজেট অ্যাপ না খুলেই পরবর্তী নামাজ ও চলমান কাউন্টডাউন দেখায়।</string>
+    <string name="onboarding_widget_body_ios">Tazkir উইজেট অ্যাপ না খুলেই পরবর্তী নামাজ ও চলমান কাউন্টডাউন দেখায়। যোগ করতে হোম স্ক্রিনে Tazkir আইকনটি চেপে ধরে রাখুন এবং উইজেটের আকার বেছে নিন।</string>
+    <string name="onboarding_widget_body_ios_legacy">Tazkir উইজেট অ্যাপ না খুলেই পরবর্তী নামাজ ও চলমান কাউন্টডাউন দেখায়। যোগ করতে হোম স্ক্রিন চেপে ধরে রাখুন, উপরের কোণের প্লাস চিহ্নে চাপ দিন, তারপর Tazkir খুঁজুন।</string>
     <string name="onboarding_widget_cta_add">উইজেট যোগ করুন</string>
     <string name="onboarding_widget_cta_done">হয়ে গেছে</string>
     <string name="onboarding_widget_secondary">পরে দেখা যাবে</string>
-    <string name="onboarding_widget_steps_android">আপনার হোম স্ক্রিন অ্যাপকে উইজেট যোগ করতে দেয় না, তাই নিজেই যোগ করুন: হোম স্ক্রিনের ফাঁকা জায়গায় চেপে ধরে রাখুন (অথবা দুই আঙুল দিয়ে চিমটি কাটুন), উইজেট অপশনে চাপ দিন, তাকভো খুঁজুন এবং উইজেটটি টেনে জায়গামতো রাখুন।</string>
+    <string name="onboarding_widget_steps_android">আপনার হোম স্ক্রিন অ্যাপকে উইজেট যোগ করতে দেয় না, তাই নিজেই যোগ করুন: হোম স্ক্রিনের ফাঁকা জায়গায় চেপে ধরে রাখুন (অথবা দুই আঙুল দিয়ে চিমটি কাটুন), উইজেট অপশনে চাপ দিন, Tazkir খুঁজুন এবং উইজেটটি টেনে জায়গামতো রাখুন।</string>
 
     <!-- Prayer names -->
     <string name="prayer_fajr">ফজর</string>
@@ -57,7 +57,7 @@
         <item quantity="other">%1$s মিনিট</item>
     </plurals>
     <string name="prayer_exact_alarms_label">সুনির্দিষ্ট অ্যালার্ম বন্ধ</string>
-    <string name="prayer_exact_alarms_body">তাকভোকে “অ্যালার্ম ও রিমাইন্ডার” অনুমতি না দেওয়া পর্যন্ত অ্যান্ড্রয়েড এক ঘণ্টা পর্যন্ত দেরিতে বাজতে পারে।</string>
+    <string name="prayer_exact_alarms_body">Tazkirকে “অ্যালার্ম ও রিমাইন্ডার” অনুমতি না দেওয়া পর্যন্ত অ্যান্ড্রয়েড এক ঘণ্টা পর্যন্ত দেরিতে বাজতে পারে।</string>
     <string name="prayer_no_location_title">এখনো কোনো অবস্থান নেই</string>
     <string name="prayer_choose_city">শহর বেছে নিন</string>
     <string name="prayer_location_settings">সেটিংসে অবস্থান চালু করুন</string>
@@ -65,11 +65,11 @@
 
     <!-- Prayer engine: the Prayer screen (Task 10) -->
     <string name="prayer_whose_checked_title">%1$s-এর সময়সূচি</string>
-    <string name="prayer_whose_checked_body">%2$s-এর জন্য %1$s-এর সময়, তাকভো নিজে হিসাব করে প্রকাশিত সময়সূচির সঙ্গে মিলিয়ে দেখেছে।</string>
+    <string name="prayer_whose_checked_body">%2$s-এর জন্য %1$s-এর সময়, Tazkir নিজে হিসাব করে প্রকাশিত সময়সূচির সঙ্গে মিলিয়ে দেখেছে।</string>
     <string name="prayer_whose_unchecked_title">%1$s-এর পদ্ধতি, এখনো পুরোপুরি যাচাই হয়নি</string>
-    <string name="prayer_whose_unchecked_body">তাকভো %1$s-এর পদ্ধতিতে %2$s-এর সময় হিসাব করে, সঙ্গে নিরাপত্তার জন্য কিছুটা বাড়তি সময় রাখে।</string>
-    <string name="prayer_whose_cautious_body">এখানকার মসজিদগুলো ভিন্ন ভিন্ন সময়সূচি মানে, তাই সবগুলোতে ওয়াক্ত শুরু হওয়ার পরই তাকভো প্রতিটি নামাজ দেখায়।</string>
-    <string name="prayer_whose_calculated_body">এখানকার কোনো স্থানীয় সময়সূচি জানা নেই, তাই তাকভো সাবধানতার সঙ্গে এই সময়গুলো হিসাব করে।</string>
+    <string name="prayer_whose_unchecked_body">Tazkir %1$s-এর পদ্ধতিতে %2$s-এর সময় হিসাব করে, সঙ্গে নিরাপত্তার জন্য কিছুটা বাড়তি সময় রাখে।</string>
+    <string name="prayer_whose_cautious_body">এখানকার মসজিদগুলো ভিন্ন ভিন্ন সময়সূচি মানে, তাই সবগুলোতে ওয়াক্ত শুরু হওয়ার পরই Tazkir প্রতিটি নামাজ দেখায়।</string>
+    <string name="prayer_whose_calculated_body">এখানকার কোনো স্থানীয় সময়সূচি জানা নেই, তাই Tazkir সাবধানতার সঙ্গে এই সময়গুলো হিসাব করে।</string>
     <string name="prayer_about_these_times">এই সময়গুলো সম্পর্কে</string>
     <string name="prayer_times_by">%1$s-এর সময়</string>
     <string name="prayer_whose_a11y">%1$s, %2$s। এই সময়গুলোর উৎস খোলে</string>
@@ -78,7 +78,7 @@
     <string name="prayer_source_published_method">প্রকাশিত পদ্ধতি</string>
     <string name="prayer_polar_line">আজ এখানে সূর্য ওঠেও না, অস্তও যায় না, তাই কিছু সময় সেই নিকটতম অক্ষাংশ ধরে দেওয়া, যেখানে সূর্য ওঠে ও অস্ত যায়।</string>
     <string name="prayer_card_cautious_title">এখানকার মসজিদগুলো ভিন্ন ভিন্ন সময়সূচি মানে</string>
-    <string name="prayer_card_cautious_body">সবগুলোতে ওয়াক্ত শুরু হওয়ার পরই তাকভো প্রতিটি নামাজ দেখায়।</string>
+    <string name="prayer_card_cautious_body">সবগুলোতে ওয়াক্ত শুরু হওয়ার পরই Tazkir প্রতিটি নামাজ দেখায়।</string>
     <string name="prayer_card_sunni_title">এগুলো সুন্নি নামাজের সময়</string>
     <string name="prayer_card_sunni_body">শিয়া (জাফরি) মতে মাগরিব ও ইফতার আরও পরে হয়।</string>
     <string name="prayer_match_my_mosque">আমার মসজিদের সঙ্গে মেলান</string>
@@ -103,7 +103,7 @@
     <string name="prayer_clock_region_chihuahua">চিহুয়াহুয়া</string>
     <string name="prayer_clock_region_paraguay">প্যারাগুয়ে</string>
     <string name="prayer_differ_before">%1$s অনুযায়ী %2$s শুরু হয় %3$s-এ</string>
-    <string name="prayer_differ_after">%1$s অনুযায়ী %2$s শুরু হয়ে গেছে · তাকভো দেখায় %3$s থেকে</string>
+    <string name="prayer_differ_after">%1$s অনুযায়ী %2$s শুরু হয়ে গেছে · Tazkir দেখায় %3$s থেকে</string>
     <string name="prayer_other_asr">%1$s আসর %2$s</string>
 
     <!-- Settings root -->
@@ -117,23 +117,23 @@
     <string name="settings_appearance">চেহারা</string>
     <string name="settings_appearance_value">%1$s · %2$s</string>
     <string name="settings_language">ভাষা</string>
-    <string name="settings_about">তাকভো সম্পর্কে</string>
+    <string name="settings_about">Tazkir সম্পর্কে</string>
     <string name="settings_attribution">কৃতজ্ঞতা ও লাইসেন্স</string>
-    <string name="settings_rate">তাকভোকে রেটিং দিন</string>
-    <string name="settings_share">তাকভো শেয়ার করুন</string>
-    <string name="settings_share_message">তাকভো: নামাজের সময়, কুরআন ও কিবলা। অ্যাকাউন্ট লাগে না।</string>
+    <string name="settings_rate">Tazkirকে রেটিং দিন</string>
+    <string name="settings_share">Tazkir শেয়ার করুন</string>
+    <string name="settings_share_message">Tazkir: নামাজের সময়, কুরআন ও কিবলা। অ্যাকাউন্ট লাগে না।</string>
     <string name="settings_not_set">নির্ধারিত নয়</string>
     <string name="settings_notifications_off">বন্ধ</string>
     <string name="settings_notifications_on_count">%1$sটি চালু</string>
     <string name="settings_version_value">1.5.0</string>
 
-    <!-- About screen. The product name is written তাকভো here, as on the icon. -->
+    <!-- About screen. The product name is written Tazkir here, as on the icon. -->
     <string name="about_tagline">বিনামূল্যে, সবার জন্য, চিরকালের জন্য।</string>
     <string name="about_privacy_label">গোপনীয়তা</string>
     <string name="about_stays_title">আপনার ফোনেই থাকে</string>
     <string name="about_stays_body">অবস্থান, সেটিংস, বুকমার্ক ও গণনা কখনো ফোন ছেড়ে যায় না।</string>
     <string name="about_online_title">শুধু আপনি চাইলেই অনলাইন</string>
-    <string name="about_online_body">ইন্টারনেট একটিমাত্র কাজে লাগে: আপনি যে তিলাওয়াতগুলো ডাউনলোড করতে চান, GitHub-এ তাকভোর উন্মুক্ত রিপোজিটরি থেকে সেগুলো আনা।</string>
+    <string name="about_online_body">ইন্টারনেট একটিমাত্র কাজে লাগে: আপনি যে তিলাওয়াতগুলো ডাউনলোড করতে চান, GitHub-এ Tazkirর উন্মুক্ত রিপোজিটরি থেকে সেগুলো আনা।</string>
     <string name="about_nothing_title">অ্যাকাউন্ট নেই, অ্যানালিটিক্স নেই</string>
     <string name="about_nothing_body">সাইন ইন করার কিছু নেই।</string>
     <string name="about_privacy_policy">গোপনীয়তা নীতি</string>
@@ -146,7 +146,7 @@
     <string name="about_icon_open_website">taqwa.world খুলুন</string>
     <string name="about_report_problem">সমস্যা জানান</string>
 
-    <!-- সেটিংস › উইজেট এবং তাকভো সম্পর্কে (সেটিংস নতুন নকশার স্পেসিফিকেশন, 30 অক্টোবর 2026)। উইজেট সারির
+    <!-- সেটিংস › উইজেট এবং Tazkir সম্পর্কে (সেটিংস নতুন নকশার স্পেসিফিকেশন, 30 অক্টোবর 2026)। উইজেট সারির
          মান হোম স্ক্রিনে থাকা উইজেট গোনে: %1$s যতগুলো আছে, %2$s মোট কতগুলো। -->
     <string name="settings_widgets">উইজেট</string>
     <string name="settings_widgets_all">সব যোগ করা হয়েছে</string>
@@ -157,9 +157,9 @@
          (widgets_prayer_name, widgets_ayah_name); Android-এর উইজেট তালিকা আর iPhone-এর গ্যালারিও উইজেটটিকে এই
          নামেই দেখায় (iosApp/TaqvoWidget-এর home_widget_name ও ayah_widget_name)। ** ও **-এর মাঝের শব্দগুলো পাঠক
          ফোনে খুঁজবেন, তাই সেগুলো তারকাচিহ্ন ছাড়া মোটা অক্ষরে দেখায়। -->
-    <string name="widgets_intro">তাকভো না খুলেই আপনার হোম স্ক্রিনে পরবর্তী নামাজ ও আজকের আয়াত।</string>
-    <string name="widgets_intro_ios">তাকভো না খুলেই আপনার হোম স্ক্রিন ও লক স্ক্রিনে পরবর্তী নামাজ ও আজকের আয়াত।</string>
-    <string name="widgets_background_note">তাকভোর সব উইজেটের জন্য। “সিস্টেম অনুযায়ী” আপনার ফোনের হালকা ও গাঢ় সেটিং অনুসরণ করে।</string>
+    <string name="widgets_intro">Tazkir না খুলেই আপনার হোম স্ক্রিনে পরবর্তী নামাজ ও আজকের আয়াত।</string>
+    <string name="widgets_intro_ios">Tazkir না খুলেই আপনার হোম স্ক্রিন ও লক স্ক্রিনে পরবর্তী নামাজ ও আজকের আয়াত।</string>
+    <string name="widgets_background_note">Tazkirর সব উইজেটের জন্য। “সিস্টেম অনুযায়ী” আপনার ফোনের হালকা ও গাঢ় সেটিং অনুসরণ করে।</string>
     <string name="widgets_prayer_label">নামাজের সময়</string>
     <string name="widgets_prayer_name">নামাজের সময়</string>
     <string name="widgets_prayer_body">চলমান কাউন্টডাউনসহ পরবর্তী নামাজ, আর আজকের সময়সূচি। ছোট বা চওড়া।</string>
@@ -179,15 +179,15 @@
     <string name="widgets_refused_body">নিজে যোগ করতে এক মুহূর্তই লাগে:</string>
     <string name="widgets_step_android_1">হোম স্ক্রিনের ফাঁকা জায়গায় চেপে ধরে রাখুন (অথবা দুই আঙুল দিয়ে চিমটি কাটুন)।</string>
     <string name="widgets_step_android_2">**উইজেট** অপশনে চাপ দিন।</string>
-    <string name="widgets_step_android_3">**তাকভো** খুঁজুন, তারপর %1$s উইজেটটি টেনে জায়গামতো রাখুন।</string>
+    <string name="widgets_step_android_3">**Tazkir** খুঁজুন, তারপর %1$s উইজেটটি টেনে জায়গামতো রাখুন।</string>
     <string name="widgets_how_label">যেভাবে যোগ করবেন</string>
-    <string name="widgets_step_ios_hold_1">হোম স্ক্রিনে **তাকভো** আইকনটি চেপে ধরে রাখুন।</string>
+    <string name="widgets_step_ios_hold_1">হোম স্ক্রিনে **Tazkir** আইকনটি চেপে ধরে রাখুন।</string>
     <string name="widgets_step_ios_hold_2">%1$s ও একটি আকার বেছে নিন।</string>
     <string name="widgets_step_ios_hold_3">এটি আপনার হোম স্ক্রিনে চলে আসবে। যেখানে খুশি টেনে রাখুন।</string>
-    <string name="widgets_ios_fallback">আইকন চেপে ধরলে উইজেট দেখা যাচ্ছে না? হোম স্ক্রিনের ফাঁকা জায়গায় চেপে ধরে রাখুন, ওপরের “**এডিট**”-এ চাপ দিন (iOS 27 ও পরের সংস্করণে এটি একটি ব্রাশ), তারপর “**উইজেট যোগ করুন**”-এ, আর তাকভো খুঁজুন।</string>
+    <string name="widgets_ios_fallback">আইকন চেপে ধরলে উইজেট দেখা যাচ্ছে না? হোম স্ক্রিনের ফাঁকা জায়গায় চেপে ধরে রাখুন, ওপরের “**এডিট**”-এ চাপ দিন (iOS 27 ও পরের সংস্করণে এটি একটি ব্রাশ), তারপর “**উইজেট যোগ করুন**”-এ, আর Tazkir খুঁজুন।</string>
     <string name="widgets_step_ios_plus_1">আপনার হোম স্ক্রিনের ফাঁকা জায়গায় চেপে ধরে রাখুন।</string>
     <string name="widgets_step_ios_plus_2">ওপরের কোণের **+** চিহ্নে চাপ দিন।</string>
-    <string name="widgets_step_ios_plus_3">তাকভো খুঁজুন এবং %1$s বেছে নিন।</string>
+    <string name="widgets_step_ios_plus_3">Tazkir খুঁজুন এবং %1$s বেছে নিন।</string>
     <string name="widgets_show_how">কীভাবে করবেন দেখুন</string>
     <string name="widgets_lock_label">লক স্ক্রিন</string>
     <string name="widgets_lock_name">এক নজরে পরবর্তী নামাজ</string>
@@ -195,15 +195,15 @@
     <string name="widgets_lock_then">তারপর %1$s</string>
     <string name="widgets_step_lock_1">লক স্ক্রিন চেপে ধরে রাখুন, তারপর “**কাস্টমাইজ করুন**”-এ চাপ দিন।</string>
     <string name="widgets_step_lock_2">“লক স্ক্রিন” বেছে নিন, তারপর ঘড়ির নিচের ফাঁকা জায়গায় চাপ দিন।</string>
-    <string name="widgets_step_lock_3">**তাকভো** বেছে নিন, তারপর গোল বা চওড়া উইজেটটি।</string>
-    <!-- তাকভো সম্পর্কে: ট্যাগলাইনের নিচের চিপ (%1$s হলো সংস্করণ, settings_version_value) আর শেষ দুটি কার্ডের
+    <string name="widgets_step_lock_3">**Tazkir** বেছে নিন, তারপর গোল বা চওড়া উইজেটটি।</string>
+    <!-- Tazkir সম্পর্কে: ট্যাগলাইনের নিচের চিপ (%1$s হলো সংস্করণ, settings_version_value) আর শেষ দুটি কার্ডের
          শিরোনাম। সেখানে রেটিং ও শেয়ার settings_rate, settings_share ও settings_share_message ব্যবহার করে। -->
     <string name="about_version_chip">সংস্করণ %1$s</string>
     <string name="about_open_source_label">ওপেন সোর্স</string>
     <string name="about_help_label">সাহায্য</string>
 
     <!-- ক্র্যাশ রিপোর্ট: ক্র্যাশের পরের বার চালু হলে দেখানো শিট, আর পাঠানোর মতো রিপোর্ট না থাকলে ইমেইলের লাইন। -->
-    <string name="crash_sheet_title">তাকভো হঠাৎ বন্ধ হয়ে গেছে</string>
+    <string name="crash_sheet_title">Tazkir হঠাৎ বন্ধ হয়ে গেছে</string>
     <string name="crash_sheet_body">আপনার ফোনে একটি প্রযুক্তিগত রিপোর্ট সংরক্ষণ করা হয়েছে। এটি jmlkhon17@gmail.com-এ পাঠালে সমস্যাটি সমাধানে সাহায্য হয়। এতে শুধু অ্যাপের সংস্করণ, আপনার ফোনের মডেল ও ত্রুটির বিবরণ থাকে, আর কিছু নয়।</string>
     <string name="crash_send">রিপোর্ট পাঠান</string>
     <string name="crash_not_now">এখন নয়</string>
@@ -274,7 +274,7 @@
     <string name="adhan_voice_madinah">মদিনা</string>
     <string name="adhan_voice_makkah_detail">মসজিদুল হারাম, %1$s</string>
     <string name="adhan_voice_madinah_detail">মসজিদে নববী, %1$s</string>
-    <string name="adhan_voice_taqvo_label">তাকভোর আযান</string>
+    <string name="adhan_voice_taqvo_label">Tazkirর আযান</string>
     <string name="adhan_voice_phone_label">আপনার ফোন থেকে</string>
     <string name="adhan_voice_choose">একটি রেকর্ডিং বেছে নিন</string>
     <string name="adhan_voice_choose_detail">এই ফোনে রাখা একটি আযান। এটি এখানেই থাকে।</string>
@@ -312,7 +312,7 @@
     <string name="timetable_auto_authority">এই স্থানের জন্য %1$s যে সময়সূচি প্রকাশ করে</string>
     <string name="timetable_auto_majority">%1$s, এখানকার বেশিরভাগ মসজিদ যা মেনে চলে</string>
     <string name="timetable_auto_cautious">সতর্কতামূলক সময়: প্রতিটি নামাজ তখন, যখন এখানকার সব সময়সূচিতে তা শুরু হয়ে গেছে</string>
-    <string name="timetable_auto_calculated">তাকভোর হিসাব: এই স্থানের কোনো সময়সূচি জানা নেই</string>
+    <string name="timetable_auto_calculated">Tazkirর হিসাব: এই স্থানের কোনো সময়সূচি জানা নেই</string>
     <string name="timetable_times_today">আজ ফজর %1$s, মাগরিব %2$s, এশা %3$s</string>
     <string name="timetable_nearby_label">আশেপাশেও ব্যবহৃত</string>
     <string name="timetable_other_methods">অন্যান্য পদ্ধতি</string>
@@ -326,7 +326,7 @@
     <string name="timetable_later_fast">কিছু দিনে এর সেহরির শেষ সময় %2$s চেয়ে %1$s পরে। আপনার মসজিদ এটি মেনে চললে তবেই এটি অনুসরণ করুন।</string>
     <string name="timetable_of_authority">%1$s-এর সময়ের</string>
     <string name="timetable_of_cautious">সতর্কতামূলক সময়ের</string>
-    <string name="timetable_of_taqvo">তাকভোর সময়ের</string>
+    <string name="timetable_of_taqvo">Tazkirর সময়ের</string>
     <plurals name="timetable_minutes">
         <item quantity="one">%1$s মিনিট</item>
         <item quantity="other">%1$s মিনিট</item>
@@ -341,21 +341,21 @@
     <string name="match_hour_apart">দুটি সময়েই ঠিক এক ঘণ্টার পার্থক্য: আপনার বোর্ড হয়তো গ্রীষ্মকালীন বা শীতকালীন সময় মেনে চলছে। এর ফজর শুরু %1$s-এ এবং এশা %2$s-এ।</string>
     <string name="match_one_fajr">এর ফজর মেলে, কিন্তু এশা শুরু হয় %1$s-এ।</string>
     <string name="match_one_isha">এর এশা মেলে, কিন্তু ফজর শুরু হয় %1$s-এ।</string>
-    <string name="match_none">তাকভোর জানা কোনো সময়সূচি দুটি সময়ের সঙ্গেই মেলে না।</string>
+    <string name="match_none">Tazkirর জানা কোনো সময়সূচি দুটি সময়ের সঙ্গেই মেলে না।</string>
     <string name="match_fajr_isha">ফজর %1$s, এশা %2$s</string>
     <string name="match_use">এই সময়সূচি ব্যবহার করুন</string>
-    <string name="match_in_use">তাকভো ইতিমধ্যে এই সময়সূচি অনুসরণ করছে।</string>
+    <string name="match_in_use">Tazkir ইতিমধ্যে এই সময়সূচি অনুসরণ করছে।</string>
     <string name="timetable_source_authority">%1$s-এর সময়</string>
     <string name="timetable_source_cautious">সতর্কতামূলক সময়</string>
-    <string name="timetable_source_taqvo">তাকভোর সময়</string>
+    <string name="timetable_source_taqvo">Tazkirর সময়</string>
     <string name="timetable_source_latest">স্থানীয় সবচেয়ে দেরির সময়সূচি</string>
     <string name="adjust_paused_for">%1$s · স্থগিত (%2$s-এর জন্য ঠিক করা)</string>
     <string name="adjust_timetable_paused_note">সময় এগিয়ে আনা সমন্বয়গুলো অপেক্ষা করবে, যতক্ষণ না সময়সূচিতে %1$s নিশ্চিত করা হয়।</string>
     <string name="adjust_confirm_title">%2$s-এর আগে %1$s দেখাবেন?</string>
     <string name="adjust_confirm_body">সময়ের আগে পড়া নামাজ আবার পড়তে হয়। আপনার মসজিদের সময়সূচি আগে হলে তবেই এটি করুন।</string>
     <string name="adjust_confirm_body_maghrib">সময়ের আগে পড়া নামাজ আবার পড়তে হয়, আর সময়ের আগে ভাঙা রোজা কাজা করতে হয়। আপনার মসজিদের সময়সূচি আগে হলে তবেই এটি করুন।</string>
-    <string name="adjust_strong_body">তাকভোতে %1$s %3$s থেকে সর্বোচ্চ %2$s পরে হয়, তাই %4$s এটিকে ওই সময়ের আগে নিয়ে যায়। সময়ের আগে পড়া নামাজ আবার পড়তে হয়। আপনার মসজিদের সময়সূচি এতটাই আগে হলে তবেই এটি করুন।</string>
-    <string name="adjust_strong_body_maghrib">তাকভোতে %1$s %3$s থেকে সর্বোচ্চ %2$s পরে হয়, তাই %4$s এটিকে ওই সময়ের আগে নিয়ে যায়। সময়ের আগে পড়া নামাজ আবার পড়তে হয়, আর সময়ের আগে ভাঙা রোজা কাজা করতে হয়। আপনার মসজিদের সময়সূচি এতটাই আগে হলে তবেই এটি করুন।</string>
+    <string name="adjust_strong_body">Tazkirতে %1$s %3$s থেকে সর্বোচ্চ %2$s পরে হয়, তাই %4$s এটিকে ওই সময়ের আগে নিয়ে যায়। সময়ের আগে পড়া নামাজ আবার পড়তে হয়। আপনার মসজিদের সময়সূচি এতটাই আগে হলে তবেই এটি করুন।</string>
+    <string name="adjust_strong_body_maghrib">Tazkirতে %1$s %3$s থেকে সর্বোচ্চ %2$s পরে হয়, তাই %4$s এটিকে ওই সময়ের আগে নিয়ে যায়। সময়ের আগে পড়া নামাজ আবার পড়তে হয়, আর সময়ের আগে ভাঙা রোজা কাজা করতে হয়। আপনার মসজিদের সময়সূচি এতটাই আগে হলে তবেই এটি করুন।</string>
     <string name="adjust_keep">%1$s রাখুন</string>
     <string name="adjust_use">%1$s ব্যবহার করুন</string>
     <string name="adjust_note">সময়সূচির সময় থেকে কোনো সময়কে এক ঘণ্টা পর্যন্ত সরায়। আপনার মসজিদের বোর্ড আলাদা হলে তবেই ব্যবহার করুন।</string>
@@ -396,11 +396,11 @@
     <string name="about_times_title">এই সময়গুলো সম্পর্কে</string>
     <string name="about_prayer_times_settings">নামাজের সময়ের সেটিংস</string>
     <string name="timetable_cautious">সতর্কতামূলক সময়</string>
-    <string name="timetable_calculated">তাকভোর হিসাব</string>
+    <string name="timetable_calculated">Tazkirর হিসাব</string>
     <string name="about_who_publishes">কে এগুলো প্রকাশ করে</string>
     <string name="about_who_publishes_body">%2$s-এ ব্যবহৃত নামাজের সময় %1$s প্রকাশ করে।</string>
-    <string name="about_not_affiliated">%1$s-এর সঙ্গে তাকভোর কোনো সম্পর্ক নেই।</string>
-    <string name="about_how_reproduces">তাকভো কীভাবে এগুলো আবার হিসাব করে</string>
+    <string name="about_not_affiliated">%1$s-এর সঙ্গে Tazkirর কোনো সম্পর্ক নেই।</string>
+    <string name="about_how_reproduces">Tazkir কীভাবে এগুলো আবার হিসাব করে</string>
     <string name="about_method_intro">%1$s যেভাবে হিসাব করে: %2$s।</string>
     <string name="about_method_fajr_angle">দিগন্তের %1$s° নিচে ফজর</string>
     <string name="about_method_isha_angle">দিগন্তের %1$s° নিচে এশা</string>
@@ -419,19 +419,19 @@
     <string name="about_checked_through">%1$s-এর প্রকাশিত সময়সূচির সঙ্গে %2$s পর্যন্ত মিলিয়ে দেখা হয়েছে।</string>
     <string name="about_not_measured_unit">%1$s-এর জন্য এখনো মাপা হয়নি।</string>
     <string name="about_checked_so_far_with_data">এ পর্যন্ত %1$s দিন যাচাই করা হয়েছে: কখনো %2$s-এর আগে নয়, সর্বোচ্চ %3$s মিনিট পরে।</string>
-    <string name="about_checked_so_far_without_data">তাকভো এখনো এগুলো %1$s-এর নিজস্ব সময়সূচির সঙ্গে মিলিয়ে দেখেনি।</string>
+    <string name="about_checked_so_far_without_data">Tazkir এখনো এগুলো %1$s-এর নিজস্ব সময়সূচির সঙ্গে মিলিয়ে দেখেনি।</string>
     <string name="about_not_followed_irn_tromso">এপ্রিলের শেষ থেকে মে মাসের মাঝামাঝি পর্যন্ত এবং জুলাইয়ের শেষ থেকে আগস্টের মাঝামাঝি পর্যন্ত %1$s-এর মক্কার সময়ের ফজর অনুসরণ করা হয় না, কারণ তখন তা সূর্যোদয়ের পরে পড়ে; মধ্যরাতের সূর্যের দিনগুলোতে এর সূর্যোদয়ও নয়, আর মাগরিব কখনো প্রকৃত সূর্যাস্তের আগে আসে না।</string>
     <string name="about_authority_method_title">%1$s-এর পদ্ধতি</string>
-    <string name="about_authority_unchecked_body">%1$s %2$s-এর জন্য নামাজের সময় প্রকাশ করে। তাকভো %1$s-এর পদ্ধতিতেই এগুলো হিসাব করে, সঙ্গে নিরাপত্তার জন্য কিছুটা বাড়তি সময় রাখে।</string>
-    <string name="about_majority_unchecked_body">%2$s-এর বেশিরভাগ মসজিদ %1$s পদ্ধতি মেনে চলে। তাকভো সেই পদ্ধতিতেই সময় হিসাব করে, সঙ্গে নিরাপত্তার জন্য কিছুটা বাড়তি সময় রাখে।</string>
+    <string name="about_authority_unchecked_body">%1$s %2$s-এর জন্য নামাজের সময় প্রকাশ করে। Tazkir %1$s-এর পদ্ধতিতেই এগুলো হিসাব করে, সঙ্গে নিরাপত্তার জন্য কিছুটা বাড়তি সময় রাখে।</string>
+    <string name="about_majority_unchecked_body">%2$s-এর বেশিরভাগ মসজিদ %1$s পদ্ধতি মেনে চলে। Tazkir সেই পদ্ধতিতেই সময় হিসাব করে, সঙ্গে নিরাপত্তার জন্য কিছুটা বাড়তি সময় রাখে।</string>
     <string name="about_nearby_heading">কিছু স্থানীয় মসজিদ এর বদলে যেসব সময়সূচি মানে</string>
-    <string name="about_cautious_body">%1$s-এর মসজিদগুলো সরল বিশ্বাসে ভিন্ন ভিন্ন সময়সূচি মানে, আর কোনোটিই বেশিরভাগ মসজিদ মানে না। তাকভো %2$s একত্র করে: প্রতিটি নামাজ দেখানো হয় সবগুলোতে ওয়াক্ত শুরু হওয়ার পর।</string>
+    <string name="about_cautious_body">%1$s-এর মসজিদগুলো সরল বিশ্বাসে ভিন্ন ভিন্ন সময়সূচি মানে, আর কোনোটিই বেশিরভাগ মসজিদ মানে না। Tazkir %2$s একত্র করে: প্রতিটি নামাজ দেখানো হয় সবগুলোতে ওয়াক্ত শুরু হওয়ার পর।</string>
     <string name="about_cautious_maghrib_guard">আজ মাগরিব ব্যতিক্রম: এটি %1$s-এর হিসাবমতো সূর্যাস্ত অনুযায়ী হয়, %2$s-এর আরও পরের মাগরিব অনুযায়ী নয়, যা উচ্চ অক্ষাংশের নিয়মে নির্ধারিত।</string>
     <string name="about_cautious_maghrib_no_sunset">আজ মাগরিব ব্যতিক্রম, কারণ এখানে সূর্যাস্ত নেই: এটি %1$s অনুসরণ করে, যে সময়সূচি সবচেয়ে বেশি মানা হয়, %2$s-এর আরও পরের মাগরিব নয়।</string>
     <string name="about_which_decides">আজ কোন সময়সূচি কোন সময় ঠিক করছে</string>
     <string name="about_stat_never_before_decider">যে সময়সূচি তা ঠিক করে, তার আগে শুরু</string>
     <string name="about_cautious_checked">এখানে অনুসৃত সময়সূচিগুলোর সঙ্গে মিলিয়ে দেখা হয়েছে।</string>
-    <string name="about_calculated_body">তাকভো %1$s-এর জন্য কোনো সরকারি সুন্নি সময়সূচি খুঁজে পায়নি, তাই সাবধানতার সঙ্গে নিজেই হিসাব করে: %2$s।</string>
+    <string name="about_calculated_body">Tazkir %1$s-এর জন্য কোনো সরকারি সুন্নি সময়সূচি খুঁজে পায়নি, তাই সাবধানতার সঙ্গে নিজেই হিসাব করে: %2$s।</string>
     <string name="about_asr_heading">আসর</string>
     <string name="about_asr_known">%1$s: %3$s, কারণ %2$s-এর বেশিরভাগ মসজিদ এটি মানে।</string>
     <string name="about_asr_unknown">%1$s: %3$s, অর্থাৎ পরের সময়, কারণ %2$s-এ বেশিরভাগ মানুষের মাযহাব জানা নেই। সেটিংসে এটি বদলাতে পারেন।</string>
@@ -443,9 +443,9 @@
     <string name="about_stop_eating">আজ %1$s-এর মধ্যে খাওয়া বন্ধ করুন।</string>
 
     <!-- Attribution -->
-    <string name="attribution_intro">তাকভো গড়ে উঠেছে অন্যদের বিনামূল্যে দিয়ে দেওয়া কাজের উপর। তাঁদের লাইসেন্স স্বীকৃতি দাবি করে, আর তা এমনিতেও তাঁদের প্রাপ্য।</string>
+    <string name="attribution_intro">Tazkir গড়ে উঠেছে অন্যদের বিনামূল্যে দিয়ে দেওয়া কাজের উপর। তাঁদের লাইসেন্স স্বীকৃতি দাবি করে, আর তা এমনিতেও তাঁদের প্রাপ্য।</string>
     <string name="credit_calculation">নামাজের সময়ের হিসাব</string>
-    <string name="credit_calculation_detail">তাকভোর নিজস্ব ইঞ্জিন। কিবলার দিক হিসাব করা হয় Batoul Apps-এর Adhan লাইব্রেরি দিয়ে, MIT লাইসেন্স।</string>
+    <string name="credit_calculation_detail">Tazkirর নিজস্ব ইঞ্জিন। কিবলার দিক হিসাব করা হয় Batoul Apps-এর Adhan লাইব্রেরি দিয়ে, MIT লাইসেন্স।</string>
     <string name="credit_cities">শহরের ডেটাবেস</string>
     <string name="credit_cities_detail">GeoNames cities15000, CC BY 4.0 লাইসেন্স।</string>
     <string name="credit_typeface">Manrope টাইপফেস</string>
@@ -569,9 +569,9 @@
     <string name="qibla_cardinal_east">পূ</string>
     <string name="qibla_cardinal_south">দ</string>
     <string name="qibla_cardinal_west">প</string>
-    <string name="notifications_exact_alarms_off">তাকভোর জন্য সুনির্দিষ্ট অ্যালার্ম বন্ধ আছে, তাই নোটিফিকেশন এক ঘণ্টা পর্যন্ত দেরিতে আসতে পারে। নোটিফিকেশন যাতে কাঁটায় কাঁটায় বাজতে পারে, সেজন্য “অ্যালার্ম ও রিমাইন্ডার” অনুমতি দিন।</string>
+    <string name="notifications_exact_alarms_off">Tazkirর জন্য সুনির্দিষ্ট অ্যালার্ম বন্ধ আছে, তাই নোটিফিকেশন এক ঘণ্টা পর্যন্ত দেরিতে আসতে পারে। নোটিফিকেশন যাতে কাঁটায় কাঁটায় বাজতে পারে, সেজন্য “অ্যালার্ম ও রিমাইন্ডার” অনুমতি দিন।</string>
     <string name="notifications_allow_exact_alarms">সুনির্দিষ্ট অ্যালার্মের অনুমতি দিন</string>
-    <string name="notifications_blocked">সিস্টেম সেটিংসে তাকভোর নোটিফিকেশন বন্ধ আছে, তাই আবার অনুমতি না দেওয়া পর্যন্ত নামাজের কোনো নোটিফিকেশন দেখানো যাবে না।</string>
+    <string name="notifications_blocked">সিস্টেম সেটিংসে Tazkirর নোটিফিকেশন বন্ধ আছে, তাই আবার অনুমতি না দেওয়া পর্যন্ত নামাজের কোনো নোটিফিকেশন দেখানো যাবে না।</string>
     <string name="notifications_open_settings">নোটিফিকেশন সেটিংস খুলুন</string>
     <string name="hijri_tabular">গাণিতিক</string>
     <!-- Bottom tab bar -->
@@ -816,7 +816,7 @@
     <string name="wallpapers_done_set">ওয়ালপেপার বসানো হয়েছে।</string>
     <string name="wallpapers_done_saved">ফটোতে সংরক্ষিত হয়েছে।</string>
     <string name="wallpapers_refused_android">এই ফোন অ্যাপকে ওয়ালপেপার বদলাতে দেয় না।</string>
-    <string name="wallpapers_refused_ios">তাকভোর ছবি যোগ করার অনুমতি নেই। সেটিংস › তাকভো › ফটো থেকে অনুমতি দিন।</string>
+    <string name="wallpapers_refused_ios">Tazkirর ছবি যোগ করার অনুমতি নেই। সেটিংস › Tazkir › ফটো থেকে অনুমতি দিন।</string>
     <string name="wallpapers_failed">ওয়ালপেপার সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।</string>
     <string name="wallpapers_dua_reference">হিসনুল মুসলিম %1$s</string>
     <string name="wallpapers_a11y_preview">ওয়ালপেপারের প্রিভিউ: %1$s</string>
@@ -903,14 +903,14 @@
     <string name="onb_guide_lock_2">নিচে বোতাম না আসা পর্যন্ত স্ক্রিনের ফাঁকা জায়গায় চেপে ধরে রাখুন।</string>
     <string name="onb_guide_lock_3">**কাস্টমাইজ** ট্যাপ করুন, তারপর লক স্ক্রিন বেছে নিন।</string>
     <string name="onb_guide_lock_4">ঘড়ির নিচের ঘরটিতে ট্যাপ করুন।</string>
-    <string name="onb_guide_lock_5">তালিকায় **তাকভো** খুঁজে ট্যাপ করুন।</string>
+    <string name="onb_guide_lock_5">তালিকায় **Tazkir** খুঁজে ট্যাপ করুন।</string>
     <string name="onb_guide_lock_6">পছন্দের উইজেট বেছে নিন — হয়ে গেল!</string>
     <string name="onb_guide_done">বুঝেছি!</string>
     <string name="settings_daily_ayahs">দৈনিক আয়াত</string>
     <string name="settings_daily_ayahs_value">দিনে %1$sটি</string>
     <string name="daily_ayahs_toggle">দৈনিক আয়াতের রিমাইন্ডার</string>
     <string name="daily_ayahs_note">আপনার বেছে নেওয়া বিষয় থেকে আয়াত শুরু ও শেষের মাঝে সমান বিরতিতে আসে। নামাজের নোটিফিকেশন সবসময় আগে।</string>
-    <string name="daily_ayahs_denied">তাকভোর নোটিফিকেশন বন্ধ, তাই দৈনিক আয়াত আসতে পারবে না। ফোনের সেটিংসে চালু করুন।</string>
+    <string name="daily_ayahs_denied">Tazkirর নোটিফিকেশন বন্ধ, তাই দৈনিক আয়াত আসতে পারবে না। ফোনের সেটিংসে চালু করুন।</string>
     <string name="daily_ayahs_open_system">নোটিফিকেশন সেটিংস খুলুন</string>
     <string name="daily_ayahs_format_label">আয়াতের প্রদর্শন</string>
     <string name="tab_feed">ফিড</string>
@@ -988,7 +988,7 @@
     <string name="feed_theme_a11y">থিম %1$d</string>
     <string name="feed_theme_edit">সম্পাদনা</string>
     <string name="feed_tools_duas">দোয়া</string>
-    <string name="feed_help_about">Taqvo সম্পর্কে</string>
+    <string name="feed_help_about">Tazkir সম্পর্কে</string>
     <string name="feed_help_q1">ফিড কীভাবে আয়াত বাছাই করে?</string>
     <string name="feed_help_a1">শুরুতে বেছে নেওয়া বিষয় থেকে। প্রতিটি পছন্দের আয়াত একই ধরনের আরও আনে; দ্রুত সরিয়ে দেওয়া আয়াত একটু কম আনে।</string>
     <string name="feed_help_q2">দৈনিক লক্ষ্য কী?</string>

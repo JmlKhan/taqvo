@@ -11,7 +11,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleDisplayName</key>
-	<string>Taqvo</string>
+	<string>Tazkir</string>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
@@ -40,9 +40,9 @@
 	<key>NSLocationDefaultAccuracyReduced</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Taqvo uses your location to calculate prayer times on your device. Your location is never sent anywhere.</string>
+	<string>Tazkir uses your location to calculate prayer times on your device. Your location is never sent anywhere.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Taqvo saves the wallpaper you made to your photos. It only adds the picture and never sees your library.</string>
+	<string>Tazkir saves the wallpaper you made to your photos. It only adds the picture and never sees your library.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIBackgroundModes</key>

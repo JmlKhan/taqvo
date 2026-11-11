@@ -2,7 +2,7 @@
 # Builds the App Store archive of the iOS app and uploads it to App Store Connect:
 #
 #   scripts/ios-release.sh            archive, then upload
-#   scripts/ios-release.sh archive    only the archive → build/ios-archive/Taqvo-<version>-<build>.xcarchive
+#   scripts/ios-release.sh archive    only the archive → build/ios-archive/Tazkir-<version>-<build>.xcarchive
 #   scripts/ios-release.sh upload     upload the archive the last `archive` made
 #
 # Signing is automatic under the team named in iosApp/Configuration/Config.xcconfig (TEAM_ID),
@@ -38,7 +38,7 @@ PLIST=iosApp/iosApp/Info.plist
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PLIST")"
 BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$PLIST")"
 OUT=build/ios-archive
-ARCHIVE="$OUT/Taqvo-$VERSION-$BUILD.xcarchive"
+ARCHIVE="$OUT/Tazkir-$VERSION-$BUILD.xcarchive"
 EXPORT="$OUT/export-$VERSION-$BUILD"
 APPEX_LIMIT_MB=15
 
@@ -61,10 +61,10 @@ archive() {
 # What the archive actually is — identifiers, versions, team, app group and the widget's size —
 # read back from the built bundles, so an upload never rests on what the project was meant to do.
 report() {
-    local app="$ARCHIVE/Products/Applications/Taqvo.app"
+    local app="$ARCHIVE/Products/Applications/Tazkir.app"
     local appex="$app/PlugIns/TaqvoWidget.appex"
     if [ ! -d "$appex" ]; then
-        echo "ERROR: $ARCHIVE has no Taqvo.app with a TaqvoWidget.appex inside." >&2
+        echo "ERROR: $ARCHIVE has no Tazkir.app with a TaqvoWidget.appex inside." >&2
         exit 1
     fi
     echo

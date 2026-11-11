@@ -101,4 +101,4 @@ internal const val MANIFEST_MAX_BYTES: Long = 2L * 1024L * 1024L
  * model and OS build on Android and the app's build on iOS. No version, so it stays the same for
  * everyone.
  */
-internal const val HTTP_USER_AGENT = "Taqvo"
+internal const val HTTP_USER_AGENT = "Tazkir"

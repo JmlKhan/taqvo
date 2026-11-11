@@ -87,7 +87,7 @@ import com.taqvo.app.resources.timetable_twelve_degrees
 
 /**
  * The short name of a timetable the registry names, in the interface's language: an entry's
- * `shortNameKey` ("Diyanet", "London Unified", "Cautious times", "Calculated by Taqvo") or a
+ * `shortNameKey` ("Diyanet", "London Unified", "Cautious times", "Calculated by Tazkir") or a
  * cautious member's `nameKey` ("Islamic Foundation"). The registry holds keys, not words, because
  * it is plain Kotlin that the website's generator compiles too.
  *

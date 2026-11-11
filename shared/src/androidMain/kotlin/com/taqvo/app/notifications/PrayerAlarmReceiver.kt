@@ -26,7 +26,7 @@ import kotlin.time.Instant
 var notificationSmallIconResId: Int = android.R.drawable.ic_popup_reminder
 
 /**
- * How a notification's tap starts `MainActivity`: in a task of its own when Taqvo is not running,
+ * How a notification's tap starts `MainActivity`: in a task of its own when Tazkir is not running,
  * and otherwise handed to the instance already there.
  *
  * SINGLE_TOP is the part that matters (B18). `MainActivity` has the default `standard` launch
@@ -105,7 +105,7 @@ class PrayerAlarmReceiver : BroadcastReceiver() {
      * Tapping the notification opens the app. The launcher intent rather than `MainActivity`
      * by name: `shared` cannot see androidApp's classes, and the launcher intent is what the
      * home screen icon fires, so the result is the same as opening the app by hand.
-     * [NOTIFICATION_TAP_FLAGS] keep that true when Taqvo is already open: the running activity
+     * [NOTIFICATION_TAP_FLAGS] keep that true when Tazkir is already open: the running activity
      * is brought forward as it was, not recreated.
      *
      * An adhkar reminder's tap goes one step further, to that set's session (adhkar spec §5):

@@ -8,7 +8,7 @@ import com.taqvo.app.resources.about_open_source_label
 import com.taqvo.app.resources.about_privacy_label
 
 /**
- * The cards of link rows on About Taqvo, decided as data so the one promise of the redesign that a
+ * The cards of link rows on About Tazkir, decided as data so the one promise of the redesign that a
  * reader would notice breaking — every row the screen and the Settings root had is still somewhere,
  * and only once — is checked without a composable.
  */

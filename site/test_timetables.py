@@ -214,10 +214,10 @@ def made_up_document(months: list, today: str) -> dict:
         "today": {"weekday": built.strftime("%A"), "full": days[i]["full"], "date": long_date(built), "hijri": days[i]["hijriLong"]},
         "highLatitude": [], "clockChanges": changes,
         "strings": {
-            "whoseTitle": "Made-up Authority timetable", "notAffiliated": "Taqvo is not affiliated with Made-up Authority.",
+            "whoseTitle": "Made-up Authority timetable", "notAffiliated": "Tazkir is not affiliated with Made-up Authority.",
             "checkedThrough": "Checked against Made-up Authority’s published timetable through 31 December 2026.",
             "whoPublishes": "Who publishes them", "whoPublishesBody": "Made-up Authority publishes the prayer times used in Made-up City.",
-            "howReproduces": "How Taqvo reproduces them", "methodIntro": "The way Made-up Authority calculates.",
+            "howReproduces": "How Tazkir reproduces them", "methodIntro": "The way Made-up Authority calculates.",
             "howChecked": "How it was checked", "statDaysValue": "365", "statDays": "days at 1 places",
             "statNever": "starts before Made-up Authority’s", "statNeverAny": "", "statMinutes": "2 min", "statAtMost": "at most after",
             "cautiousBody": "", "maghribGuard": "", "maghribGuardTemplate": "", "maghribNoSunsetTemplate": "", "whichDecides": "Which timetable decides each time today",

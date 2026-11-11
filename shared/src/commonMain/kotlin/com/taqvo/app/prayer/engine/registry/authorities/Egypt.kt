@@ -124,7 +124,7 @@ object Egypt {
                     lateLimits = listOf(
                         LateLimit(
                             3,
-                            "ESA computes Taba's table about half a degree west of Taba, and Taqvo keeps Taba's own " +
+                            "ESA computes Taba's table about half a degree west of Taba, and Tazkir keeps Taba's own " +
                                 "earlier sunrise and dawn",
                             setOf(TimedEvent.SUNRISE, TimedEvent.END_OF_EATING),
                         ),

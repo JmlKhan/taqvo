@@ -15,7 +15,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
- * The single place that knows how to redraw Taqvo's home-screen widgets, and the process-lifetime
+ * The single place that knows how to redraw Tazkir's home-screen widgets, and the process-lifetime
  * hooks that decide when to.
  *
  * Everything the widgets render comes from the SharedPreferences mirror that `WidgetMirrorWriter`

@@ -124,7 +124,7 @@ struct AyahTimelineProvider: TimelineProvider {
     func getSnapshot(in context: Context, completion: @escaping (AyahEntry) -> Void) {
         let entry = Self.entries(from: Date()).first!
         // The gallery asks for a snapshot before the app has necessarily run once, and a gallery
-        // card reading "open Taqvo to load today's ayah" sells nothing. A real ayah goes there
+        // card reading "open Tazkir to load today's ayah" sells nothing. A real ayah goes there
         // instead; a home-screen render never takes this branch, because it is not a preview.
         if context.isPreview && entry.entry == nil {
             completion(Self.sampleEntry(background: entry.background))
@@ -448,7 +448,7 @@ struct TaqvoAyahWidgetView: View {
     /// copy `Localizable.strings` carries.
     private var placeholderText: String {
         let arabic = Locale.current.language.languageCode?.identifier.hasPrefix("ar") ?? false
-        return localized("ayah_widget_placeholder", fallback: arabic ? "افتح تقفو مرة لتحميل آية اليوم" : "Open Taqvo once to load today’s ayah")
+        return localized("ayah_widget_placeholder", fallback: arabic ? "افتح Tazkir مرة لتحميل آية اليوم" : "Open Tazkir once to load today’s ayah")
     }
 
     /// The card as VoiceOver hears it (design §5): the widget's name, the reference in the
@@ -483,7 +483,7 @@ struct TaqvoAyahWidget: Widget {
         StaticConfiguration(kind: kind, provider: AyahTimelineProvider()) { entry in
             TaqvoAyahWidgetView(entry: entry)
                 // Spec §8: the tap opens that ayah in the reader. Nil before the mirror exists, so
-                // the tap is a plain "open Taqvo" rather than a link to nowhere.
+                // the tap is a plain "open Tazkir" rather than a link to nowhere.
                 .widgetURL(entry.entry.flatMap { URL(string: "taqvo://ayah/\($0.surah)/\($0.ayah)") })
         }
         .configurationDisplayName(LocalizedStringKey("ayah_widget_name"))

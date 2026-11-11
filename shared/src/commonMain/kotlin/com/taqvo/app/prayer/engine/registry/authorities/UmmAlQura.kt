@@ -48,7 +48,7 @@ import com.taqvo.app.prayer.engine.registry.single
 object UmmAlQura {
     /**
      * Class A's minute was passed at the tables' own points on the lag dates alone (rulings R37, R41): on a lag date
-     * the API prints the previous day's times, and Taqvo shows the later of the two days' starts and the earlier of
+     * the API prints the previous day's times, and Tazkir shows the later of the two days' starts and the earlier of
      * their sunrises and ends of eating, a minute more than the class allows on a few days (over 13,146 place-days:
      * Fajr on 1, sunrise on 9, the end of eating on 21, every one a lag date). Across a unit's reach (one minute of
      * longitude, ruling R40) the start shown is the later of the unit's table and the user's own sun, and the ends the
@@ -59,7 +59,7 @@ object UmmAlQura {
      */
     val lagDateLimit = LateLimit(
         2,
-        "on the few dates a year Umm al-Qura's calendar repeats the previous day's times, Taqvo shows the later Fajr of " +
+        "on the few dates a year Umm al-Qura's calendar repeats the previous day's times, Tazkir shows the later Fajr of " +
             "the two days, so as never to be early if the calendar stops repeating them; and across a unit's reach the " +
             "later of the unit's table and the user's own sun (the reach rows, 9 Oct 2026)",
         setOf(TimedEvent.FAJR),
@@ -77,7 +77,7 @@ object UmmAlQura {
     /** The lag dates' earlier sunrise and end of eating, and across a unit's reach the earlier of its table's and the user's own. */
     val reachEndsLimit = LateLimit(
         3,
-        "on the lag dates Taqvo shows the earlier sunrise and end of eating of the two days, and within a unit's reach the " +
+        "on the lag dates Tazkir shows the earlier sunrise and end of eating of the two days, and within a unit's reach the " +
             "earlier of the unit's table and the user's own, so toward the reach's edge they come up to 3 min before the " +
             "table (each unit's own tables replayed across its reach, 9 Oct 2026)",
         setOf(TimedEvent.SUNRISE, TimedEvent.END_OF_EATING),

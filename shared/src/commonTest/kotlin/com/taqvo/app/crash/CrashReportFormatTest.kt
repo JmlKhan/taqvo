@@ -14,7 +14,7 @@ class CrashReportFormatTest {
     fun theHeaderNamesTheAppThePhoneAndTheMoment() {
         val text = CrashReportFormat.render(IllegalStateException("boom"), "main", info, at)
         val lines = text.lines()
-        assertEquals("Taqvo crash report", lines[0])
+        assertEquals("Tazkir crash report", lines[0])
         assertEquals("saved: 2026-09-13T21:05:12Z", lines[1])
         assertEquals("app: 1.0.0 (20)", lines[2])
         assertEquals("platform: Android 16 (SDK 36)", lines[3])
@@ -53,6 +53,6 @@ class CrashReportFormatTest {
     fun parseRefusesTextThatIsNotAReport() {
         assertNull(CrashReportFormat.parse(""))
         assertNull(CrashReportFormat.parse("saved: yesterday\nsomething"))
-        assertNull(CrashReportFormat.parse("Taqvo crash report\nnot a saved line"))
+        assertNull(CrashReportFormat.parse("Tazkir crash report\nnot a saved line"))
     }
 }

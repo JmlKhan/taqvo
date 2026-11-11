@@ -285,7 +285,7 @@ object Maghreb {
     /** Spec §6.3 (ruling R41): beyond the fitted cities, sunrise and Maghrib take a margin for any elevation. */
     private val edgeSunrise = LateLimit(
         7,
-        "Beyond the cities whose own Habous table Taqvo fits, the place's elevation is not known, so sunrise takes a " +
+        "Beyond the cities whose own Habous table Tazkir fits, the place's elevation is not known, so sunrise takes a " +
             "national margin that covers the highest town checked (Imilchil, about 2,150 m): at a low town it is up to " +
             "7 min before Habous's sunrise.",
         setOf(TimedEvent.SUNRISE),
@@ -293,7 +293,7 @@ object Maghreb {
 
     private val edgeMaghrib = LateLimit(
         6,
-        "Beyond the cities whose own Habous table Taqvo fits, the place's elevation is not known, so Maghrib takes a " +
+        "Beyond the cities whose own Habous table Tazkir fits, the place's elevation is not known, so Maghrib takes a " +
             "national margin that covers the highest town checked (Imilchil, about 2,150 m): at a low town it is up to " +
             "6 min after Habous's Maghrib.",
         setOf(TimedEvent.MAGHRIB),

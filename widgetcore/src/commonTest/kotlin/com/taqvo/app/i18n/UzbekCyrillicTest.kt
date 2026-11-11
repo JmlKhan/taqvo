@@ -30,7 +30,7 @@ class UzbekCyrillicTest {
         assertEquals("%1\$s та оят", cyr("%1\$s ta oyat"))
         assertEquals("{prayer}гача", cyr("{prayer}gacha"))
         assertEquals("Тугмани босинг: **Add Widget**", cyr("Tugmani bosing: **Add Widget**"))
-        assertEquals("Taqvo сизни кутмоқда", cyr("Taqvo sizni kutmoqda"))
+        assertEquals("Tazkir сизни кутмоқда", cyr("Tazkir sizni kutmoqda"))
     }
 
     @Test

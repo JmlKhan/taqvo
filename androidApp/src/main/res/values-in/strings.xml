@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Taqvo</string>
+    <string name="app_name">Tazkir</string>
     <!-- Widget picker titles (android:label on each receiver). -->
     <string name="widget_small_label">Salat berikutnya</string>
     <string name="widget_medium_label">Waktu salat</string>

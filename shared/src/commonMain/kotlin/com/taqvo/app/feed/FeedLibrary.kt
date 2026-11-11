@@ -23,9 +23,15 @@ class FeedLibrary(private val content: ContentSource) {
     suspend fun card(id: String, lang: ContentLang): FeedCard? = cards(listOf(id), lang).firstOrNull()
 }
 
-/** The text "Copy text" puts on the clipboard (feed spec §9): the Arabic when shown, the translation, the reference. */
+/** The credit the copied text carries (feed spec §9). The translator's name is a proper noun, written the same in both scripts. */
+private const val TRANSLATION_CREDIT = "Shayx Muhammad Sodiq tarjimasi"
+
+/**
+ * The text "Copy text" puts on the clipboard (feed spec §9): the Arabic when shown, the translation,
+ * the reference and the translation's credit. Never the commentary.
+ */
 fun FeedCard.copyText(withArabic: Boolean): String = buildString {
     if (withArabic) append(item.arabic).append("\n\n")
     translation?.let { append(it) }
-    append("\n\n— ").append(reference)
+    append("\n\n— ").append(reference).append(" (").append(TRANSLATION_CREDIT).append(")")
 }.trim()

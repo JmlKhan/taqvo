@@ -345,7 +345,7 @@ internal fun DrawScope.drawReadAloudMark(tint: Color, pointsForward: Boolean) {
 }
 
 /**
- * A five-pointed star, outlined: About Taqvo's Rate button. Not mirrored — a star has no
+ * A five-pointed star, outlined: About Tazkir's Rate button. Not mirrored — a star has no
  * direction to be wrong about under a right-to-left interface.
  */
 internal fun DrawScope.drawStar(tint: Color) {
@@ -367,7 +367,7 @@ internal fun DrawScope.drawStar(tint: Color) {
 }
 
 /**
- * A phone, upright, with its home bar: the mark of About Taqvo's first promise, that what the app
+ * A phone, upright, with its home bar: the mark of About Tazkir's first promise, that what the app
  * keeps stays on the phone. The three promise marks are one set, each the plainest picture of its
  * promise, and none of them mirrors.
  */

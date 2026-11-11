@@ -7,7 +7,7 @@ import android.net.Uri
 import java.io.File
 
 /**
- * The Taqvo launcher icon as a 512 px PNG **file**, for the media notification and the lock
+ * The Tazkir launcher icon as a 512 px PNG **file**, for the media notification and the lock
  * screen.
  *
  * The artwork is the app's icon and not the reciter's monogram, by decision (spec §12): the

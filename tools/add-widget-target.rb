@@ -180,7 +180,7 @@ app.add_dependency(ext) unless app.dependencies.any? { |d| d.target == ext }
 embed = app.copy_files_build_phases.find { |p| p.name == 'Embed Foundation Extensions' }
 unless embed
   embed = app.new_copy_files_build_phase('Embed Foundation Extensions')
-  # 13 == PlugIns. Without this the .appex never reaches Taqvo.app/PlugIns and iOS never sees it.
+  # 13 == PlugIns. Without this the .appex never reaches Tazkir.app/PlugIns and iOS never sees it.
   embed.dst_subfolder_spec = '13'
   embed.dst_path = ''
 end

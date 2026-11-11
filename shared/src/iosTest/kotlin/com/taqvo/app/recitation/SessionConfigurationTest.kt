@@ -19,7 +19,7 @@ class SessionConfigurationTest {
         assertFalse(configuration.HTTPShouldSetCookies, "cookies are sent")
         assertNull(configuration.HTTPCookieStorage, "cookies are kept")
         assertEquals(NSHTTPCookieAcceptPolicy.NSHTTPCookieAcceptPolicyNever, configuration.HTTPCookieAcceptPolicy)
-        assertEquals("Taqvo", configuration.HTTPAdditionalHeaders?.get("User-Agent"))
+        assertEquals("Tazkir", configuration.HTTPAdditionalHeaders?.get("User-Agent"))
         // CFNetwork otherwise sends the reader's own languages, in their order of preference.
         assertEquals("*", configuration.HTTPAdditionalHeaders?.get("Accept-Language"))
     }

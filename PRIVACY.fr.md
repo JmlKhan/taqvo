@@ -1,8 +1,8 @@
-# Politique de confidentialité de Taqvo
+# Politique de confidentialité de Tazkir
 
-_Dernière mise à jour le 29 septembre 2026. S’applique à Taqvo 1.0.0 et aux versions ultérieures sur Android et iOS._
+_Dernière mise à jour le 29 septembre 2026. S’applique à Tazkir 1.0.0 et aux versions ultérieures sur Android et iOS._
 
-Taqvo est une application islamique gratuite, sans compte, sans publicité et sans outil d’analyse. Elle
+Tazkir est une application islamique gratuite, sans compte, sans publicité et sans outil d’analyse. Elle
 fonctionne hors ligne. La seule chose pour laquelle elle utilise Internet est le téléchargement
 des récitations du Coran, et uniquement lorsque vous le lui demandez.
 
@@ -16,10 +16,10 @@ Tout ce que l’application sait est enregistré sur votre appareil et nulle par
 - vos compteurs de Tasbih ;
 - les récitations que vous avez téléchargées.
 
-Rien de tout cela ne nous est envoyé, ni à qui que ce soit. Il n’y a aucun serveur derrière Taqvo
+Rien de tout cela ne nous est envoyé, ni à qui que ce soit. Il n’y a aucun serveur derrière Tazkir
 et aucun compte à créer. Supprimer l’application supprime tout cela.
 
-Si Taqvo plante, elle enregistre un rapport technique sur votre téléphone (la version de
+Si Tazkir plante, elle enregistre un rapport technique sur votre téléphone (la version de
 l’application, le modèle de votre téléphone et l’erreur, rien d’autre). Il ne quitte jamais le
 téléphone, sauf si vous choisissez de nous l’envoyer par e-mail.
 
@@ -32,7 +32,7 @@ l’appareil et n’est jamais transmise.
 
 ## Téléchargement des récitations
 
-Les récitations sont récupérées une sourate à la fois depuis le dépôt de données public de Taqvo
+Les récitations sont récupérées une sourate à la fois depuis le dépôt de données public de Tazkir
 sur GitHub (github.com/MohamedAbulgasem/Taqwa-data), et uniquement lorsque vous touchez
 Télécharger, que vous touchez Écouter sur une sourate que vous n’avez pas téléchargée, ou que
 vous choisissez « Télécharger tout le Coran ». Par défaut, cela se fait via le Wi-Fi uniquement ;
@@ -59,21 +59,21 @@ Si vous choisissez de faire lire la traduction ou le tafsir à voix haute après
 c’est une voix de synthèse vocale de votre téléphone qui s’en charge : l’une des voix d’Apple
 sur iPhone ; sur Android, une voix du moteur de synthèse vocale du téléphone, une application
 distincte (le plus souvent celle de Google ou de Samsung) qui a ses propres réglages et ses
-propres conditions de confidentialité. Taqvo ne choisit que des voix qui fonctionnent hors ligne
+propres conditions de confidentialité. Tazkir ne choisit que des voix qui fonctionnent hors ligne
 et n’envoie elle-même le texte nulle part. Si un téléphone Android n’a pas la voix,
 « Obtenir la voix » ouvre le téléchargement proposé par le moteur de synthèse vocale lui-même ;
 sur iPhone, les voix s’ajoutent dans l’app Réglages.
 
 ## Sauvegardes
 
-Taqvo n’utilise pas la sauvegarde d’applications d’Android : votre position et vos paramètres ne
+Tazkir n’utilise pas la sauvegarde d’applications d’Android : votre position et vos paramètres ne
 sont donc pas copiés chez Google. Sur iOS, vos paramètres, vos signets, vos compteurs et vos
-récitations téléchargées sont exclus de la sauvegarde iCloud ; les seules choses de Taqvo qui
+récitations téléchargées sont exclus de la sauvegarde iCloud ; les seules choses de Tazkir qui
 soient sauvegardées sont les petits caches des widgets, les prochains horaires de prière et les
 cent versets que le widget du verset du jour fait défiler, dont aucun ne contient votre position,
 et cette sauvegarde est chiffrée par Apple et ne nous est jamais visible.
 
-## Ce que Taqvo ne fait jamais
+## Ce que Tazkir ne fait jamais
 
 - Aucun compte, aucune connexion, aucun profil.
 - Aucune publicité et aucun identifiant publicitaire.
@@ -82,12 +82,12 @@ et cette sauvegarde est chiffrée par Apple et ne nous est jamais visible.
 - Aucune vente ni aucun partage de données, puisqu’il n’y en a aucune à vendre ou à partager.
 
 Votre téléphone peut envoyer des rapports de plantage à Google ou à Apple selon ses propres
-paramètres ; ceux-ci viennent du téléphone, et non de Taqvo, et ne contiennent rien qui vous
+paramètres ; ceux-ci viennent du téléphone, et non de Tazkir, et ne contiennent rien qui vous
 appartienne au-delà des détails techniques du plantage.
 
 ## Enfants
 
-Taqvo ne collecte aucune donnée de qui que ce soit, quel que soit son âge.
+Tazkir ne collecte aucune donnée de qui que ce soit, quel que soit son âge.
 
 ## Modifications
 

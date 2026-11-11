@@ -89,7 +89,7 @@ object Gulf {
                 lateLimits = listOf(
                     LateLimit(
                         3,
-                        "Dubai's one table serves the whole city, and Taqvo also keeps each place's own dawn, " +
+                        "Dubai's one table serves the whole city, and Tazkir also keeps each place's own dawn, " +
                             "about a minute earlier in the city's north-east in June",
                         setOf(TimedEvent.END_OF_EATING),
                     ),
@@ -163,7 +163,7 @@ object Gulf {
      * Qatar Calendar House, "the official calendar of the State of Qatar" (HIGH that Isha = Maghrib +
      * 90 on all 365 days, Ramadan included): Fajr 18° (printed up to about 1.6 min before exact 18°),
      * Dhuhr about +1, Asr +1, and Maghrib + 3 all year (spec §6.1: the calendar's Ramadan 1447 Maghrib;
-     * the rest of the year it prints about sunset + 2). Taqvo follows the later of the calendar and
+     * the rest of the year it prints about sunset + 2). Tazkir follows the later of the calendar and
      * the Ministry of Awqaf's API, which prints Dhuhr and Asr a minute earlier (all 119 days both
      * print). The fast begins at its Fajr: the end of eating is the 18° dawn rounded down less 54 s.
      *
@@ -228,7 +228,7 @@ object Gulf {
                 lateLimits = listOf(
                     LateLimit(
                         3,
-                        "Al Khor follows Doha's calendar, and Taqvo also keeps Al Khor's own later summer sunset " +
+                        "Al Khor follows Doha's calendar, and Tazkir also keeps Al Khor's own later summer sunset " +
                             "with the calendar's Maghrib + 3 (its Ramadan Maghrib, kept all year)",
                         setOf(TimedEvent.MAGHRIB, TimedEvent.ISHA),
                     ),

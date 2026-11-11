@@ -251,7 +251,7 @@ object Russia {
     )
 
     /**
-     * Bashkortostan: TsDUM (Ufa) not found. Calculated by Taqvo with DUM RF's conventions (the nearest
+     * Bashkortostan: TsDUM (Ufa) not found. Calculated by Tazkir with DUM RF's conventions (the nearest
      * published), and the Hanafi Asr of its majority (spec §3.7).
      */
     val bashkortostan: RegistryEntry = single(

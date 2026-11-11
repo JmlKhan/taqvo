@@ -25,7 +25,7 @@ actual fun openAppSettings() {
 actual fun requestExactAlarmAccess() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
     val context = appContext
-    // The package URI opens Taqvo's own row rather than the list of every app. Some OEM builds
+    // The package URI opens Tazkir's own row rather than the list of every app. Some OEM builds
     // ship no activity for this action at all; the note stays and nothing crashes.
     val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.fromParts("package", context.packageName, null))
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -37,7 +37,7 @@ actual fun canOpenAppLanguageSettings(): Boolean = Build.VERSION.SDK_INT >= Buil
 actual fun openAppLanguageSettings() {
     if (!canOpenAppLanguageSettings()) return
     val context = appContext
-    // Taqvo's own "App language" page, offering the seven languages of locales_config.xml.
+    // Tazkir's own "App language" page, offering the seven languages of locales_config.xml.
     val intent = Intent(Settings.ACTION_APP_LOCALE_SETTINGS, Uri.fromParts("package", context.packageName, null))
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     runCatching { context.startActivity(intent) }

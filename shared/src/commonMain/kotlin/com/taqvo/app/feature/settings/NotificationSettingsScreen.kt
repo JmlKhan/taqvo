@@ -144,7 +144,7 @@ fun NotificationSettingsScreen(
     // falls back to an inexact window rather than crashing, and this is where that trade-off is
     // admitted. Always false on iOS.
     exactAlarmsUnavailable: Boolean = false,
-    /** Whether the OS currently lets Taqvo post notifications at all. Re-read by the caller each
+    /** Whether the OS currently lets Tazkir post notifications at all. Re-read by the caller each
      * time the app comes to the front, so a switch flipped in system settings is reflected here. */
     notificationsGranted: Boolean = true,
     /** The app's page in system settings, for when [notificationsGranted] is false. */

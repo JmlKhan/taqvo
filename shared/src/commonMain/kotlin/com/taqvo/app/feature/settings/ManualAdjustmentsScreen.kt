@@ -214,7 +214,7 @@ private fun confirmBody(ask: PendingAsk, source: TimetableName, margin: Int?): S
     if (!ask.strong || margin == null) {
         return stringResource(if (maghrib) Res.string.adjust_confirm_body_maghrib else Res.string.adjust_confirm_body)
     }
-    // Where mosques differ Taqvo's time is the latest timetable's, so that is what the margin is measured from.
+    // Where mosques differ Tazkir's time is the latest timetable's, so that is what the margin is measured from.
     val reference = if (source.source == SourceKind.CAUTIOUS) stringResource(Res.string.timetable_source_latest) else sourceTime(source)
     return stringResource(
         if (maghrib) Res.string.adjust_strong_body_maghrib else Res.string.adjust_strong_body,

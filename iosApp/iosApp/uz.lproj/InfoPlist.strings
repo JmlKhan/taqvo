@@ -1,8 +1,8 @@
 /* The permission sheet's own copy, in Uzbek. */
-"NSLocationWhenInUseUsageDescription" = "Taqvo namoz vaqtlarini qurilmangizning o‘zida hisoblash uchun joylashuvingizdan foydalanadi. Joylashuvingiz hech qayerga yuborilmaydi.";
+"NSLocationWhenInUseUsageDescription" = "Tazkir namoz vaqtlarini qurilmangizning o‘zida hisoblash uchun joylashuvingizdan foydalanadi. Joylashuvingiz hech qayerga yuborilmaydi.";
 
 /* The name under the home screen icon. */
-"CFBundleDisplayName" = "Taqvo";
+"CFBundleDisplayName" = "Tazkir";
 
 /* Settings › Wallpapers, on saving the first wallpaper: add-only access to Photos. */
-"NSPhotoLibraryAddUsageDescription" = "Taqvo siz yaratgan fon rasmini rasmlaringizga saqlaydi. U faqat rasmni qo‘shadi va kutubxonangizni hech qachon ko‘rmaydi.";
+"NSPhotoLibraryAddUsageDescription" = "Tazkir siz yaratgan fon rasmini rasmlaringizga saqlaydi. U faqat rasmni qo‘shadi va kutubxonangizni hech qachon ko‘rmaydi.";

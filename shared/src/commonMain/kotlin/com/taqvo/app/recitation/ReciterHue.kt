@@ -6,7 +6,7 @@ package com.taqvo.app.recitation
  * whose voice is playing at a glance (spec 3a §3, §5.5).
  *
  * Two colours per theme: a **deep tinted disc** and a **luminous glyph** on it. They are the amber
- * family's own recipe — Taqvo's accent is a deep amber with a bright ring — walked around the wheel
+ * family's own recipe — Tazkir's accent is a deep amber with a bright ring — walked around the wheel
  * and kept at the app's muted, earthy saturation, so nine other hues can sit beside amber without
  * any of them reading as a different app.
  *

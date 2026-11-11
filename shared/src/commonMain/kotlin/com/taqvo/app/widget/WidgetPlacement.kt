@@ -1,7 +1,7 @@
 package com.taqvo.app.widget
 
 /**
- * Which Taqvo widgets are placed right now: [prayer], [ayah] and [dua] on a home screen, and on iPhone
+ * Which Tazkir widgets are placed right now: [prayer], [ayah] and [dua] on a home screen, and on iPhone
  * [lockScreen], the Lock Screen widget, which is a widget of its own and never counts as the prayer
  * widget on the Home Screen. Android has no Lock Screen widget, so it never reports one.
  *

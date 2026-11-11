@@ -13,7 +13,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -sdk iphonesimulator 
 # the extension links only the Compose-free :widgetcore framework precisely to stay far below
 # that. A regression here (e.g. the extension linking `shared` again) is invisible to every
 # Gradle test, so it is checked at the only place it can be seen: the built .appex.
-APPEX="build/ios-dd/Build/Products/Debug-iphonesimulator/Taqvo.app/PlugIns/TaqvoWidget.appex"
+APPEX="build/ios-dd/Build/Products/Debug-iphonesimulator/Tazkir.app/PlugIns/TaqvoWidget.appex"
 APPEX_LIMIT_MB=15
 if [ -d "$APPEX" ]; then
   size_mb=$(( $(du -sk "$APPEX" | cut -f1) / 1024 ))

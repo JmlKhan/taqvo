@@ -49,7 +49,7 @@ class WidgetPlacementIosTest {
     }
 
     @Test
-    fun `no Taqvo widget placed is an answer and not a failure`() = runTest {
+    fun `no Tazkir widget placed is an answer and not a failure`() = runTest {
         answering(emptyList())
         assertEquals(WidgetPlacement(prayer = false, ayah = false, lockScreen = false), createWidgetPlacementSource().current())
     }

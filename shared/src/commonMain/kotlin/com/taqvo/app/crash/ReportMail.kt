@@ -10,7 +10,7 @@ object ReportMail {
     const val BODY_MAX = 1_800
 
     /** Not localised: it is read by support, and it has to sort and search the same way for everyone. */
-    fun subject(info: DeviceInfo): String = "Taqvo report · ${info.appVersion} (${info.build}) · ${info.platform}"
+    fun subject(info: DeviceInfo): String = "Tazkir report · ${info.appVersion} (${info.build}) · ${info.platform}"
 
     fun body(info: DeviceInfo, report: CrashReport?, noReportLine: String): String {
         if (report == null) {

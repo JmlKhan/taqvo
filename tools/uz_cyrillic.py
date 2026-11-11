@@ -17,7 +17,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 KEEP_WORDS = {
-    "Taqvo", "Android", "iPhone", "iOS", "iPad", "Google", "Apple", "Safari", "Chrome", "Samsung",
+    "Tazkir", "Android", "iPhone", "iOS", "iPad", "Google", "Apple", "Safari", "Chrome", "Samsung",
     "TestFlight", "App", "Store", "Play", "GitHub", "Wi", "Fi", "WiFi", "TTS", "MB", "GB", "KB",
     "Manrope", "Amiri", "Lora", "Nunito", "OFL", "CC", "BY", "SA", "PDF", "URL", "OK", "AM", "PM",
     "Tasma", "Hijri", "Quran", "Sahih", "Saheeh", "QuranEnc", "Kuliev", "Kulieva",
@@ -38,6 +38,10 @@ def is_letter(c):
 
 
 def word(w):
+    # The product name stays in Latin script, and its Uzbek suffix is written in Cyrillic after it
+    # ("Tazkir’ni" -> "Tazkirни"), as the bold forms already are.
+    if w.startswith("Tazkir") and len(w) > 7 and w[6] in APOS:
+        return "Tazkir" + word(w[7:])
     letters = "".join(c for c in w if is_letter(c))
     low = letters.lower()
     if letters in KEEP_WORDS or "w" in low or NOT_UZBEK_C.search(low):
@@ -185,7 +189,7 @@ def main():
 if __name__ == "__main__":
     if "--selftest" in sys.argv:
         for s in ["Oʻzbekcha", "Qur’on", "yaxshi", "ekran", "Sozlamalar", "Shom namozi", "gʻoya", "%1$s ta oyat", "**Add**",
-                  "Yordam", "Bomdod", "Kechki zikrlar", "ma’no", "Taqvo"]:
+                  "Yordam", "Bomdod", "Kechki zikrlar", "ma’no", "Tazkir"]:
             print(s, "->", from_latin(s))
         sys.exit(0)
     sys.exit(main())

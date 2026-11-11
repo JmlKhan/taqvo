@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">تقفو</string>
+    <string name="app_name">Tazkir</string>
     <string name="ui_language">ur</string>
 
     <string name="language_name">اردو</string>
@@ -11,7 +11,7 @@
     <string name="sheet_a11y_drag_handle">گھسیٹنے کا ہینڈل</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_welcome_title">تقفو</string>
+    <string name="onboarding_welcome_title">Tazkir</string>
     <string name="onboarding_welcome_body">نماز کے اوقات، قبلہ اور قرآن۔ نہ اکاؤنٹ، اور آف لائن بھی چلتا ہے۔</string>
     <string name="onboarding_welcome_cta">شروع کریں</string>
     <string name="onboarding_location_title">آپ کہاں ہیں؟</string>
@@ -21,15 +21,15 @@
     <string name="onboarding_notifications_body">ہر نماز کے لیے ایک اطلاع۔ ہر نماز کی آواز آپ الگ الگ چن سکتے ہیں، اور جب چاہیں بدل سکتے ہیں۔</string>
     <string name="onboarding_notifications_secondary">ابھی نہیں</string>
     <string name="onboarding_exact_title">الارم اور یاد دہانیاں</string>
-    <string name="onboarding_exact_body">اینڈرائیڈ عین نماز کے وقت پر تبھی بج سکتا ہے جب تقفو کو ”الارم اور یاد دہانیاں“ کی اجازت ہو۔ اس کے بغیر اطلاع ایک گھنٹے تک دیر سے آ سکتی ہے۔</string>
+    <string name="onboarding_exact_body">اینڈرائیڈ عین نماز کے وقت پر تبھی بج سکتا ہے جب Tazkir کو ”الارم اور یاد دہانیاں“ کی اجازت ہو۔ اس کے بغیر اطلاع ایک گھنٹے تک دیر سے آ سکتی ہے۔</string>
     <string name="onboarding_widget_title">آپ کی ہوم اسکرین پر</string>
-    <string name="onboarding_widget_body">تقفو کا ویجٹ ایپ کھولے بغیر اگلی نماز اور چلتی ہوئی الٹی گنتی دکھاتا ہے۔</string>
-    <string name="onboarding_widget_body_ios">تقفو کا ویجٹ ایپ کھولے بغیر اگلی نماز اور چلتی ہوئی الٹی گنتی دکھاتا ہے۔ اسے شامل کرنے کے لیے ہوم اسکرین پر تقفو کے آئیکن کو دبا کر رکھیں اور ویجٹ کا سائز چنیں۔</string>
-    <string name="onboarding_widget_body_ios_legacy">تقفو کا ویجٹ ایپ کھولے بغیر اگلی نماز اور چلتی ہوئی الٹی گنتی دکھاتا ہے۔ اسے شامل کرنے کے لیے ہوم اسکرین کو دبا کر رکھیں، اوپر کونے میں جمع کے نشان پر ٹیپ کریں، پھر تقفو تلاش کریں۔</string>
+    <string name="onboarding_widget_body">Tazkir کا ویجٹ ایپ کھولے بغیر اگلی نماز اور چلتی ہوئی الٹی گنتی دکھاتا ہے۔</string>
+    <string name="onboarding_widget_body_ios">Tazkir کا ویجٹ ایپ کھولے بغیر اگلی نماز اور چلتی ہوئی الٹی گنتی دکھاتا ہے۔ اسے شامل کرنے کے لیے ہوم اسکرین پر Tazkir کے آئیکن کو دبا کر رکھیں اور ویجٹ کا سائز چنیں۔</string>
+    <string name="onboarding_widget_body_ios_legacy">Tazkir کا ویجٹ ایپ کھولے بغیر اگلی نماز اور چلتی ہوئی الٹی گنتی دکھاتا ہے۔ اسے شامل کرنے کے لیے ہوم اسکرین کو دبا کر رکھیں، اوپر کونے میں جمع کے نشان پر ٹیپ کریں، پھر Tazkir تلاش کریں۔</string>
     <string name="onboarding_widget_cta_add">ویجٹ شامل کریں</string>
     <string name="onboarding_widget_cta_done">ہو گیا</string>
     <string name="onboarding_widget_secondary">شاید بعد میں</string>
-    <string name="onboarding_widget_steps_android">آپ کی ہوم اسکرین ایپس کو ویجٹ شامل کرنے نہیں دیتی، اس لیے اسے خود شامل کریں: ہوم اسکرین پر کسی خالی جگہ کو دبا کر رکھیں (یا دو انگلیاں اسکرین پر قریب لائیں)، ویجٹس پر ٹیپ کریں، تقفو تلاش کریں اور ویجٹ کو کھینچ کر اس کی جگہ پر رکھ دیں۔</string>
+    <string name="onboarding_widget_steps_android">آپ کی ہوم اسکرین ایپس کو ویجٹ شامل کرنے نہیں دیتی، اس لیے اسے خود شامل کریں: ہوم اسکرین پر کسی خالی جگہ کو دبا کر رکھیں (یا دو انگلیاں اسکرین پر قریب لائیں)، ویجٹس پر ٹیپ کریں، Tazkir تلاش کریں اور ویجٹ کو کھینچ کر اس کی جگہ پر رکھ دیں۔</string>
 
     <!-- Prayer names -->
     <string name="prayer_fajr">فجر</string>
@@ -57,7 +57,7 @@
         <item quantity="other">%1$s منٹ</item>
     </plurals>
     <string name="prayer_exact_alarms_label">عین وقت کے الارم بند</string>
-    <string name="prayer_exact_alarms_body">جب تک تقفو کو ”الارم اور یاد دہانیاں“ کی اجازت نہ ہو، اینڈرائیڈ ایک گھنٹے تک دیر سے بجا سکتا ہے۔</string>
+    <string name="prayer_exact_alarms_body">جب تک Tazkir کو ”الارم اور یاد دہانیاں“ کی اجازت نہ ہو، اینڈرائیڈ ایک گھنٹے تک دیر سے بجا سکتا ہے۔</string>
     <string name="prayer_no_location_title">ابھی کوئی مقام نہیں</string>
     <string name="prayer_choose_city">شہر چنیں</string>
     <string name="prayer_location_settings">ترتیبات سے مقام فعال کریں</string>
@@ -65,11 +65,11 @@
 
     <!-- Prayer engine: the Prayer screen (Task 10) -->
     <string name="prayer_whose_checked_title">%1$s کا نقشۂ اوقات</string>
-    <string name="prayer_whose_checked_body">%2$s کے لیے %1$s کے اوقات، جنہیں تقفو نے دوبارہ حساب کر کے شائع شدہ نقشۂ اوقات سے ملا کر جانچا ہے۔</string>
+    <string name="prayer_whose_checked_body">%2$s کے لیے %1$s کے اوقات، جنہیں Tazkir نے دوبارہ حساب کر کے شائع شدہ نقشۂ اوقات سے ملا کر جانچا ہے۔</string>
     <string name="prayer_whose_unchecked_title">%1$s کا طریقہ، ابھی پوری طرح جانچا نہیں گیا</string>
-    <string name="prayer_whose_unchecked_body">تقفو %2$s کے اوقات %1$s کے طریقے سے نکالتا ہے، اور احتیاط کی کچھ گنجائش رکھتا ہے۔</string>
-    <string name="prayer_whose_cautious_body">یہاں کی مساجد کے نقشۂ اوقات مختلف ہیں، اس لیے تقفو ہر نماز تب دکھاتا ہے جب سب کے ہاں اس کا وقت شروع ہو چکا ہو۔</string>
-    <string name="prayer_whose_calculated_body">یہاں کا کوئی مقامی نقشۂ اوقات معلوم نہیں، اس لیے تقفو یہ اوقات احتیاط کے ساتھ نکالتا ہے۔</string>
+    <string name="prayer_whose_unchecked_body">Tazkir %2$s کے اوقات %1$s کے طریقے سے نکالتا ہے، اور احتیاط کی کچھ گنجائش رکھتا ہے۔</string>
+    <string name="prayer_whose_cautious_body">یہاں کی مساجد کے نقشۂ اوقات مختلف ہیں، اس لیے Tazkir ہر نماز تب دکھاتا ہے جب سب کے ہاں اس کا وقت شروع ہو چکا ہو۔</string>
+    <string name="prayer_whose_calculated_body">یہاں کا کوئی مقامی نقشۂ اوقات معلوم نہیں، اس لیے Tazkir یہ اوقات احتیاط کے ساتھ نکالتا ہے۔</string>
     <string name="prayer_about_these_times">ان اوقات کے بارے میں</string>
     <string name="prayer_times_by">%1$s کے اوقات</string>
     <string name="prayer_whose_a11y">%1$s، %2$s۔ اوقات کا ماخذ کھولتا ہے</string>
@@ -78,7 +78,7 @@
     <string name="prayer_source_published_method">جاری کردہ طریقہ</string>
     <string name="prayer_polar_line">آج یہاں سورج نہ طلوع ہوتا ہے نہ غروب، اس لیے کچھ اوقات اُس قریب ترین عرض بلد کے مطابق ہیں جہاں سورج طلوع اور غروب ہوتا ہے۔</string>
     <string name="prayer_card_cautious_title">یہاں کی مساجد کے نقشۂ اوقات مختلف ہیں</string>
-    <string name="prayer_card_cautious_body">تقفو ہر نماز تب دکھاتا ہے جب سب کے ہاں اس کا وقت شروع ہو چکا ہو۔</string>
+    <string name="prayer_card_cautious_body">Tazkir ہر نماز تب دکھاتا ہے جب سب کے ہاں اس کا وقت شروع ہو چکا ہو۔</string>
     <string name="prayer_card_sunni_title">یہ اہلِ سنت کے اوقاتِ نماز ہیں</string>
     <string name="prayer_card_sunni_body">شیعہ (جعفری) فقہ میں مغرب اور افطار بعد میں ہوتے ہیں۔</string>
     <string name="prayer_match_my_mosque">اپنی مسجد سے ملائیں</string>
@@ -103,7 +103,7 @@
     <string name="prayer_clock_region_chihuahua">چیواوا</string>
     <string name="prayer_clock_region_paraguay">پیراگوئے</string>
     <string name="prayer_differ_before">%1$s کے مطابق %2$s کا وقت %3$s پر شروع ہوتا ہے</string>
-    <string name="prayer_differ_after">%1$s کے مطابق %2$s کا وقت شروع ہو چکا ہے · تقفو اسے %3$s سے دکھاتا ہے</string>
+    <string name="prayer_differ_after">%1$s کے مطابق %2$s کا وقت شروع ہو چکا ہے · Tazkir اسے %3$s سے دکھاتا ہے</string>
     <string name="prayer_other_asr">عصرِ %1$s %2$s</string>
 
     <!-- Settings root -->
@@ -117,23 +117,23 @@
     <string name="settings_appearance">ظاہری شکل</string>
     <string name="settings_appearance_value">%1$s · %2$s</string>
     <string name="settings_language">زبان</string>
-    <string name="settings_about">تقفو کے بارے میں</string>
+    <string name="settings_about">Tazkir کے بارے میں</string>
     <string name="settings_attribution">اعتراف اور لائسنس</string>
-    <string name="settings_rate">تقفو کو ریٹ کریں</string>
-    <string name="settings_share">تقفو شیئر کریں</string>
-    <string name="settings_share_message">تقفو: نماز کے اوقات، قرآن اور قبلہ۔ اکاؤنٹ کی ضرورت نہیں۔</string>
+    <string name="settings_rate">Tazkir کو ریٹ کریں</string>
+    <string name="settings_share">Tazkir شیئر کریں</string>
+    <string name="settings_share_message">Tazkir: نماز کے اوقات، قرآن اور قبلہ۔ اکاؤنٹ کی ضرورت نہیں۔</string>
     <string name="settings_not_set">مقرر نہیں</string>
     <string name="settings_notifications_off">بند</string>
     <string name="settings_notifications_on_count">%1$s فعال</string>
     <string name="settings_version_value">1.5.0</string>
 
-    <!-- «تقفو کے بارے میں» کی اسکرین۔ -->
+    <!-- «Tazkir کے بارے میں» کی اسکرین۔ -->
     <string name="about_tagline">مفت، سب کے لیے، ہمیشہ کے لیے۔</string>
     <string name="about_privacy_label">رازداری</string>
     <string name="about_stays_title">آپ کے فون پر رہتا ہے</string>
     <string name="about_stays_body">مقام، ترتیبات، محفوظ آیات اور گنتی کبھی فون سے باہر نہیں جاتیں۔</string>
     <string name="about_online_title">آن لائن صرف جب آپ کہیں</string>
-    <string name="about_online_body">انٹرنیٹ صرف ایک کام کے لیے استعمال ہوتا ہے: وہ تلاوتیں جو آپ خود ڈاؤن لوڈ کرنا چاہیں، GitHub پر تقفو کے عوامی مخزن سے۔</string>
+    <string name="about_online_body">انٹرنیٹ صرف ایک کام کے لیے استعمال ہوتا ہے: وہ تلاوتیں جو آپ خود ڈاؤن لوڈ کرنا چاہیں، GitHub پر Tazkir کے عوامی مخزن سے۔</string>
     <string name="about_nothing_title">نہ اکاؤنٹ، نہ تجزیات</string>
     <string name="about_nothing_body">کہیں سائن اِن نہیں کرنا۔</string>
     <string name="about_privacy_policy">رازداری کی پالیسی</string>
@@ -146,7 +146,7 @@
     <string name="about_icon_open_website">taqwa.world کھولیں</string>
     <string name="about_report_problem">مسئلے کی اطلاع دیں</string>
 
-    <!-- ترتیبات › ویجٹس اور تقفو کے بارے میں (ترتیبات کی نئی ترتیب کا خاکہ، 30 اکتوبر 2026)۔ ویجٹس کی قطار کی
+    <!-- ترتیبات › ویجٹس اور Tazkir کے بارے میں (ترتیبات کی نئی ترتیب کا خاکہ، 30 اکتوبر 2026)۔ ویجٹس کی قطار کی
          قدر ہوم اسکرین پر موجود ویجٹ گنتی ہے: %1$s جتنے موجود ہیں، %2$s کل کتنے ہیں۔ -->
     <string name="settings_widgets">ویجٹس</string>
     <string name="settings_widgets_all">سب شامل ہیں</string>
@@ -157,9 +157,9 @@
          ہجے)۔ مراحل میں %1$s ویجٹ کا وہ نام ہے جو اس کے کارڈ پر ہے (widgets_prayer_name، widgets_ayah_name)، اور Android کی ویجٹ فہرست اور
          iPhone کی گیلری بھی اسے اسی نام سے دکھاتی ہیں (iosApp/TaqvoWidget میں home_widget_name اور ayah_widget_name)۔ ** اور ** کے درمیان کے
          الفاظ وہ ہیں جو قاری فون پر ڈھونڈے گا، اس لیے وہ ستاروں کے بغیر موٹے دکھائی دیتے ہیں۔ -->
-    <string name="widgets_intro">اگلی نماز اور آج کی آیت آپ کی ہوم اسکرین پر، تقفو کھولے بغیر۔</string>
-    <string name="widgets_intro_ios">اگلی نماز اور آج کی آیت آپ کی ہوم اسکرین اور لاک اسکرین پر، تقفو کھولے بغیر۔</string>
-    <string name="widgets_background_note">تقفو کے تمام ویجٹس کے لیے۔ ”نظام کے مطابق“ آپ کے فون کی روشن اور تاریک ترتیب کی پیروی کرتا ہے۔</string>
+    <string name="widgets_intro">اگلی نماز اور آج کی آیت آپ کی ہوم اسکرین پر، Tazkir کھولے بغیر۔</string>
+    <string name="widgets_intro_ios">اگلی نماز اور آج کی آیت آپ کی ہوم اسکرین اور لاک اسکرین پر، Tazkir کھولے بغیر۔</string>
+    <string name="widgets_background_note">Tazkir کے تمام ویجٹس کے لیے۔ ”نظام کے مطابق“ آپ کے فون کی روشن اور تاریک ترتیب کی پیروی کرتا ہے۔</string>
     <string name="widgets_prayer_label">نماز کے اوقات</string>
     <string name="widgets_prayer_name">نماز کے اوقات</string>
     <string name="widgets_prayer_body">چلتی ہوئی الٹی گنتی کے ساتھ اگلی نماز، اور آج کے اوقات۔ چھوٹا یا چوڑا۔</string>
@@ -179,15 +179,15 @@
     <string name="widgets_refused_body">اسے خود شامل کرنے میں بس ایک لمحہ لگتا ہے:</string>
     <string name="widgets_step_android_1">ہوم اسکرین پر کسی خالی جگہ کو دبا کر رکھیں (یا دو انگلیاں اسکرین پر قریب لائیں)۔</string>
     <string name="widgets_step_android_2">**ویجٹس** پر ٹیپ کریں۔</string>
-    <string name="widgets_step_android_3">**تقفو** تلاش کریں، پھر %1$s ویجٹ کو کھینچ کر اس کی جگہ پر رکھ دیں۔</string>
+    <string name="widgets_step_android_3">**Tazkir** تلاش کریں، پھر %1$s ویجٹ کو کھینچ کر اس کی جگہ پر رکھ دیں۔</string>
     <string name="widgets_how_label">شامل کرنے کا طریقہ</string>
-    <string name="widgets_step_ios_hold_1">ہوم اسکرین پر **تقفو** کے آئیکن کو دبا کر رکھیں۔</string>
+    <string name="widgets_step_ios_hold_1">ہوم اسکرین پر **Tazkir** کے آئیکن کو دبا کر رکھیں۔</string>
     <string name="widgets_step_ios_hold_2">%1$s اور کوئی سائز چنیں۔</string>
     <string name="widgets_step_ios_hold_3">یہ آپ کی ہوم اسکرین پر آ جاتا ہے۔ اسے جہاں چاہیں کھینچ کر رکھیں۔</string>
-    <string name="widgets_ios_fallback">آئیکن دبانے پر ویجٹ نظر نہیں آتے؟ ہوم اسکرین کے کسی خالی حصے کو دبا کر رکھیں، اوپر ”**ترمیم**“ پر ٹیپ کریں (iOS 27 اور اس کے بعد یہ ایک برش ہے)، پھر ”**ویجیٹ شامل کریں**“ پر، اور تقفو تلاش کریں۔</string>
+    <string name="widgets_ios_fallback">آئیکن دبانے پر ویجٹ نظر نہیں آتے؟ ہوم اسکرین کے کسی خالی حصے کو دبا کر رکھیں، اوپر ”**ترمیم**“ پر ٹیپ کریں (iOS 27 اور اس کے بعد یہ ایک برش ہے)، پھر ”**ویجیٹ شامل کریں**“ پر، اور Tazkir تلاش کریں۔</string>
     <string name="widgets_step_ios_plus_1">اپنی ہوم اسکرین کے کسی خالی حصے کو دبا کر رکھیں۔</string>
     <string name="widgets_step_ios_plus_2">اوپر کونے میں **+** کے نشان پر ٹیپ کریں۔</string>
-    <string name="widgets_step_ios_plus_3">تقفو تلاش کریں اور %1$s چنیں۔</string>
+    <string name="widgets_step_ios_plus_3">Tazkir تلاش کریں اور %1$s چنیں۔</string>
     <string name="widgets_show_how">طریقہ دکھائیں</string>
     <string name="widgets_lock_label">لاک اسکرین</string>
     <string name="widgets_lock_name">اگلی نماز ایک نظر میں</string>
@@ -195,15 +195,15 @@
     <string name="widgets_lock_then">پھر %1$s</string>
     <string name="widgets_step_lock_1">اپنی لاک اسکرین کو دبا کر رکھیں، پھر ”**حسب خواہش بنائیں**“ پر ٹیپ کریں۔</string>
     <string name="widgets_step_lock_2">”لاک اسکرین“ چنیں، پھر گھڑی کے نیچے والی جگہ پر ٹیپ کریں۔</string>
-    <string name="widgets_step_lock_3">**تقفو** چنیں، پھر گول یا چوڑا ویجٹ۔</string>
-    <!-- تقفو کے بارے میں: ٹیگ لائن کے نیچے ورژن کی چِپ (%1$s ورژن ہے، settings_version_value) اور آخری دو
+    <string name="widgets_step_lock_3">**Tazkir** چنیں، پھر گول یا چوڑا ویجٹ۔</string>
+    <!-- Tazkir کے بارے میں: ٹیگ لائن کے نیچے ورژن کی چِپ (%1$s ورژن ہے، settings_version_value) اور آخری دو
          کارڈوں کے عنوان۔ وہاں ریٹ اور شیئر settings_rate، settings_share اور settings_share_message استعمال کرتے ہیں۔ -->
     <string name="about_version_chip">ورژن %1$s</string>
     <string name="about_open_source_label">اوپن سورس</string>
     <string name="about_help_label">مدد</string>
 
     <!-- کریش رپورٹ: کریش کے بعد اگلی بار کھلنے پر دکھائی جانے والی شیٹ، اور ای میل کی وہ سطر جب بھیجنے کے لیے کوئی رپورٹ نہ ہو۔ -->
-    <string name="crash_sheet_title">تقفو اچانک بند ہو گیا</string>
+    <string name="crash_sheet_title">Tazkir اچانک بند ہو گیا</string>
     <string name="crash_sheet_body">آپ کے فون پر ایک تکنیکی رپورٹ محفوظ کی گئی ہے۔ اسے jmlkhon17@gmail.com پر بھیجنے سے مسئلہ حل کرنے میں مدد ملتی ہے۔ اس میں صرف ایپ کا ورژن، آپ کے فون کا ماڈل اور خرابی کی تفصیل ہوتی ہے، اور کچھ نہیں۔</string>
     <string name="crash_send">رپورٹ بھیجیں</string>
     <string name="crash_not_now">ابھی نہیں</string>
@@ -273,7 +273,7 @@
     <string name="adhan_voice_madinah">مدینہ</string>
     <string name="adhan_voice_makkah_detail">مسجد الحرام، %1$s</string>
     <string name="adhan_voice_madinah_detail">مسجد نبوی، %1$s</string>
-    <string name="adhan_voice_taqvo_label">تقفو کی اذانیں</string>
+    <string name="adhan_voice_taqvo_label">Tazkir کی اذانیں</string>
     <string name="adhan_voice_phone_label">آپ کے فون سے</string>
     <string name="adhan_voice_choose">ریکارڈنگ چنیں</string>
     <string name="adhan_voice_choose_detail">اس فون پر محفوظ اذان۔ یہ یہیں رہتی ہے۔</string>
@@ -311,7 +311,7 @@
     <string name="timetable_auto_authority">وہ نقشۂ اوقات جو %1$s اس جگہ کے لیے جاری کرتا ہے</string>
     <string name="timetable_auto_majority">%1$s، جس پر یہاں کی اکثر مساجد چلتی ہیں</string>
     <string name="timetable_auto_cautious">احتیاطی اوقات: ہر نماز تب، جب اس جگہ کے تمام نقشۂ اوقات میں اس کا وقت شروع ہو چکا ہو</string>
-    <string name="timetable_auto_calculated">تقفو کا حساب: اس جگہ کا کوئی نقشۂ اوقات معلوم نہیں</string>
+    <string name="timetable_auto_calculated">Tazkir کا حساب: اس جگہ کا کوئی نقشۂ اوقات معلوم نہیں</string>
     <string name="timetable_times_today">آج فجر %1$s، مغرب %2$s، عشاء %3$s</string>
     <string name="timetable_nearby_label">آس پاس بھی رائج</string>
     <string name="timetable_other_methods">دیگر طریقے</string>
@@ -325,7 +325,7 @@
     <string name="timetable_later_fast">کچھ دنوں میں اس میں سحری کا اختتام %2$s سے %1$s بعد ہوتا ہے۔ اسے صرف تب اپنائیں جب آپ کی مسجد اس پر چلتی ہو۔</string>
     <string name="timetable_of_authority">%1$s کے وقت</string>
     <string name="timetable_of_cautious">احتیاطی اوقات</string>
-    <string name="timetable_of_taqvo">تقفو کے وقت</string>
+    <string name="timetable_of_taqvo">Tazkir کے وقت</string>
     <plurals name="timetable_minutes">
         <item quantity="one">%1$s منٹ</item>
         <item quantity="other">%1$s منٹ</item>
@@ -340,21 +340,21 @@
     <string name="match_hour_apart">دونوں اوقات میں ٹھیک ایک گھنٹے کا فرق ہے: ہو سکتا ہے آپ کا بورڈ گرمیوں یا سردیوں کے وقت پر ہو۔ اس کی فجر %1$s اور عشاء %2$s پر شروع ہوتی ہے۔</string>
     <string name="match_one_fajr">اس کی فجر ملتی ہے، مگر عشاء %1$s پر شروع ہوتی ہے۔</string>
     <string name="match_one_isha">اس کی عشاء ملتی ہے، مگر فجر %1$s پر شروع ہوتی ہے۔</string>
-    <string name="match_none">تقفو کا جانا پہچانا کوئی نقشۂ اوقات دونوں اوقات سے نہیں ملتا۔</string>
+    <string name="match_none">Tazkir کا جانا پہچانا کوئی نقشۂ اوقات دونوں اوقات سے نہیں ملتا۔</string>
     <string name="match_fajr_isha">فجر %1$s، عشاء %2$s</string>
     <string name="match_use">یہ نقشۂ اوقات اپنائیں</string>
-    <string name="match_in_use">تقفو پہلے ہی یہی نقشۂ اوقات اپنائے ہوئے ہے۔</string>
+    <string name="match_in_use">Tazkir پہلے ہی یہی نقشۂ اوقات اپنائے ہوئے ہے۔</string>
     <string name="timetable_source_authority">%1$s کے وقت</string>
     <string name="timetable_source_cautious">احتیاطی وقت</string>
-    <string name="timetable_source_taqvo">تقفو کے وقت</string>
+    <string name="timetable_source_taqvo">Tazkir کے وقت</string>
     <string name="timetable_source_latest">سب سے بعد والے مقامی نقشۂ اوقات</string>
     <string name="adjust_paused_for">%1$s · موقوف (%2$s کے لیے رکھا گیا)</string>
     <string name="adjust_timetable_paused_note">وقت کو پہلے کرنے والی ترمیمات تب تک رکی رہیں گی جب تک نقشۂ اوقات میں %1$s کی تصدیق نہ ہو۔</string>
     <string name="adjust_confirm_title">کیا %1$s کو %2$s سے پہلے دکھایا جائے؟</string>
     <string name="adjust_confirm_body">وقت سے پہلے پڑھی گئی نماز دہرانی ہوگی۔ یہ صرف تب کریں جب آپ کی مسجد کا نقشۂ اوقات پہلے ہو۔</string>
     <string name="adjust_confirm_body_maghrib">وقت سے پہلے پڑھی گئی نماز دہرانی ہوگی، اور وقت سے پہلے کھولا گیا روزہ قضا کرنا ہوگا۔ یہ صرف تب کریں جب آپ کی مسجد کا نقشۂ اوقات پہلے ہو۔</string>
-    <string name="adjust_strong_body">تقفو میں %1$s، %3$s سے زیادہ سے زیادہ %2$s بعد ہے، اس لیے %4$s اسے اُس وقت سے پہلے لے آتا ہے۔ وقت سے پہلے پڑھی گئی نماز دہرانی ہوگی۔ یہ صرف تب کریں جب آپ کی مسجد کا نقشۂ اوقات اتنا ہی پہلے ہو۔</string>
-    <string name="adjust_strong_body_maghrib">تقفو میں %1$s، %3$s سے زیادہ سے زیادہ %2$s بعد ہے، اس لیے %4$s اسے اُس وقت سے پہلے لے آتا ہے۔ وقت سے پہلے پڑھی گئی نماز دہرانی ہوگی، اور وقت سے پہلے کھولا گیا روزہ قضا کرنا ہوگا۔ یہ صرف تب کریں جب آپ کی مسجد کا نقشۂ اوقات اتنا ہی پہلے ہو۔</string>
+    <string name="adjust_strong_body">Tazkir میں %1$s، %3$s سے زیادہ سے زیادہ %2$s بعد ہے، اس لیے %4$s اسے اُس وقت سے پہلے لے آتا ہے۔ وقت سے پہلے پڑھی گئی نماز دہرانی ہوگی۔ یہ صرف تب کریں جب آپ کی مسجد کا نقشۂ اوقات اتنا ہی پہلے ہو۔</string>
+    <string name="adjust_strong_body_maghrib">Tazkir میں %1$s، %3$s سے زیادہ سے زیادہ %2$s بعد ہے، اس لیے %4$s اسے اُس وقت سے پہلے لے آتا ہے۔ وقت سے پہلے پڑھی گئی نماز دہرانی ہوگی، اور وقت سے پہلے کھولا گیا روزہ قضا کرنا ہوگا۔ یہ صرف تب کریں جب آپ کی مسجد کا نقشۂ اوقات اتنا ہی پہلے ہو۔</string>
     <string name="adjust_keep">%1$s پر قائم رہیں</string>
     <string name="adjust_use">%1$s استعمال کریں</string>
     <string name="adjust_note">کسی وقت کو نقشۂ اوقات کے وقت سے ایک گھنٹے تک آگے پیچھے کرتا ہے۔ صرف تب استعمال کریں جب آپ کی مسجد کا بورڈ مختلف ہو۔</string>
@@ -395,11 +395,11 @@
     <string name="about_times_title">ان اوقات کے بارے میں</string>
     <string name="about_prayer_times_settings">نماز کے اوقات کی ترتیبات</string>
     <string name="timetable_cautious">احتیاطی اوقات</string>
-    <string name="timetable_calculated">تقفو کا حساب</string>
+    <string name="timetable_calculated">Tazkir کا حساب</string>
     <string name="about_who_publishes">انہیں کون جاری کرتا ہے</string>
     <string name="about_who_publishes_body">%2$s میں رائج اوقاتِ نماز %1$s جاری کرتا ہے۔</string>
-    <string name="about_not_affiliated">تقفو کا %1$s سے کوئی تعلق نہیں۔</string>
-    <string name="about_how_reproduces">تقفو انہیں کیسے دوبارہ نکالتا ہے</string>
+    <string name="about_not_affiliated">Tazkir کا %1$s سے کوئی تعلق نہیں۔</string>
+    <string name="about_how_reproduces">Tazkir انہیں کیسے دوبارہ نکالتا ہے</string>
     <string name="about_method_intro">%1$s کا طریقۂ حساب: %2$s۔</string>
     <string name="about_method_fajr_angle">فجر افق سے %1$s° نیچے</string>
     <string name="about_method_isha_angle">عشاء افق سے %1$s° نیچے</string>
@@ -418,19 +418,19 @@
     <string name="about_checked_through">%1$s کے شائع شدہ نقشۂ اوقات سے %2$s تک ملا کر جانچا گیا۔</string>
     <string name="about_not_measured_unit">%1$s کے لیے ابھی ناپا نہیں گیا۔</string>
     <string name="about_checked_so_far_with_data">اب تک %1$s دن جانچے گئے: کبھی %2$s کے وقت سے پہلے نہیں، زیادہ سے زیادہ %3$s منٹ بعد۔</string>
-    <string name="about_checked_so_far_without_data">تقفو نے ابھی انہیں %1$s کے اپنے نقشۂ اوقات سے نہیں ملایا۔</string>
+    <string name="about_checked_so_far_without_data">Tazkir نے ابھی انہیں %1$s کے اپنے نقشۂ اوقات سے نہیں ملایا۔</string>
     <string name="about_not_followed_irn_tromso">اپریل کے آخر سے مئی کے وسط تک اور جولائی کے آخر سے اگست کے وسط تک %1$s کی مکہ کے وقت والی فجر اختیار نہیں کی جاتی، کیونکہ تب وہ طلوعِ آفتاب کے بعد آتی ہے، اور نہ آدھی رات کے سورج کے دنوں میں اس کا طلوعِ آفتاب؛ مغرب کا وقت کبھی اصل غروبِ آفتاب سے پہلے شروع نہیں ہوتا۔</string>
     <string name="about_authority_method_title">%1$s کا طریقہ</string>
-    <string name="about_authority_unchecked_body">%1$s، %2$s کے لیے اوقاتِ نماز جاری کرتا ہے۔ تقفو انہیں %1$s ہی کے طریقے سے نکالتا ہے، اور احتیاط کی کچھ گنجائش رکھتا ہے۔</string>
-    <string name="about_majority_unchecked_body">%2$s کی اکثر مساجد %1$s کے طریقے پر چلتی ہیں۔ تقفو اوقات اسی طریقے سے نکالتا ہے، اور احتیاط کی کچھ گنجائش رکھتا ہے۔</string>
+    <string name="about_authority_unchecked_body">%1$s، %2$s کے لیے اوقاتِ نماز جاری کرتا ہے۔ Tazkir انہیں %1$s ہی کے طریقے سے نکالتا ہے، اور احتیاط کی کچھ گنجائش رکھتا ہے۔</string>
+    <string name="about_majority_unchecked_body">%2$s کی اکثر مساجد %1$s کے طریقے پر چلتی ہیں۔ Tazkir اوقات اسی طریقے سے نکالتا ہے، اور احتیاط کی کچھ گنجائش رکھتا ہے۔</string>
     <string name="about_nearby_heading">وہ نقشۂ اوقات جن پر کچھ مقامی مساجد اس کے بجائے چلتی ہیں</string>
-    <string name="about_cautious_body">%1$s کی مساجد نیک نیتی سے مختلف نقشۂ اوقات پر چلتی ہیں، اور کسی ایک پر اکثریت نہیں۔ تقفو %2$s کو یکجا کرتا ہے: ہر نماز تب دکھائی جاتی ہے جب سب میں اس کا وقت شروع ہو چکا ہو۔</string>
-    <string name="about_cautious_maghrib_guard">آج مغرب اس اصول سے مستثنیٰ ہے: تقفو اس میں %1$s کے حساب سے غروبِ آفتاب کی پیروی کرتا ہے، نہ کہ %2$s کے اُس مغرب کی جو بعد میں آتا ہے اور بلند عرض بلد کے قاعدے سے طے ہوتا ہے۔</string>
-    <string name="about_cautious_maghrib_no_sunset">آج مغرب اس اصول سے مستثنیٰ ہے، کیونکہ یہاں غروبِ آفتاب نہیں ہوتا: تقفو اس میں %1$s پر چلتا ہے، جو سب سے زیادہ مانا جانے والا نقشۂ اوقات ہے، نہ کہ %2$s کے اُس مغرب پر جو بعد میں آتا ہے۔</string>
+    <string name="about_cautious_body">%1$s کی مساجد نیک نیتی سے مختلف نقشۂ اوقات پر چلتی ہیں، اور کسی ایک پر اکثریت نہیں۔ Tazkir %2$s کو یکجا کرتا ہے: ہر نماز تب دکھائی جاتی ہے جب سب میں اس کا وقت شروع ہو چکا ہو۔</string>
+    <string name="about_cautious_maghrib_guard">آج مغرب اس اصول سے مستثنیٰ ہے: Tazkir اس میں %1$s کے حساب سے غروبِ آفتاب کی پیروی کرتا ہے، نہ کہ %2$s کے اُس مغرب کی جو بعد میں آتا ہے اور بلند عرض بلد کے قاعدے سے طے ہوتا ہے۔</string>
+    <string name="about_cautious_maghrib_no_sunset">آج مغرب اس اصول سے مستثنیٰ ہے، کیونکہ یہاں غروبِ آفتاب نہیں ہوتا: Tazkir اس میں %1$s پر چلتا ہے، جو سب سے زیادہ مانا جانے والا نقشۂ اوقات ہے، نہ کہ %2$s کے اُس مغرب پر جو بعد میں آتا ہے۔</string>
     <string name="about_which_decides">آج ہر وقت کون سا نقشۂ اوقات طے کرتا ہے</string>
     <string name="about_stat_never_before_decider">اسے طے کرنے والے نقشۂ اوقات کے وقت سے پہلے آغاز</string>
     <string name="about_cautious_checked">یہاں رائج نقشۂ اوقات سے ملا کر جانچا گیا۔</string>
-    <string name="about_calculated_body">تقفو کو %1$s کے لیے کوئی سرکاری سنی نقشۂ اوقات نہیں ملا، اس لیے وہ احتیاط کے ساتھ خود حساب کرتا ہے: %2$s۔</string>
+    <string name="about_calculated_body">Tazkir کو %1$s کے لیے کوئی سرکاری سنی نقشۂ اوقات نہیں ملا، اس لیے وہ احتیاط کے ساتھ خود حساب کرتا ہے: %2$s۔</string>
     <string name="about_asr_heading">عصر</string>
     <string name="about_asr_known">%1$s: %3$s، کیونکہ %2$s کی اکثر مساجد اسی پر چلتی ہیں۔</string>
     <string name="about_asr_unknown">%1$s: %3$s، یعنی بعد والا وقت، کیونکہ %2$s میں اکثریت کا مسلک معلوم نہیں۔ آپ اسے ترتیبات میں بدل سکتے ہیں۔</string>
@@ -442,9 +442,9 @@
     <string name="about_stop_eating">آج %1$s تک کھانا پینا بند کر دیں۔</string>
 
     <!-- Attribution -->
-    <string name="attribution_intro">تقفو اُس کام پر کھڑا ہے جو دوسروں نے بلا معاوضہ دیا۔ اُن کے لائسنس اعتراف کا تقاضا کرتے ہیں، اور یہ ویسے بھی اُن کا حق ہے۔</string>
+    <string name="attribution_intro">Tazkir اُس کام پر کھڑا ہے جو دوسروں نے بلا معاوضہ دیا۔ اُن کے لائسنس اعتراف کا تقاضا کرتے ہیں، اور یہ ویسے بھی اُن کا حق ہے۔</string>
     <string name="credit_calculation">نماز کے اوقات کا حساب</string>
-    <string name="credit_calculation_detail">تقفو کا اپنا انجن۔ قبلے کی سمت Batoul Apps کی Adhan لائبریری سے نکالی جاتی ہے، MIT لائسنس۔</string>
+    <string name="credit_calculation_detail">Tazkir کا اپنا انجن۔ قبلے کی سمت Batoul Apps کی Adhan لائبریری سے نکالی جاتی ہے، MIT لائسنس۔</string>
     <string name="credit_cities">شہروں کا ڈیٹابیس</string>
     <string name="credit_cities_detail">GeoNames cities15000، CC BY 4.0۔</string>
     <string name="credit_typeface">Manrope ٹائپ فیس</string>
@@ -566,9 +566,9 @@
     <string name="qibla_cardinal_east">مش</string>
     <string name="qibla_cardinal_south">ج</string>
     <string name="qibla_cardinal_west">مغ</string>
-    <string name="notifications_exact_alarms_off">تقفو کے لیے عین وقت کے الارم بند ہیں، اس لیے اطلاع ایک گھنٹے تک دیر سے آ سکتی ہے۔ ”الارم اور یاد دہانیاں“ کی اجازت دیں تاکہ اطلاع عین وقت پر بج سکے۔</string>
+    <string name="notifications_exact_alarms_off">Tazkir کے لیے عین وقت کے الارم بند ہیں، اس لیے اطلاع ایک گھنٹے تک دیر سے آ سکتی ہے۔ ”الارم اور یاد دہانیاں“ کی اجازت دیں تاکہ اطلاع عین وقت پر بج سکے۔</string>
     <string name="notifications_allow_exact_alarms">عین وقت کے الارم کی اجازت دیں</string>
-    <string name="notifications_blocked">نظام کی ترتیبات میں تقفو کی اطلاعات بند ہیں، اس لیے دوبارہ اجازت ملنے تک نماز کی کوئی اطلاع نہیں دکھائی جا سکتی۔</string>
+    <string name="notifications_blocked">نظام کی ترتیبات میں Tazkir کی اطلاعات بند ہیں، اس لیے دوبارہ اجازت ملنے تک نماز کی کوئی اطلاع نہیں دکھائی جا سکتی۔</string>
     <string name="notifications_open_settings">اطلاعات کی ترتیبات کھولیں</string>
     <string name="hijri_tabular">حسابی</string>
     <!-- Bottom tab bar -->
@@ -811,7 +811,7 @@
     <string name="wallpapers_done_set">وال پیپر لگ گیا۔</string>
     <string name="wallpapers_done_saved">تصاویر میں محفوظ ہو گیا۔</string>
     <string name="wallpapers_refused_android">یہ فون ایپس کو وال پیپر بدلنے نہیں دیتا۔</string>
-    <string name="wallpapers_refused_ios">تقفو کو تصاویر شامل کرنے کی اجازت نہیں۔ سیٹنگز › تقفو › تصاویر میں اجازت دیں۔</string>
+    <string name="wallpapers_refused_ios">Tazkir کو تصاویر شامل کرنے کی اجازت نہیں۔ سیٹنگز › Tazkir › تصاویر میں اجازت دیں۔</string>
     <string name="wallpapers_failed">وال پیپر محفوظ نہیں ہو سکا۔ دوبارہ کوشش کریں۔</string>
     <string name="wallpapers_dua_reference">حصن المسلم %1$s</string>
     <string name="wallpapers_a11y_preview">وال پیپر کا پیش منظر: %1$s</string>
@@ -898,14 +898,14 @@
     <string name="onb_guide_lock_2">اسکرین کے خالی حصے کو دبائے رکھیں یہاں تک کہ نیچے بٹن ظاہر ہوں۔</string>
     <string name="onb_guide_lock_3">**حسب ضرورت بنائیں** پر ٹیپ کریں، پھر لاک اسکرین چنیں۔</string>
     <string name="onb_guide_lock_4">گھڑی کے نیچے والے خانے پر ٹیپ کریں۔</string>
-    <string name="onb_guide_lock_5">فہرست میں **تقفو** تلاش کریں اور ٹیپ کریں۔</string>
+    <string name="onb_guide_lock_5">فہرست میں **Tazkir** تلاش کریں اور ٹیپ کریں۔</string>
     <string name="onb_guide_lock_6">اپنا مطلوبہ ویجیٹ چنیں — ہو گیا!</string>
     <string name="onb_guide_done">سمجھ گیا!</string>
     <string name="settings_daily_ayahs">روزانہ آیات</string>
     <string name="settings_daily_ayahs_value">روزانہ %1$s</string>
     <string name="daily_ayahs_toggle">روزانہ آیت کی یاد دہانیاں</string>
     <string name="daily_ayahs_note">آیات آپ کے چنے ہوئے موضوعات سے، شروع اور اختتام کے درمیان برابر وقفوں سے آتی ہیں۔ نماز کی اطلاعات ہمیشہ پہلے آتی ہیں۔</string>
-    <string name="daily_ayahs_denied">تقفو کی اطلاعات بند ہیں، اس لیے روزانہ آیات نہیں آ سکتیں۔ فون کی ترتیبات میں انہیں آن کریں۔</string>
+    <string name="daily_ayahs_denied">Tazkir کی اطلاعات بند ہیں، اس لیے روزانہ آیات نہیں آ سکتیں۔ فون کی ترتیبات میں انہیں آن کریں۔</string>
     <string name="daily_ayahs_open_system">اطلاعات کی ترتیبات کھولیں</string>
     <string name="daily_ayahs_format_label">آیت کا انداز</string>
     <string name="tab_feed">فیڈ</string>
@@ -983,7 +983,7 @@
     <string name="feed_theme_a11y">تھیم %1$d</string>
     <string name="feed_theme_edit">ترمیم</string>
     <string name="feed_tools_duas">دعائیں</string>
-    <string name="feed_help_about">Taqvo کے بارے میں</string>
+    <string name="feed_help_about">Tazkir کے بارے میں</string>
     <string name="feed_help_q1">فیڈ آیات کیسے چنتی ہے؟</string>
     <string name="feed_help_a1">شروع میں چنے گئے موضوعات سے۔ ہر پسند کی گئی آیت اسی طرح کی مزید لاتی ہے؛ جلدی سے گزاری گئی آیت کچھ کم۔</string>
     <string name="feed_help_q2">روزانہ کا ہدف کیا ہے؟</string>

@@ -1,8 +1,8 @@
-# Kebijakan privasi Taqvo
+# Kebijakan privasi Tazkir
 
-_Terakhir diperbarui 29 September 2026. Berlaku untuk Taqvo 1.0.0 dan versi setelahnya di Android dan iOS._
+_Terakhir diperbarui 29 September 2026. Berlaku untuk Tazkir 1.0.0 dan versi setelahnya di Android dan iOS._
 
-Taqvo adalah aplikasi Islami gratis tanpa akun, tanpa iklan, dan tanpa analitik. Aplikasi ini
+Tazkir adalah aplikasi Islami gratis tanpa akun, tanpa iklan, dan tanpa analitik. Aplikasi ini
 berfungsi offline. Satu-satunya hal yang membuatnya memakai internet adalah mengunduh tilawah
 Al-Qur'an, dan hanya ketika Anda memintanya.
 
@@ -17,9 +17,9 @@ Semua yang diketahui aplikasi ini tersimpan di perangkat Anda dan tidak di tempa
 - tilawah apa pun yang sudah Anda unduh.
 
 Tidak satu pun dari semua itu dikirim kepada kami atau kepada siapa pun. Tidak ada server di balik
-Taqvo dan tidak ada akun yang perlu dibuat. Menghapus aplikasinya menghapus semuanya.
+Tazkir dan tidak ada akun yang perlu dibuat. Menghapus aplikasinya menghapus semuanya.
 
-Jika Taqvo mengalami kerusakan, aplikasi menyimpan laporan teknis di ponsel Anda (versi aplikasi,
+Jika Tazkir mengalami kerusakan, aplikasi menyimpan laporan teknis di ponsel Anda (versi aplikasi,
 model ponsel Anda, dan kesalahannya, tidak lebih). Laporan itu tidak pernah keluar dari ponsel
 kecuali Anda memilih mengirimkannya kepada kami lewat email.
 
@@ -31,7 +31,7 @@ pun. Lokasi Anda dipakai di perangkat dan tidak pernah dikirimkan.
 
 ## Unduhan tilawah
 
-Tilawah diambil satu surah setiap kali dari repositori data publik Taqvo di GitHub
+Tilawah diambil satu surah setiap kali dari repositori data publik Tazkir di GitHub
 (github.com/MohamedAbulgasem/Taqwa-data), dan hanya ketika Anda menekan Unduh, menekan Putar pada
 surah yang belum Anda unduh, atau memilih “Unduh seluruh Al-Qur'an”. Secara bawaan hal ini
 berlangsung lewat Wi-Fi saja; Anda bisa mengizinkan data seluler di Pengaturan › Al-Qur'an ›
@@ -56,21 +56,21 @@ Tilawah yang sudah diunduh bisa dihapus per qari di Pengaturan › Al-Qur'an ›
 Jika Anda memilih agar terjemahan atau tafsir dibacakan setelah setiap ayat, yang membacakannya
 adalah suara teks-ke-ucapan milik ponsel Anda sendiri: salah satu suara Apple di iPhone; di
 Android, suara dari mesin ucapan ponsel, yaitu aplikasi terpisah (biasanya milik Google atau
-Samsung) yang punya pengaturan dan ketentuan privasinya sendiri. Taqvo hanya memilih suara yang
-berfungsi offline, dan Taqvo sendiri tidak mengirim teks itu ke mana pun. Jika ponsel Android
+Samsung) yang punya pengaturan dan ketentuan privasinya sendiri. Tazkir hanya memilih suara yang
+berfungsi offline, dan Tazkir sendiri tidak mengirim teks itu ke mana pun. Jika ponsel Android
 belum punya suaranya, “Unduh suara” membuka unduhan milik mesin ucapan itu sendiri; di iPhone,
 suara ditambahkan lewat app Pengaturan.
 
 ## Cadangan
 
-Taqvo menolak ikut serta dalam pencadangan aplikasi Android, jadi lokasi dan pengaturan Anda tidak
+Tazkir menolak ikut serta dalam pencadangan aplikasi Android, jadi lokasi dan pengaturan Anda tidak
 disalin ke Google. Di iOS, pengaturan, penanda, hitungan, dan tilawah yang Anda unduh dikecualikan
-dari cadangan iCloud; satu-satunya milik Taqvo yang dicadangkan adalah cache kecil milik widget,
+dari cadangan iCloud; satu-satunya milik Tazkir yang dicadangkan adalah cache kecil milik widget,
 yaitu waktu salat yang akan datang dan seratus ayat yang diputar bergiliran oleh widget ayat
 harian, dan keduanya tidak memuat lokasi Anda; cadangan itu pun dienkripsi oleh Apple dan tidak
 pernah terlihat oleh kami.
 
-## Apa yang tidak pernah dilakukan Taqvo
+## Apa yang tidak pernah dilakukan Tazkir
 
 - Tanpa akun, tanpa proses masuk, tanpa profil.
 - Tanpa iklan dan tanpa pengenal iklan.
@@ -79,12 +79,12 @@ pernah terlihat oleh kami.
 - Tanpa penjualan atau pembagian data, karena memang tidak ada yang bisa dijual atau dibagikan.
 
 Ponsel Anda mungkin mengirim laporan kerusakan ke Google atau Apple menurut pengaturannya sendiri;
-laporan itu datang dari ponsel, bukan dari Taqvo, dan tidak memuat apa pun milik Anda selain
+laporan itu datang dari ponsel, bukan dari Tazkir, dan tidak memuat apa pun milik Anda selain
 rincian teknis kerusakan tersebut.
 
 ## Anak-anak
 
-Taqvo tidak mengumpulkan data dari siapa pun, pada usia berapa pun.
+Tazkir tidak mengumpulkan data dari siapa pun, pada usia berapa pun.
 
 ## Perubahan
 

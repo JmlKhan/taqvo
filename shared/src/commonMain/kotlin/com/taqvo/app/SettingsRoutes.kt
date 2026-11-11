@@ -663,7 +663,7 @@ internal fun WidgetsRoute(
     )
 }
 
-/** Settings › About Taqvo, the app's profile page; Attribution & licences opens from its Open source card. */
+/** Settings › About Tazkir, the app's profile page; Attribution & licences opens from its Open source card. */
 @Composable
 internal fun AboutRoute(navigator: Navigator) {
     AboutScreen(

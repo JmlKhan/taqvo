@@ -70,7 +70,7 @@ import kotlin.math.max
 
 /**
  * Whose times the Prayer screen shows (spec §2.1): the timetable the day follows, by its short
- * name's key, and how sure Taqvo is of it at this place. The effective entry's, so a timetable the
+ * name's key, and how sure Tazkir is of it at this place. The effective entry's, so a timetable the
  * user chose is the one named.
  */
 data class WhoseTimes(val shortNameKey: String, val entryClass: EntryClass) {
@@ -83,7 +83,7 @@ data class WhoseTimes(val shortNameKey: String, val entryClass: EntryClass) {
     }
 }
 
-/** The card's title: "Diyanet timetable", "Cautious times", "ISNA method, not yet fully checked", "Calculated by Taqvo". */
+/** The card's title: "Diyanet timetable", "Cautious times", "ISNA method, not yet fully checked", "Calculated by Tazkir". */
 @Composable
 private fun whoseTitle(whose: WhoseTimes): String {
     val name = isolated(authorityShortName(whose.shortNameKey))
@@ -110,7 +110,7 @@ private fun whoseSentence(whose: WhoseTimes, place: String): String {
 /**
  * The words of the Prayer screen's source label (spec §2.1), where the times are not an authority's
  * own checked timetable: several timetables combined, an authority's published method not yet
- * proven against its timetable, or Taqvo's own calculation where nothing official is known. Null
+ * proven against its timetable, or Tazkir's own calculation where nothing official is known. Null
  * for a checked authority, whose times need no label.
  */
 internal fun sourceLabelRes(whose: WhoseTimes): StringResource? = when (whose.entryClass) {
@@ -120,7 +120,7 @@ internal fun sourceLabelRes(whose: WhoseTimes): StringResource? = when (whose.en
     EntryClass.D_NONE -> Res.string.timetable_calculated
 }
 
-/** What a screen reader calls the times: "Times by Diyanet", "Cautious times", "Calculated by Taqvo". */
+/** What a screen reader calls the times: "Times by Diyanet", "Cautious times", "Calculated by Tazkir". */
 @Composable
 private fun whoseSpoken(whose: WhoseTimes): String = when (whose.entryClass) {
     EntryClass.C -> stringResource(Res.string.timetable_cautious)

@@ -76,11 +76,11 @@ data class ChoiceInProgress(val id: String, val progress: Float)
 /** A choice the check found earlier than Automatic, waiting for its keep button or "Follow it". */
 data class PendingWarning(val id: String, val nameKey: String, val finding: EarlierFinding)
 
-/** The name a timetable goes by: an authority's short name, "Cautious times" or "Calculated by Taqvo". */
+/** The name a timetable goes by: an authority's short name, "Cautious times" or "Calculated by Tazkir". */
 @Composable
 internal fun timetableNameText(name: TimetableName): String = authorityShortName(name.nameKey)
 
-/** "Diyanet’s time", "the cautious time" or "Taqvo’s time" (spec §2.2's {source}). */
+/** "Diyanet’s time", "the cautious time" or "Tazkir’s time" (spec §2.2's {source}). */
 @Composable
 internal fun sourceTime(name: TimetableName): String = when (name.source) {
     SourceKind.AUTHORITY -> stringResource(Res.string.timetable_source_authority, authorityShortName(name.nameKey))
@@ -88,7 +88,7 @@ internal fun sourceTime(name: TimetableName): String = when (name.source) {
     SourceKind.TAQVO -> stringResource(Res.string.timetable_source_taqvo)
 }
 
-/** "London Unified’s", "the cautious times" or "Taqvo’s": whose start a warning compares with. */
+/** "London Unified’s", "the cautious times" or "Tazkir’s": whose start a warning compares with. */
 @Composable
 private fun sourceOf(name: TimetableName): String = when (name.source) {
     SourceKind.AUTHORITY -> stringResource(Res.string.timetable_of_authority, authorityShortName(name.nameKey))

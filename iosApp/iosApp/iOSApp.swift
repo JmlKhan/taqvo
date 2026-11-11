@@ -28,7 +28,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 	}
 
 	/// Without this, iOS shows nothing at all while the app is in the foreground: no banner and, for
-	/// a prayer, no adhan. That is exactly the moment a user is most likely to be looking at Taqvo,
+	/// a prayer, no adhan. That is exactly the moment a user is most likely to be looking at Tazkir,
 	/// so a notification is presented in full whether or not the app happens to be open.
 	func userNotificationCenter(
 		_ center: UNUserNotificationCenter,
@@ -187,7 +187,7 @@ struct iOSApp: App {
 		WidgetRefreshBridge.shared.onRefresh = { reloadWidgets() }
 	}
 
-	/// Settings › Widgets and the Settings root ask which Taqvo widgets are placed; `WidgetCenter` is
+	/// Settings › Widgets and the Settings root ask which Tazkir widgets are placed; `WidgetCenter` is
 	/// the only thing that knows, it is Swift-only, and it answers asynchronously, so the shared code
 	/// hands over a completion and this fills it in.
 	///
@@ -296,7 +296,7 @@ enum RecitationHarness {
 
 	/// The URLs in `TAQVO_HARNESS_URLS` (`SIMCTL_CHILD_TAQVO_HARNESS_URLS="url url …" xcrun simctl launch …`),
 	/// each handled as `onOpenURL` would, two seconds after launch and a second and a half apart. iOS 27 asks
-	/// "Open in Taqvo?" before `simctl openurl` reaches the app, which no script can answer, so the store and
+	/// "Open in Tazkir?" before `simctl openurl` reaches the app, which no script can answer, so the store and
 	/// README captures relaunch with their URLs instead. Once per process: `onAppear` can run again.
 	static func runLaunchURLs(openAyah: @escaping (URL) -> Void) {
 		guard !launchURLsRun, let list = ProcessInfo.processInfo.environment["TAQVO_HARNESS_URLS"] else { return }

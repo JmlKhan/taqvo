@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Taqvo</string>
+    <string name="app_name">Tazkir</string>
     <!-- The language these strings are written in; the one fact every "is the UI Arabic?" decision reads. -->
     <string name="ui_language">fr</string>
 
@@ -13,7 +13,7 @@
     <string name="sheet_a11y_drag_handle">Poignée de déplacement</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_welcome_title">Taqvo</string>
+    <string name="onboarding_welcome_title">Tazkir</string>
     <string name="onboarding_welcome_body">Les horaires de prière, la qibla et le Coran. Sans compte, fonctionne hors ligne.</string>
     <string name="onboarding_welcome_cta">Commencer</string>
     <string name="onboarding_location_title">Où êtes-vous ?</string>
@@ -23,15 +23,15 @@
     <string name="onboarding_notifications_body">Une notification pour chaque prière. Vous choisissez le son de chaque prière séparément, et vous pouvez le changer quand vous voulez.</string>
     <string name="onboarding_notifications_secondary">Pas maintenant</string>
     <string name="onboarding_exact_title">Alarmes et rappels</string>
-    <string name="onboarding_exact_body">Android ne peut sonner à l’heure exacte de la prière que si « Alarmes et rappels » est autorisé pour Taqvo. Sans cela, une notification peut arriver jusqu’à une heure en retard.</string>
+    <string name="onboarding_exact_body">Android ne peut sonner à l’heure exacte de la prière que si « Alarmes et rappels » est autorisé pour Tazkir. Sans cela, une notification peut arriver jusqu’à une heure en retard.</string>
     <string name="onboarding_widget_title">Sur votre écran d’accueil</string>
-    <string name="onboarding_widget_body">Le widget Taqvo affiche la prochaine prière et un compte à rebours en direct, sans ouvrir l’application.</string>
-    <string name="onboarding_widget_body_ios">Le widget Taqvo affiche la prochaine prière et un compte à rebours en direct, sans ouvrir l’application. Pour l’ajouter, appuyez longuement sur l’icône Taqvo de votre écran d’accueil et choisissez une taille de widget.</string>
-    <string name="onboarding_widget_body_ios_legacy">Le widget Taqvo affiche la prochaine prière et un compte à rebours en direct, sans ouvrir l’application. Pour l’ajouter, appuyez longuement sur votre écran d’accueil, touchez le signe plus dans le coin supérieur, puis recherchez Taqvo.</string>
+    <string name="onboarding_widget_body">Le widget Tazkir affiche la prochaine prière et un compte à rebours en direct, sans ouvrir l’application.</string>
+    <string name="onboarding_widget_body_ios">Le widget Tazkir affiche la prochaine prière et un compte à rebours en direct, sans ouvrir l’application. Pour l’ajouter, appuyez longuement sur l’icône Tazkir de votre écran d’accueil et choisissez une taille de widget.</string>
+    <string name="onboarding_widget_body_ios_legacy">Le widget Tazkir affiche la prochaine prière et un compte à rebours en direct, sans ouvrir l’application. Pour l’ajouter, appuyez longuement sur votre écran d’accueil, touchez le signe plus dans le coin supérieur, puis recherchez Tazkir.</string>
     <string name="onboarding_widget_cta_add">Ajouter le widget</string>
     <string name="onboarding_widget_cta_done">Terminé</string>
     <string name="onboarding_widget_secondary">Plus tard</string>
-    <string name="onboarding_widget_steps_android">Votre écran d’accueil ne permet pas aux applications d’ajouter des widgets, ajoutez-le donc vous-même : appuyez longuement sur un espace vide de l’écran d’accueil (ou pincez-le), touchez Widgets, trouvez Taqvo et faites glisser le widget à sa place.</string>
+    <string name="onboarding_widget_steps_android">Votre écran d’accueil ne permet pas aux applications d’ajouter des widgets, ajoutez-le donc vous-même : appuyez longuement sur un espace vide de l’écran d’accueil (ou pincez-le), touchez Widgets, trouvez Tazkir et faites glisser le widget à sa place.</string>
 
     <!-- Prayer names. The Arabic name that sits beside these is never a resource: it is the
          same in every locale, so it lives in PrayerNaming. -->
@@ -60,7 +60,7 @@
         <item quantity="other">%1$s minutes</item>
     </plurals>
     <string name="prayer_exact_alarms_label">ALARMES EXACTES DÉSACTIVÉES</string>
-    <string name="prayer_exact_alarms_body">Android peut sonner jusqu’à une heure en retard tant que « Alarmes et rappels » n’est pas autorisé pour Taqvo.</string>
+    <string name="prayer_exact_alarms_body">Android peut sonner jusqu’à une heure en retard tant que « Alarmes et rappels » n’est pas autorisé pour Tazkir.</string>
     <string name="prayer_no_location_title">Pas encore de position</string>
     <string name="prayer_choose_city">Choisir une ville</string>
     <string name="prayer_location_settings">Activer la position dans les paramètres</string>
@@ -68,11 +68,11 @@
 
     <!-- Prayer engine: the Prayer screen (Task 10) -->
     <string name="prayer_whose_checked_title">Calendrier %1$s</string>
-    <string name="prayer_whose_checked_body">Horaires %1$s pour %2$s, reproduits par Taqvo et vérifiés d’après le calendrier publié.</string>
+    <string name="prayer_whose_checked_body">Horaires %1$s pour %2$s, reproduits par Tazkir et vérifiés d’après le calendrier publié.</string>
     <string name="prayer_whose_unchecked_title">Méthode %1$s, pas encore entièrement vérifiée</string>
-    <string name="prayer_whose_unchecked_body">Taqvo calcule les horaires pour %2$s selon la méthode %1$s, avec une marge de sécurité.</string>
-    <string name="prayer_whose_cautious_body">Les mosquées d’ici suivent des calendriers différents : Taqvo affiche chaque prière une fois qu’elles l’ont toutes commencée.</string>
-    <string name="prayer_whose_calculated_body">Aucun calendrier local n’est connu ici : Taqvo calcule donc ces horaires avec prudence.</string>
+    <string name="prayer_whose_unchecked_body">Tazkir calcule les horaires pour %2$s selon la méthode %1$s, avec une marge de sécurité.</string>
+    <string name="prayer_whose_cautious_body">Les mosquées d’ici suivent des calendriers différents : Tazkir affiche chaque prière une fois qu’elles l’ont toutes commencée.</string>
+    <string name="prayer_whose_calculated_body">Aucun calendrier local n’est connu ici : Tazkir calcule donc ces horaires avec prudence.</string>
     <string name="prayer_about_these_times">À propos de ces horaires</string>
     <string name="prayer_times_by">Horaires selon %1$s</string>
     <string name="prayer_whose_a11y">%1$s, %2$s. Ouvre la provenance de ces horaires</string>
@@ -81,7 +81,7 @@
     <string name="prayer_source_published_method">Méthode publiée</string>
     <string name="prayer_polar_line">Le soleil ne se lève ni ne se couche ici aujourd’hui : certains horaires suivent la latitude la plus proche où c’est le cas.</string>
     <string name="prayer_card_cautious_title">Les mosquées d’ici suivent des calendriers différents</string>
-    <string name="prayer_card_cautious_body">Taqvo affiche chaque prière une fois qu’elles l’ont toutes commencée.</string>
+    <string name="prayer_card_cautious_body">Tazkir affiche chaque prière une fois qu’elles l’ont toutes commencée.</string>
     <string name="prayer_card_sunni_title">Ce sont des horaires de prière sunnites</string>
     <string name="prayer_card_sunni_body">Dans la pratique chiite (jaʿfarite), le Maghrib et l’iftar sont plus tardifs.</string>
     <string name="prayer_match_my_mosque">Aligner sur ma mosquée</string>
@@ -106,7 +106,7 @@
     <string name="prayer_clock_region_chihuahua">Le Chihuahua</string>
     <string name="prayer_clock_region_paraguay">Le Paraguay</string>
     <string name="prayer_differ_before">Selon %1$s, %2$s commence à %3$s</string>
-    <string name="prayer_differ_after">Selon %1$s, %2$s a commencé · Taqvo l’affiche dès %3$s</string>
+    <string name="prayer_differ_after">Selon %1$s, %2$s a commencé · Tazkir l’affiche dès %3$s</string>
     <string name="prayer_other_asr">%1$s %2$s</string>
 
     <!-- Settings root -->
@@ -120,24 +120,24 @@
     <string name="settings_appearance">Apparence</string>
     <string name="settings_appearance_value">%1$s · %2$s</string>
     <string name="settings_language">Langue</string>
-    <string name="settings_about">À propos de Taqvo</string>
+    <string name="settings_about">À propos de Tazkir</string>
     <string name="settings_attribution">Attributions et licences</string>
-    <string name="settings_rate">Noter Taqvo</string>
-    <string name="settings_share">Partager Taqvo</string>
-    <string name="settings_share_message">Taqvo : les horaires de prière, le Coran et la qibla. Sans compte.</string>
+    <string name="settings_rate">Noter Tazkir</string>
+    <string name="settings_share">Partager Tazkir</string>
+    <string name="settings_share_message">Tazkir : les horaires de prière, le Coran et la qibla. Sans compte.</string>
     <string name="settings_not_set">Non définie</string>
     <string name="settings_notifications_off">Désactivées</string>
     <string name="settings_notifications_on_count">%1$s activées</string>
     <string name="settings_version_value">1.5.0</string>
 
-    <!-- About screen (privacy spec §6). "Taqvo" is the product name and stays in Latin script in
+    <!-- About screen (privacy spec §6). "Tazkir" is the product name and stays in Latin script in
          every locale, as on the icon. -->
     <string name="about_tagline">Gratuit, pour tous, pour toujours.</string>
     <string name="about_privacy_label">CONFIDENTIALITÉ</string>
     <string name="about_stays_title">Tout reste sur votre téléphone</string>
     <string name="about_stays_body">Position, paramètres, signets et compteurs ne le quittent jamais.</string>
     <string name="about_online_title">En ligne seulement quand vous le demandez</string>
-    <string name="about_online_body">Internet ne sert qu’à une chose : les récitations que vous choisissez de télécharger, depuis le dépôt public de Taqvo sur GitHub.</string>
+    <string name="about_online_body">Internet ne sert qu’à une chose : les récitations que vous choisissez de télécharger, depuis le dépôt public de Tazkir sur GitHub.</string>
     <string name="about_nothing_title">Sans compte, sans suivi</string>
     <string name="about_nothing_body">Rien où se connecter.</string>
     <string name="about_privacy_policy">Politique de confidentialité</string>
@@ -150,7 +150,7 @@
     <string name="about_icon_open_website">Ouvrir taqwa.world</string>
     <string name="about_report_problem">Signaler un problème</string>
 
-    <!-- Paramètres › Widgets et À propos de Taqvo (spécification de la refonte des paramètres, 30 octobre
+    <!-- Paramètres › Widgets et À propos de Tazkir (spécification de la refonte des paramètres, 30 octobre
          2026). La valeur de la ligne Widgets compte les widgets présents sur un écran d’accueil : %1$s ceux
          qui y sont, %2$s leur nombre total. -->
     <string name="settings_widgets">Widgets</string>
@@ -168,9 +168,9 @@
          qui est aussi celui de la liste des widgets d’Android et de la galerie de l’iPhone (home_widget_name et
          ayah_widget_name dans iosApp/TaqvoWidget). Les mots entre ** et **
          sont ceux que le lecteur cherchera sur son téléphone : ils s’affichent en gras, sans les étoiles. -->
-    <string name="widgets_intro">La prochaine prière et le verset du jour sur votre écran d’accueil, sans ouvrir Taqvo.</string>
-    <string name="widgets_intro_ios">La prochaine prière et le verset du jour sur votre écran d’accueil et votre écran verrouillé, sans ouvrir Taqvo.</string>
-    <string name="widgets_background_note">Pour tous les widgets Taqvo. « Système » suit le mode clair ou sombre de votre téléphone.</string>
+    <string name="widgets_intro">La prochaine prière et le verset du jour sur votre écran d’accueil, sans ouvrir Tazkir.</string>
+    <string name="widgets_intro_ios">La prochaine prière et le verset du jour sur votre écran d’accueil et votre écran verrouillé, sans ouvrir Tazkir.</string>
+    <string name="widgets_background_note">Pour tous les widgets Tazkir. « Système » suit le mode clair ou sombre de votre téléphone.</string>
     <string name="widgets_prayer_label">HORAIRES DE PRIÈRE</string>
     <string name="widgets_prayer_name">Horaires de prière</string>
     <string name="widgets_prayer_body">La prochaine prière avec un compte à rebours en direct, et les horaires du jour. Petit ou large.</string>
@@ -190,15 +190,15 @@
     <string name="widgets_refused_body">Il suffit d’un instant pour l’ajouter à la main :</string>
     <string name="widgets_step_android_1">Appuyez longuement sur un espace vide de votre écran d’accueil (ou pincez-le).</string>
     <string name="widgets_step_android_2">Touchez **Widgets**.</string>
-    <string name="widgets_step_android_3">Trouvez **Taqvo**, puis faites glisser le widget %1$s à sa place.</string>
+    <string name="widgets_step_android_3">Trouvez **Tazkir**, puis faites glisser le widget %1$s à sa place.</string>
     <string name="widgets_how_label">COMMENT L’AJOUTER</string>
-    <string name="widgets_step_ios_hold_1">Appuyez longuement sur l’icône **Taqvo** de votre écran d’accueil.</string>
+    <string name="widgets_step_ios_hold_1">Appuyez longuement sur l’icône **Tazkir** de votre écran d’accueil.</string>
     <string name="widgets_step_ios_hold_2">Choisissez %1$s et une taille.</string>
     <string name="widgets_step_ios_hold_3">Il apparaît sur votre écran d’accueil. Faites-le glisser où vous voulez.</string>
-    <string name="widgets_ios_fallback">Pas de widgets quand vous appuyez sur l’icône ? Appuyez longuement sur une zone vide de l’écran d’accueil, touchez **+** en haut de l’écran (un pinceau à partir d’iOS 27), puis **Ajouter un widget**, et recherchez Taqvo.</string>
+    <string name="widgets_ios_fallback">Pas de widgets quand vous appuyez sur l’icône ? Appuyez longuement sur une zone vide de l’écran d’accueil, touchez **+** en haut de l’écran (un pinceau à partir d’iOS 27), puis **Ajouter un widget**, et recherchez Tazkir.</string>
     <string name="widgets_step_ios_plus_1">Appuyez longuement sur une zone vide de votre écran d’accueil.</string>
     <string name="widgets_step_ios_plus_2">Touchez le **+** dans le coin supérieur.</string>
-    <string name="widgets_step_ios_plus_3">Recherchez Taqvo et choisissez %1$s.</string>
+    <string name="widgets_step_ios_plus_3">Recherchez Tazkir et choisissez %1$s.</string>
     <string name="widgets_show_how">Voir comment faire</string>
     <string name="widgets_lock_label">ÉCRAN VERROUILLÉ</string>
     <string name="widgets_lock_name">La prochaine prière en un coup d’œil</string>
@@ -206,8 +206,8 @@
     <string name="widgets_lock_then">puis %1$s</string>
     <string name="widgets_step_lock_1">Appuyez longuement sur votre écran verrouillé, puis touchez **Personnaliser**.</string>
     <string name="widgets_step_lock_2">Choisissez Écran verrouillé, puis touchez l’espace sous l’heure.</string>
-    <string name="widgets_step_lock_3">Choisissez **Taqvo**, puis le widget rond ou large.</string>
-    <!-- À propos de Taqvo : la pastille sous le slogan (%1$s est la version, settings_version_value) et les
+    <string name="widgets_step_lock_3">Choisissez **Tazkir**, puis le widget rond ou large.</string>
+    <!-- À propos de Tazkir : la pastille sous le slogan (%1$s est la version, settings_version_value) et les
          titres de ses deux dernières cartes. Noter et Partager y reprennent settings_rate, settings_share et
          settings_share_message. -->
     <string name="about_version_chip">Version %1$s</string>
@@ -215,7 +215,7 @@
     <string name="about_help_label">AIDE</string>
 
     <!-- Rapport de plantage : la feuille au lancement qui suit un plantage, et la ligne de l’e-mail quand il n’y a aucun rapport à envoyer. -->
-    <string name="crash_sheet_title">Taqvo s’est fermée de manière inattendue</string>
+    <string name="crash_sheet_title">Tazkir s’est fermée de manière inattendue</string>
     <string name="crash_sheet_body">Un rapport technique a été enregistré sur votre téléphone. L’envoyer à jmlkhon17@gmail.com aide à corriger le problème. Il contient la version de l’application, le modèle de votre téléphone et l’erreur, rien d’autre.</string>
     <string name="crash_send">Envoyer le rapport</string>
     <string name="crash_not_now">Pas maintenant</string>
@@ -328,7 +328,7 @@
     <string name="timetable_auto_authority">Le calendrier publié par %1$s pour ce lieu</string>
     <string name="timetable_auto_majority">%1$s, suivi par la plupart des mosquées d’ici</string>
     <string name="timetable_auto_cautious">Horaires par précaution : chaque prière une fois que tous les calendriers du lieu l’ont commencée</string>
-    <string name="timetable_auto_calculated">Calculé par Taqvo : aucun calendrier n’est connu pour ce lieu</string>
+    <string name="timetable_auto_calculated">Calculé par Tazkir : aucun calendrier n’est connu pour ce lieu</string>
     <string name="timetable_times_today">Aujourd’hui : Fajr %1$s, Maghrib %2$s, Isha %3$s</string>
     <string name="timetable_nearby_label">AUSSI SUIVIS À PROXIMITÉ</string>
     <string name="timetable_other_methods">Autres méthodes</string>
@@ -342,7 +342,7 @@
     <string name="timetable_later_fast">Son jeûne commence %1$s après %2$s certains jours. Ne le suivez que si votre mosquée le suit.</string>
     <string name="timetable_of_authority">l’horaire %1$s</string>
     <string name="timetable_of_cautious">les horaires par précaution</string>
-    <string name="timetable_of_taqvo">l’horaire de Taqvo</string>
+    <string name="timetable_of_taqvo">l’horaire de Tazkir</string>
     <plurals name="timetable_minutes">
         <item quantity="one">%1$s minute</item>
         <item quantity="other">%1$s minutes</item>
@@ -357,21 +357,21 @@
     <string name="match_hour_apart">Les deux horaires diffèrent d’exactement une heure : votre tableau suit peut-être l’heure d’été ou d’hiver. Son Fajr commence à %1$s et son Isha à %2$s.</string>
     <string name="match_one_fajr">Son Fajr correspond, mais son Isha commence à %1$s.</string>
     <string name="match_one_isha">Son Isha correspond, mais son Fajr commence à %1$s.</string>
-    <string name="match_none">Aucun calendrier connu de Taqvo ne correspond aux deux horaires.</string>
+    <string name="match_none">Aucun calendrier connu de Tazkir ne correspond aux deux horaires.</string>
     <string name="match_fajr_isha">Fajr %1$s, Isha %2$s</string>
     <string name="match_use">Utiliser ce calendrier</string>
-    <string name="match_in_use">Taqvo suit déjà ce calendrier.</string>
+    <string name="match_in_use">Tazkir suit déjà ce calendrier.</string>
     <string name="timetable_source_authority">l’heure %1$s</string>
     <string name="timetable_source_cautious">l’heure par précaution</string>
-    <string name="timetable_source_taqvo">l’heure de Taqvo</string>
+    <string name="timetable_source_taqvo">l’heure de Tazkir</string>
     <string name="timetable_source_latest">le calendrier local le plus tardif</string>
     <string name="adjust_paused_for">%1$s · en pause (réglé pour %2$s)</string>
     <string name="adjust_timetable_paused_note">Les ajustements qui avancent un horaire attendent que le calendrier %1$s soit confirmé dans Calendrier.</string>
     <string name="adjust_confirm_title">Afficher %1$s avant %2$s ?</string>
     <string name="adjust_confirm_body">Une prière accomplie avant son heure doit être refaite. Ne le faites que si le calendrier de votre mosquée est plus tôt.</string>
     <string name="adjust_confirm_body_maghrib">Une prière accomplie avant son heure doit être refaite, et un jeûne rompu avant l’heure doit être rattrapé. Ne le faites que si le calendrier de votre mosquée est plus tôt.</string>
-    <string name="adjust_strong_body">Chez Taqvo, %1$s vient au plus %2$s après %3$s : %4$s le place donc avant cette heure. Une prière accomplie avant son heure doit être refaite. Ne le faites que si le calendrier de votre mosquée est aussi tôt.</string>
-    <string name="adjust_strong_body_maghrib">Chez Taqvo, %1$s vient au plus %2$s après %3$s : %4$s le place donc avant cette heure. Une prière accomplie avant son heure doit être refaite, et un jeûne rompu avant l’heure doit être rattrapé. Ne le faites que si le calendrier de votre mosquée est aussi tôt.</string>
+    <string name="adjust_strong_body">Chez Tazkir, %1$s vient au plus %2$s après %3$s : %4$s le place donc avant cette heure. Une prière accomplie avant son heure doit être refaite. Ne le faites que si le calendrier de votre mosquée est aussi tôt.</string>
+    <string name="adjust_strong_body_maghrib">Chez Tazkir, %1$s vient au plus %2$s après %3$s : %4$s le place donc avant cette heure. Une prière accomplie avant son heure doit être refaite, et un jeûne rompu avant l’heure doit être rattrapé. Ne le faites que si le calendrier de votre mosquée est aussi tôt.</string>
     <string name="adjust_keep">Garder %1$s</string>
     <string name="adjust_use">Utiliser %1$s</string>
     <string name="adjust_note">Décale un horaire d’une heure au plus par rapport au calendrier. À n’utiliser que si le tableau de votre mosquée diffère.</string>
@@ -412,11 +412,11 @@
     <string name="about_times_title">À propos de ces horaires</string>
     <string name="about_prayer_times_settings">Paramètres des horaires de prière</string>
     <string name="timetable_cautious">Horaires par précaution</string>
-    <string name="timetable_calculated">Calculé par Taqvo</string>
+    <string name="timetable_calculated">Calculé par Tazkir</string>
     <string name="about_who_publishes">Qui les publie</string>
     <string name="about_who_publishes_body">%1$s publie les horaires de prière suivis pour %2$s.</string>
-    <string name="about_not_affiliated">Taqvo n’est pas affiliée à %1$s.</string>
-    <string name="about_how_reproduces">Comment Taqvo les reproduit</string>
+    <string name="about_not_affiliated">Tazkir n’est pas affiliée à %1$s.</string>
+    <string name="about_how_reproduces">Comment Tazkir les reproduit</string>
     <string name="about_method_intro">Comment %1$s calcule : %2$s.</string>
     <string name="about_method_fajr_angle">l’aube (Fajr) à %1$s° sous l’horizon</string>
     <string name="about_method_isha_angle">la tombée de la nuit (Isha) à %1$s° sous l’horizon</string>
@@ -435,19 +435,19 @@
     <string name="about_checked_through">Vérifiés d’après le calendrier publié par %1$s jusqu’au %2$s.</string>
     <string name="about_not_measured_unit">Pas mesuré pour %1$s.</string>
     <string name="about_checked_so_far_with_data">Vérifiés sur %1$s jours jusqu’ici : jamais avant %2$s, jusqu’à %3$s minutes après.</string>
-    <string name="about_checked_so_far_without_data">Taqvo ne les a pas encore comparés au calendrier publié par %1$s.</string>
+    <string name="about_checked_so_far_without_data">Tazkir ne les a pas encore comparés au calendrier publié par %1$s.</string>
     <string name="about_not_followed_irn_tromso">Le Fajr à l’heure de La Mecque que publie %1$s n’est pas suivi de fin avril à mi-mai et de fin juillet à mi-août, quand il tombe après le lever du soleil, ni le lever du soleil qu’il publie sous le soleil de minuit ; le Maghrib ne vient jamais avant le vrai coucher du soleil.</string>
     <string name="about_authority_method_title">Méthode %1$s</string>
-    <string name="about_authority_unchecked_body">%1$s publie les horaires de prière pour %2$s. Taqvo les calcule comme le fait %1$s, avec une marge de sécurité.</string>
-    <string name="about_majority_unchecked_body">La plupart des mosquées à %2$s suivent la méthode %1$s. Taqvo calcule les horaires selon cette méthode, avec une marge de sécurité.</string>
+    <string name="about_authority_unchecked_body">%1$s publie les horaires de prière pour %2$s. Tazkir les calcule comme le fait %1$s, avec une marge de sécurité.</string>
+    <string name="about_majority_unchecked_body">La plupart des mosquées à %2$s suivent la méthode %1$s. Tazkir calcule les horaires selon cette méthode, avec une marge de sécurité.</string>
     <string name="about_nearby_heading">Calendriers que suivent plutôt certaines mosquées d’ici</string>
-    <string name="about_cautious_body">À %1$s, les mosquées suivent de bonne foi des calendriers différents, et aucun n’est suivi par la plupart. Taqvo combine %2$s : chaque prière s’affiche une fois que tous l’ont commencée.</string>
+    <string name="about_cautious_body">À %1$s, les mosquées suivent de bonne foi des calendriers différents, et aucun n’est suivi par la plupart. Tazkir combine %2$s : chaque prière s’affiche une fois que tous l’ont commencée.</string>
     <string name="about_cautious_maghrib_guard">Le Maghrib fait exception aujourd’hui : il suit le soleil, comme le calcule %1$s, plutôt que le Maghrib plus tardif de %2$s, fixé par une règle des hautes latitudes.</string>
     <string name="about_cautious_maghrib_no_sunset">Le Maghrib fait exception aujourd’hui, faute de coucher du soleil ici : il suit %1$s, le calendrier le plus suivi, plutôt que le Maghrib plus tardif de %2$s.</string>
     <string name="about_which_decides">Quel calendrier fixe chaque horaire aujourd’hui</string>
     <string name="about_stat_never_before_decider">débuts avant le calendrier qui le fixe</string>
     <string name="about_cautious_checked">Vérifiés d’après les calendriers suivis ici.</string>
-    <string name="about_calculated_body">Faute de calendrier sunnite officiel pour %1$s, Taqvo en calcule un avec prudence : %2$s.</string>
+    <string name="about_calculated_body">Faute de calendrier sunnite officiel pour %1$s, Tazkir en calcule un avec prudence : %2$s.</string>
     <string name="about_asr_heading">Asr</string>
     <string name="about_asr_known">%1$s : %3$s, car c’est l’heure que suivent la plupart des mosquées à %2$s.</string>
     <string name="about_asr_unknown">%1$s : %3$s, l’heure la plus tardive, car l’école majoritaire à %2$s n’est pas connue. Vous pouvez la changer dans les Paramètres.</string>
@@ -459,9 +459,9 @@
     <string name="about_stop_eating">Arrêtez de manger au plus tard à %1$s aujourd’hui.</string>
 
     <!-- Attribution -->
-    <string name="attribution_intro">Taqvo repose sur le travail que d’autres ont offert. Leurs licences imposent de les citer, et cela leur est dû de toute façon.</string>
+    <string name="attribution_intro">Tazkir repose sur le travail que d’autres ont offert. Leurs licences imposent de les citer, et cela leur est dû de toute façon.</string>
     <string name="credit_calculation">Calcul des horaires de prière</string>
-    <string name="credit_calculation_detail">Le moteur propre à Taqvo. La direction de la qibla est calculée avec Adhan de Batoul Apps, licence MIT.</string>
+    <string name="credit_calculation_detail">Le moteur propre à Tazkir. La direction de la qibla est calculée avec Adhan de Batoul Apps, licence MIT.</string>
     <string name="credit_cities">Base de données des villes</string>
     <string name="credit_cities_detail">GeoNames cities15000, licence CC BY 4.0.</string>
     <string name="credit_typeface">Police Manrope</string>
@@ -588,9 +588,9 @@
     <string name="qibla_cardinal_east">E</string>
     <string name="qibla_cardinal_south">S</string>
     <string name="qibla_cardinal_west">O</string>
-    <string name="notifications_exact_alarms_off">Les alarmes exactes sont désactivées pour Taqvo, une notification peut donc arriver jusqu’à une heure en retard. Autorisez « Alarmes et rappels » pour qu’elle puisse sonner à la minute près.</string>
+    <string name="notifications_exact_alarms_off">Les alarmes exactes sont désactivées pour Tazkir, une notification peut donc arriver jusqu’à une heure en retard. Autorisez « Alarmes et rappels » pour qu’elle puisse sonner à la minute près.</string>
     <string name="notifications_allow_exact_alarms">Autoriser les alarmes exactes</string>
-    <string name="notifications_blocked">Les notifications sont désactivées pour Taqvo dans les paramètres du système : aucune alerte de prière ne peut s’afficher tant qu’elles ne sont pas réautorisées.</string>
+    <string name="notifications_blocked">Les notifications sont désactivées pour Tazkir dans les paramètres du système : aucune alerte de prière ne peut s’afficher tant qu’elles ne sont pas réautorisées.</string>
     <string name="notifications_open_settings">Ouvrir les paramètres de notification</string>
     <string name="hijri_tabular">Tabulaire</string>
     <!-- Bottom tab bar (iteration 1: the owner asked for it after seeing Today on a phone;
@@ -838,7 +838,7 @@
     <string name="wallpapers_done_set">Fond d’écran défini.</string>
     <string name="wallpapers_done_saved">Enregistré dans Photos.</string>
     <string name="wallpapers_refused_android">Ce téléphone ne permet pas aux apps de changer le fond d’écran.</string>
-    <string name="wallpapers_refused_ios">Taqvo n’a pas le droit d’ajouter des photos. Autorisez-le dans Réglages › Taqvo › Photos.</string>
+    <string name="wallpapers_refused_ios">Tazkir n’a pas le droit d’ajouter des photos. Autorisez-le dans Réglages › Tazkir › Photos.</string>
     <string name="wallpapers_failed">Le fond d’écran n’a pas pu être enregistré. Veuillez réessayer.</string>
     <string name="wallpapers_dua_reference">Hisn al-Muslim %1$s</string>
     <string name="wallpapers_a11y_preview">Aperçu du fond d’écran : %1$s</string>
@@ -925,14 +925,14 @@
     <string name="onb_guide_lock_2">Maintenez le doigt sur une zone vide jusqu’à ce que des boutons apparaissent en bas.</string>
     <string name="onb_guide_lock_3">Touchez **Personnaliser**, puis choisissez l’écran verrouillé.</string>
     <string name="onb_guide_lock_4">Touchez la case sous l’heure.</string>
-    <string name="onb_guide_lock_5">Trouvez **Taqvo** dans la liste et touchez-le.</string>
+    <string name="onb_guide_lock_5">Trouvez **Tazkir** dans la liste et touchez-le.</string>
     <string name="onb_guide_lock_6">Choisissez le widget voulu — c’est fait !</string>
     <string name="onb_guide_done">Compris !</string>
     <string name="settings_daily_ayahs">Versets du jour</string>
     <string name="settings_daily_ayahs_value">%1$s par jour</string>
     <string name="daily_ayahs_toggle">Rappels de versets</string>
     <string name="daily_ayahs_note">Les versets arrivent à intervalles réguliers entre le début et la fin, selon les thèmes choisis. Les notifications de prière passent toujours en premier.</string>
-    <string name="daily_ayahs_denied">Les notifications de Taqvo sont désactivées : les versets du jour ne peuvent pas arriver. Activez-les dans les réglages du téléphone.</string>
+    <string name="daily_ayahs_denied">Les notifications de Tazkir sont désactivées : les versets du jour ne peuvent pas arriver. Activez-les dans les réglages du téléphone.</string>
     <string name="daily_ayahs_open_system">Ouvrir les réglages des notifications</string>
     <string name="daily_ayahs_format_label">AFFICHAGE DES VERSETS</string>
     <string name="tab_feed">Fil</string>
@@ -1010,7 +1010,7 @@
     <string name="feed_theme_a11y">Thème %1$d</string>
     <string name="feed_theme_edit">Modifier</string>
     <string name="feed_tools_duas">Invocations</string>
-    <string name="feed_help_about">À propos de Taqvo</string>
+    <string name="feed_help_about">À propos de Tazkir</string>
     <string name="feed_help_q1">Comment le fil choisit-il les versets ?</string>
     <string name="feed_help_a1">D’après les thèmes choisis au départ. Chaque verset aimé en amène d’autres du même genre ; un verset passé vite en amène un peu moins.</string>
     <string name="feed_help_q2">Qu’est-ce que l’objectif du jour ?</string>

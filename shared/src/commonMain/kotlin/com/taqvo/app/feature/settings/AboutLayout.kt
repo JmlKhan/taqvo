@@ -7,7 +7,7 @@ import com.taqvo.app.resources.about_open_source_label
 import com.taqvo.app.resources.about_privacy_label
 
 /**
- * The link rows About Taqvo can show. Every one the old About screen and the Settings root's About
+ * The link rows About Tazkir can show. Every one the old About screen and the Settings root's About
  * section had is here (Rate and Share became the two buttons under the hero instead), so the test
  * that each sits in exactly one group is the test that the redesign lost none of them.
  */
@@ -17,7 +17,7 @@ internal enum class AboutRow { PRIVACY_POLICY, SOURCE, LICENCE, ATTRIBUTION, REP
 internal data class AboutGroup(val label: StringResource, val rows: List<AboutRow>)
 
 /**
- * About Taqvo's cards, top to bottom (settings redesign spec, approved 30 Oct 2026). The privacy
+ * About Tazkir's cards, top to bottom (settings redesign spec, approved 30 Oct 2026). The privacy
  * policy closes the privacy card, under the promises it spells out; Attribution & licences sits
  * with the source and the licence it belongs beside; Help is how to reach a person, then the site.
  */

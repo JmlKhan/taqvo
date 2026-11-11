@@ -60,7 +60,7 @@ import kotlin.test.assertTrue
 /**
  * Where the times are not an authority's own checked timetable, a label set into the times card's
  * top hairline says where they come from: "Cautious times" (several timetables combined), "Published
- * method" (an authority's method not yet proven against its timetable), "Calculated by Taqvo"
+ * method" (an authority's method not yet proven against its timetable), "Calculated by Tazkir"
  * (nothing official known). It takes no line of its own, so the Qibla card keeps its place: it sits
  * lower than for any other city only by the air the label is given above Fajr. The label's words
  * start where the prayer names start, in either direction; it is one button that opens About these

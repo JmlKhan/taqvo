@@ -22,7 +22,7 @@ const val AUTOMATIC_TIMETABLE = "automatic"
 
 /**
  * Whose time a sentence compares with (spec §2.2's {source}): an authority by name, the cautious
- * time where mosques differ, or Taqvo's own where nothing is known.
+ * time where mosques differ, or Tazkir's own where nothing is known.
  */
 enum class SourceKind { AUTHORITY, CAUTIOUS, TAQVO }
 
@@ -184,7 +184,7 @@ fun timetableRowIds(automatic: RegistryEntry, place: Place, storedId: String?): 
  * The adjustment an earlier step may reach before it passes the timetable's own margin (spec §2.2:
  * it asks again, more strongly, past it): the "at most N minutes late" the timetable is held to
  * for [prayer] here (the unit's or entry's exception, else its class's), or null where no figure is
- * claimed (a place not measured, or a time Taqvo calculates with nothing to compare against).
+ * claimed (a place not measured, or a time Tazkir calculates with nothing to compare against).
  */
 fun marginMinutes(resolution: Resolution, prayer: Prayer): Int? {
     if (!resolution.measured || resolution.entryClass == EntryClass.D_NONE) return null

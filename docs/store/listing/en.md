@@ -6,7 +6,7 @@ enforces them. Copy each block into the console as it is.
 ## Google Play
 
 ### Title (30)
-Taqvo: Prayer, Quran & Qibla
+Tazkir: Prayer, Quran & Qibla
 
 ### Short description (80)
 Prayer times, adhan, Quran with recitation, adhkar and Qibla. Works offline.
@@ -14,11 +14,11 @@ Prayer times, adhan, Quran with recitation, adhkar and Qibla. Works offline.
 (No price or promotion words here: Play flags them in the short description and may not promote the app.)
 
 ### Full description (4000)
-Taqvo gives you the essentials of the day in one quiet place: prayer times where you are, a takbir or the adhan at each prayer, the whole Quran to read and listen to, the morning and evening adhkar, and the Qibla. It works offline, costs nothing, shows no adverts and asks for no account.
+Tazkir gives you the essentials of the day in one quiet place: prayer times where you are, a takbir or the adhan at each prayer, the whole Quran to read and listen to, the morning and evening adhkar, and the Qibla. It works offline, costs nothing, shows no adverts and asks for no account.
 
 PRAYER TIMES
 • Times for where you are, from your phone's location or a city you choose from more than 34,000.
-• Times from the timetable the mosques near you follow. Where Taqvo holds it, it reproduces it and checks it day by day against the published tables: on every day checked, no prayer starts before the published time. Where a timetable is not yet fully checked, Taqvo adds a safety margin; where mosques follow different timetables, it shows cautious times, each prayer once all have begun it; and where no timetable is known, it calculates on the safe side.
+• Times from the timetable the mosques near you follow. Where Tazkir holds it, it reproduces it and checks it day by day against the published tables: on every day checked, no prayer starts before the published time. Where a timetable is not yet fully checked, Tazkir adds a safety margin; where mosques follow different timetables, it shows cautious times, each prayer once all have begun it; and where no timetable is known, it calculates on the safe side.
 • Tap the (i) on the Prayer screen to see whose times these are, and About these times for how they are made and checked. Match my mosque looks for your mosque's timetable from two times on its board, and the usual calculation methods (Muslim World League, Egyptian, Karachi, ISNA and more) and a per-prayer adjustment are there too.
 • Rules for high latitudes, where the night is too short for the usual angles.
 • A notification for each prayer: a clear tone, a takbir, or the adhan in a choice of voices, among them Makkah and Madinah, or a recording from your phone, with an optional reminder before it, an Iqama reminder a chosen number of minutes after the adhan, and a Duha reminder at its best time.
@@ -52,7 +52,7 @@ MADE TO BE TRUSTED
 
 Available in English, Arabic, French, Turkish, Indonesian, Urdu and Bengali.
 
-Prayer times from Taqvo's own engine; the Qibla bearing uses the Adhan library. Quran text from the Tanzil Project. Adhkar texts from OpenDua. Recitations from the Islamic Network, licensed by the reciters for free distribution. Taqvo is not affiliated with the religious authorities whose timetables it follows.
+Prayer times from Tazkir's own engine; the Qibla bearing uses the Adhan library. Quran text from the Tanzil Project. Adhkar texts from OpenDua. Recitations from the Islamic Network, licensed by the reciters for free distribution. Tazkir is not affiliated with the religious authorities whose timetables it follows.
 
 Website: https://taqwa.world
 Support: jmlkhon17@gmail.com
@@ -68,9 +68,9 @@ What's new in 1.5.0:
 ## App Store
 
 ### Name (30)
-Taqvo: Prayer, Quran & Qibla
+Tazkir: Prayer, Quran & Qibla
 
-(Plain "Taqvo" is taken on the store, along with look-alikes such as "Taqvo - Prayer Times & Quran", checked 24 September 2026, so App Store Connect's record has carried the full title since 1.0.0.)
+(Plain "Tazkir" is taken on the store, along with look-alikes such as "Tazkir - Prayer Times & Quran", checked 24 September 2026, so App Store Connect's record has carried the full title since 1.0.0.)
 
 ### Subtitle (30)
 Muslim Adhan & Tasbeeh, No Ads
@@ -78,7 +78,7 @@ Muslim Adhan & Tasbeeh, No Ads
 (From the next version. In 1.0.0: "Prayer times, Quran & Qibla". Names and subtitles change only with a new version.)
 
 ### Promotional text (170)
-Prayer times from the timetable your mosques follow, checked day by day where Taqvo holds it. The adhan, the Quran with recitation, morning and evening adhkar, the Qibla.
+Prayer times from the timetable your mosques follow, checked day by day where Tazkir holds it. The adhan, the Quran with recitation, morning and evening adhkar, the Qibla.
 
 (Proposal of 29 September, the owner's to take or leave; editable at any time, even after release. Until then: "Prayer times where you are, the adhan when they arrive, the whole Quran to read and listen to, and the Qibla. Free, offline, no account and no adverts.")
 

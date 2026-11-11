@@ -65,7 +65,7 @@ object Diyanet {
         endOfEatingMarginSeconds = 19,
     )
 
-    /** An ilçe Taqvo has not analysed: its point is unknown. */
+    /** An ilçe Tazkir has not analysed: its point is unknown. */
     val outside = method.atEdge("tr.diyanet.edge", margins(start = 60, sunrise = -60))
 
     private fun district(id: String, name: String, lat: Double, lon: Double, radiusKm: Double = 15.0) =

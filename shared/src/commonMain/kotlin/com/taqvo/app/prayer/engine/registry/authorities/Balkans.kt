@@ -82,7 +82,7 @@ object Balkans {
      * (Banja Luka's and Bihać's drift within the month is a recorded exception of 3 min). Elsewhere (spec §6.2 a, class D, no figure claimed) the plain angles with per-month offsets
      * a minute beyond the latest of the three towns' for the starts and the earliest for the ends, the
      * fast at the 18° dawn 73 s early. Towns south of Sarajevo carry a sign error in IZ's offsets,
-     * printing a dawn before the real one; Taqvo keeps the real dawn (spec §10.8), a recorded
+     * printing a dawn before the real one; Tazkir keeps the real dawn (spec §10.8), a recorded
      * exception on the units for the southern towns in the app's list (no table held for them).
      * Sandžak uses it (Regions).
      *
@@ -166,7 +166,7 @@ object Balkans {
 
     private const val SOUTHERN_DAWN =
         "IZ BiH's town offsets carry the latitude term with the wrong sign south of Sarajevo, so its printed zora " +
-            "can come before the real dawn, by about 16 min at Trebinje in June; Taqvo keeps the real dawn and, as " +
+            "can come before the real dawn, by about 16 min at Trebinje in June; Tazkir keeps the real dawn and, as " +
             "everywhere beyond IZ's three held towns, the month's margin over their drift (3–8 min), about 24 min " +
             "after the printed zora there in June."
 

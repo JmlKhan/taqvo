@@ -3,7 +3,7 @@
 "ayah_widget_description" = "Le verset du jour, avec sa traduction.";
 
 /* Shown on the card until the app has run once and written the pool mirror (design spec §2). */
-"ayah_widget_placeholder" = "Ouvrez Taqvo une fois pour charger le verset du jour";
+"ayah_widget_placeholder" = "Ouvrez Tazkir une fois pour charger le verset du jour";
 
 /* Spoken only: the ayah widget's reference for VoiceOver. %1$@ the surah, %2$@ the ayah number. */
 "ayah_widget_a11y_reference" = "%1$@, verset %2$@";
@@ -13,12 +13,12 @@
    name what the gallery shows; tools/i18n-check.py holds the two together. */
 "home_widget_name" = "Horaires de prière";
 "home_widget_description" = "La prochaine prière, le compte à rebours et les horaires du jour.";
-"lock_widget_name" = "Taqvo sur l’écran verrouillé";
+"lock_widget_name" = "Tazkir sur l’écran verrouillé";
 "lock_widget_description" = "La prochaine prière en un coup d’œil.";
 
 /* Shown on the prayer cards until the app has run once and written the snapshot mirror. */
-"prayer_widget_placeholder_title" = "Taqvo";
-"prayer_widget_placeholder_body" = "Ouvrez Taqvo pour charger vos horaires de prière.";
+"prayer_widget_placeholder_title" = "Tazkir";
+"prayer_widget_placeholder_body" = "Ouvrez Tazkir pour charger vos horaires de prière.";
 
 /* The prayer after the next one on the rectangular complication; %@ is its display name. */
 "lock_widget_then" = "puis %@";
@@ -26,5 +26,5 @@
 /* The daily-dua widget in the gallery, its placeholder until the app has run once, and its reference (%@ the number in Hisn al-Muslim). */
 "dua_widget_name" = "Invocation du jour";
 "dua_widget_description" = "L’invocation du jour, avec sa traduction.";
-"dua_widget_placeholder" = "Ouvrez Taqvo une fois pour charger l’invocation du jour";
+"dua_widget_placeholder" = "Ouvrez Tazkir une fois pour charger l’invocation du jour";
 "dua_widget_reference" = "Hisn al-Muslim %@";

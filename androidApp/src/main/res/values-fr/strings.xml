@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">Taqvo</string>
+    <string name="app_name">Tazkir</string>
     <!-- Widget picker titles (android:label on each receiver). All three providers showed as
-         "Taqvo" before, so only the size line told them apart (N5, S23 round). -->
+         "Tazkir" before, so only the size line told them apart (N5, S23 round). -->
     <string name="widget_small_label">Prochaine prière</string>
     <string name="widget_medium_label">Horaires de prière</string>
     <string name="widget_ayah_label">Verset du jour</string>

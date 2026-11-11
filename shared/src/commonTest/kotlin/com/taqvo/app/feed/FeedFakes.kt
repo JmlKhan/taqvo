@@ -32,11 +32,11 @@ fun fakeCatalog(topics: List<String> = listOf("sabr", "zikr", "shukr"), perTopic
     return ContentCatalog(items, topics)
 }
 
-class FakeContent(private val catalog: ContentCatalog = fakeCatalog()) : ContentSource {
+class FakeContent(private val catalog: ContentCatalog = fakeCatalog(), private val emptyLang: ContentLang? = null) : ContentSource {
     var fail = false
     override suspend fun catalog(): ContentCatalog = if (fail) error("unreadable") else catalog
     override suspend fun texts(lang: ContentLang): Map<String, String> =
-        if (lang == ContentLang.UZ_LATN) emptyMap() else catalog.items.associate { it.id to "${lang.tag} ${it.id}" }
+        if (lang == emptyLang) emptyMap() else catalog.items.associate { it.id to "${lang.tag} ${it.id}" }
     override suspend fun topicLabels(lang: ContentLang): Map<String, String> = catalog.topics.associateWith { it }
     override suspend fun sources(): List<ContentSourceInfo> = emptyList()
 }

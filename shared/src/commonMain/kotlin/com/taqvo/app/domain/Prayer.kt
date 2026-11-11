@@ -22,7 +22,7 @@ data class PrayerTime(val prayer: Prayer, val instant: Instant)
  *   where the day has one.
  * - [setByRule]: the times a high-latitude rule set; [polar]: the sun does not both rise and set
  *   at the place on this date.
- * - [sourceEntryId]: the registry entry the times follow; [entryClass]: how sure Taqvo is of them
+ * - [sourceEntryId]: the registry entry the times follow; [entryClass]: how sure Tazkir is of them
  *   at this place.
  * - [highLatitudeRuleApplied] and [nearestLatitudeFallbackApplied] are the old engine's two flags,
  *   kept for their readers until the Prayer screen's rework (Task 10): the first is set when a rule

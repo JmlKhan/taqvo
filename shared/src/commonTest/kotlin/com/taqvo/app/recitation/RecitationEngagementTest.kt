@@ -28,7 +28,7 @@ private class CountingDataStore(private val delegate: DataStore<Preferences>) : 
 }
 
 /**
- * "Engaged" is the one fact the catalogue refresh is gated on: a person who installed Taqvo for
+ * "Engaged" is the one fact the catalogue refresh is gated on: a person who installed Tazkir for
  * prayer times and never opened recitation causes no network request, ever (privacy spec §2.1).
  */
 class RecitationEngagementTest {
