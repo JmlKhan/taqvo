@@ -236,7 +236,7 @@
       "events": ["fajr", "sunrise", "dhuhr", "asrStandard", "maghrib", "isha", "endOfEating"]
     },
     "unit al-khor: 3 min": {
-      "reason": "Al Khor follows Doha's calendar, and Taqvo also keeps Al Khor's own later summer sunset with the calendar's Maghrib + 3 (its Ramadan Maghrib, kept all year)",
+      "reason": "Al Khor follows Doha's calendar, and Tazkir also keeps Al Khor's own later summer sunset with the calendar's Maghrib + 3 (its Ramadan Maghrib, kept all year)",
       "events": ["maghrib", "isha"]
     }
   },
@@ -251,7 +251,7 @@
           "events": ["fajr", "sunrise", "dhuhr", "asrStandard", "endOfEating"]
         },
         "unit al-khor: 3 min": {
-          "reason": "Al Khor follows Doha's calendar, and Taqvo also keeps Al Khor's own later summer sunset with the calendar's Maghrib + 3 (its Ramadan Maghrib, kept all year)",
+          "reason": "Al Khor follows Doha's calendar, and Tazkir also keeps Al Khor's own later summer sunset with the calendar's Maghrib + 3 (its Ramadan Maghrib, kept all year)",
           "events": ["maghrib", "isha"]
         }
       },

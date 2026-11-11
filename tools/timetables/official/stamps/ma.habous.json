@@ -239,11 +239,11 @@
       "events": ["fajr", "dhuhr", "asrStandard", "isha", "endOfEating"]
     },
     "entry ma.habous: 6 min": {
-      "reason": "Beyond the cities whose own Habous table Taqvo fits, the place's elevation is not known, so Maghrib takes a national margin that covers the highest town checked (Imilchil, about 2,150 m): at a low town it is up to 6 min after Habous's Maghrib.",
+      "reason": "Beyond the cities whose own Habous table Tazkir fits, the place's elevation is not known, so Maghrib takes a national margin that covers the highest town checked (Imilchil, about 2,150 m): at a low town it is up to 6 min after Habous's Maghrib.",
       "events": ["maghrib"]
     },
     "entry ma.habous: 7 min": {
-      "reason": "Beyond the cities whose own Habous table Taqvo fits, the place's elevation is not known, so sunrise takes a national margin that covers the highest town checked (Imilchil, about 2,150 m): at a low town it is up to 7 min before Habous's sunrise.",
+      "reason": "Beyond the cities whose own Habous table Tazkir fits, the place's elevation is not known, so sunrise takes a national margin that covers the highest town checked (Imilchil, about 2,150 m): at a low town it is up to 7 min before Habous's sunrise.",
       "events": ["sunrise"]
     },
     "unit casablanca: 2 min": {

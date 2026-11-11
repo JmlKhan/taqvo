@@ -3,6 +3,12 @@ package com.taqvo.app.feature.onboarding
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
+import org.jetbrains.compose.resources.painterResource
+import com.taqvo.app.feed.FeedThemes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -165,14 +171,11 @@ internal fun wallpaperFonts() = WallpaperFonts(quran = mushafFamily(), dua = Fon
 @Composable
 internal fun ThemeScreen(
     progress: Float?,
-    sample: WallpaperSample?,
-    selected: WallpaperStyle,
-    onSelect: (WallpaperStyle) -> Unit,
+    selectedId: String,
+    onSelect: (String) -> Unit,
     onContinue: () -> Unit,
 ) {
     val colors = LocalTaqvoColors.current
-    val measurer = rememberTextMeasurer()
-    val fonts = wallpaperFonts()
     OnbPage(
         progress = progress,
         onSkip = null,
@@ -181,23 +184,19 @@ internal fun ThemeScreen(
             Spacer(Modifier.height(8.dp))
             OnbTitle(stringResource(Res.string.onb_theme_title))
             Spacer(Modifier.height(24.dp))
-            WallpaperStyle.entries.chunked(2).forEach { row ->
+            ONBOARDING_THEME_IDS.map(FeedThemes::of).chunked(2).forEach { row ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    row.forEach { style ->
-                        val chosen = style == selected
-                        val name = stringResource(style.label)
+                    row.forEach { theme ->
+                        val chosen = theme.id == selectedId
                         Box(
                             Modifier
                                 .weight(1f)
                                 .aspectRatio(9f / 16f)
                                 .clip(RoundedCornerShape(18.dp))
                                 .border(if (chosen) 3.dp else 1.dp, if (chosen) colors.accent else colors.hairline, RoundedCornerShape(18.dp))
-                                .selectable(selected = chosen, role = Role.RadioButton) { onSelect(style) }
-                                .semantics { contentDescription = name },
+                                .selectable(selected = chosen, role = Role.RadioButton) { onSelect(theme.id) },
                         ) {
-                            Canvas(Modifier.fillMaxSize()) {
-                                if (sample != null) drawWallpaper(sample.text, sample.reference, style, fonts, measurer, sample.translationRtl)
-                            }
+                            Image(painterResource(theme.thumb), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                             if (chosen) {
                                 Box(
                                     Modifier.align(Alignment.TopEnd).padding(8.dp).size(26.dp).clip(CircleShape).background(colors.background),
@@ -214,10 +213,13 @@ internal fun ThemeScreen(
     )
 }
 
-/** Screen 12: the chosen look full screen, the ayah fading in a moment after the picture. */
+/** The four feed backgrounds onboarding offers (of the Mavzular screen's full set): the mosque under a crescent, green hills, camels at dusk, misty forest. */
+internal val ONBOARDING_THEME_IDS = listOf("theme_06", "theme_08", "theme_16", "theme_02")
+
+/** Screen 12: the chosen background full screen, the ayah fading in a moment after the picture. */
 @Composable
-internal fun PreviewScreen(progress: Float?, sample: WallpaperSample?, style: WallpaperStyle, onContinue: () -> Unit) {
-    val measurer = rememberTextMeasurer()
+internal fun PreviewScreen(progress: Float?, sample: WallpaperSample?, themeId: String, onContinue: () -> Unit) {
+    val theme = FeedThemes.of(themeId)
     val fonts = wallpaperFonts()
     val picture = remember { Animatable(0f) }
     LaunchedEffect(Unit) { picture.animateTo(1f, tween(500)) }
@@ -225,19 +227,23 @@ internal fun PreviewScreen(progress: Float?, sample: WallpaperSample?, style: Wa
         progress = progress,
         onSkip = null,
         background = {
-            Canvas(Modifier.fillMaxSize().alpha(picture.value)) {
-                if (sample != null) drawWallpaper(sample.text, sample.reference, style, fonts, measurer, sample.translationRtl)
+            Box(Modifier.fillMaxSize().alpha(picture.value)) {
+                Image(painterResource(theme.image), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = theme.scrim)))
+                if (sample != null) {
+                    Column(Modifier.fillMaxSize().padding(horizontal = 32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(sample.text.arabic, color = Color.White, fontFamily = fonts.quran, fontSize = 28.sp, textAlign = TextAlign.Center)
+                        sample.text.translation?.let {
+                            Spacer(Modifier.height(16.dp))
+                            Text(it, color = Color.White, fontFamily = fonts.translation, fontSize = 16.sp, textAlign = TextAlign.Center)
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Text(sample.reference, color = Color.White.copy(alpha = 0.8f), fontFamily = fonts.translation, fontSize = 13.sp)
+                    }
+                }
             }
         },
         content = {},
         footer = { LightButton(stringResource(Res.string.onb_continue), onContinue) },
     )
 }
-
-internal val WallpaperStyle.label: StringResource
-    get() = when (this) {
-        WallpaperStyle.NIGHT -> Res.string.wallpapers_style_night
-        WallpaperStyle.DAWN -> Res.string.wallpapers_style_dawn
-        WallpaperStyle.DUSK -> Res.string.wallpapers_style_dusk
-        WallpaperStyle.SLATE -> Res.string.wallpapers_style_slate
-    }

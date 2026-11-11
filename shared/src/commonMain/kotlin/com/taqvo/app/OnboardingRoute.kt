@@ -37,6 +37,7 @@ import com.taqvo.app.quran.RTL_TRANSLATION_LANGUAGES
 import com.taqvo.app.quran.ReadingSettings
 import com.taqvo.app.settings.SettingsRepository
 import com.taqvo.app.wallpaper.WallpaperSource
+import com.taqvo.app.feed.FeedThemes
 import com.taqvo.app.wallpaper.WallpaperStyle
 import com.taqvo.app.wallpaper.WallpaperText
 import com.taqvo.app.widget.WidgetAddPath
@@ -76,6 +77,7 @@ internal fun OnboardingRoute(
     val storedReminders by store.ayahReminders.collectAsState(null)
     val ayahFormat by store.ayahFormat.collectAsState(AyahFormat.ARABIC_TRANSLATION)
     val style by store.wallpaperStyle.collectAsState(WallpaperStyle.NIGHT)
+    val themeId by container.feedPrefsStore.themeId.collectAsState(FeedThemes.DEFAULT_ID)
 
     // The resume point (spec §0): written on every step, so a killed onboarding comes back here.
     LaunchedEffect(step) { store.setStep(step.name) }
@@ -129,6 +131,7 @@ internal fun OnboardingRoute(
             language = language,
             reminders = reminders,
             ayahFormat = ayahFormat,
+            themeId = themeId,
             style = style,
             wallpaperSample = wallpaperSample,
             previewFor = previewFor,
@@ -151,9 +154,9 @@ internal fun OnboardingRoute(
                 scope.launch { store.setAyahFormat(chosen) }
                 track(OnboardingEvents.AYAH_FORMAT, mapOf("format" to chosen.name))
             },
-            setStyle = { chosen ->
-                scope.launch { store.setWallpaperStyle(chosen) }
-                track(OnboardingEvents.THEME, mapOf("theme" to chosen.name))
+            setTheme = { chosen ->
+                scope.launch { container.feedPrefsStore.setThemeId(chosen) }
+                track(OnboardingEvents.THEME, mapOf("theme" to chosen))
             },
             startStreak = {
                 scope.launch { store.startStreak(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date) }

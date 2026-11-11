@@ -59,10 +59,10 @@ import com.taqvo.app.resources.onboarding_widget_cta_done
 import com.taqvo.app.resources.onboarding_widget_secondary
 import com.taqvo.app.resources.onboarding_widget_steps_android
 import com.taqvo.app.resources.onboarding_widget_title
-import com.taqvo.app.wallpaper.WallpaperStyle
 import com.taqvo.app.widget.PinnableWidget
 import com.taqvo.app.widget.WidgetAddPath
 import com.taqvo.app.widget.WidgetPinRequester
+import com.taqvo.app.wallpaper.WallpaperStyle
 import com.taqvo.app.widget.askToPin
 
 /** What onboarding shows: the answers so far and the settings they have made. */
@@ -71,6 +71,9 @@ data class OnboardingModel(
     val language: AppLanguage,
     val reminders: AyahReminderSettings,
     val ayahFormat: AyahFormat,
+    /** The feed background chosen on the theme screen (an id from `FeedThemes`). */
+    val themeId: String,
+    /** The wallpaper look the later showcase screens mock up. */
     val style: WallpaperStyle,
     /** The ayah the wallpaper screens draw; null until the Quran database has answered. */
     val wallpaperSample: WallpaperSample?,
@@ -92,7 +95,7 @@ class OnboardingActions(
     /** The notification prompt's answer: turns the reminders on or off, leaving their times be. */
     val setRemindersAllowed: (Boolean) -> Unit,
     val setAyahFormat: (AyahFormat) -> Unit,
-    val setStyle: (WallpaperStyle) -> Unit,
+    val setTheme: (String) -> Unit,
     val startStreak: () -> Unit,
     /** The system's answer to the notification prompt: prayer notifications follow it too. */
     val onNotificationPermission: (Boolean) -> Unit,
@@ -261,8 +264,8 @@ fun OnboardingScreen(
         )
         OnboardingStep.EXACT_ALARMS -> ExactAlarmsScreen(progress, onAllow = actions.onRequestExactAlarms, onLater = { advance() })
         OnboardingStep.LOADING -> LoadingScreen(progress, work = actions.prepare, onDone = { advance(OnboardingStep.LOADING) })
-        OnboardingStep.THEME -> ThemeScreen(progress, model.wallpaperSample, model.style, onSelect = actions.setStyle, onContinue = { advance() })
-        OnboardingStep.PREVIEW -> PreviewScreen(progress, model.wallpaperSample, model.style, onContinue = { advance() })
+        OnboardingStep.THEME -> ThemeScreen(progress, model.themeId, onSelect = actions.setTheme, onContinue = { advance() })
+        OnboardingStep.PREVIEW -> PreviewScreen(progress, model.wallpaperSample, model.themeId, onContinue = { advance() })
         OnboardingStep.SHOWCASE_LOCK ->
             ShowcaseLockScreen(progress, model.style, model.ios, model.previewFor(model.ayahFormat), onContinue = { advance() })
         OnboardingStep.SHOWCASE_HOME ->

@@ -239,7 +239,7 @@
       "events": ["fajr", "sunrise", "dhuhr", "asrStandard", "maghrib", "isha", "endOfEating"]
     },
     "unit dubai: 3 min": {
-      "reason": "Dubai's one table serves the whole city, and Taqvo also keeps each place's own dawn, about a minute earlier in the city's north-east in June",
+      "reason": "Dubai's one table serves the whole city, and Tazkir also keeps each place's own dawn, about a minute earlier in the city's north-east in June",
       "events": ["endOfEating"]
     }
   },
@@ -254,7 +254,7 @@
           "events": ["fajr", "sunrise", "dhuhr", "asrStandard", "maghrib", "isha"]
         },
         "unit dubai: 3 min": {
-          "reason": "Dubai's one table serves the whole city, and Taqvo also keeps each place's own dawn, about a minute earlier in the city's north-east in June",
+          "reason": "Dubai's one table serves the whole city, and Tazkir also keeps each place's own dawn, about a minute earlier in the city's north-east in June",
           "events": ["endOfEating"]
         }
       },

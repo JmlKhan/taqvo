@@ -236,7 +236,7 @@
       "events": ["fajr", "sunrise", "dhuhr", "asrStandard", "maghrib", "isha", "endOfEating"]
     },
     "unit taba: 3 min": {
-      "reason": "ESA computes Taba's table about half a degree west of Taba, and Taqvo keeps Taba's own earlier sunrise and dawn",
+      "reason": "ESA computes Taba's table about half a degree west of Taba, and Tazkir keeps Taba's own earlier sunrise and dawn",
       "events": ["sunrise", "endOfEating"]
     }
   },
@@ -3673,7 +3673,7 @@
           "events": ["fajr", "dhuhr", "asrStandard", "maghrib", "isha"]
         },
         "unit taba: 3 min": {
-          "reason": "ESA computes Taba's table about half a degree west of Taba, and Taqvo keeps Taba's own earlier sunrise and dawn",
+          "reason": "ESA computes Taba's table about half a degree west of Taba, and Tazkir keeps Taba's own earlier sunrise and dawn",
           "events": ["sunrise", "endOfEating"]
         }
       },

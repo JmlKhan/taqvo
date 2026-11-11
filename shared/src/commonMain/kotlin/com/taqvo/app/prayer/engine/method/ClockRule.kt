@@ -20,7 +20,7 @@ interface ClockRule {
     fun on(date: LocalDate, point: GeoPoint, zone: TimeZone): ClockTimes
 
     /**
-     * The About screen's string key saying what of the authority's calendar Tazkir does not follow
+     * The About screen's string key saying what of the authority's calendar Taqvo does not follow
      * ([ClockTimes.notFollowed], and a Fajr the day cannot show before sunrise), or null.
      */
     val notFollowedNoteKey: String? get() = null
