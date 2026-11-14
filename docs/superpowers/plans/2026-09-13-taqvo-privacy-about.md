@@ -600,7 +600,7 @@ git commit -m "ios: declare exempt encryption so every upload skips the export-c
 - Create: `PRIVACY.md` (repo root)
 - Create: `docs/STORE-PRIVACY.md`
 
-**Interfaces:** the policy URL is `https://github.com/MohamedAbulgasem/Taqwa/blob/main/PRIVACY.md` (Task 7's `AboutLinks.PRIVACY_POLICY`).
+**Interfaces:** the policy URL is `https://github.com/JmlKhan/taqvo/blob/main/PRIVACY.md` (Task 7's `AboutLinks.PRIVACY_POLICY`).
 
 - [ ] **Step 1: Write `PRIVACY.md`** from spec §4 verbatim, with the Backups section resolved to what the code does:
 
@@ -688,9 +688,9 @@ package com.taqvo.app.about
  * Taqvo repository is public — a release-day step, not a code one.
  */
 object AboutLinks {
-    const val PRIVACY_POLICY = "https://github.com/MohamedAbulgasem/Taqwa/blob/main/PRIVACY.md"
-    const val SOURCE = "https://github.com/MohamedAbulgasem/Taqwa"
-    const val LICENCE = "https://github.com/MohamedAbulgasem/Taqwa/blob/main/LICENSE"
+    const val PRIVACY_POLICY = "https://github.com/JmlKhan/taqvo/blob/main/PRIVACY.md"
+    const val SOURCE = "https://github.com/JmlKhan/taqvo"
+    const val LICENCE = "https://github.com/JmlKhan/taqvo/blob/main/LICENSE"
 }
 ```
 

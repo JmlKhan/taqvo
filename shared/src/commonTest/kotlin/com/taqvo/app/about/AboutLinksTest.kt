@@ -14,7 +14,7 @@ class AboutLinksTest {
 
     @Test
     fun everyLinkIsHttpsToTheTaqvoOwner() {
-        for (link in all) assertTrue(link.startsWith("https://github.com/MohamedAbulgasem/"), link)
+        for (link in all) assertTrue(link.startsWith("https://github.com/JmlKhan/"), link)
     }
 
     @Test

@@ -64,7 +64,7 @@ import com.taqvo.app.design.components.drawNoEntry
 import com.taqvo.app.design.components.drawPhone
 import com.taqvo.app.design.components.drawShare
 import com.taqvo.app.design.components.drawStar
-import com.taqvo.app.feature.onboarding.drawMihrab
+import com.taqvo.app.design.components.drawLogo
 import com.taqvo.app.i18n.isLatinScriptUi
 import com.taqvo.app.i18n.uiLanguage
 import com.taqvo.app.resources.Res
@@ -415,8 +415,7 @@ private const val PromiseMarkTint = 0.12f
 private fun AppIconTile(contentDescription: String, size: Dp, onClick: () -> Unit) {
     val dark = LocalTaqvoDark.current
     val hairline = LocalTaqvoColors.current.hairline
-    val tile = if (dark) IconInk else IconPaper
-    val arch = if (dark) IconPaper else IconInk
+    val tile = IconGreen
     val shape = RoundedCornerShape(size / 4)
     Box(
         Modifier
@@ -428,10 +427,9 @@ private fun AppIconTile(contentDescription: String, size: Dp, onClick: () -> Uni
             .semantics { this.contentDescription = contentDescription },
     ) {
         // The launcher draws the mark at 78 % of its canvas so no mask clips it; the same here.
-        Canvas(Modifier.fillMaxSize()) { scale(0.78f) { drawMihrab(arch, IconAmber) } }
+        Canvas(Modifier.fillMaxSize()) { scale(0.78f) { drawLogo(IconAmber, IconAmber) } }
     }
 }
 
-private val IconPaper = Color(0xFFFFFFFF)
-private val IconInk = Color(0xFF16160F)
+private val IconGreen = Color(0xFF002D24)
 private val IconAmber = Color(0xFFE3A21C)

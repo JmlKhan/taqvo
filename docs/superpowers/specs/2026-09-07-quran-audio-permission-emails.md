@@ -12,7 +12,7 @@ Contact: the address or form on https://alquran.cloud/contact (the API and CDN t
 
 Assalamu alaykum,
 
-I am building Taqvo, a free Islamic app for Android and iPhone: prayer times, adhan notifications, qibla, and from the next release a Quran reader with recitation. It is non-commercial in every sense: no ads, no subscriptions, no accounts, no analytics, and the code is published under GPL-3.0 at github.com/MohamedAbulgasem/Taqwa.
+I am building Taqvo, a free Islamic app for Android and iPhone: prayer times, adhan notifications, qibla, and from the next release a Quran reader with recitation. It is non-commercial in every sense: no ads, no subscriptions, no accounts, no analytics, and the code is published under GPL-3.0 at github.com/JmlKhan/taqvo.
 
 Your terms say the recitations you host are licensed for free, non-commercial redistribution at the bitrates you publish. I would like to use them exactly that way, and wanted to tell you how before doing it:
 
@@ -27,7 +27,7 @@ Jazakum Allahu khayran,
 
 Mohamed Abulgasem
 [your email]
-github.com/MohamedAbulgasem/Taqwa
+github.com/JmlKhan/taqvo
 
 ---
 
@@ -53,7 +53,7 @@ Jazakum Allahu khayran for your time and for the Sheikh's recitation, which has 
 
 Mohamed Abulgasem
 [your email]
-github.com/MohamedAbulgasem/Taqwa
+github.com/JmlKhan/taqvo
 
 ---
 
@@ -75,7 +75,7 @@ Jazakum Allahu khayran,
 
 Mohamed Abulgasem
 [your email]
-github.com/MohamedAbulgasem/Taqwa
+github.com/JmlKhan/taqvo
 
 ---
 
@@ -89,7 +89,7 @@ Re-issued to Mohamed for sending from algiriany93@gmail.com. Supersedes drafts 1
 
 Assalamu alaykum,
 
-I am building Taqvo, a free Islamic app for Android and iPhone: prayer times, adhan, qibla, a Quran reader, and now recitation. It is non-commercial in every sense: no ads, no subscriptions, no accounts, no analytics. The code is GPL-3.0 at github.com/MohamedAbulgasem/Taqwa.
+I am building Taqvo, a free Islamic app for Android and iPhone: prayer times, adhan, qibla, a Quran reader, and now recitation. It is non-commercial in every sense: no ads, no subscriptions, no accounts, no analytics. The code is GPL-3.0 at github.com/JmlKhan/taqvo.
 
 Your terms (§IV) license the recitations for free, non-commercial redistribution at the bitrates you publish, and §III asks anyone running a full-corpus mirror to get in touch. This is that message.
 
@@ -103,7 +103,7 @@ If any of this is outside what you intend, please tell me and I will change it. 
 Jazakum Allahu khayran,
 Mohamed Abulgasem
 algiriany93@gmail.com
-github.com/MohamedAbulgasem/Taqwa
+github.com/JmlKhan/taqvo
 
 ### 2. Mishary Rashid Alafasy's office
 
@@ -123,4 +123,4 @@ Jazakum Allahu khayran for your time, and for the Sheikh's recitation, which has
 
 Mohamed Abulgasem
 algiriany93@gmail.com
-github.com/MohamedAbulgasem/Taqwa
+github.com/JmlKhan/taqvo

@@ -7,12 +7,12 @@ everyone work.
 ## Where to start
 
 - **A prayer time doesn't match your mosque.** Use the
-  [prayer times form](https://github.com/MohamedAbulgasem/Taqwa/issues/new?template=prayer-times.yml).
+  [prayer times form](https://github.com/JmlKhan/taqvo/issues/new?template=prayer-times.yml).
   These reports are among the most useful of all.
 - **Something is broken.** Use the
-  [bug form](https://github.com/MohamedAbulgasem/Taqwa/issues/new?template=bug.yml).
+  [bug form](https://github.com/JmlKhan/taqvo/issues/new?template=bug.yml).
 - **Wording or a translation is wrong.** Use the
-  [wording form](https://github.com/MohamedAbulgasem/Taqwa/issues/new?template=wording.yml), or
+  [wording form](https://github.com/JmlKhan/taqvo/issues/new?template=wording.yml), or
   send a pull request for the app's own strings ([Translations](#translations) below).
 - **An authority's timetable Tazkir doesn't follow yet.** Open an issue with where it is published.
 - **A security problem.** Report it privately, as [SECURITY.md](SECURITY.md) describes, never in a
@@ -45,7 +45,7 @@ otherwise. In more detail:
 - **Religious text is as published.** The Quran's Arabic is the [Tanzil](https://tanzil.net) text,
   verbatim, and is never edited here. Translations, tafsir and adhkar come from the sources
   credited in [docs/ATTRIBUTION.md](docs/ATTRIBUTION.md), and a correction needs a source (the
-  [wording form](https://github.com/MohamedAbulgasem/Taqwa/issues/new?template=wording.yml) says which).
+  [wording form](https://github.com/JmlKhan/taqvo/issues/new?template=wording.yml) says which).
 - **Nothing interrupts.** The app never asks for a review and never nags.
 
 ## How to contribute

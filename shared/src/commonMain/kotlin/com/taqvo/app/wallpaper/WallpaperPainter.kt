@@ -1,6 +1,7 @@
 package com.taqvo.app.wallpaper
 
 import androidx.compose.ui.geometry.Offset
+import com.taqvo.app.design.components.drawLogoAt
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Canvas
@@ -164,30 +165,9 @@ private fun arabicStyle(quran: Boolean, sizeSp: Float, fonts: WallpaperFonts, co
     lineHeightStyle = LineHeightStyle(alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.None),
 )
 
-/**
- * The app icon's mark, the mihrab with its amber point, from `ic_launcher_foreground.xml`'s own
- * path on its 1024 canvas: the arch spans y 216 to 780 there, and [height] is that span here.
- * [topCentre] is the apex.
- */
-private fun DrawScope.drawMihrab(topCentre: Offset, height: Float, colors: WallpaperColors) {
-    val scale = height / (ARCH_BOTTOM - ARCH_APEX)
-    // The icon's coordinates, moved so its apex (512, 216) lands on [topCentre].
-    fun x(v: Float) = topCentre.x + (v - 512f) * scale
-    fun y(v: Float) = topCentre.y + (v - ARCH_APEX) * scale
-    val arch = Path().apply {
-        moveTo(x(292f), y(780f))
-        lineTo(x(292f), y(520f))
-        cubicTo(x(292f), y(372f), x(380f), y(268f), x(512f), y(216f))
-        cubicTo(x(644f), y(268f), x(732f), y(372f), x(732f), y(520f))
-        lineTo(x(732f), y(780f))
-    }
-    drawPath(
-        arch,
-        color = colors.ink.copy(alpha = 0.85f),
-        style = Stroke(width = 64f * scale, cap = StrokeCap.Round, join = StrokeJoin.Round),
-    )
-    drawCircle(colors.accent, radius = 46f * scale, center = Offset(x(512f), y(392f)))
-}
+/** The app icon's mark, the crescent and star, [height] tall with its top edge at [topCentre]. */
+private fun DrawScope.drawMihrab(topCentre: Offset, height: Float, colors: WallpaperColors) =
+    drawLogoAt(topCentre, height, colors.accent, colors.accent)
 
 /**
  * The full-size picture: [draw] into a fresh [widthPx] × [heightPx] bitmap, outside composition.
@@ -222,5 +202,3 @@ private const val REFERENCE_GAP = 22f
 private const val BLOCK_SHARE = 0.56f
 private const val BLOCK_CENTRE = 0.57f
 private const val BLOCK_BOTTOM = 0.86f
-private const val ARCH_APEX = 216f
-private const val ARCH_BOTTOM = 780f

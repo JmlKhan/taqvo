@@ -16,7 +16,7 @@ import sys
 import time
 import urllib.request
 
-UA = "Taqvo-mirror/0.1 (free open-source app; github.com/MohamedAbulgasem/Taqwa)"
+UA = "Taqvo-mirror/0.1 (free open-source app; github.com/JmlKhan/taqvo)"
 
 WORK = os.environ.get(
     "TAQVO_AUDIO_WORK",

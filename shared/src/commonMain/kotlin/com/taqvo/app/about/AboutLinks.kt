@@ -12,9 +12,9 @@ object AboutLinks {
     /** Where "Report a problem" and the crash sheet address their email; the site and the policy say the same. */
     const val SUPPORT_EMAIL = "jmlkhon17@gmail.com"
     const val WEBSITE = "https://taqwa.world/"
-    const val PRIVACY_POLICY = "https://github.com/MohamedAbulgasem/Taqwa/blob/main/PRIVACY.md"
-    const val SOURCE = "https://github.com/MohamedAbulgasem/Taqwa"
-    const val LICENCE = "https://github.com/MohamedAbulgasem/Taqwa/blob/main/LICENSE"
+    const val PRIVACY_POLICY = "https://github.com/JmlKhan/taqvo/blob/main/PRIVACY.md"
+    const val SOURCE = "https://github.com/JmlKhan/taqvo"
+    const val LICENCE = "https://github.com/JmlKhan/taqvo/blob/main/LICENSE"
 
     /** Tazkir's Apple ID in App Store Connect; the README, the site's badge and `site/stores.json` link the same page. */
     const val APP_STORE_ID = "6814975544"

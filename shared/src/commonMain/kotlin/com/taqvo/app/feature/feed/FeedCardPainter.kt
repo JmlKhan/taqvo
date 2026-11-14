@@ -1,6 +1,7 @@
 package com.taqvo.app.feature.feed
 
 import androidx.compose.ui.geometry.Offset
+import com.taqvo.app.design.components.drawLogoAt
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -139,7 +140,7 @@ private fun DrawScope.drawCover(image: ImageBitmap) {
 
 /**
  * The app's mark and name, side by side at about 60% (feed spec §9), centred on [topCentre]: the
- * mihrab from the launcher icon, drawn small, then "Tazkir".
+ * crescent and star from the launcher icon, drawn small, then "Tazkir".
  */
 private fun DrawScope.drawWatermark(
     topCentre: Offset,
@@ -165,21 +166,9 @@ private fun DrawScope.drawWatermark(
     drawText(name, topLeft = Offset(startX + markWidth + gap, topCentre.y + (height - name.size.height) / 2))
 }
 
-/** The launcher icon's mihrab, from `ic_launcher_foreground.xml`'s own path on its 1024 canvas, [height] tall. */
-private fun DrawScope.drawMark(topCentre: Offset, height: Float, tint: Color) {
-    val scale = height / (780f - 216f)
-    fun x(v: Float) = topCentre.x + (v - 512f) * scale
-    fun y(v: Float) = topCentre.y + (v - 216f) * scale
-    val arch = Path().apply {
-        moveTo(x(292f), y(780f))
-        lineTo(x(292f), y(520f))
-        cubicTo(x(292f), y(372f), x(380f), y(268f), x(512f), y(216f))
-        cubicTo(x(644f), y(268f), x(732f), y(372f), x(732f), y(520f))
-        lineTo(x(732f), y(780f))
-    }
-    drawPath(arch, color = tint, style = Stroke(width = 64f * scale, cap = StrokeCap.Round, join = StrokeJoin.Round))
-    drawCircle(tint, radius = 46f * scale, center = Offset(x(512f), y(392f)))
-}
+/** The launcher icon's crescent and star, [height] tall. */
+private fun DrawScope.drawMark(topCentre: Offset, height: Float, tint: Color) =
+    drawLogoAt(topCentre, height, tint, tint)
 
 private const val CARD_UNITS = 400f
 private const val SIDE = 36f

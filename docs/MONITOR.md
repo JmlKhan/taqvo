@@ -314,7 +314,7 @@ The job then commits as `taqvo-monitor` with hooks off (`git -c core.hooksPath=/
 archive's changes to the branch the run started on (rebased onto whatever arrived meanwhile, one
 retry); only when that push landed, its rebase brought in no change under `archive/tables/` from
 elsewhere (tables the proof may read; otherwise the proof is not published and the next run proves
-again), and prove's checks were green, the proof to `MohamedAbulgasem/Taqwa` `main`, with the message
+again), and prove's checks were green, the proof to `JmlKhan/taqvo` `main`, with the message
 `tools/timetables/monitor/proof.py message` wrote in the proving job (counts, gate files, entries and
 city slugs only; no time, no table date, no AI attribution; refused, exit 3, if it ever had a time's
 shape). Before that commit, **main's commits since the proving job's checkout must touch nothing the
@@ -356,7 +356,7 @@ again).
 **The token (the owner, once).** On GitHub: Settings › Developer settings › Personal access tokens ›
 Fine-grained tokens › Generate new token. Name `Tazkir monitor push`; expiration 1 year (a calendar
 reminder to renew it); resource owner MohamedAbulgasem; Repository access › Only select repositories
-› `MohamedAbulgasem/Taqwa` (the public repository alone); Permissions › Repository permissions ›
+› `JmlKhan/taqvo` (the public repository alone); Permissions › Repository permissions ›
 Contents: **Read and write** (Metadata: read-only is added by itself; nothing else). Generate, copy
 it once. Then in `MohamedAbulgasem/Taqwa-official`: Settings › Secrets and variables › Actions › New
 repository secret, name `TAQVO_PUSH_TOKEN`, paste, save. Copy this template to the private

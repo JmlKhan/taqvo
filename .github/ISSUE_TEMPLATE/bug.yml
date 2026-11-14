@@ -5,8 +5,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        - **A prayer time differs from your mosque?** Use the [prayer times form](https://github.com/MohamedAbulgasem/Taqwa/issues/new?template=prayer-times.yml) instead.
-        - **A security problem?** Report it privately, as [SECURITY.md](https://github.com/MohamedAbulgasem/Taqwa/blob/main/SECURITY.md) describes, not here.
+        - **A prayer time differs from your mosque?** Use the [prayer times form](https://github.com/JmlKhan/taqvo/issues/new?template=prayer-times.yml) instead.
+        - **A security problem?** Report it privately, as [SECURITY.md](https://github.com/JmlKhan/taqvo/blob/main/SECURITY.md) describes, not here.
         - **The adhan came late or not at all?** Check [The adhan came late, or not at all](https://taqwa.world/support/#late) first. The phone's battery settings are the usual cause.
         - **The app crashed?** It keeps a report on the phone. Settings › About Taqvo › Report a problem opens an email to support with the saved report. It contains the app version, your phone model and the error, nothing else. Say below that you have sent it.
 

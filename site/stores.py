@@ -26,7 +26,7 @@ import sys
 import campaigns
 
 SITE = os.path.dirname(os.path.abspath(__file__))
-SOURCE_URL = "https://github.com/MohamedAbulgasem/Taqwa"
+SOURCE_URL = "https://github.com/JmlKhan/taqvo"
 
 STORE_ADDRESSES = {
     "google_play": r"https://play\.google\.com/store/apps/details\?id=com\.taqvo\.app",

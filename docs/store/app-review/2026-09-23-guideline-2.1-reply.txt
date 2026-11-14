@@ -26,7 +26,7 @@ Tazkir is not in a regulated industry. Its religious content is used under the p
 - Recitations: Islamic Network, licensed by the reciters for free, non-commercial redistribution at the published bitrates (alquran.cloud/terms-and-conditions, section IV)
 - Quran font: KFGQPC Uthmanic Script Hafs (King Fahd Complex), free to use unmodified
 - Adhan audio: Wikimedia Commons (CC0, CC BY-SA 4.0, CC BY 3.0); city list: GeoNames (CC BY 4.0)
-Tazkir is free, with no ads or purchases, so it stays within these non-commercial terms. The full list is at github.com/MohamedAbulgasem/Taqwa/blob/main/docs/ATTRIBUTION.md.
+Tazkir is free, with no ads or purchases, so it stays within these non-commercial terms. The full list is at github.com/JmlKhan/taqvo/blob/main/docs/ATTRIBUTION.md.
 
 Privacy policy: https://taqwa.world/privacy/
 Support: jmlkhon17@gmail.com

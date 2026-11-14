@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
+import com.taqvo.app.design.components.drawLogo
 import com.taqvo.app.ayah.AyahReminderSettings
 import com.taqvo.app.design.LocalTaqvoColors
 import com.taqvo.app.design.components.CardDivider
@@ -167,7 +168,7 @@ internal fun NotificationPreview(preview: AyahPreviewText?, modifier: Modifier =
             Modifier.size(38.dp).clip(RoundedCornerShape(9.dp)).background(colors.textPrimary),
             contentAlignment = Alignment.Center,
         ) {
-            Canvas(Modifier.size(28.dp)) { drawMihrab(colors.background, colors.ring) }
+            Canvas(Modifier.size(28.dp)) { drawLogo(colors.background, colors.background) }
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {

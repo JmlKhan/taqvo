@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.datetime.DayOfWeek
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import com.taqvo.app.design.components.drawLogo
 import com.taqvo.app.design.LocalTaqvoColors
 import com.taqvo.app.design.WallpaperDusk
 import com.taqvo.app.design.components.TaqvoPrimaryButton
@@ -92,12 +93,15 @@ internal fun SplashScreen(onStart: () -> Unit) {
         },
         content = {
             Box(Modifier.size(180.dp), contentAlignment = Alignment.Center) {
-                Canvas(Modifier.fillMaxSize()) { drawMihrab(dusk.ink, dusk.accent) }
+                Canvas(Modifier.fillMaxSize()) { drawLogo(dusk.accent, dusk.accent) }
             }
             Spacer(Modifier.height(36.dp))
             OnbTitle(stringResource(Res.string.app_name), color = dusk.ink)
             Spacer(Modifier.height(10.dp))
             OnbBody(stringResource(Res.string.onb_splash_tagline), color = dusk.secondary)
+            Spacer(Modifier.height(20.dp))
+            // The founder's credit: a name, so it is not translated.
+            OnbBody("by Asadbek Qurbon", color = dusk.secondary.copy(alpha = 0.8f))
         },
         footer = { LightButton(stringResource(Res.string.onb_splash_cta), onStart) },
     )
@@ -120,7 +124,7 @@ internal fun IntroScreen(progress: Float?, onContinue: () -> Unit) {
         progress = progress,
         onSkip = null,
         content = {
-            MihrabMark()
+            LogoMark()
             Spacer(Modifier.height(28.dp))
             OnbTitle(stringResource(Res.string.onb_intro_title))
             Spacer(Modifier.height(12.dp))
@@ -223,7 +227,7 @@ internal fun JourneyScreen(progress: Float?, onContinue: () -> Unit) {
                 Canvas(Modifier.fillMaxSize()) {
                     drawCircle(Brush.radialGradient(listOf(colors.ring.copy(alpha = 0.35f), Color.Transparent)), radius = size.minDimension / 2)
                 }
-                Canvas(Modifier.size(150.dp)) { drawMihrab(colors.textPrimary, colors.ring) }
+                Canvas(Modifier.size(150.dp)) { drawLogo(colors.ring, colors.ring) }
             }
             Spacer(Modifier.height(28.dp))
             OnbTitle(stringResource(Res.string.onb_journey_title))

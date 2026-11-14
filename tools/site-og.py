@@ -28,12 +28,9 @@ CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 LANGUAGES = ["en", "ar", "fr", "tr", "id", "ur", "bn"]
 WIDTH, HEIGHT = 1200, 630
 
-# The app's mihrab mark, as on the site's hero tile.
+# The app's mark (crescent and star), as on the site's hero tile.
 MARK = (
-    '<svg viewBox="0 0 1024 1024" fill="none"><g transform="translate(512 512) scale(0.78) '
-    'translate(-512 -512)"><path d="M292 780V520c0-148 88-252 220-304 132 52 220 156 220 304v260" '
-    'stroke="#16160F" stroke-width="88" stroke-linecap="round" stroke-linejoin="round"/>'
-    '<circle cx="512" cy="392" r="46" fill="#E3A21C"/></g></svg>'
+    '<svg viewBox="75 63 283 283" fill="none"><path d="M240 100A104.1 104.1 0 1 0 318 232A87.2 87.2 0 1 1 240 100Z" fill="#E3A21C"/><polygon points="252.0,143.0 255.4,176.7 271.1,165.9 260.3,181.6 294.0,185.0 260.3,188.4 271.1,204.1 255.4,193.3 252.0,227.0 248.6,193.3 232.9,204.1 243.7,188.4 210.0,185.0 243.7,181.6 232.9,165.9 248.6,176.7" fill="#E3A21C"/></svg>'
 )
 
 CARD = """<!doctype html>
@@ -51,7 +48,7 @@ CARD = """<!doctype html>
   .copy {{ flex: 1; display: flex; flex-direction: column; gap: 22px; }}
   .brand {{ display: flex; align-items: center; gap: 18px; }}
   .tile {{
-    width: 84px; height: 84px; border-radius: 22px; background: #FFFFFF;
+    width: 84px; height: 84px; border-radius: 22px; background: #002D24;
     border: 2px solid #E7E5DD; display: grid; place-items: center;
   }}
   .tile svg {{ width: 66px; height: 66px; }}

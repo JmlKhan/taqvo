@@ -554,7 +554,7 @@ document's `proof` block (§9.2), sentences in `meta.json` (`checks_*`):
    timetables: name, kind ("Reproduced and checked" / "Cautious times"), place-days, places, checked
    through, at most (the entry's worst over the starts). Rows come from `proof.published`.
 6. **Read it yourself** — links to the stamps folder and the engine's design in the public repository
-   (`https://github.com/MohamedAbulgasem/Taqwa/tree/main/tools/timetables/official/stamps`,
+   (`https://github.com/JmlKhan/taqvo/tree/main/tools/timetables/official/stamps`,
    `…/blob/main/docs/superpowers/specs/2026-09-26-taqvo-prayer-times-engine-design.md`), and the line that
    the engine ships no table and reproduces each authority's published method.
 

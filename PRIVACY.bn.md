@@ -89,5 +89,4 @@ Tazkir কারও কাছ থেকে, তিনি যে বয়সে�
 
 ## যোগাযোগ
 
-আমাদের jmlkhon17@gmail.com-এ ইমেইল করুন, অথবা github.com/MohamedAbulgasem/Taqwa/issues ঠিকানায় একটি
-ইস্যু খুলুন।
+আমাদের jmlkhon17@gmail.com-এ ইমেইল করুন।

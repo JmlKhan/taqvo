@@ -83,4 +83,4 @@ Tazkir، ولا تحوي شيئًا يخصك سوى التفاصيل التقن�
 
 ## التواصل
 
-راسلنا على jmlkhon17@gmail.com، أو افتح مشكلة على github.com/MohamedAbulgasem/Taqwa/issues.
+راسلنا على jmlkhon17@gmail.com.

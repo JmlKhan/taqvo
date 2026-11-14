@@ -33,7 +33,7 @@
 #   ProofStamps.kt itself from the stamps (proof_stamps.py: the proving job's copy must equal it), then commits as
 #   taqvo-monitor with hooks off: the archive's changes to this branch (rebased onto what arrived meanwhile, retried
 #   once) and, when prove changed the public checkout with every check green and that commit landed, the proof to
-#   MohamedAbulgasem/Taqwa main, fast-forward only (a token GitHub refuses is not retried; skipped with a notice
+#   JmlKhan/taqvo main, fast-forward only (a token GitHub refuses is not retried; skipped with a notice
 #   while the secret is not set). Each token reaches git as a masked header on the commands that push alone.
 # - "report" (issues: write) keeps one issue "Taqvo monitor" (label monitor-attention) open while something needs
 #   attention: created or updated only when the attention set changed (always when the monitor itself failed), its
@@ -108,7 +108,7 @@ jobs:
         if: github.event_name == 'schedule' && github.event.schedule == '23 1 * * *'
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
-          repository: MohamedAbulgasem/Taqwa
+          repository: JmlKhan/taqvo
           ref: main
           path: taqvo
           persist-credentials: false
@@ -173,7 +173,7 @@ jobs:
       - name: Check out Taqvo at main
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
-          repository: MohamedAbulgasem/Taqwa
+          repository: JmlKhan/taqvo
           ref: ${{ github.event.inputs.rehearsal == 'true' && github.event.inputs.taqvo_ref || 'main' }}
           path: taqvo
           persist-credentials: false
@@ -459,7 +459,7 @@ jobs:
       - name: Check out Taqvo at main
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
-          repository: MohamedAbulgasem/Taqwa
+          repository: JmlKhan/taqvo
           ref: ${{ github.event.inputs.rehearsal == 'true' && github.event.inputs.taqvo_ref || 'main' }}
           path: taqvo
           persist-credentials: false
@@ -538,7 +538,7 @@ jobs:
         # the gate, the generator, the site, the scripts, the build), nothing is pushed and the next run proves again.
         # handoff.py (from this job's own checkout) refuses any path outside bot-paths.txt, a deletion, a hash that
         # differs, a clock time's shape (ruling R69), and a ProofStamps.kt that is not what proof_stamps.py writes from
-        # the stamps. The token (TAQVO_PUSH_TOKEN, a fine-grained token with Contents: write on MohamedAbulgasem/Taqwa
+        # the stamps. The token (TAQVO_PUSH_TOKEN, a fine-grained token with Contents: write on JmlKhan/taqvo
         # alone) is turned into a masked header at once and reaches git on the push commands alone; the push is
         # fast-forward only (main's ruleset refuses anything else), retried once on a main that moved elsewhere. A
         # token GitHub refuses is not retried. Without the secret the step skips with a notice.
@@ -576,7 +576,7 @@ jobs:
           [[ "$PROVEN_ON" =~ ^[0-9a-f]{40}$ ]] || refused "the monitor job named no Taqvo commit"
           target=main
           if [ "$REHEARSAL" = true ]; then target="monitor-rehearsal-$GITHUB_RUN_ID"; fi
-          remote="https://github.com/MohamedAbulgasem/Taqwa.git"
+          remote="https://github.com/JmlKhan/taqvo.git"
           # handoff.py check reads the message before anything is committed: short plain text, no time's shape, no trailer.
           message="$RUNNER_TEMP/handoff/proof-message.txt"
           cd taqvo
@@ -648,7 +648,7 @@ jobs:
       - name: Check out Taqvo's monitor code
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
-          repository: MohamedAbulgasem/Taqwa
+          repository: JmlKhan/taqvo
           ref: ${{ github.event.inputs.rehearsal == 'true' && github.event.inputs.taqvo_ref || 'main' }}
           path: taqvo
           persist-credentials: false

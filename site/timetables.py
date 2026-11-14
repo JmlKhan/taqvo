@@ -36,8 +36,8 @@ from stores import block as store_block
 SECTION = "prayer-times/"
 CHECKS_PAGE_SLUG = "how-taqvo-checks"  # reserved for the "How Tazkir checks" page; no city may use it
 # Where the checks page sends a reader who wants to see the proof for themselves (spec §5.6).
-STAMPS_URL = "https://github.com/MohamedAbulgasem/Taqwa/tree/main/tools/timetables/official/stamps"
-DESIGN_URL = "https://github.com/MohamedAbulgasem/Taqwa/blob/main/docs/superpowers/specs/2026-09-26-taqvo-prayer-times-engine-design.md"
+STAMPS_URL = "https://github.com/JmlKhan/taqvo/tree/main/tools/timetables/official/stamps"
+DESIGN_URL = "https://github.com/JmlKhan/taqvo/blob/main/docs/superpowers/specs/2026-09-26-taqvo-prayer-times-engine-design.md"
 HOME_MARKER = "<!-- prayer-times -->"
 OBLIGATORY = [0, 2, 3, 4, 5]  # the prayers of the countdown, as in the app: Sunrise is never "next"
 DHUHR = 2
@@ -52,15 +52,13 @@ MIHRAB = ('<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.5
           '2.06.81 3.44 2.43 3.44 4.75v4.47" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" '
           'stroke-linejoin="round"/><circle cx="8" cy="6.3" r="0.95" fill="currentColor"/></svg>')
 # The same glyph with the app icon's amber dot: the card's foot and the app section's tile.
-MIHRAB_LIT = MIHRAB.replace('r="0.95" fill="currentColor"', 'r="0.95" fill="var(--ring)"')
+MIHRAB_LIT = '<svg viewBox="106 94 221 221" fill="none" aria-hidden="true"><path d="M240 100A104.1 104.1 0 1 0 318 232A87.2 87.2 0 1 1 240 100Z" fill="var(--ring)"/><polygon points="252.0,143.0 255.4,176.7 271.1,165.9 260.3,181.6 294.0,185.0 260.3,188.4 271.1,204.1 255.4,193.3 252.0,227.0 248.6,193.3 232.9,204.1 243.7,188.4 210.0,185.0 243.7,181.6 232.9,165.9 248.6,176.7" fill="var(--ring)"/></svg>'
 CHEVRON = ('<svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" '
            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5"/></svg>')
 CHECK = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" '
          'stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7"/></svg>')
-# The Tazkir mark (the arch and its amber dot, as on the home page) for the foot of a printed month.
-PRINT_MARK = ('<svg class="pf-mark" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.56 12.6V8.13c0-2.32 '
-              '1.38-3.94 3.44-4.75 2.06.81 3.44 2.43 3.44 4.75v4.47" stroke="currentColor" stroke-width="1.4" '
-              'stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="6.3" r="0.95" fill="#E3A21C"/></svg>')
+# The Tazkir mark (the crescent and star, as on the home page) for the foot of a printed month.
+PRINT_MARK = '<svg class="pf-mark" viewBox="106 94 221 221" fill="none" aria-hidden="true"><path d="M240 100A104.1 104.1 0 1 0 318 232A87.2 87.2 0 1 1 240 100Z" fill="#E3A21C"/><polygon points="252.0,143.0 255.4,176.7 271.1,165.9 260.3,181.6 294.0,185.0 260.3,188.4 271.1,204.1 255.4,193.3 252.0,227.0 248.6,193.3 232.9,204.1 243.7,188.4 210.0,185.0 243.7,181.6 232.9,165.9 248.6,176.7" fill="#E3A21C"/></svg>'
 SEARCH = ('<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" '
           'stroke-width="1.8"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>')
 PRINTER = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" '

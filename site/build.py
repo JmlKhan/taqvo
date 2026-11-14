@@ -207,7 +207,7 @@ APP = {
     "license": "https://www.gnu.org/licenses/gpl-3.0.html",
     "image": f"{ORIGIN}/assets/icon-512.png",
     "author": {"@type": "Person", "name": "Mohamed Abulgasem", "url": "https://mohamedabulgasem.github.io/"},
-    "sameAs": ["https://github.com/MohamedAbulgasem/Taqwa"],
+    "sameAs": ["https://github.com/JmlKhan/taqvo"],
 }
 
 

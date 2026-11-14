@@ -123,7 +123,7 @@ html[dir="rtl"] .month-head a, html[dir="rtl"] .tt-stale a { direction: rtl; }
 }
 .hero-copy { display: flex; flex-direction: column; gap: 22px; }
 .icon-tile {
-  width: 64px; height: 64px; border-radius: 16px; background: var(--icon-paper); border: 1px solid var(--hair);
+  width: 64px; height: 64px; border-radius: 16px; background: #002D24; border: 1px solid var(--hair);
   display: flex; align-items: center; justify-content: center;
 }
 .icon-tile svg { width: 50px; height: 50px; }

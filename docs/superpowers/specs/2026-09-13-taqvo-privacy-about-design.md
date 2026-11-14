@@ -247,7 +247,7 @@ version ships, with the date above updated.
 
 ## Contact
 
-Open an issue at github.com/MohamedAbulgasem/Taqwa/issues or email algiriany93@gmail.com.
+Open an issue at github.com/JmlKhan/taqvo/issues or email algiriany93@gmail.com.
 ```
 
 Open question for Mohamed (decide before merge, one line in the review): keep the personal
@@ -360,9 +360,9 @@ the credits.
 ```kotlin
 // shared/src/commonMain/kotlin/com/taqvo/app/about/AboutLinks.kt
 object AboutLinks {
-    const val PRIVACY_POLICY = "https://github.com/MohamedAbulgasem/Taqwa/blob/main/PRIVACY.md"
-    const val SOURCE = "https://github.com/MohamedAbulgasem/Taqwa"
-    const val LICENCE = "https://github.com/MohamedAbulgasem/Taqwa/blob/main/LICENSE"
+    const val PRIVACY_POLICY = "https://github.com/JmlKhan/taqvo/blob/main/PRIVACY.md"
+    const val SOURCE = "https://github.com/JmlKhan/taqvo"
+    const val LICENCE = "https://github.com/JmlKhan/taqvo/blob/main/LICENSE"
 }
 ```
 

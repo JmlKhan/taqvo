@@ -91,5 +91,4 @@ Tazkir کسی سے بھی، کسی بھی عمر کے شخص سے، کوئی ڈ�
 
 ## رابطہ
 
-ہمیں jmlkhon17@gmail.com پر ای میل کریں، یا github.com/MohamedAbulgasem/Taqwa/issues پر ایک
-اِشو کھولیں۔
+ہمیں jmlkhon17@gmail.com پر ای میل کریں۔

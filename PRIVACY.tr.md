@@ -90,5 +90,4 @@ bunu bildirecek ve yukarıdaki tarih güncellenecektir.
 
 ## İletişim
 
-jmlkhon17@gmail.com adresine e-posta gönderin ya da
-github.com/MohamedAbulgasem/Taqwa/issues adresinde bir kayıt açın.
+jmlkhon17@gmail.com adresine e-posta gönderin.

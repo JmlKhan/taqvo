@@ -9,7 +9,7 @@ that promise or harm the people who use the app, and reports are very welcome.
 
 Report it privately, never in a public issue:
 
-- **On GitHub:** [Report a vulnerability](https://github.com/MohamedAbulgasem/Taqwa/security/advisories/new),
+- **On GitHub:** [Report a vulnerability](https://github.com/JmlKhan/taqvo/security/advisories/new),
   on this repository's Security tab. Only you and the maintainer see the report.
 - **Without a GitHub account:** email jmlkhon17@gmail.com with "Security" in the subject.
 
@@ -74,6 +74,6 @@ Out of scope:
   unlocked phone.
 - **Automated scans:** findings with no demonstrated impact.
 - **Prayer times:** a time that looks wrong is not a security issue. Use the
-  [prayer times form](https://github.com/MohamedAbulgasem/Taqwa/issues/new?template=prayer-times.yml)
+  [prayer times form](https://github.com/JmlKhan/taqvo/issues/new?template=prayer-times.yml)
   instead. If Tazkir shows a prayer earlier than the published timetable it says it follows, that
   is the most serious kind of bug the app can have, and it is handled first.

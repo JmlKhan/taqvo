@@ -103,7 +103,7 @@ import com.taqvo.app.design.components.CardDivider
 import com.taqvo.app.design.components.TaqvoPrimaryButton
 import com.taqvo.app.design.components.drawChevron
 import com.taqvo.app.domain.WidgetBackground
-import com.taqvo.app.feature.onboarding.drawMihrab
+import com.taqvo.app.design.components.drawLogo
 import com.taqvo.app.i18n.LocalPlatformFormat
 import com.taqvo.app.resources.Res
 import com.taqvo.app.resources.appearance_widget_add
@@ -1172,7 +1172,7 @@ private fun DrawScope.drawStepArt(art: StepArt, colors: TaqvoColors, forward: Bo
             box(9f, 9f, 22f, 22f, 6f, colors.surface)
             box(9f, 9f, 22f, 22f, 6f, colors.hairline, outline)
             // The launcher icon's own mark, at the 78 % of its tile the launcher draws it.
-            inset(9f * u) { scale(0.78f) { drawMihrab(colors.textPrimary, colors.ring) } }
+            inset(9f * u) { scale(0.78f) { drawLogo(colors.ring, colors.ring) } }
         }
         StepArt.CHOOSE_SIZE -> {
             box(6f, 8f, 28f, 24f, 5f, colors.surface)
